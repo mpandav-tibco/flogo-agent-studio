@@ -1,0 +1,85 @@
+# Port Registry — Flogo Agent Studio
+#
+# All services use the 7000-7099 range to avoid conflicts with:
+#   80xx — common web servers, Weaviate (8080), Ollama (11434)
+#   90xx — RAG pipeline (9191), SN MCP wrapper (9090)
+#   30xx/40xx/50xx — dev servers, databases, system services
+#
+# Add new ports here BEFORE creating the service. Never reuse a released port.
+
+flogo_services:
+
+  rule-engine:
+    port: 7000
+    description: "Generic YAML rule engine — POST /api/analyze, GET /api/health"
+    app: "apps/rule-engine-service.flogo"
+    status: active
+
+  agent-chat:
+    port: 7001
+    description: "Agent chat service — POST /api/chat, POST /api/chat/retrieve, POST /api/chat/agent (OOTB agentactivity), GET /api/health"
+    app: "apps/agent-chat-service.flogo"
+    status: active  # Phase 1
+
+  ingestion:
+    port: 7002
+    description: "KB ingestion service — POST /api/ingest, POST /api/ingest/upload, POST /api/ingest/collection, GET /api/health"
+    app: "apps/ingestion-service.flogo"
+    status: active  # Phase 1
+
+  feedback:
+    port: 7003
+    description: "Feedback service — POST /api/feedback, GET /api/feedback, GET /api/feedback/{agentId}, GET /api/health"
+    app: "apps/feedback-service.flogo"
+    status: active  # Phase 1
+
+  config:
+    port: 7004
+    description: "Multi-agent registry — GET /api/agents, GET /api/agents/{agentId}, POST /api/agents, PUT /api/agents/{agentId}, DELETE /api/agents/{agentId}, GET /api/health"
+    app: "apps/config-service.flogo"
+    status: active  # Phase 1
+
+  sse-stream:
+    port: 7005
+    description: "SSE streaming service — POST /api/stream/chat (RAG+LLM → SSE events), POST /api/stream/broadcast, GET /events (SSE), GET /api/health"
+    app: "apps/sse-stream-service.flogo"
+    status: active  # Phase 2
+
+  # 7006-7009 reserved for future Flogo services
+
+  agent-builder:
+    port: 7010
+    description: "Agent Builder backend — POST /api/agent-builder/generate, POST /api/agent-builder/improve, POST /api/agent-builder/validate, GET /api/health"
+    app: "apps/agent-builder-service.flogo"
+    status: active  # Phase 2
+
+  mcp-server:
+    port: 3333
+    description: "Flogo Agent Studio MCP Server ('flogo-dev-assist'). Exposes analyze_flogo, rag_chat, list_agents, get_agent, submit_feedback, get_feedback as MCP tools. Registered in .mcp.json."
+    app: "apps/mcp-server.flogo"
+    status: active  # Phase 2
+
+other_services:
+
+  chainlit-ui:
+    port: 7080
+    description: "Chainlit chat UI (Python, thin proxy). Multi-agent selector, RAG chat, thumbs-up/down feedback. Run: chainlit run chainlit/app.py --port 7080"
+    service: "chainlit/app.py"
+    status: active  # Phase 2
+
+external_dependencies:
+
+  weaviate-http:
+    port: 8080
+    description: "Weaviate vector database — HTTP API"
+    managed_by: docker-compose
+
+  weaviate-grpc:
+    port: 50051
+    description: "Weaviate gRPC port"
+    managed_by: docker-compose
+
+  ollama:
+    port: 11434
+    description: "Ollama LLM/embedding runtime"
+    managed_by: system

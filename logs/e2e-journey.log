@@ -1,0 +1,164 @@
+
+====================================================================================================
+  FLOGO AGENT STUDIO - END-TO-END JOURNEY TEST
+====================================================================================================
+Started: 2026-05-12 16:48:29
+
+====================================================================================================
+  PHASE 1 - HEALTH CHECKS (all 8 services)
+====================================================================================================
+  [OK  ] rule-engine-service port=7000 HTTP 200 (39ms) version=1.0.0
+  [OK  ] agent-chat-service port=7001 HTTP 200 (3ms) version=1.0.0
+  [OK  ] ingestion-service port=7002 HTTP 200 (3ms) version==$property["SERVICE_VERSION"]
+  [OK  ] feedback-service port=7003 HTTP 200 (3ms) version=1.0.0
+  [OK  ] config-service port=7004 HTTP 200 (13ms) version=1.0.0
+  [OK  ] sse-stream-service port=7005 HTTP 200 (3ms) version==$property["SERVICE_VERSION"]
+  [OK  ] agent-builder-service port=7010 HTTP 200 (3ms) version=1.0.0
+  [OK  ] mcp-server port=3333 HTTP 200 (1ms)
+
+====================================================================================================
+  PHASE 2 - CONFIG-SERVICE (port 7004): Discover agents
+====================================================================================================
+
+  [STEP 1] List all registered agents
+       --> HTTP 200 [OK  ] (4ms)
+         - default.json
+         - flogo-analyzer.json
+         - support-agent-v1.json
+         - test-e2e-agent.json
+       Found 4 agents
+
+  [STEP 2] Get default agent configuration
+       --> HTTP 200 [OK  ] (4ms)
+       RESPONSE: {'id': 'default', 'name': 'Default Assistant', 'collectionName': 'KnowledgeBase', 'description': 'General-purpose knowledge base assistant. Answers questions using RAG retrieval from the configured VectorDB collection.', 'active': True, 'chunkStrategy': 'heading'}
+
+====================================================================================================
+  PHASE 3 - INGESTION-SERVICE (port 7002): Load knowledge into 'KnowledgeBase'
+====================================================================================================
+
+  [STEP 3] Ingest AgenticAI capabilities document -> 'KnowledgeBase' (Weaviate)
+       REQUEST: POST /api/ingest body={"collectionName": "KnowledgeBase", "documents": [{"text": "TIBCO Flogo AgenticAI provides a suite of activities for building intelligent agents. Key activities include: AgentActivity for orchestrating LLM-based reasoning with tool use, VectorDB RAGQuery for retrieval-augmented generation from a vector database, MCP trigger for Model Context Protocol tool registration and JSON-RPC handling, SSE trigger for real-time server-sent event streaming to browser clients, and Pongo2Prompt for dynamic Jinja2-style prompt templating. Agents can chain these activities to build end-to-end AI workflows combining knowledge retrieval, LLM reasoning, and real-time streaming.", "metadata": {"source": "e2e-journey", "topic": "AgenticAI", "timestamp": "16:48:29.789"}}]}
+       --> HTTP 200 [OK  ] (2237ms)
+       RESPONSE: {'chunksCreated': 1, 'dimensions': 768, 'duration': '2.2248572s', 'error': '', 'ids': ['5a6c220b-894c-43ef-88b8-d4897083fd6a'], 'ingestedCount': 1, 'sourceDocumentCount': 1, 'success': True}
+
+====================================================================================================
+  PHASE 4 - RULE-ENGINE-SERVICE (port 7000): Analyze Flogo app quality
+====================================================================================================
+
+  [STEP 4] Run quality rules against the Flogo app definition
+       REQUEST: POST /api/analyze
+       --> HTTP 200 [OK  ] (6ms)
+       RESPONSE: {'error': '', 'errorCount': 0, 'findings': [], 'infoCount': 0, 'markdown': '## Analysis Report — agent-studio-app.flogo\n\n**Errors:** 0  |  **Warnings:** 0  |  **Info:** 0\n\n', 'overview': {'extension': '.flogo', 'file': 'agent-studio-app.flogo', 'name': 'agent-studio-app', 'parser': 'json', 'rules_run': 2, 'version': '1.0.0'}, 'positives': [], 'success': True, 'warningCount': 0}
+
+====================================================================================================
+  PHASE 5 - AGENT-CHAT-SERVICE (port 7001): RAG query against 'KnowledgeBase'
+====================================================================================================
+
+  [STEP 5] Ask RAG question: 'What AgenticAI activities does TIBCO Flogo provide for building AI agents?'
+       REQUEST: POST /api/chat body={"message": "What AgenticAI activities does TIBCO Flogo provide for building AI agents?", "collectionName": "KnowledgeBase"}
+       --> HTTP 200 [OK  ] (1072ms)
+       RESPONSE: {'answer': 'TIBCO Flogo AgenticAI provides the following activities for building AI agents:\n\n*   AgentActivity\n*   VectorDB RAGQuery\n*   MCP trigger\n*   SSE trigger\n*   Pongo2Prompt', 'duration': '225.0716ms', 'error': '', 'formattedContext': '1. TIBCO Flogo is a platform for building AI agents.\n\n2. Agent Studio is a platform for building AI agents with TIBCO Flogo.\n\n3. Agent Studio is a platform for building AI agents with TIBCO Flogo.\n\n4. TIBCO Flogo AgenticAI provides a suite of activities for building intelligent agents. Key activities include: AgentActivity for orchestrating LLM-based reasoning with tool use, VectorDB RAGQuery for retrieval-augmented generation from a vector database, MCP trigger for Model Context Protocol tool registration and JSON-RPC handling, SSE trigger for real-time server-sent event streaming to browser clients, and Pongo2Prompt for dynamic Jinja2-style prompt templating. Agents can chain these activities to build end-to-end AI workflows combining knowledge retrieval, LLM reasoning, and real-time streaming.\n\n5. TIBCO Flogo is a platform for building AI agents and integration flows.', 'queryEmbedding': [-0.048016034, 0.032264356, -0.15173683, 0.04169404, 0.05891782, -0.03220707, 0.041186012, -0.002023612, 0.042480946, -0.057687555, -0.028907211, 0.030863851, 0.04227225, -0.0059793987, -0.0043882295, -0.03273797, -0.017524023, -0.046428923, -0.05633602, 0.028507752, -0.011480134, -0.009428711, 0.040915087, -0.027028522, 0.055182975, 0.0013765028, 0.03700073, -0.016394516, -0.0008964411, -0.016385842, 0.0059689498, 0.0036871892, -0.0018625197, 0.0070308954, -0.032817714, -0.0007561953, 0.053135075, 0.06740389, -0.030868467, -0.09965148, 0.01911883, -0.0062411274, -0.006833303, -0.058503494, 0.0587621, 0.012053667, 0.051603835, -0.015102223, 0.06118384, -0.015701639, 0.03163057, -0.015376621, 0.0054520755, 0.0133410925, 0.07458581, 0.044089932, -0.012356857, -0.010482392, -0.014567992, -0.012028395, 0.07735114, 0.08373646, 0.014604376, 0.082837224, 0.041640993, -0.03989431, 0.0071761115, 0.010640196, 0.0041870777, -0.016199809, 0.034251682, -0.0041032056, 0.03813714, 0.027780104, -0.05708876, 0.008908281, -0.011575165, 0.0043927827, -0.013181756, 0.031890515, 0.041831832, 0.0005469304, 0.068418935, 0.016614733, 0.042425472, 0.027054459, -0.034409866, -0.03774922, -0.04389198, 0.055050205, -0.0045364867, 0.002156537, 0.037270397, 0.046015587, -0.11569971, 0.023065388, -0.027942011, -0.0036269643, -0.0013230365, 0.032900155, -0.0652268, 0.011854077, 0.027591487, -0.015904719, -0.016509932, -0.007701533, -0.018436873, 0.021208195, -0.022030212, 0.07242556, -0.008742227, 0.036442194, -0.030546153, 0.00096615194, 0.0102045685, -0.006829427, 0.030067809, 0.00075119187, 0.029876677, 0.013793143, -0.009985241, -0.034653418, 0.027501516, 0.009894859, -0.0018123089, 0.03515611, -0.05016145, 0.008636323, -0.024736643, -0.077782124, 0.018948926, -0.007392978, -0.00854369, -0.02356635, 0.03978427, 0.023380687, -0.09063776, -0.050406452, -0.0029144264, 0.041582827, 0.003798038, 0.061631404, 0.030763805, -0.0135547295, -0.032420367, 0.008396806, 0.054471593, -0.0071523944, -0.038249653, 0.059723794, -0.051883165, 0.028884368, 0.041026898, 0.046645727, 0.067891866, -0.007329799, -0.011802891, 0.00037996558, 0.027633231, -0.031044366, 0.05714079, 0.0012984524, 0.0011510474, 0.01948317, -0.009485744, -0.086338066, -0.0032892677, 0.052358486, 0.030653747, 0.0648503, -0.0451931, 0.009866965, -0.011755453, 0.025203291, 0.010332867, -0.04546363, 0.010824779, -0.0138780875, 0.009824901, -0.019036537, -0.0020948967, -0.0635848, -0.00054254045, -0.0069426456, -0.04845971, -0.04717354, 0.0134942, -0.07087685, -0.0358523, -0.058966924, 0.009551199, 0.01171422, -0.006386808, 0.022576055, -0.028436331, -0.038820427, -0.012198515, -0.022225406, 0.002634453, -0.009290531, -0.019786594, 0.03703959, -0.04574277, -0.03133407, -0.010701997, 0.04307452, -0.03593944, -0.016309645, 0.008662878, -0.013444065, 0.08845318, -0.062723614, 0.010231787, -0.008653747, 0.015918575, -0.030679183, 0.026721567, -0.010089364, -0.017545145, -0.024470326, 0.014781822, 0.018602604, -0.009004544, -0.03892072, 0.040092133, 0.017096194, -0.005941211, 0.014724485, -0.013993945, 0.018149111, -0.017356066, -0.05017678, 0.027450822, 0.0112858815, 0.002430133, -0.0011695937, 0.0072310525, 0.08030597, 0.007832459, 0.022153705, -0.003688482, -0.008750966, -0.004950398, 0.0059871846, -0.0067227394, -0.0011631119, 0.0023367482, 0.03263559, -0.018194761, 0.04571456, 0.036676824, 0.0113878865, 0.017280733, -0.023305543, 0.03321838, -0.014694864, -0.049473405, -0.017748462, 0.013290105, -0.02290041, 0.030539272, 0.012304035, 0.04413861, -0.012529819, 0.024785964, -0.030327814, -0.039594684, -0.0027716144, 0.008960932, 0.047194183, -0.0026602403, 0.0051719886, -0.001890415, 0.06601328, -0.039960213, 0.012750862, 0.04025111, -0.014358003, 0.0050241807, 0.008252009, -0.02465771, -0.034880526, -0.03834513, 0.03891085, -0.028268907, 0.03056781, 0.038366627, -0.027651196, 0.006006765, -0.006688448, 0.0268877, -0.04314915, -0.041472513, 0.047772378, -0.047162645, -0.02311282, 0.040839177, -0.036154274, 0.026245138, -0.013359821, 0.038360536, 0.011962199, -0.016092787, 0.016430764, -0.018619344, 0.02724558, 0.04410631, -0.025911147, -0.012730106, -0.041222196, -0.032236684, 0.015855866, -0.024621373, 0.0046688886, -0.028706172, 0.022619728, 0.026255695, 0.009060807, 0.0500091, -0.00024101902, -0.022497851, -0.011515195, -0.004543528, -0.026522547, 0.0054843538, 0.047397166, 0.030821517, 0.0083399415, 0.054935724, -0.026601156, 0.0029302547, 0.030993072, 0.022175409, -0.026623856, -0.037555017, 0.004133848, -0.0107149705, -0.024032157, -0.035277788, 0.036438026, 0.043163884, 0.018371714, 0.03799776, -0.027236048, -0.02020827, -0.018768296, -0.07760702, 0.0058829864, 0.047712278, 0.015304776, -0.047570974, -0.0009777813, -0.037778847, 0.014988288, -0.015303528, -0.031600185, 0.02491296, 0.03464035, -0.05045964, -0.0014510375, 0.024414338, -0.002154465, 0.008136926, 0.018034317, -0.028399395, 0.07167538, 0.035404813, 0.008594451, 0.04930342, 0.026312467, 0.02759029, 0.012808378, 0.0061940937, 0.016476126, 0.010691188, 0.05499806, -0.06960318, -0.018586548, -0.042670704, 0.0017911441, 0.02970444, 0.011897779, 0.0041709975, 0.0017232046, -0.0021911701, -0.030882021, 0.0032353443, -0.010246482, 0.04724264, 0.023348369, -0.056950342, 0.0053908415, -0.02366535, 0.006912519, 0.019625926, -0.074147895, 0.02255714, 0.007758251, 0.05745155, 0.049015194, -0.048923478, -0.05265544, -0.0035152505, -0.0033560279, 0.008112795, -0.012512704, 0.012491999, -0.038863663, 0.030778812, -0.047523875, 0.025146328, 0.04707588, -0.0041226083, -0.036509488, 0.0335698, 0.009371932, 0.029003453, -0.009550176, -0.023699153, 0.009726932, 0.036235467, 0.019409936, 0.023975596, 0.02225508, 0.0280131, 0.015731184, 0.05146609, 0.013082288, -0.010528396, -0.068134524, -0.03144468, 0.010874965, 0.007115315, -0.06317091, -0.050687175, -0.015413804, 0.011294934, 0.051175773, 0.05691601, 0.05224842, -0.004902969, -0.014528973, -0.03520728, -0.045032542, 0.0037955395, 0.024718314, 0.0112997275, -0.04934178, -0.07031407, 0.03742221, 0.026012821, 0.06054719, 0.04805061, -0.01264589, 0.06452685, -0.02836325, 0.0030945553, -0.027121607, -0.017143587, 0.03149621, 0.022559, -0.06718087, -0.066661045, -0.019756408, 0.019963704, 0.009828036, 0.026422173, -0.025801571, 0.04435482, 0.09622869, -0.04053816, 0.022951763, 0.030695917, -0.0113544185, 0.016344922, -0.044818733, -0.00071357755, -0.0036046177, 0.019477095, 0.05723151, 0.023628578, -0.020373806, -0.032304317, -0.08494567, 0.010424276, 0.002967367, 0.0042525204, -0.03547502, 0.037657477, -0.033356205, -0.035193834, 0.023575488, -0.03450452, -0.02839327, -0.037106514, -0.028727107, -0.021851946, 0.056656998, 0.0070144543, 0.056961525, 0.07953294, -0.009602637, -0.043805365, 0.0119507, 0.02881701, -0.005555303, 0.064702585, -0.028111864, -0.02534907, -0.027850647, -0.0036915531, 0.015874181, -0.0081672985, -0.026816478, 0.03233327, -0.04143631, 0.020225648, 0.019431777, -0.10362658, -0.00757231, -0.010929904, -0.028452097, -0.027450578, -0.040207908, -0.025912315, 0.018380746, 0.036139872, 0.0027788612, 0.05089299, 0.054003906, 0.025198782, 0.05006178, -0.022350525, -0.026854374, 0.035980135, -0.0022702732, -0.031383805, -0.022426493, -0.0019751734, 0.028404776, 0.0024871083, 0.019743035, -0.0013852381, 0.011113499, 0.015780317, -0.018720293, -0.04881811, 0.045206144, 0.0037351127, 0.0097201355, 0.041936, -0.05951887, -0.011130448, -0.027839322, 0.0045058765, -0.0482868, -0.031978525, -0.0010363363, -0.024372252, -0.07731197, 0.0068340153, 0.040964257, 0.02435584, -0.019451186, 0.045095444, -0.009577655, 0.022014784, 0.055823468, 0.025185224, 0.03591653, 0.00067328307, -0.024209512, -0.00043450322, -0.01575931, -0.006403389, -0.007986363, 0.04623618, -0.038437005, -0.075904794, 0.03709977, 0.019815752, -0.07392401, -0.006169474, 0.029790396, 0.008566377, -0.014430049, -0.041849695, -0.075750925, -0.017528698, -0.064317286, -0.007663472, 0.034864224, 0.022393046, -0.041083038, -0.0058264113, -0.022954188, -0.040789247, 0.02448912, 0.021691063, -0.041077632, 0.018758433, 0.0016673725, -0.030865557, -0.03313115, -0.021064537, 0.058600083, 0.010011587, 0.01400801, -0.0128845265, -0.015082101, 0.023896363, 0.015391134, 0.027811494, 0.019454623, 0.033314206, -0.031570088, 0.06867277, -0.0023005486, 0.037569616, -0.055624206, -0.04381438, -0.072566144, 0.03601243, -0.033090394, 0.04122417, 0.022224266, -0.048660804, -0.050424848, -0.07098686, 0.07034426, -0.022758124, 0.049107205, -0.077875935, -0.03661459, -0.09836618, -0.014951582, 0.004281736, 0.03556856, -0.0421293, -0.00038711255, -0.016047567, -0.012195412, -0.04051781, 0.0747283, 0.079959966, -0.036546204, -0.020644687, 0.037285265, 0.048513096, -0.0130045805, 0.042630985, 0.035925355, 0.0154308155, -0.051237673, -0.0022812579, -0.05694099, 0.005275771, -0.04877033, -0.10778509, -0.054290447, -0.006863488, 0.0012357658, 0.0060898326, 0.025333848, 0.011739614, 0.0047456543, 0.016192496, 0.042030048, -0.032363538, -0.015123195, 0.032316476, 0.01620762, -0.018746888, -0.041767064, -0.024722641, 0.037984516, 0.05840865, 0.04497299, 0.030809313, -0.06061182, 0.054768234, -0.030145347, 0.04021414, -0.016988048, 0.0071791452, -0.0311319, 0.06281338, -0.0335226, -0.016866224, -0.058432627, -0.012553595, -0.02471219, 0.00770849, -0.033248182, 0.035071094, 0.024681794, 0.017250797, 0.011812772, -0.08945847, 0.016088855, -0.05269567, 0.008799626, 0.016107555, 0.03197224, 0.023768274, 0.008764035, 0.042375606, -0.015479293, -0.02799701, -0.03350038, -0.025474356, 0.056832768, 0.0020346844, 0.04502096, 0.011243794, 0.07072045, -0.020487895, -0.007928298, 0.069041885, -0.00063532125, 0.022355102, -0.030619247, -0.078916855, -0.049385738, -0.032064095, -0.012137334, 0.041711334, -0.034542337, -0.0025947173, 0.03379084, 0.0023649458, 0.0073927054, -0.07437028, 0.019863708, 0.029819291, -0.053288314, 0.0005565935, -0.04926267, -0.014118032, -0.024065543, -0.0067756358, 0.05640104, 0.032859378, 0.11049464, -0.020175554, 0.010810863, -0.060359742, 0.029488932, 0.030386029, 0.039957643, 0.018756533, 0.07060513, 0.017407687, -0.024494544, -0.05664051, 0.017750727, -0.056944985, 0.04236913, 0.08769215, 0.0076394514, 0.037058823, -0.010905815, 0.0133747645, -0.043425765, -0.012721121, -0.06202365, -0.030212788, -0.025809363], 'sourceDocuments': [{'content': 'TIBCO Flogo is a platform for building AI agents.', 'id': 'd6c99cf6-fbe9-4ad1-9e23-3dda7f481122', 'payload': {'source': 'e2e-test-2', 'text': 'TIBCO Flogo is a platform for building AI agents.'}, 'score': 0}, {'content': 'Agent Studio is a platform for building AI agents with TIBCO Flogo.', 'id': '7779707c-255d-4829-ba9a-d990f7154976', 'payload': {'source': 'test', 'text': 'Agent Studio is a platform for building AI agents with TIBCO Flogo.', 'topic': 'agent-studio'}, 'score': 0}, {'content': 'Agent Studio is a platform for building AI agents with TIBCO Flogo.', 'id': 'ad01bc6c-1c41-44cf-9a6d-0433be953fb7', 'payload': {'source': 'test', 'text': 'Agent Studio is a platform for building AI agents with TIBCO Flogo.', 'topic': 'agent-studio'}, 'score': 0}, {'content': 'TIBCO Flogo AgenticAI provides a suite of activities for building intelligent agents. Key activities include: AgentActivity for orchestrating LLM-based reasoning with tool use, VectorDB RAGQuery for retrieval-augmented generation from a vector database, MCP trigger for Model Context Protocol tool registration and JSON-RPC handling, SSE trigger for real-time server-sent event streaming to browser clients, and Pongo2Prompt for dynamic Jinja2-style prompt templating. Agents can chain these activities to build end-to-end AI workflows combining knowledge retrieval, LLM reasoning, and real-time streaming.', 'id': '5a6c220b-894c-43ef-88b8-d4897083fd6a', 'payload': {'source': 'e2e-journey', 'text': 'TIBCO Flogo AgenticAI provides a suite of activities for building intelligent agents. Key activities include: AgentActivity for orchestrating LLM-based reasoning with tool use, VectorDB RAGQuery for retrieval-augmented generation from a vector database, MCP trigger for Model Context Protocol tool registration and JSON-RPC handling, SSE trigger for real-time server-sent event streaming to browser clients, and Pongo2Prompt for dynamic Jinja2-style prompt templating. Agents can chain these activities to build end-to-end AI workflows combining knowledge retrieval, LLM reasoning, and real-time streaming.', 'timestamp': '16:48:29.789', 'topic': 'AgenticAI'}, 'score': 0}, {'content': 'TIBCO Flogo is a platform for building AI agents and integration flows.', 'id': 'b3f8c209-90ef-42cf-92f8-d1f10948fa99', 'payload': {'source': 'log-test', 'text': 'TIBCO Flogo is a platform for building AI agents and integration flows.'}, 'score': 0}], 'success': True, 'totalFound': 5}
+
+====================================================================================================
+  PHASE 6 - FEEDBACK-SERVICE (port 7003): Submit and retrieve feedback
+====================================================================================================
+
+  [STEP 6] Submit user feedback (rating=5) for agent 'default'
+       REQUEST: POST /api/feedback body={"agentId": "default", "rating": 5, "comment": "RAG answer correctly listed AgenticAI activities. Answer: TIBCO Flogo AgenticAI provides the following activities for building AI agents:\n", "sessionId": "e2e-journey-001"}
+       --> HTTP 200 [OK  ] (23ms)
+       RESPONSE: {'fullPath': 'C:\\Users\\mpandav\\Downloads\\Work\\TIBCO\\git\\flogo-agent-studio\\feedback\\default.jsonl', 'isDir': False, 'modTime': '2026-05-12 16:48:33.1290489 +0200 CEST', 'mode': '-rw-rw-rw-', 'name': 'default.jsonl', 'size': 812}
+
+  [STEP 7] Retrieve stored feedback records for agent 'default'
+       REQUEST: GET /api/feedback/default
+       --> HTTP 200 [OK  ] (12ms)
+
+====================================================================================================
+  PHASE 7 - AGENT-BUILDER-SERVICE (port 7010): LLM-generated agent config
+====================================================================================================
+
+  [STEP 8] Generate an improved agent config via LLM (nemotron-3-nano:30b)
+       REQUEST: POST /api/agent-builder/generate
+       --> HTTP 200 [OK  ] (3022ms)
+       RESPONSE: {'active': True, 'collectionName': 'KnowledgeBase', 'description': 'A sample agent for demonstration purposes.', 'id': 'my-agent', 'llmProvider': 'openai', 'maxTokens': 1500, 'model': 'gpt-3.5-turbo', 'name': 'My Agent', 'systemPrompt': 'You are a helpful assistant.', 'tags': ['sample', 'demo'], 'temperature': 0.7, 'tools': ['ragQuery', 'ruleAnalysis', 'webSearch'], 'topK': 5, 'version': '1.0.0'}
+
+====================================================================================================
+  PHASE 8 - SSE-STREAM-SERVICE (port 7005): Broadcast + RAG+LLM stream
+====================================================================================================
+
+  [STEP 9] Broadcast 'session.start' event to all SSE subscribers
+       REQUEST: POST /api/stream/broadcast
+       --> HTTP 200 [OK  ] (5ms)
+       RESPONSE: {'broadcasted': True}
+
+  [STEP 10] Stream chat: full RAG+LLM pipeline with async SSE event emission
+       REQUEST: POST /api/stream/chat body={"message": "What AgenticAI activities does TIBCO Flogo provide for building AI agents?", "collectionName": "KnowledgeBase", "sessionId": "e2e-journey-001"}
+       --> HTTP 202 [OK  ] (2174ms)
+       RESPONSE: {'eventsUrl': '/events', 'streaming': True}
+
+====================================================================================================
+  PHASE 9 - MCP SERVER (port 3333): All 6 tools via Model Context Protocol
+====================================================================================================
+  Protocol: JSON-RPC 2.0 over Streamable HTTP
+
+  [STEP 11] Initialize MCP session (JSON-RPC handshake)
+       REQUEST: POST /mcp method=initialize
+       --> HTTP 200 [OK  ] (2ms)
+       RESPONSE: session=42E3PCNP6LMNMWXF6H5AWEU3TT server={'name': 'flogo-dev-assist', 'version': '1.0.0'}
+
+  [STEP 12] tools/list -> discover all registered MCP tools
+       REQUEST: POST /mcp method=tools/list
+       --> HTTP 200 [OK  ] (24ms)
+         - analyze_flogo: Analyze a TIBCO Flogo application file against configured YA
+         - get_agent: Retrieve the full configuration of a specific AI agent by it
+         - get_feedback: Read the full feedback log. Returns raw JSON-lines text; eac
+         - list_agents: Return all registered AI agent configurations from the Flogo
+         - rag_chat: Ask a question and get an answer backed by your knowledge ba
+         - submit_feedback: Record a thumbs-up or thumbs-down rating for an AI agent res
+
+  Calling all 6 MCP tools:
+
+  [STEP 7] tools/call: 'list_agents'
+       tools/call list_agents -> config-service:7004 -> GET /api/agents
+       --> HTTP 200 [OK  ] (21ms)
+           - default.json
+           - flogo-analyzer.json
+           - support-agent-v1.json
+           - test-e2e-agent.json
+
+  [STEP 8] tools/call: 'get_agent'
+       tools/call get_agent -> config-service:7004 -> GET /api/agents/{id}
+       --> HTTP 200 [OK  ] (33ms)
+         {'active': True, 'chunkStrategy': 'heading', 'collectionName': 'KnowledgeBase', 'created': '2026-05-11', 'description': 'General-purpose knowledge base assistant. Answers questions using RAG retrieval from the configured VectorDB collection.', 'id': 'default', 'llmProvider': 'openai', 'maxTokens': 2048, 'model': 'gpt-4o-mini', 'name': 'Default Assistant', 'systemPrompt': "You are a helpful assistant. Answer questions accurately using the provided context. If the context doesn't contain enough information, say so clearly.", 'tags': ['general', 'rag'], 'temperature': 0.7, 'tools': ['ragQuery'], 'topK': 5, 'version': '1.0.0'}
+
+  [STEP 9] tools/call: 'submit_feedback'
+       tools/call submit_feedback -> feedback-service:7003 -> POST /api/feedback
+       --> HTTP 200 [OK  ] (16ms)
+         file: C:\Users\mpandav\Downloads\Work\TIBCO\git\flogo-agent-studio\feedback\default.jsonl
+
+  [STEP 10] tools/call: 'get_feedback'
+       tools/call get_feedback -> feedback-service:7003 -> GET /api/feedback/{id}
+       --> HTTP 200 [OK  ] (12ms)
+         {'agentId': 'test-agent', 'comment': 'Works great', 'rating': 5}
+
+  [STEP 11] tools/call: 'rag_chat'
+       tools/call rag_chat -> agent-chat-service:7001 -> POST /api/chat (RAG pipeline)
+       --> HTTP 200 [OK  ] (1065ms)
+         answer: TIBCO Flogo AgenticAI provides the following activities for building AI agents:
+
+*   AgentActivity
+*   VectorDB RAGQuery
+*   MCP trigger
+*   SSE trigger
+*   Pongo2Prompt
+
+  [STEP 12] tools/call: 'analyze_flogo'
+       tools/call analyze_flogo -> rule-engine-service:7000 -> POST /api/analyze
+       --> HTTP 200 [OK  ] (30ms)
+         {'error': '', 'errorCount': 0, 'findings': [], 'infoCount': 0, 'markdown': '## Analysis Report — agent-studio-app.flogo\n\n**Errors:** 0  |  **Warnings:** 0  |  **Info:** 0\n\n', 'overview': {'extension': '.flogo', 'file': 'agent-studio-app.flogo', 'name': 'agent-studio-app', 'parser': 'json', 'rules_run': 2, 'version': '1.0.0'}, 'positives': [], 'success': True, 'warningCount': 0}
+
+====================================================================================================
+  JOURNEY COMPLETE - FINAL OUTCOME
+====================================================================================================
+
+RESULT: ALL STEPS PASSED
+TOTAL TIME: 9.9s

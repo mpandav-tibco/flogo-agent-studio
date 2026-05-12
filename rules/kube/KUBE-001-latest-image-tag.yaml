@@ -1,0 +1,30 @@
+rule:
+  id: KUBE-001
+  enabled: true
+  severity: ERROR
+  category: deployment
+  title: Image Uses latest or No Tag
+  description: >
+    Container "{{.Scope.name}}" uses image "{{.Match}}" which has no explicit
+    version tag (or uses :latest). This makes deployments non-reproducible.
+  tags: [kubernetes, image, deployment]
+
+  applies_to: [.yaml, .yml]
+  parser: yaml
+
+  scope: spec.template.spec.containers
+
+  match:
+    type: any_of
+    conditions:
+      - type: regex
+        path: image
+        pattern: ":latest$"
+      - type: not_contains
+        path: image
+        substring: ":"
+
+  location: "container:{{.Scope.name}}"
+  recommendation: >
+    Pin the image to a specific digest or semantic version tag.
+    Replace "{{.Match}}" with "image:1.2.3" or "image@sha256:...".

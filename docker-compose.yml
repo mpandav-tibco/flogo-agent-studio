@@ -1,0 +1,293 @@
+version: "3.9"
+
+# ── Flogo Agent Studio — full stack ───────────────────────────────────────────
+#
+# Bring up everything:   docker compose up -d
+# Tear down:             docker compose down
+# Logs (all):            docker compose logs -f
+# Logs (one service):    docker compose logs -f agent-chat
+#
+# Prerequisites:
+#   - Flogo apps compiled to binaries and placed in ./bin/<service-name>
+#     OR replace the image/command blocks with your Flogo Docker images.
+#   - OPENAI_API_KEY (or whichever LLM provider) exported in your shell
+#     or set in a .env file next to this file.
+#
+# Ports summary (see ports.yaml for canonical registry):
+#   7000  rule-engine-service
+#   7001  agent-chat-service
+#   7002  ingestion-service
+#   7003  feedback-service
+#   7004  config-service
+#   7010  agent-builder-service
+#   3333  mcp-server
+#   7080  chainlit-ui
+#   8080  weaviate (http)
+#   50051 weaviate (grpc)
+#   11434 ollama
+
+networks:
+  agent-studio:
+    driver: bridge
+
+volumes:
+  weaviate_data:
+  agents_data:
+  feedback_data:
+  rules_data:
+
+# ── Shared Flogo environment ───────────────────────────────────────────────────
+x-flogo-env: &flogo-env
+  FLOGO_LOG_LEVEL: INFO
+
+# ── Services ──────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Infrastructure ────────────────────────────────────────────────────────
+
+  weaviate:
+    image: semitechnologies/weaviate:1.24.6
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: none
+      ENABLE_MODULES: ""
+      CLUSTER_HOSTNAME: node1
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    networks:
+      - agent-studio
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/v1/.well-known/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ~/.ollama:/root/.ollama
+    networks:
+      - agent-studio
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ── Phase 1 Flogo Services ─────────────────────────────────────────────────
+
+  rule-engine:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:rule-engine-${VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "7000:7000"
+    environment:
+      <<: *flogo-env
+      FLOGO_APP_PROPS_ENV: auto
+      RULES_PATH: /app/rules
+    volumes:
+      - rules_data:/app/rules
+      - ./rules:/app/rules:ro
+    networks:
+      - agent-studio
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  agent-chat:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:agent-chat-${VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "7001:7001"
+    environment:
+      <<: *flogo-env
+      FLOGO_APP_PROPS_ENV: auto
+      WEAVIATE_HOST: weaviate
+      WEAVIATE_PORT: "8080"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    networks:
+      - agent-studio
+    depends_on:
+      weaviate:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7001/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  ingestion:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:ingestion-${VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "7002:7002"
+    environment:
+      <<: *flogo-env
+      FLOGO_APP_PROPS_ENV: auto
+      WEAVIATE_HOST: weaviate
+      WEAVIATE_PORT: "8080"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    networks:
+      - agent-studio
+    depends_on:
+      weaviate:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7002/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  feedback:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:feedback-${VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "7003:7003"
+    environment:
+      <<: *flogo-env
+      FLOGO_APP_PROPS_ENV: auto
+      FEEDBACK_LOG_PATH: /app/feedback/feedback.jsonl
+      FEEDBACK_DIR: /app/feedback
+    volumes:
+      - feedback_data:/app/feedback
+    networks:
+      - agent-studio
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7003/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  config:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:config-${VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "7004:7004"
+    environment:
+      <<: *flogo-env
+      FLOGO_APP_PROPS_ENV: auto
+      AGENTS_DIR: /app/agents
+    volumes:
+      - agents_data:/app/agents
+      - ./agents:/app/agents:ro
+    networks:
+      - agent-studio
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7004/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Phase 2 Services ───────────────────────────────────────────────────────
+
+  sse-stream:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:sse-stream-${VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "7005:7005"
+    environment:
+      <<: *flogo-env
+      FLOGO_APP_PROPS_ENV: auto
+      CHAT_SERVICE_URL: http://agent-chat:7001/api/chat
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    networks:
+      - agent-studio
+    depends_on:
+      agent-chat:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7005/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  agent-builder:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:agent-builder-${VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "7010:7010"
+    environment:
+      <<: *flogo-env
+      FLOGO_APP_PROPS_ENV: auto
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      CONFIG_SERVICE_BASE_URL: http://config:7004
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    networks:
+      - agent-studio
+    depends_on:
+      config:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7010/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  mcp-server:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:mcp-server-${VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "3333:3333"
+    environment:
+      <<: *flogo-env
+      FLOGO_APP_PROPS_ENV: auto
+      RULE_ENGINE_URL: http://rule-engine:7000/api/analyze
+      CHAT_SERVICE_URL: http://agent-chat:7001/api/chat
+      CONFIG_SERVICE_BASE_URL: http://config:7004
+      FEEDBACK_SERVICE_URL: http://feedback:7003/api/feedback
+      FEEDBACK_SERVICE_BASE_URL: http://feedback:7003
+    networks:
+      - agent-studio
+    depends_on:
+      rule-engine:
+        condition: service_healthy
+      agent-chat:
+        condition: service_healthy
+      config:
+        condition: service_healthy
+      feedback:
+        condition: service_healthy
+
+  # ── Chainlit UI ────────────────────────────────────────────────────────────
+
+  chainlit-ui:
+    build:
+      context: ./chainlit
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "7080:7080"
+    environment:
+      CONFIG_SERVICE_URL: http://config:7004
+      CHAT_SERVICE_URL: http://agent-chat:7001
+      FEEDBACK_SERVICE_URL: http://feedback:7003
+      REQUEST_TIMEOUT: "60"
+      CHAINLIT_HOST: 0.0.0.0
+      CHAINLIT_PORT: "7080"
+    networks:
+      - agent-studio
+    depends_on:
+      config:
+        condition: service_healthy
+      agent-chat:
+        condition: service_healthy
+      feedback:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7080/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5

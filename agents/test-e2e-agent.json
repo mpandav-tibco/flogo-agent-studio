@@ -1,0 +1,1 @@
+{"active":true,"collectionName":"TestBase","description":"For E2E testing","id":"test-e2e-agent","llmProvider":"ollama","maxTokens":500,"model":"llama3","name":"E2E Test Agent","systemPrompt":"Help users","tags":["test"],"temperature":0.3,"tools":["ragQuery"],"topK":5,"version":"1.0.0"}

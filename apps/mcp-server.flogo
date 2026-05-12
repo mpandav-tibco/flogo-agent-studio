@@ -1,0 +1,871 @@
+{
+  "imports": [
+    "trig_mcpserver github.com/tibco/flogo-mcp/src/app/MCP/trigger/mcpserver",
+    "github.com/project-flogo/flow",
+    "act_default_noop github.com/project-flogo/contrib/activity/noop",
+    "act_general_log github.com/tibco/flogo-general/src/app/General/activity/log",
+    "act_default_actreturn github.com/project-flogo/contrib/activity/actreturn",
+    "act_general_rest github.com/tibco/flogo-general/src/app/General/activity/rest",
+    "act_mcptoolresult github.com/mpandav-tibco/flogo-extensions/mcptoolresult"
+  ],
+  "name": "mcp-server",
+  "description": "Flogo Agent Studio MCP Server. Exposes all Phase 1 services as MCP tools for Claude, Cursor, and any MCP client. Registered in .mcp.json as 'flogo-dev-assist'. Part of Flogo Agent Studio Phase 2.",
+  "version": "1.0.0",
+  "type": "flogo:app",
+  "appModel": "1.1.1",
+  "tags": [
+    "mcp",
+    "ai-agent",
+    "flogo-agent-studio",
+    "phase-2"
+  ],
+  "triggers": [
+    {
+      "ref": "#trig_mcpserver",
+      "name": "flogo-dev-assist",
+      "description": "MCP Server \u2014 exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:3333/mcp.",
+      "settings": {
+        "serverName": "flogo-dev-assist",
+        "serverVersion": "1.0.0",
+        "serverType": "HTTP",
+        "serverPort": "3333",
+        "authType": "None"
+      },
+      "id": "FlogoDevAssistMCP",
+      "handlers": [
+        {
+          "name": "analyze_flogo",
+          "description": "Analyze a Flogo app (.flogo JSON) against YAML rules. Returns structured findings with severity levels. Delegates to rule-engine-service on port 7000.",
+          "settings": {
+            "handlerType": "Tool",
+            "resourceUri": "",
+            "handlerName": "analyze_flogo",
+            "handlerDescription": "Analyze a TIBCO Flogo application file against configured YAML rules. Returns structured findings (errors, warnings, info) with rule IDs, severity, and descriptions. Useful for Flogo code review, best-practice validation, and CI quality gates."
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:analyze_flogo"
+            },
+            "input": {
+              "body": "=$.arguments"
+            },
+            "output": {
+              "response": "=$.response"
+            }
+          },
+          "schemas": {
+            "output": {
+              "arguments": {
+                "type": "json",
+                "value": "{\"type\": \"object\", \"properties\": {\"content\": {\"type\": \"string\", \"description\": \"The raw .flogo file content (JSON string)\"}, \"fileName\": {\"type\": \"string\", \"description\": \"Logical file name for context (e.g. my-app.flogo)\"}, \"rulesPath\": {\"type\": \"string\", \"description\": \"Optional: path to YAML rules directory override\"}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"description\": \"Optional: filter rules by tag\"}}, \"required\": [\"content\"]}"
+              }
+            }
+          }
+        },
+        {
+          "name": "rag_chat",
+          "description": "Ask a question using hybrid RAG retrieval + LLM answer generation. Delegates to agent-chat-service on port 7001.",
+          "settings": {
+            "handlerType": "Tool",
+            "resourceUri": "",
+            "handlerName": "rag_chat",
+            "handlerDescription": "Ask a question and get an answer backed by your knowledge base using hybrid RAG (BM25 + vector search) + LLM. Returns the answer, source documents used, and performance metrics. Choose an agentId to use a specific configured agent."
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:rag_chat"
+            },
+            "input": {
+              "body": "=$.arguments"
+            },
+            "output": {
+              "response": "=$.response"
+            }
+          },
+          "schemas": {
+            "output": {
+              "arguments": {
+                "type": "json",
+                "value": "{\"type\": \"object\", \"properties\": {\"sessionId\": {\"type\": \"string\", \"description\": \"Conversation session ID for multi-turn context\"}, \"topK\": {\"type\": \"integer\", \"description\": \"Max source documents to retrieve (default: 5)\"}, \"message\": {\"type\": \"string\", \"description\": \"The user query/message\"}, \"collectionName\": {\"type\": \"string\", \"description\": \"The vector collection name (from get_agent.collectionName)\"}}, \"required\": [\"message\"]}"
+              }
+            }
+          }
+        },
+        {
+          "name": "list_agents",
+          "description": "List all registered agent configurations from the multi-agent registry. Delegates to config-service on port 7004.",
+          "settings": {
+            "handlerType": "Tool",
+            "resourceUri": "",
+            "handlerName": "list_agents",
+            "handlerDescription": "Return all registered AI agent configurations from the Flogo Agent Studio registry. Each entry includes the agent ID, name, description, model, and capabilities. Use this before rag_chat to discover available agents."
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:list_agents"
+            },
+            "input": {},
+            "output": {
+              "response": "=$.response"
+            }
+          },
+          "schemas": {
+            "output": {
+              "arguments": {
+                "type": "json",
+                "value": "{\"type\": \"object\", \"properties\": {}}"
+              }
+            }
+          }
+        },
+        {
+          "name": "get_agent",
+          "description": "Get a specific agent configuration by ID. Delegates to config-service on port 7004.",
+          "settings": {
+            "handlerType": "Tool",
+            "resourceUri": "",
+            "handlerName": "get_agent",
+            "handlerDescription": "Retrieve the full configuration of a specific AI agent by its ID. Returns systemPrompt, model, collectionName, tools, temperature, and other settings."
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:get_agent"
+            },
+            "input": {
+              "agentId": "=$.arguments.agentId"
+            },
+            "output": {
+              "response": "=$.response"
+            }
+          },
+          "schemas": {
+            "output": {
+              "arguments": {
+                "type": "json",
+                "value": "{\"type\": \"object\", \"properties\": {\"agentId\": {\"type\": \"string\", \"description\": \"The agent identifier\"}}, \"required\": [\"agentId\"]}"
+              }
+            }
+          }
+        },
+        {
+          "name": "submit_feedback",
+          "description": "Record a thumbs-up or thumbs-down rating on an agent response. Delegates to feedback-service on port 7003.",
+          "settings": {
+            "handlerType": "Tool",
+            "resourceUri": "",
+            "handlerName": "submit_feedback",
+            "handlerDescription": "Record a thumbs-up or thumbs-down rating for an AI agent response, with an optional comment. Persisted to the feedback log for evaluation and fine-tuning."
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:submit_feedback"
+            },
+            "input": {
+              "body": "=$.arguments"
+            },
+            "output": {
+              "response": "=$.response"
+            }
+          },
+          "schemas": {
+            "output": {
+              "arguments": {
+                "type": "json",
+                "value": "{\"type\": \"object\", \"properties\": {\"agentId\": {\"type\": \"string\"}, \"sessionId\": {\"type\": \"string\"}, \"messageId\": {\"type\": \"string\"}, \"rating\": {\"type\": \"string\", \"enum\": [\"thumbsUp\", \"thumbsDown\"]}, \"comment\": {\"type\": \"string\"}}, \"required\": [\"agentId\", \"sessionId\", \"messageId\", \"rating\"]}"
+              }
+            }
+          }
+        },
+        {
+          "name": "get_feedback",
+          "description": "Read the feedback log. Delegates to feedback-service on port 7003.",
+          "settings": {
+            "handlerType": "Tool",
+            "resourceUri": "",
+            "handlerName": "get_feedback",
+            "handlerDescription": "Read the full feedback log. Returns raw JSON-lines text; each line is one feedback entry. Use to evaluate agent response quality and identify areas for improvement."
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:get_feedback"
+            },
+            "input": {},
+            "output": {
+              "response": "=$.response"
+            }
+          },
+          "schemas": {
+            "output": {
+              "arguments": {
+                "type": "json",
+                "value": "{\"type\": \"object\", \"properties\": {}}"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "id": "flow:analyze_flogo",
+      "data": {
+        "name": "analyze_flogo",
+        "description": "MCP tool: forwards Flogo app analysis request to rule-engine-service (port 7000) and returns structured findings.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "CallRuleEngine"
+          },
+          {
+            "id": 3,
+            "from": "CallRuleEngine",
+            "to": "MapResult"
+          },
+          {
+            "id": 4,
+            "from": "MapResult",
+            "to": "Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "[MCP] analyze_flogo tool invoked",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "CallRuleEngine",
+            "name": "CallRuleEngine",
+            "description": "POST to rule-engine-service /api/analyze",
+            "activity": {
+              "ref": "#act_general_rest",
+              "input": {
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "Method": "POST",
+                "Uri": "=$property[\"RULE_ENGINE_URL\"]",
+                "body": "=$flow.body"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].result"
+                }
+              }
+            }
+          },
+          {
+            "id": "MapResult",
+            "name": "MapResult",
+            "description": "Build MCP ToolResult structure",
+            "activity": {
+              "ref": "#act_mcptoolresult",
+              "input": {
+                "data": "=coerce.toString($activity[CallRuleEngine].responseBody)"
+              }
+            }
+          }
+        ],
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "result",
+              "type": "any"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "flow:rag_chat",
+      "data": {
+        "name": "rag_chat",
+        "description": "MCP tool: forwards RAG chat request to agent-chat-service (port 7001) and returns answer + sources.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "CallChatService"
+          },
+          {
+            "id": 3,
+            "from": "CallChatService",
+            "to": "MapResult"
+          },
+          {
+            "id": 4,
+            "from": "MapResult",
+            "to": "Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "[MCP] rag_chat tool invoked",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "CallChatService",
+            "name": "CallChatService",
+            "description": "POST to agent-chat-service /api/chat",
+            "activity": {
+              "ref": "#act_general_rest",
+              "input": {
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "Method": "POST",
+                "Uri": "=$property[\"CHAT_SERVICE_URL\"]",
+                "body": "=$flow.body"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].result"
+                }
+              }
+            }
+          },
+          {
+            "id": "MapResult",
+            "name": "MapResult",
+            "description": "Build MCP ToolResult structure",
+            "activity": {
+              "ref": "#act_mcptoolresult",
+              "input": {
+                "data": "=coerce.toString($activity[CallChatService].responseBody)"
+              }
+            }
+          }
+        ],
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "result",
+              "type": "any"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "flow:list_agents",
+      "data": {
+        "name": "list_agents",
+        "description": "MCP tool: GET all agents from config-service (port 7004).",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "CallConfigService"
+          },
+          {
+            "id": 3,
+            "from": "CallConfigService",
+            "to": "MapResult"
+          },
+          {
+            "id": 4,
+            "from": "MapResult",
+            "to": "Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "[MCP] list_agents",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "CallConfigService",
+            "name": "CallConfigService",
+            "description": "GET config-service /api/agents",
+            "activity": {
+              "ref": "#act_general_rest",
+              "input": {
+                "headers": {
+                  "Accept": "application/json"
+                },
+                "Method": "GET",
+                "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/agents\")"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].result"
+                }
+              }
+            }
+          },
+          {
+            "id": "MapResult",
+            "name": "MapResult",
+            "description": "Build MCP ToolResult structure",
+            "activity": {
+              "ref": "#act_mcptoolresult",
+              "input": {
+                "data": "=coerce.toString($activity[CallConfigService].responseBody)"
+              }
+            }
+          }
+        ],
+        "metadata": {
+          "input": [],
+          "output": [
+            {
+              "name": "result",
+              "type": "any"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "flow:get_agent",
+      "data": {
+        "name": "get_agent",
+        "description": "MCP tool: GET a specific agent config from config-service (port 7004).",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "CallConfigService"
+          },
+          {
+            "id": 3,
+            "from": "CallConfigService",
+            "to": "MapResult"
+          },
+          {
+            "id": 4,
+            "from": "MapResult",
+            "to": "Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[MCP] get_agent: \", coerce.toString($flow.agentId))",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "CallConfigService",
+            "name": "CallConfigService",
+            "description": "GET config-service /api/agents/{agentId}",
+            "activity": {
+              "ref": "#act_general_rest",
+              "input": {
+                "headers": {
+                  "Accept": "application/json"
+                },
+                "Method": "GET",
+                "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/agents/\", $flow.agentId)"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].result"
+                }
+              }
+            }
+          },
+          {
+            "id": "MapResult",
+            "name": "MapResult",
+            "description": "Build MCP ToolResult structure",
+            "activity": {
+              "ref": "#act_mcptoolresult",
+              "input": {
+                "data": "=coerce.toString($activity[CallConfigService].responseBody)"
+              }
+            }
+          }
+        ],
+        "metadata": {
+          "input": [
+            {
+              "name": "agentId",
+              "type": "string"
+            }
+          ],
+          "output": [
+            {
+              "name": "result",
+              "type": "any"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "flow:submit_feedback",
+      "data": {
+        "name": "submit_feedback",
+        "description": "MCP tool: POST feedback entry to feedback-service (port 7003).",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "CallFeedbackService"
+          },
+          {
+            "id": 3,
+            "from": "CallFeedbackService",
+            "to": "MapResult"
+          },
+          {
+            "id": 4,
+            "from": "MapResult",
+            "to": "Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "[MCP] submit_feedback tool invoked",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "CallFeedbackService",
+            "name": "CallFeedbackService",
+            "description": "POST to feedback-service /api/feedback",
+            "activity": {
+              "ref": "#act_general_rest",
+              "input": {
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "Method": "POST",
+                "Uri": "=$property[\"FEEDBACK_SERVICE_URL\"]",
+                "body": "=$flow.body"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].result"
+                }
+              }
+            }
+          },
+          {
+            "id": "MapResult",
+            "name": "MapResult",
+            "description": "Build MCP ToolResult structure",
+            "activity": {
+              "ref": "#act_mcptoolresult",
+              "input": {
+                "data": "=coerce.toString($activity[CallFeedbackService].responseBody)"
+              }
+            }
+          }
+        ],
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "result",
+              "type": "any"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "flow:get_feedback",
+      "data": {
+        "name": "get_feedback",
+        "description": "MCP tool: GET feedback log from feedback-service (port 7003).",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "CallFeedbackService"
+          },
+          {
+            "id": 3,
+            "from": "CallFeedbackService",
+            "to": "MapResult"
+          },
+          {
+            "id": 4,
+            "from": "MapResult",
+            "to": "Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "[MCP] get_feedback",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "CallFeedbackService",
+            "name": "CallFeedbackService",
+            "description": "GET feedback-service /api/feedback",
+            "activity": {
+              "ref": "#act_general_rest",
+              "input": {
+                "headers": {
+                  "Accept": "application/json"
+                },
+                "Method": "GET",
+                "Uri": "=string.concat($property[\"FEEDBACK_SERVICE_BASE_URL\"], \"/api/feedback\")"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].result"
+                }
+              }
+            }
+          },
+          {
+            "id": "MapResult",
+            "name": "MapResult",
+            "description": "Build MCP ToolResult structure",
+            "activity": {
+              "ref": "#act_mcptoolresult",
+              "input": {
+                "data": "=coerce.toString($activity[CallFeedbackService].responseBody)"
+              }
+            }
+          }
+        ],
+        "metadata": {
+          "input": [],
+          "output": [
+            {
+              "name": "result",
+              "type": "any"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "properties": [
+    {
+      "name": "RULE_ENGINE_URL",
+      "type": "string",
+      "description": "Rule engine service analyze endpoint. Override at deployment.",
+      "value": "http://localhost:7000/api/analyze"
+    },
+    {
+      "name": "CHAT_SERVICE_URL",
+      "type": "string",
+      "description": "Agent chat service chat endpoint. Override at deployment.",
+      "value": "http://localhost:7001/api/chat"
+    },
+    {
+      "name": "CONFIG_SERVICE_BASE_URL",
+      "type": "string",
+      "description": "Config service base URL. Override at deployment.",
+      "value": "http://localhost:7004"
+    },
+    {
+      "name": "FEEDBACK_SERVICE_URL",
+      "type": "string",
+      "description": "Feedback service submit endpoint. Override at deployment.",
+      "value": "http://localhost:7003/api/feedback"
+    },
+    {
+      "name": "FEEDBACK_SERVICE_BASE_URL",
+      "type": "string",
+      "description": "Feedback service base URL for GET operations. Override at deployment.",
+      "value": "http://localhost:7003"
+    },
+    {
+      "name": "SERVICE_VERSION",
+      "type": "string",
+      "value": "1.0.0"
+    }
+  ],
+  "connections": {},
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLW1jcC9zcmMvYXBwL01DUCIsImlkIjoiTUNQRmxvZ28iLCJ2ZXJzaW9uIjoiMS4wLjIiLCJ0YWciOiIxLjAuMi1iMDEiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIE1vZGVsIENvbnRleHQgUHJvdG9jb2wgKE1DUCkiLCJzM2xvY2F0aW9uIjoibG9jYWwvTUNQRmxvZ28iLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfV0=",
+  "metadata": {
+    "endpoints": [],
+    "flogoVersion": "2.26.3"
+  }
+}

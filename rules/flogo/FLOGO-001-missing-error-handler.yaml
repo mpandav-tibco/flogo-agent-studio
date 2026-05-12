@@ -1,0 +1,25 @@
+rule:
+  id: FLOGO-001
+  enabled: true
+  severity: ERROR
+  category: error-handling
+  title: Missing Error Handler
+  description: >
+    Flow "{{.Scope.name}}" has no error handler branch. Uncaught exceptions
+    will surface as HTTP 500 with no diagnostic information.
+  tags: [error-handler, resilience]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  # Scope: each top-level flow object in the Flogo app
+  scope: $.resources[*].data
+
+  match:
+    type: missing
+    path: errorHandler.tasks
+
+  location: "flow:{{.Scope.name}}"
+  recommendation: >
+    Add an errorHandler branch to flow "{{.Scope.name}}" with at minimum
+    a Return activity that maps the error message to the response.

@@ -1,0 +1,555 @@
+{
+  "imports": [
+    "tr_rest github.com/tibco/flogo-general/src/app/General/trigger/rest",
+    "trig_sse github.com/mpandav-tibco/flogo-extensions/sse/trigger",
+    "github.com/project-flogo/flow",
+    "act_default_noop github.com/project-flogo/contrib/activity/noop",
+    "act_general_log github.com/tibco/flogo-general/src/app/General/activity/log",
+    "act_default_actreturn github.com/project-flogo/contrib/activity/actreturn",
+    "act_general_rest github.com/tibco/flogo-general/src/app/General/activity/rest",
+    "act_sse_send github.com/mpandav-tibco/flogo-extensions/sse/activity",
+    "act_agentactivity github.com/tibco/flogo-ai-agent/src/app/AgenticAI/activity/agentactivity",
+    "con_llmprovider github.com/tibco/flogo-ai-agent/src/app/AgenticAI/connector/llmprovider"
+  ],
+  "name": "sse-stream-service",
+  "description": "Server-Sent Events streaming service for Flogo Agent Studio. Accepts a chat request, runs the LLM with streaming, and pushes token events to connected SSE clients. Enables real-time response display in the Chainlit UI. Part of Flogo Agent Studio Phase 2.",
+  "version": "1.0.0",
+  "type": "flogo:app",
+  "appModel": "1.1.1",
+  "tags": [
+    "sse",
+    "streaming",
+    "ai-agent",
+    "flogo-agent-studio",
+    "phase-2"
+  ],
+  "triggers": [
+    {
+      "ref": "#trig_sse",
+      "name": "sse-event-bus",
+      "description": "SSE event bus — clients connect to /events and receive streamed token events.",
+      "settings": {
+        "port": 7099,
+        "path": "/events",
+        "corsEnabled": true,
+        "heartbeatInterval": 30
+      },
+      "id": "SSEEventBus"
+    },
+    {
+      "ref": "#tr_rest",
+      "name": "tibco-wi-rest",
+      "description": "REST trigger — SSE stream service on port 7005 (same port; SSE trigger owns /events, REST trigger owns all other paths).",
+      "settings": {
+        "port": 7005,
+        "APISpecUpdate": false,
+        "swagger": "",
+        "swaggerVersion": "v2",
+        "authenticationType": "None",
+        "username": "",
+        "password": "",
+        "apiVersion": "1.0.0",
+        "secureConnection": false,
+        "serverKey": "",
+        "caCertificate": ""
+      },
+      "id": "SSEStreamRESTTrigger",
+      "handlers": [
+        {
+          "name": "stream_chat",
+          "description": "Start a streaming chat session. Runs RAG retrieval then LLM generation; pushes events to all SSE clients via act_sse_send. Returns sessionId immediately; actual response tokens arrive over SSE.",
+          "settings": {
+            "Method": "POST",
+            "Path": "/api/stream/chat",
+            "reqType": "application/json",
+            "OutputValidation": false
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:stream_chat"
+            },
+            "input": {
+              "body": "=$.body"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            }
+          },
+          "reply": {
+            "code": 202,
+            "configureResponseCodes": false,
+            "message": "",
+            "data": {},
+            "responseBody": {},
+            "responseCodesSchema": {}
+          },
+          "schemas": {
+            "output": {
+              "body": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"},\"agentId\":{\"type\":\"string\"},\"sessionId\":{\"type\":\"string\"},\"topK\":{\"type\":\"integer\"}}}"
+              }
+            }
+          }
+        },
+        {
+          "name": "broadcast_event",
+          "description": "Push an arbitrary event to all SSE clients. Used by other Flogo services to emit custom events (e.g. ingestion progress, agent state changes).",
+          "settings": {
+            "Method": "POST",
+            "Path": "/api/stream/broadcast",
+            "reqType": "application/json",
+            "OutputValidation": false
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:broadcast_event"
+            },
+            "input": {
+              "body": "=$.body"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "message": "",
+            "data": {},
+            "responseBody": {},
+            "responseCodesSchema": {}
+          },
+          "schemas": {
+            "output": {}
+          }
+        },
+        {
+          "name": "health_check",
+          "description": "Service health check",
+          "settings": {
+            "Method": "GET",
+            "Path": "/api/health",
+            "reqType": "application/json",
+            "OutputValidation": false
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:health_check"
+            },
+            "input": {},
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "message": "",
+            "data": {},
+            "responseBody": {},
+            "responseCodesSchema": {}
+          },
+          "schemas": {
+            "output": {}
+          }
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "id": "flow:stream_chat",
+      "data": {
+        "name": "stream_chat",
+        "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: 'stream.start', 'stream.answer', 'stream.done'. Returns 202 immediately — SSE clients receive tokens in real time.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "EmitStart"
+          },
+          {
+            "id": 3,
+            "from": "EmitStart",
+            "to": "CallRAG"
+          },
+          {
+            "id": 4,
+            "from": "CallRAG",
+            "to": "RunLLM"
+          },
+          {
+            "id": 5,
+            "from": "RunLLM",
+            "to": "EmitAnswer"
+          },
+          {
+            "id": 6,
+            "from": "EmitAnswer",
+            "to": "EmitDone"
+          },
+          {
+            "id": 7,
+            "from": "EmitDone",
+            "to": "Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[SSE] stream_chat: agentId=\", coerce.toString($flow.body.collectionName), \" sessionId=\", coerce.toString($flow.body.sessionId))",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "EmitStart",
+            "name": "EmitStart",
+            "description": "Notify SSE clients that streaming has begun for this session.",
+            "activity": {
+              "ref": "#act_sse_send",
+              "input": {
+                "target": "all",
+                "eventType": "stream.start",
+                "data": {
+                  "sessionId": "=$flow.body.sessionId",
+                  "agentId": "=$flow.body.agentId",
+                  "query": "=$flow.body.query"
+                },
+                "format": "json"
+              }
+            }
+          },
+          {
+            "id": "CallRAG",
+            "name": "CallRAG",
+            "description": "Retrieve relevant context from agent-chat-service via RAG.",
+            "activity": {
+              "ref": "#act_general_rest",
+              "input": {
+                "body": "=$flow.body",
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "Method": "POST",
+                "Uri": "=$property[\"CHAT_SERVICE_URL\"]"
+              }
+            }
+          },
+          {
+            "id": "RunLLM",
+            "name": "RunLLM",
+            "description": "Run LLM with RAG context. AgentActivity returns the full answer; we push it as a single SSE chunk (true token-by-token streaming requires native AgentActivity streaming support).",
+            "activity": {
+              "ref": "#act_agentactivity",
+              "settings": {
+                "llmProviderConnection": "conn://llm_provider",
+                "model": "=$property[\"LLM_MODEL\"]",
+                "temperature": 0.7,
+                "enableGuardrails": false,
+                "rateLimit": 0,
+                "tokenLimit": 0,
+                "redactSensitiveData": false,
+                "responseType": "Text",
+                "conversationStoreType": "Memory",
+                "memoryMaxSize": 10,
+                "systemPrompt": "=$property[\"SYSTEM_PROMPT\"]"
+              },
+              "input": {
+                "userPrompt": "=string.concat(\"Context:\\n\", coerce.toString($activity[CallRAG].responseBody.answer), \"\\n\\nQuestion: \", coerce.toString($flow.body.message))",
+                "conversationId": "=$flow.body.sessionId"
+              }
+            }
+          },
+          {
+            "id": "EmitAnswer",
+            "name": "EmitAnswer",
+            "description": "Push the full LLM answer and retrieved sources to all SSE clients.",
+            "activity": {
+              "ref": "#act_sse_send",
+              "input": {
+                "target": "all",
+                "eventType": "stream.answer",
+                "data": {
+                  "sessionId": "=$flow.body.sessionId",
+                  "agentId": "=$flow.body.agentId",
+                  "answer": "=$activity[RunLLM].output.response",
+                  "sources": "=$activity[CallRAG].output.responseBody.data.sourceDocuments"
+                },
+                "format": "json"
+              }
+            }
+          },
+          {
+            "id": "EmitDone",
+            "name": "EmitDone",
+            "description": "Signal stream completion so the UI can re-enable the input.",
+            "activity": {
+              "ref": "#act_sse_send",
+              "input": {
+                "target": "all",
+                "eventType": "stream.done",
+                "data": {
+                  "sessionId": "=$flow.body.sessionId",
+                  "agentId": "=$flow.body.agentId"
+                },
+                "format": "json"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 202,
+                  "data": {
+                    "streaming": true,
+                    "eventsUrl": "/events"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "flow:broadcast_event",
+      "data": {
+        "name": "broadcast_event",
+        "description": "Push an arbitrary event payload to all connected SSE clients. Used by other services (ingestion progress, agent status changes, system alerts).",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "BroadcastEvent"
+          },
+          {
+            "id": 3,
+            "from": "BroadcastEvent",
+            "to": "Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[SSE] broadcast: eventType=\", coerce.toString($flow.body.eventType))",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "BroadcastEvent",
+            "name": "BroadcastEvent",
+            "description": "Push caller-supplied event to all SSE subscribers.",
+            "activity": {
+              "ref": "#act_sse_send",
+              "input": {
+                "target": "all",
+                "eventType": "=$flow.body.eventType",
+                "data": "=$flow.body.data",
+                "format": "json"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": {
+                    "broadcasted": true
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "flow:health_check",
+      "data": {
+        "name": "health_check",
+        "description": "Returns service health status.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": {
+                    "status": "ok",
+                    "service": "sse-stream-service",
+                    "version": "=$property[\"SERVICE_VERSION\"]",
+                    "port": 7005,
+                    "sseEndpoint": "/events",
+                    "streamEndpoint": "/api/stream/chat"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "metadata": {
+          "input": [],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "properties": [
+    {
+      "name": "CHAT_SERVICE_URL",
+      "type": "string",
+      "description": "Agent chat service endpoint for RAG retrieval. Override at deployment.",
+      "value": "http://localhost:7001/api/chat"
+    },
+    {
+      "name": "LLM_MODEL",
+      "type": "string",
+      "description": "LLM model for streaming responses. Override at deployment.",
+      "value": "nemotron-3-nano:30b"
+    },
+    {
+      "name": "SYSTEM_PROMPT",
+      "type": "string",
+      "description": "Default system prompt for the streaming LLM. Agents can override via their config.",
+      "value": "You are a helpful assistant. Answer questions accurately using the provided context. If the context doesn't contain enough information, say so clearly."
+    },
+    {
+      "name": "SERVICE_VERSION",
+      "type": "string",
+      "value": "1.0.0"
+    }
+  ],
+  "connections": {
+    "llm_provider": {
+      "id": "llm_provider",
+      "name": "LLM Provider",
+      "ref": "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/connector/llmprovider",
+      "settings": {
+        "name": "LLM Provider",
+        "llmProvider": "OpenAI",
+        "apiKey": "954bd5d476ee456583f9a4079d24ac16.EP8HhAPYJyC4LELg-PfqTa6z",
+        "llmProviderUrl": "https://ollama.com/v1"
+      }
+    }
+  },
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL21wYW5kYXYtdGliY28vZmxvZ28tZXh0ZW5zaW9ucy9zc2UiLCJpZCI6IlNTRSIsInZlcnNpb24iOiIxLjAuMCIsInRhZyI6IjEuMC4wIiwibmFtZSI6IlNlcnZlci1TZW50IEV2ZW50cyIsInMzbG9jYXRpb24iOiJsb2NhbC9TU0UiLCJpc1VzZXJFeHRlbnNpb24iOnRydWV9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1haS1hZ2VudC9zcmMvYXBwL0FnZW50aWNBSSIsImlkIjoiQWdlbnRpY0FJIiwidmVyc2lvbiI6IjAuOS4xIiwidGFnIjoiMC45LjEtYjAyIiwibmFtZSI6IlRJQkNPIEZsb2dvwq4gQ29ubmVjdG9yIGZvciBBZ2VudGljIEFJIChUZWNoIFByZXZpZXcpIiwiczNsb2NhdGlvbiI6IlRpYmNvL0FnZW50aWNBSSIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9XQ==",
+  "metadata": {
+    "endpoints": [],
+    "flogoVersion": "2.26.3"
+  }
+}

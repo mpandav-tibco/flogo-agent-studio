@@ -1,0 +1,1045 @@
+{
+  "imports": [
+    "github.com/project-flogo/flow",
+    "github.com/project-flogo/contrib/activity/noop",
+    "github.com/tibco/flogo-general/src/app/General/activity/log",
+    "github.com/mpandav-tibco/flogo-extensions/vectordb/activity/ragQuery",
+    "github.com/project-flogo/contrib/activity/actreturn",
+    "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/activity/agentactivity",
+    "github.com/tibco/flogo-general/src/app/General/trigger/rest",
+    "github.com/project-flogo/contrib/function/coerce",
+    "github.com/project-flogo/contrib/function/string",
+    "github.com/mpandav-tibco/flogo-extensions/vectordb/connector",
+    "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/connector/llmprovider"
+  ],
+  "name": "agent-chat-service",
+  "description": "AI agent chat service. Accepts a user message, performs hybrid RAG retrieval, and generates an LLM answer. Part of Flogo Agent Studio.",
+  "version": "1.0.0",
+  "type": "flogo:app",
+  "appModel": "1.1.1",
+  "tags": [],
+  "triggers": [
+    {
+      "ref": "#rest",
+      "name": "tibco-wi-rest",
+      "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
+      "settings": {
+        "port": 7001,
+        "APISpecUpdate": false,
+        "swagger": "",
+        "swaggerVersion": "v2",
+        "authenticationType": "None",
+        "username": "",
+        "password": "",
+        "apiVersion": "1.0.0",
+        "secureConnection": false,
+        "serverKey": "",
+        "caCertificate": ""
+      },
+      "id": "AgentChatRESTTrigger",
+      "handlers": [
+        {
+          "description": "Hybrid RAG retrieval (BM25 + vector) followed by LLM answer generation. Returns answer, sourceDocuments, and duration.",
+          "settings": {
+            "Method": "POST",
+            "reqType": "application/json",
+            "Path": "/api/chat",
+            "OutputValidation": false
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:chat"
+            },
+            "input": {
+              "body": "=$.body",
+              "headers": "=$.headers"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "message": {}
+          },
+          "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
+            "output": {
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              },
+              "body": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"message\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"topK\":{\"type\":\"number\"},\"sessionId\":{\"type\":\"string\"},\"systemPrompt\":{\"type\":\"string\"}}}",
+                "fe_metadata": "{\"message\":\"abc\",\"collectionName\":\"abc\",\"topK\":134,\"sessionId\":\"abc\",\"systemPrompt\":\"abc\"}"
+              }
+            }
+          },
+          "name": "chat"
+        },
+        {
+          "description": "Hybrid RAG retrieval without LLM generation. Returns sourceDocuments and formattedContext for inspection or custom LLM integration.",
+          "settings": {
+            "Method": "POST",
+            "reqType": "application/json",
+            "Path": "/api/chat/retrieve",
+            "OutputValidation": false
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:retrieve_only"
+            },
+            "input": {
+              "body": "=$.body",
+              "headers": "=$.headers"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "message": {}
+          },
+          "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
+            "output": {
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              },
+              "body": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"message\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"topK\":{\"type\":\"number\"}}}",
+                "fe_metadata": "{\"message\":\"abc\",\"collectionName\":\"abc\",\"topK\":134}"
+              }
+            }
+          },
+          "name": "retrieve_only"
+        },
+        {
+          "description": "Hybrid RAG retrieval (retrieve-only) followed by OOTB agentactivity for LLM generation. Supports conversation memory, multi-provider LLM (OpenAI, Anthropic, Gemini, Ollama, vLLM) via LLM Provider connector.",
+          "settings": {
+            "Method": "POST",
+            "reqType": "application/json",
+            "Path": "/api/chat/agent",
+            "OutputValidation": false
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:chat_with_agent"
+            },
+            "input": {
+              "body": "=$.body",
+              "headers": "=$.headers"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "message": {}
+          },
+          "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
+            "output": {
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              },
+              "body": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"message\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"topK\":{\"type\":\"number\"},\"sessionId\":{\"type\":\"string\"}}}",
+                "fe_metadata": "{\"message\":\"abc\",\"collectionName\":\"abc\",\"topK\":134,\"sessionId\":\"abc\"}"
+              }
+            }
+          },
+          "name": "chat_with_agent"
+        },
+        {
+          "description": "Returns service health status and version.",
+          "settings": {
+            "Method": "GET",
+            "reqType": "application/json",
+            "Path": "/api/health",
+            "OutputValidation": false
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:health_check"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "message": {}
+          },
+          "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
+            "output": {
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              }
+            }
+          },
+          "name": "health_check"
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "id": "flow:chat",
+      "data": {
+        "name": "chat",
+        "description": "Hybrid RAG retrieval (BM25 + vector) followed by LLM answer generation. Returns answer, sourceDocuments, and duration.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest",
+            "type": "label",
+            "label": "Start to LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "RAGQuery",
+            "type": "label",
+            "label": "LogRequest to RAGQuery"
+          },
+          {
+            "id": 3,
+            "from": "RAGQuery",
+            "to": "Return",
+            "type": "label",
+            "label": "RAGQuery to Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "description": "",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "description": "",
+            "activity": {
+              "ref": "#log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[AgentChat] Chat request: session=\", coerce.toString($flow.body.sessionId), \" collection=\", coerce.toString($flow.body.collectionName))"
+              }
+            }
+          },
+          {
+            "id": "RAGQuery",
+            "name": "RAGQuery",
+            "description": "",
+            "activity": {
+              "ref": "#ragQuery",
+              "settings": {
+                "connection": "conn://vectordb-weaviate",
+                "useConnectorEmbedding": true,
+                "embeddingProvider": "OpenAI",
+                "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]",
+                "embeddingDimensions": 0,
+                "defaultCollection": "=$property[\"COLLECTION_NAME\"]",
+                "defaultTopK": 5,
+                "scoreThreshold": 0,
+                "contentField": "text",
+                "contextFormat": "numbered",
+                "timeoutSeconds": 120,
+                "useHybridSearch": true,
+                "hybridAlpha": 0.75,
+                "enableLLMGenerate": true,
+                "llmProvider": "OpenAI",
+                "llmBaseURL": "https://ollama.com",
+                "llmAPIKey": "954bd5d476ee456583f9a4079d24ac16.EP8HhAPYJyC4LELg-PfqTa6z",
+                "llmModel": "gemma3:4b-cloud",
+                "systemPrompt": "=$property[\"SYSTEM_PROMPT\"]",
+                "maxTokens": 1024,
+                "temperature": 0.1
+              },
+              "input": {
+                "queryText": "=$flow.body.message",
+                "collectionName": "=$flow.body.collectionName",
+                "topK": "=$flow.body.topK",
+                "systemPrompt": "=$flow.body.systemPrompt"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": "=$activity[RAGQuery]"
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdRdWVyeSI6eyJ4Ijo0NDksInkiOjQ5fSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9fQ==",
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            },
+            {
+              "name": "headers",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "float64"
+            },
+            {
+              "name": "data",
+              "type": "object"
+            }
+          ],
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"object\",\"properties\":{}},\"headers\":{\"type\":\"object\",\"properties\":{}}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
+      }
+    },
+    {
+      "id": "flow:retrieve_only",
+      "data": {
+        "name": "retrieve_only",
+        "description": "Hybrid RAG retrieval without LLM generation. Returns sourceDocuments and formattedContext for inspection or custom LLM integration.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest",
+            "type": "label",
+            "label": "Start to LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "RAGQuery",
+            "type": "label",
+            "label": "LogRequest to RAGQuery"
+          },
+          {
+            "id": 3,
+            "from": "RAGQuery",
+            "to": "Return",
+            "type": "label",
+            "label": "RAGQuery to Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "description": "",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "description": "",
+            "activity": {
+              "ref": "#log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[AgentChat] Retrieve-only request: collection=\", coerce.toString($flow.body.collectionName))"
+              }
+            }
+          },
+          {
+            "id": "RAGQuery",
+            "name": "RAGQuery",
+            "description": "",
+            "activity": {
+              "ref": "#ragQuery",
+              "settings": {
+                "connection": "conn://vectordb-weaviate",
+                "useConnectorEmbedding": true,
+                "embeddingProvider": "OpenAI",
+                "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]",
+                "embeddingDimensions": 0,
+                "defaultCollection": "=$property[\"COLLECTION_NAME\"]",
+                "defaultTopK": 5,
+                "scoreThreshold": 0,
+                "contentField": "text",
+                "contextFormat": "numbered",
+                "timeoutSeconds": 30,
+                "useHybridSearch": true,
+                "hybridAlpha": 0.75,
+                "enableLLMGenerate": false,
+                "llmProvider": "Ollama",
+                "llmBaseURL": "http://localhost:11434",
+                "llmModel": "llama3.1:8b",
+                "systemPrompt": "You are a helpful assistant. Answer the question using only the provided context. If the context does not contain enough information, say so.",
+                "maxTokens": 1024,
+                "temperature": 0.1
+              },
+              "input": {
+                "queryText": "=$flow.body.message",
+                "collectionName": "=$flow.body.collectionName",
+                "topK": "=$flow.body.topK"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": "=$activity[RAGQuery]"
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdRdWVyeSI6eyJ4Ijo0NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9fQ==",
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            },
+            {
+              "name": "headers",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "float64"
+            },
+            {
+              "name": "data",
+              "type": "object"
+            }
+          ],
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"object\",\"properties\":{}},\"headers\":{\"type\":\"object\",\"properties\":{}}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
+      }
+    },
+    {
+      "id": "flow:chat_with_agent",
+      "data": {
+        "name": "chat_with_agent",
+        "description": "Hybrid RAG retrieval (retrieve-only) followed by OOTB agentactivity for LLM generation. Supports conversation memory, multi-provider LLM (OpenAI, Anthropic, Gemini, Ollama, vLLM) via LLM Provider connector.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest",
+            "type": "label",
+            "label": "Start to LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "RAGRetrieve",
+            "type": "label",
+            "label": "LogRequest to RAGRetrieve"
+          },
+          {
+            "id": 3,
+            "from": "RAGRetrieve",
+            "to": "AgentChat",
+            "type": "label",
+            "label": "RAGRetrieve to AgentChat"
+          },
+          {
+            "id": 4,
+            "from": "AgentChat",
+            "to": "Return",
+            "type": "label",
+            "label": "AgentChat to Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "description": "",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "description": "",
+            "activity": {
+              "ref": "#log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[AgentChat/OOTB] Agent chat request: session=\", coerce.toString($flow.body.sessionId), \" collection=\", coerce.toString($flow.body.collectionName))"
+              }
+            }
+          },
+          {
+            "id": "RAGRetrieve",
+            "name": "RAGRetrieve",
+            "description": "",
+            "activity": {
+              "ref": "#ragQuery",
+              "settings": {
+                "connection": "conn://vectordb-weaviate",
+                "useConnectorEmbedding": true,
+                "embeddingProvider": "OpenAI",
+                "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]",
+                "embeddingDimensions": 0,
+                "defaultCollection": "=$property[\"COLLECTION_NAME\"]",
+                "defaultTopK": 5,
+                "scoreThreshold": 0,
+                "contentField": "text",
+                "contextFormat": "numbered",
+                "timeoutSeconds": 30,
+                "useHybridSearch": true,
+                "hybridAlpha": 0.75,
+                "enableLLMGenerate": false,
+                "llmProvider": "Ollama",
+                "llmBaseURL": "http://localhost:11434",
+                "llmModel": "llama3.1:8b",
+                "systemPrompt": "You are a helpful assistant. Answer the question using only the provided context. If the context does not contain enough information, say so.",
+                "maxTokens": 1024,
+                "temperature": 0.1
+              },
+              "input": {
+                "queryText": "=$flow.body.message",
+                "collectionName": "=$flow.body.collectionName",
+                "topK": "=$flow.body.topK"
+              }
+            }
+          },
+          {
+            "id": "AgentChat",
+            "name": "AgentChat",
+            "description": "",
+            "activity": {
+              "ref": "#agentactivity",
+              "settings": {
+                "llmProviderConnection": "conn://llm-provider",
+                "model": "=$property[\"LLM_MODEL\"]",
+                "reasoning": "",
+                "temperature": 0.1,
+                "enableGuardrails": false,
+                "rateLimit": 25,
+                "tokenLimit": 4096,
+                "redactSensitiveData": false,
+                "responseType": "Text",
+                "mcpServers": [],
+                "conversationStoreType": "Memory",
+                "memoryMaxSize": 20,
+                "systemPrompt": "=$property[\"SYSTEM_PROMPT\"]"
+              },
+              "input": {
+                "userPrompt": "=string.concat(\"Context:\\n\", $activity[RAGRetrieve].formattedContext, \"\\n\\nUser question: \", $flow.body.message)",
+                "conversationId": "=$flow.body.sessionId"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": "=$activity[AgentChat]"
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdSZXRyaWV2ZSI6eyJ4Ijo0NTAsInkiOjUwfSwiQWdlbnRDaGF0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            },
+            {
+              "name": "headers",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "float64"
+            },
+            {
+              "name": "data",
+              "type": "object"
+            }
+          ],
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"object\",\"properties\":{}},\"headers\":{\"type\":\"object\",\"properties\":{}}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
+      }
+    },
+    {
+      "id": "flow:health_check",
+      "data": {
+        "name": "health_check",
+        "description": "Returns service health status and version.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "Return",
+            "type": "label",
+            "label": "Start to Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "description": "",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": {
+                    "status": "ok",
+                    "service": "agent-chat-service",
+                    "port": 7001,
+                    "version": "1.0.0"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6MjUwLCJ5Ijo1MH19",
+        "metadata": {
+          "input": [],
+          "output": [
+            {
+              "name": "code",
+              "type": "float64"
+            },
+            {
+              "name": "data",
+              "type": "object"
+            }
+          ],
+          "fe_metadata": {
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
+      }
+    }
+  ],
+  "properties": [
+    {
+      "name": "AgenticAI.llm-provider.LLM_Provider",
+      "type": "string",
+      "value": "Ollama"
+    },
+    {
+      "name": "AgenticAI.llm-provider.LLM_Base_URL",
+      "type": "string",
+      "value": "http://localhost:11434"
+    },
+    {
+      "name": "EMBEDDING_MODEL",
+      "type": "string",
+      "value": "nomic-embed-text"
+    },
+    {
+      "name": "COLLECTION_NAME",
+      "type": "string",
+      "value": "KnowledgeBase"
+    },
+    {
+      "name": "LLM_MODEL",
+      "type": "string",
+      "value": "gemma3:4b-cloud"
+    },
+    {
+      "name": "SYSTEM_PROMPT",
+      "type": "string",
+      "value": "You are a helpful assistant. Answer the question using only the provided context. If the context does not contain enough information, say so clearly."
+    },
+    {
+      "name": "SERVICE_VERSION",
+      "type": "string",
+      "value": "1.0.0"
+    },
+    {
+      "name": "LLM_PROVIDER",
+      "type": "string",
+      "value": "OpenAI"
+    },
+    {
+      "name": "LLM_BASE_URL",
+      "type": "string",
+      "value": "https://ollama.com/v1"
+    },
+    {
+      "name": "LLM_API_KEY",
+      "type": "string",
+      "value": "954bd5d476ee456583f9a4079d24ac16.EP8HhAPYJyC4LELg-PfqTa6z"
+    },
+    {
+      "name": "VECTORDB_HOST",
+      "type": "string",
+      "value": "localhost"
+    },
+    {
+      "name": "VECTORDB_PORT",
+      "type": "integer",
+      "value": 8080
+    },
+    {
+      "name": "OPENAI_API_KEY",
+      "type": "string",
+      "value": "ollama"
+    }
+  ],
+  "connections": {
+    "vectordb-weaviate": {
+      "id": "vectordb-weaviate",
+      "name": "$property[\"VectorDB.vectordb-weaviate.Connection_Name\"]",
+      "ref": "#connector",
+      "isGlobal": false,
+      "settings": {
+        "name": "vectordb-weaviate",
+        "dbType": "weaviate",
+        "host": "=$property[\"VECTORDB_HOST\"]",
+        "port": "=$property[\"VECTORDB_PORT\"]",
+        "apiKey": "",
+        "useTLS": false,
+        "tlsInsecureSkipVerify": false,
+        "timeoutSeconds": 30,
+        "maxRetries": 3,
+        "retryBackoffMs": 100,
+        "grpcPort": 50051,
+        "scheme": "http",
+        "dbName": "default",
+        "defaultMetricType": "cosine",
+        "enableEmbedding": true,
+        "embeddingProvider": "OpenAI",
+        "embeddingAPIKey": "=$property[\"OPENAI_API_KEY\"]",
+        "embeddingBaseURL": "http://localhost:11434/v1",
+        "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]"
+      }
+    },
+    "llm-provider": {
+      "id": "llm-provider",
+      "name": "llm-provider",
+      "ref": "#llmprovider",
+      "isGlobal": false,
+      "settings": {
+        "name": "llm-provider",
+        "llmProvider": "OpenAI",
+        "anthropicProvider": "Default",
+        "apiKey": "954bd5d476ee456583f9a4079d24ac16.EP8HhAPYJyC4LELg-PfqTa6z",
+        "llmProviderUrl": "https://ollama.com/v1"
+      }
+    }
+  },
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuYyIsImlkIjoiVmVjdG9yREIiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJWZWN0b3JEQiBSQUcgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tYWktYWdlbnQvc3JjL2FwcC9BZ2VudGljQUkiLCJpZCI6IkFnZW50aWNBSSIsInZlcnNpb24iOiIwLjkuMSIsInRhZyI6IjAuOS4xLWIwMiIsIm5hbWUiOiJUSUJDTyBGbG9nb8KuIENvbm5lY3RvciBmb3IgQWdlbnRpYyBBSSAoVGVjaCBQcmV2aWV3KSIsInMzbG9jYXRpb24iOiJUaWJjby9BZ2VudGljQUkiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfV0=",
+  "metadata": {
+    "endpoints": [
+      {
+        "protocol": "http",
+        "port": "7001",
+        "spec": {
+          "name": "agent-chat-service",
+          "version": "1.0.0"
+        },
+        "title": "AgentChatRESTTrigger",
+        "swagger": {
+          "swagger": "2.0",
+          "info": {
+            "title": "agent-chat-service",
+            "version": "1.0.0",
+            "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
+          },
+          "paths": {
+            "/api/chat": {
+              "post": {
+                "summary": "chat",
+                "operationId": "post_api_chat",
+                "parameters": [
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  },
+                  {
+                    "name": "body",
+                    "in": "body",
+                    "description": "request body parameter",
+                    "required": true,
+                    "schema": {
+                      "$ref": "#/definitions/schema1"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Hybrid RAG retrieval (BM25 + vector) followed by LLM answer generation. Returns answer, sourceDocuments, and duration.",
+                "consumes": [
+                  "application/json"
+                ]
+              }
+            },
+            "/api/chat/retrieve": {
+              "post": {
+                "summary": "retrieve_only",
+                "operationId": "post_api_chat_retrieve",
+                "parameters": [
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  },
+                  {
+                    "name": "body",
+                    "in": "body",
+                    "description": "request body parameter",
+                    "required": true,
+                    "schema": {
+                      "$ref": "#/definitions/schema2"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Hybrid RAG retrieval without LLM generation. Returns sourceDocuments and formattedContext for inspection or custom LLM integration.",
+                "consumes": [
+                  "application/json"
+                ]
+              }
+            },
+            "/api/chat/agent": {
+              "post": {
+                "summary": "chat_with_agent",
+                "operationId": "post_api_chat_agent",
+                "parameters": [
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  },
+                  {
+                    "name": "body",
+                    "in": "body",
+                    "description": "request body parameter",
+                    "required": true,
+                    "schema": {
+                      "$ref": "#/definitions/schema3"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Hybrid RAG retrieval (retrieve-only) followed by OOTB agentactivity for LLM generation. Supports conversation memory, multi-provider LLM (OpenAI, Anthropic, Gemini, Ollama, vLLM) via LLM Provider connector.",
+                "consumes": [
+                  "application/json"
+                ]
+              }
+            },
+            "/api/health": {
+              "get": {
+                "summary": "health_check",
+                "operationId": "get_api_health",
+                "parameters": [
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Returns service health status and version."
+              }
+            }
+          },
+          "definitions": {
+            "schema1": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                },
+                "collectionName": {
+                  "type": "string"
+                },
+                "topK": {
+                  "type": "number"
+                },
+                "sessionId": {
+                  "type": "string"
+                },
+                "systemPrompt": {
+                  "type": "string"
+                }
+              }
+            },
+            "schema2": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                },
+                "collectionName": {
+                  "type": "string"
+                },
+                "topK": {
+                  "type": "number"
+                }
+              }
+            },
+            "schema3": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                },
+                "collectionName": {
+                  "type": "string"
+                },
+                "topK": {
+                  "type": "number"
+                },
+                "sessionId": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    ],
+    "flogoVersion": "2.26.3"
+  }
+}

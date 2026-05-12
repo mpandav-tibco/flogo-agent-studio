@@ -1,0 +1,30 @@
+# ── Compiled binaries ─────────────────────────────────────────────────────────
+bin/
+
+# ── Runtime logs ──────────────────────────────────────────────────────────────
+logs/*.log
+logs/*-err.log
+# Keep sample output
+!logs/e2e-journey.log
+
+# ── Feedback runtime data ─────────────────────────────────────────────────────
+feedback/*.jsonl
+!feedback/default.jsonl
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+chainlit/.chainlit/
+.env
+.env.*
+!.env.example
+
+# ── Flogo design history ──────────────────────────────────────────────────────
+.flogodesign/
+
+# ── OS / editor noise ─────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

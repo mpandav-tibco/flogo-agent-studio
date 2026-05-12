@@ -1,0 +1,268 @@
+"""
+Flogo Agent Studio — Chainlit UI (port 7080)
+
+Thin proxy to the Flogo Agent Studio REST services:
+  - config-service    (port 7004) — multi-agent registry
+  - agent-chat-service (port 7001) — RAG chat + agentactivity
+  - feedback-service  (port 7003) — thumbs-up/down ratings
+"""
+
+import os
+import uuid
+import json
+import httpx
+import chainlit as cl
+
+# ── Service endpoints ──────────────────────────────────────────────────────────
+
+CONFIG_URL   = os.getenv("CONFIG_SERVICE_URL",   "http://localhost:7004")
+CHAT_URL     = os.getenv("CHAT_SERVICE_URL",     "http://localhost:7001")
+FEEDBACK_URL = os.getenv("FEEDBACK_SERVICE_URL", "http://localhost:7003")
+
+REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT", "60"))
+
+# ── Helpers ────────────────────────────────────────────────────────────────────
+
+async def fetch_agents() -> list[dict]:
+    """Load all registered agents from config-service.
+
+    config-service list_agents returns fileMetadata (file-level data from act_file_list).
+    Each entry has a fileName like "default.json". We extract the agentId then call
+    get_agent for each to hydrate the full config object.
+    """
+    async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
+        # Step 1: list agent files
+        resp = await client.get(f"{CONFIG_URL}/api/agents")
+        resp.raise_for_status()
+        body = resp.json()
+        file_entries = body.get("agents", [])
+
+        # Extract agent IDs from filenames ("default.json" → "default")
+        agent_ids: list[str] = []
+        for entry in file_entries:
+            fname = entry.get("fileName") or entry.get("name") or ""
+            if fname.endswith(".json"):
+                agent_ids.append(fname[:-5])
+
+        if not agent_ids:
+            return []
+
+        # Step 2: hydrate each agent config (get_agent returns config as JSON string)
+        agents: list[dict] = []
+        for agent_id in agent_ids:
+            try:
+                r = await client.get(f"{CONFIG_URL}/api/agents/{agent_id}")
+                if r.status_code == 200:
+                    data = r.json()
+                    config_raw = data.get("config", "{}")
+                    config = json.loads(config_raw) if isinstance(config_raw, str) else config_raw
+                    if not config.get("id"):
+                        config["id"] = agent_id
+                    agents.append(config)
+            except Exception as exc:
+                print(f"[Chainlit] could not load agent '{agent_id}': {exc}")
+
+        return agents
+
+
+async def post_chat(agent_id: str, query: str, session_id: str, top_k: int = 5) -> dict:
+    """Call agent-chat-service POST /api/chat."""
+    async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
+        resp = await client.post(
+            f"{CHAT_URL}/api/chat",
+            json={
+                "query": query,
+                "agentId": agent_id,
+                "sessionId": session_id,
+                "topK": top_k,
+            },
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
+async def post_feedback(
+    agent_id: str,
+    session_id: str,
+    message_id: str,
+    rating: str,
+    comment: str = "",
+) -> None:
+    """Call feedback-service POST /api/feedback (fire-and-forget; errors are silently logged)."""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            await client.post(
+                f"{FEEDBACK_URL}/api/feedback",
+                json={
+                    "agentId": agent_id,
+                    "sessionId": session_id,
+                    "messageId": message_id,
+                    "rating": rating,
+                    "comment": comment,
+                },
+            )
+    except Exception as exc:
+        print(f"[Feedback] failed to submit: {exc}")
+
+
+def agent_label(agent: dict) -> str:
+    return f"{agent.get('name', agent.get('id', '?'))} — {agent.get('description', '')[:60]}"
+
+
+# ── Chainlit lifecycle ─────────────────────────────────────────────────────────
+
+@cl.on_chat_start
+async def on_chat_start():
+    session_id = str(uuid.uuid4())
+    cl.user_session.set("session_id", session_id)
+    cl.user_session.set("last_message_id", None)
+    cl.user_session.set("last_agent_id", None)
+
+    # Load agents from config-service
+    try:
+        agents = await fetch_agents()
+    except Exception as exc:
+        await cl.Message(
+            content=f"Could not reach config-service ({CONFIG_URL}): {exc}\n\nEnsure all Flogo services are running.",
+            author="System",
+        ).send()
+        agents = []
+
+    if not agents:
+        # Fall back to a minimal default so the session is usable
+        agents = [{"id": "default", "name": "Default Agent", "description": "General assistant"}]
+
+    cl.user_session.set("agents", agents)
+
+    # Build agent selector
+    agent_options = [
+        cl.Action(
+            name="select_agent",
+            value=a.get("id", "default"),
+            label=agent_label(a),
+            payload={"agentId": a.get("id", "default")},
+        )
+        for a in agents
+    ]
+
+    # Default to first agent
+    default_agent = agents[0]
+    cl.user_session.set("agent_id", default_agent.get("id", "default"))
+    cl.user_session.set("agent_name", default_agent.get("name", "Agent"))
+
+    welcome = (
+        f"**Flogo Agent Studio**\n\n"
+        f"Active agent: **{default_agent.get('name', 'Default Agent')}**\n"
+        f"{default_agent.get('description', '')}\n\n"
+        f"Type a message to start chatting. Use the buttons below to switch agents or rate responses."
+    )
+
+    await cl.Message(content=welcome, actions=agent_options, author="System").send()
+
+
+@cl.action_callback("select_agent")
+async def select_agent(action: cl.Action):
+    agents: list[dict] = cl.user_session.get("agents", [])
+    agent_id = action.payload.get("agentId", action.value)
+
+    # Find full agent record for the name
+    matched = next((a for a in agents if a.get("id") == agent_id), None)
+    agent_name = matched.get("name", agent_id) if matched else agent_id
+    description = matched.get("description", "") if matched else ""
+
+    cl.user_session.set("agent_id", agent_id)
+    cl.user_session.set("agent_name", agent_name)
+
+    await cl.Message(
+        content=f"Switched to **{agent_name}**\n{description}",
+        author="System",
+    ).send()
+    await action.remove()
+
+
+@cl.action_callback("thumbs_up")
+async def thumbs_up(action: cl.Action):
+    await _record_feedback("thumbsUp", action)
+
+
+@cl.action_callback("thumbs_down")
+async def thumbs_down(action: cl.Action):
+    await _record_feedback("thumbsDown", action)
+
+
+async def _record_feedback(rating: str, action: cl.Action):
+    session_id   = cl.user_session.get("session_id", "unknown")
+    agent_id     = cl.user_session.get("last_agent_id") or cl.user_session.get("agent_id", "default")
+    message_id   = cl.user_session.get("last_message_id", "unknown")
+
+    await post_feedback(agent_id, session_id, message_id, rating)
+    emoji = "👍" if rating == "thumbsUp" else "👎"
+    await cl.Message(content=f"{emoji} Feedback recorded.", author="System").send()
+    await action.remove()
+
+
+@cl.on_message
+async def on_message(message: cl.Message):
+    agent_id   = cl.user_session.get("agent_id", "default")
+    agent_name = cl.user_session.get("agent_name", "Agent")
+    session_id = cl.user_session.get("session_id", str(uuid.uuid4()))
+    message_id = str(uuid.uuid4())
+
+    cl.user_session.set("last_message_id", message_id)
+    cl.user_session.set("last_agent_id", agent_id)
+
+    async with cl.Step(name=f"{agent_name} — thinking", show_input=False) as step:
+        try:
+            result = await post_chat(agent_id, message.content, session_id)
+        except httpx.HTTPStatusError as exc:
+            step.output = f"HTTP {exc.response.status_code}: {exc.response.text}"
+            await cl.Message(
+                content=f"Service error ({exc.response.status_code}). Please try again.",
+                author=agent_name,
+            ).send()
+            return
+        except Exception as exc:
+            step.output = str(exc)
+            await cl.Message(
+                content=f"Could not reach agent-chat-service ({CHAT_URL}): {exc}",
+                author=agent_name,
+            ).send()
+            return
+
+        answer        = result.get("answer") or result.get("data", {}).get("answer", str(result))
+        sources       = result.get("sourceDocuments") or result.get("data", {}).get("sourceDocuments", [])
+        duration_ms   = result.get("durationMs") or result.get("data", {}).get("durationMs", 0)
+
+        step.output = f"Retrieved {len(sources)} source(s) in {duration_ms}ms"
+
+    # Build source elements
+    elements = []
+    if sources:
+        source_lines = []
+        for i, doc in enumerate(sources, 1):
+            title  = doc.get("title") or doc.get("source") or f"Source {i}"
+            score  = doc.get("score", 0)
+            source_lines.append(f"**{i}. {title}** (score: {score:.3f})")
+            content_preview = (doc.get("content") or doc.get("text") or "")[:400]
+            if content_preview:
+                source_lines.append(f"_{content_preview}…_")
+        elements.append(
+            cl.Text(
+                name="Sources",
+                content="\n\n".join(source_lines),
+                display="side",
+            )
+        )
+
+    # Feedback actions
+    feedback_actions = [
+        cl.Action(name="thumbs_up",   value=message_id, label="👍 Good answer",    payload={}),
+        cl.Action(name="thumbs_down", value=message_id, label="👎 Not helpful",    payload={}),
+    ]
+
+    await cl.Message(
+        content=answer,
+        author=agent_name,
+        elements=elements,
+        actions=feedback_actions,
+    ).send()

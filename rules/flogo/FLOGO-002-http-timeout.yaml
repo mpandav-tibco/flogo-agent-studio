@@ -1,0 +1,37 @@
+rule:
+  id: FLOGO-002
+  enabled: true
+  severity: ERROR
+  category: resilience
+  title: HTTP Activity Without Timeout
+  description: >
+    Activity "{{.Scope.name}}" in flow "{{.Parent.name}}" is an HTTP/REST call
+    with no timeout configured. Slow or unresponsive downstream services will
+    block the thread indefinitely.
+  tags: [http, timeout, resilience]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data.tasks[*]
+
+  when:
+    type: contains_any
+    path: activity.ref
+    substrings:
+      - "contrib/activity/rest"
+      - "activity/rest"
+
+  match:
+    type: any_of
+    conditions:
+      - type: missing
+        path: activity.input.timeout
+      - type: equals
+        path: activity.input.timeout
+        value: 0
+
+  location: "flow:{{.Parent.name}} / activity:{{.Scope.name}}"
+  recommendation: >
+    Set a timeout (e.g. 30000 ms) on the REST activity "{{.Scope.name}}".
+    Use an app property so it can be tuned per environment without redeployment.

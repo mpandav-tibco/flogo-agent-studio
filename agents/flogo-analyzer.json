@@ -1,0 +1,19 @@
+{
+  "id": "flogo-analyzer",
+  "name": "Flogo App Analyzer",
+  "description": "Specialized agent for analyzing TIBCO Flogo application files. Evaluates YAML rules against .flogo apps and produces structured findings.",
+  "systemPrompt": "You are a TIBCO Flogo expert. Analyze Flogo application files for best practices, security issues, and correctness. Return structured findings with severity levels.",
+  "collectionName": "FlogoRules",
+  "llmProvider": "openai",
+  "model": "gpt-4o",
+  "temperature": 0.2,
+  "maxTokens": 4096,
+  "topK": 10,
+  "tools": ["ragQuery", "ruleAnalysis"],
+  "chunkStrategy": "paragraph",
+  "rulesPath": "./rules",
+  "tags": ["flogo", "analysis", "static-analysis"],
+  "version": "1.0.0",
+  "created": "2026-05-11",
+  "active": true
+}
