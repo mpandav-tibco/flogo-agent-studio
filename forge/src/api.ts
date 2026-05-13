@@ -35,6 +35,18 @@ async function json<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+function normalizeAgent(a: unknown): Agent {
+  const agent = a as Agent & { config: unknown };
+  if (typeof agent.config === "string") {
+    try {
+      agent.config = JSON.parse(agent.config);
+    } catch {
+      agent.config = {};
+    }
+  }
+  return agent as Agent;
+}
+
 function get(url: string): Promise<Response> {
   return fetch(url, { headers: headers() });
 }
@@ -48,16 +60,18 @@ function mutate(url: string, method: string, body?: object): Promise<Response> {
 }
 
 export const listAgents = (status?: string): Promise<Agent[]> =>
-  get(status ? `${BASE}?status=${encodeURIComponent(status)}` : BASE).then(json<Agent[]>);
+  get(status ? `${BASE}?status=${encodeURIComponent(status)}` : BASE)
+    .then(json<Agent[]>)
+    .then((agents) => agents.map(normalizeAgent));
 
 export const getAgent = (id: string): Promise<Agent> =>
-  get(`${BASE}/${id}`).then(json<Agent>);
+  get(`${BASE}/${id}`).then(json<Agent>).then(normalizeAgent);
 
 export const createAgent = (body: AgentCreate): Promise<Agent> =>
-  mutate(BASE, "POST", body).then(json<Agent>);
+  mutate(BASE, "POST", body).then(json<Agent>).then(normalizeAgent);
 
 export const updateAgent = (id: string, body: AgentUpdate): Promise<Agent> =>
-  mutate(`${BASE}/${id}`, "PUT", body).then(json<Agent>);
+  mutate(`${BASE}/${id}`, "PUT", body).then(json<Agent>).then(normalizeAgent);
 
 export const deleteAgent = (id: string): Promise<void> =>
   mutate(`${BASE}/${id}`, "DELETE").then((r) => {

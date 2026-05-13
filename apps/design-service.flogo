@@ -8,7 +8,9 @@
     "github.com/tibco/flogo-general/src/app/General/trigger/rest",
     "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/string",
-    "github.com/tibco/wi-postgres/src/app/PostgreSQL/connector/connection"
+    "github.com/tibco/wi-postgres/src/app/PostgreSQL/connector/connection",
+    "github.com/mpandav-tibco/flogo-extensions/function/string",
+    "act_default_noop github.com/project-flogo/contrib/activity/noop"
   ],
   "name": "design-service",
   "description": "Agent Studio design-time service on port 7020. PostgreSQL-backed CRUD for agent definitions.",
@@ -20,7 +22,7 @@
     {
       "ref": "#rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger — design-service on port 7020",
+      "description": "REST trigger \u2014 design-service on port 7020",
       "settings": {
         "port": 7020,
         "APISpecUpdate": false,
@@ -353,6 +355,63 @@
             }
           },
           "name": "health_check"
+        },
+        {
+          "settings": {
+            "APISpecPath": "",
+            "Method": "GET",
+            "reqType": "application/json",
+            "Path": "/api/v1/agents/{agentId}/config",
+            "OutputValidation": false
+          },
+          "action": {
+            "input": {
+              "agentId": "=$.pathParams.agentId"
+            },
+            "output": {
+              "data": "=$.data",
+              "code": "=$.code"
+            },
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:get_agent_config"
+            }
+          },
+          "reply": {
+            "code": 0,
+            "configureResponseCodes": false,
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
+            "responseBody": {},
+            "responseCodesSchema": {},
+            "message": ""
+          },
+          "name": "get_agent_config",
+          "description": "Get flat agent config for runtime use",
+          "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
+            "output": {
+              "pathParams": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"agentId\",\"type\":\"string\"}]"
+              },
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              }
+            }
+          }
         }
       ]
     }
@@ -448,7 +507,7 @@
               "settings": {
                 "mappings": {
                   "code": 201,
-                  "data": "=$activity[InsertAgent].Output"
+                  "data": "=$activity[InsertAgent].Output.records[0]"
                 }
               }
             }
@@ -537,7 +596,7 @@
               "input": {
                 "Connection": "conn://design-db",
                 "Schema": "public",
-                "Query": "SELECT id, name, description, status, config::text as config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
+                "Query": "SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
                 "manualmode": false,
                 "State": "08b2ee28-918b-4127-a95c-de11c2717832SELECT id, name, description, status, config::text as config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
                 "input": {
@@ -559,7 +618,7 @@
               "settings": {
                 "mappings": {
                   "code": 200,
-                  "data": "=$activity[SelectAgent].Output"
+                  "data": "=$activity[SelectAgent].Output.records[0]"
                 }
               }
             }
@@ -636,7 +695,7 @@
               "input": {
                 "Connection": "conn://design-db",
                 "Schema": "public",
-                "Query": "SELECT id, name, description, status, config::text as config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC",
+                "Query": "SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC",
                 "manualmode": false
               }
             }
@@ -1088,6 +1147,105 @@
         },
         "explicitReply": true
       }
+    },
+    {
+      "id": "flow:get_agent_config",
+      "data": {
+        "name": "get_agent_config",
+        "description": "Flogo Flow created with Flogo Design",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "SelectAgentConfig",
+            "type": "label",
+            "label": "StartActivity to SelectAgentConfig"
+          },
+          {
+            "id": 2,
+            "from": "SelectAgentConfig",
+            "to": "Return",
+            "type": "label",
+            "label": "SelectAgentConfig to Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp Activity",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "activity": {
+              "input": {
+                "Connection": "conn://design-db",
+                "QueryName": "",
+                "Schema": "public",
+                "Query": "SELECT config->>'collectionName' as \"collectionName\", config->>'topK' as \"topK\", config->>'systemPrompt' as \"systemPrompt\", config->>'llmProvider' as \"llmProvider\", config->>'llmModel' as \"llmModel\", config->>'llmBaseUrl' as \"llmBaseUrl\", config->>'temperature' as \"temperature\", config->>'chunkStrategy' as \"chunkStrategy\" FROM agents WHERE id = ?agentId",
+                "manualmode": false,
+                "fetchMetadata": "",
+                "input": {
+                  "mapping": {
+                    "parameters": {
+                      "agentId": "=$flow.agentId"
+                    }
+                  }
+                },
+                "Fields": [],
+                "RuntimeQuery": "",
+                "State": ""
+              },
+              "ref": "#query"
+            },
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
+            "id": "SelectAgentConfig",
+            "name": "SelectAgentConfig",
+            "description": "PostgreSQL postgresql-query Activity"
+          },
+          {
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": "=$activity[SelectAgentConfig].Output.records[0]"
+                }
+              }
+            },
+            "id": "Return",
+            "name": "Return",
+            "description": "Simple Return Activity"
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "agentId",
+              "type": "string"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "float64"
+            },
+            {
+              "name": "data",
+              "type": "object"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
     }
   ],
   "properties": [
@@ -1188,7 +1346,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby93aS1wb3N0Z3Jlcy9zcmMvYXBwL1Bvc3RncmVTUUwiLCJpZCI6IlBvc3RncmVTUUwiLCJ2ZXJzaW9uIjoiMi43LjEiLCJ0YWciOiIyLjcuMS1iMDEiLCJuYW1lIjoiUG9zdGdyZVNRTCIsInMzbG9jYXRpb24iOiJUaWJjby9Qb3N0Z3JlU1FMIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL3dpLXBvc3RncmVzL3NyYy9hcHAvUG9zdGdyZVNRTCIsImlkIjoiUG9zdGdyZVNRTCIsInZlcnNpb24iOiIyLjcuMSIsInRhZyI6IjIuNy4xLWIwMSIsIm5hbWUiOiJUSUJDTyBGbG9nbyBjb25uZWN0b3IgZm9yIFBvc3RncmVTUUwiLCJzM2xvY2F0aW9uIjoiVGliY28vUG9zdGdyZVNRTCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9XQ==",
   "metadata": {
     "endpoints": [
       {
@@ -1204,7 +1362,7 @@
           "info": {
             "title": "design-service",
             "version": "1.0.0",
-            "description": "REST trigger — design-service on port 7020"
+            "description": "REST trigger \u2014 design-service on port 7020"
           },
           "paths": {
             "/api/v1/agents": {

@@ -1304,7 +1304,7 @@
       "name": "CONFIG_SERVICE_BASE_URL",
       "type": "string",
       "description": "Config service base URL. Override at deployment.",
-      "value": "http://localhost:7004"
+      "value": "http://localhost:7020"
     },
     {
       "name": "FEEDBACK_SERVICE_URL",

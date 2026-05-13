@@ -11,7 +11,8 @@
     "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/string",
     "github.com/mpandav-tibco/flogo-extensions/vectordb/connector",
-    "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/connector/llmprovider"
+    "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/connector/llmprovider",
+    "github.com/mpandav-tibco/flogo-extensions/function/string"
   ],
   "name": "agent-chat-service",
   "description": "AI agent chat service. Accepts a user message, performs hybrid RAG retrieval, and generates an LLM answer. Part of Flogo Agent Studio.",
@@ -291,7 +292,7 @@
               "ref": "#act_rest",
               "input": {
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"CONFIG_SERVICE_URL\"], \"/api/agents/\", coerce.toString($flow.body.agentId))",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.body.agentId), \"/config\")",
                 "headers": {
                   "Content-Type": "application/json",
                   "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
@@ -339,7 +340,7 @@
               "input": {
                 "queryText": "=$flow.body.message",
                 "collectionName": "=$activity[GetAgentConfig].responseBody.collectionName",
-                "topK": "=$activity[GetAgentConfig].responseBody.topK",
+                "topK": "=coerce.toInt($activity[GetAgentConfig].responseBody.topK)",
                 "systemPrompt": "=$activity[GetAgentConfig].responseBody.systemPrompt"
               }
             }
@@ -830,6 +831,11 @@
       "type": "string",
       "description": "Pre-computed Authorization header for outbound calls. Matches API_KEY=changeme by default.",
       "value": "Basic ZmxvZ286Y2hhbmdlbWU="
+    },
+    {
+      "name": "DESIGN_SERVICE_URL",
+      "type": "string",
+      "value": "http://localhost:7020"
     }
   ],
   "connections": {
@@ -874,7 +880,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuYyIsImlkIjoiVmVjdG9yREIiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJWZWN0b3JEQiBSQUcgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tYWktYWdlbnQvc3JjL2FwcC9BZ2VudGljQUkiLCJpZCI6IkFnZW50aWNBSSIsInZlcnNpb24iOiIwLjkuMSIsInRhZyI6IjAuOS4xLWIwMiIsIm5hbWUiOiJUSUJDTyBGbG9nb8KuIENvbm5lY3RvciBmb3IgQWdlbnRpYyBBSSAoVGVjaCBQcmV2aWV3KSIsInMzbG9jYXRpb24iOiJUaWJjby9BZ2VudGljQUkiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfV0=",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuYyIsImlkIjoiVmVjdG9yREIiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJWZWN0b3JEQiBSQUcgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tYWktYWdlbnQvc3JjL2FwcC9BZ2VudGljQUkiLCJpZCI6IkFnZW50aWNBSSIsInZlcnNpb24iOiIwLjkuMCIsInRhZyI6IjAuOS4wLWIwMyIsIm5hbWUiOiJUSUJDTyBGbG9nb8KuIENvbm5lY3RvciBmb3IgQWdlbnRpYyBBSSAoVGVjaCBQcmV2aWV3KSIsInMzbG9jYXRpb24iOiJUaWJjby9BZ2VudGljQUkiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfV0=",
   "metadata": {
     "endpoints": [
       {

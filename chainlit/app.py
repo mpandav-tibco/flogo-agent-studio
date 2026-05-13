@@ -2,7 +2,7 @@
 Flogo Agent Studio — Chainlit UI (port 7080)
 
 Thin proxy to the Flogo Agent Studio REST services:
-  - config-service     (port 7004) — multi-agent registry
+  - design-service     (port 7020) — PostgreSQL-backed agent registry (single source of truth)
   - agent-chat-service (port 7001) — RAG chat + agentactivity
   - feedback-service   (port 7003) — thumbs-up/down ratings
 """
@@ -15,7 +15,7 @@ import chainlit as cl
 
 # ── Service endpoints ──────────────────────────────────────────────────────────
 
-CONFIG_URL   = os.getenv("CONFIG_SERVICE_URL",   "http://localhost:7004")
+DESIGN_URL   = os.getenv("DESIGN_SERVICE_URL",   "http://localhost:7020")
 CHAT_URL     = os.getenv("CHAT_SERVICE_URL",     "http://localhost:7001")
 FEEDBACK_URL = os.getenv("FEEDBACK_SERVICE_URL", "http://localhost:7003")
 
@@ -28,47 +28,34 @@ _AUTH_HEADER = {"Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="}
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 async def fetch_agents() -> list[dict]:
-    """Load all registered agents from config-service.
+    """Load active agents from design-service (PostgreSQL-backed, single source of truth).
 
-    config-service list_agents returns a raw JSON array of file metadata entries.
-    Each entry has a fileName like "default.json". We extract the agentId then call
-    get_agent for each to hydrate the full config object.
+    Returns only agents with status='active', with config fields flattened for easy access.
     """
     async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
-        # Step 1: list agent files
-        resp = await client.get(f"{CONFIG_URL}/api/agents", headers=_AUTH_HEADER)
+        resp = await client.get(f"{DESIGN_URL}/api/v1/agents", headers=_AUTH_HEADER)
         resp.raise_for_status()
         body = resp.json()
-        # config-service returns a raw list, not {"agents": [...]}
-        file_entries = body if isinstance(body, list) else body.get("agents", [])
+        records = body if isinstance(body, list) else body.get("records", [])
 
-        # Extract agent IDs from filenames ("default.json" → "default")
-        agent_ids: list[str] = []
-        for entry in file_entries:
-            fname = entry.get("fileName") or entry.get("name") or ""
-            if fname.endswith(".json"):
-                agent_ids.append(fname[:-5])
-
-        if not agent_ids:
-            return []
-
-        # Step 2: hydrate each agent config
         agents: list[dict] = []
-        for agent_id in agent_ids:
-            try:
-                r = await client.get(
-                    f"{CONFIG_URL}/api/agents/{agent_id}",
-                    headers=_AUTH_HEADER,
-                )
-                if r.status_code == 200:
-                    data = r.json()
-                    config_raw = data.get("config", "{}")
-                    config = json.loads(config_raw) if isinstance(config_raw, str) else config_raw
-                    if not config.get("id"):
-                        config["id"] = agent_id
-                    agents.append(config)
-            except Exception as exc:
-                print(f"[Chainlit] could not load agent '{agent_id}': {exc}")
+        for a in records:
+            if a.get("status") != "active":
+                continue
+            cfg = a.get("config", {})
+            if isinstance(cfg, str):
+                try:
+                    cfg = json.loads(cfg)
+                except Exception:
+                    cfg = {}
+            agents.append({
+                "id": a["id"],
+                "name": a.get("name", a["id"]),
+                "description": a.get("description", ""),
+                "collectionName": cfg.get("collectionName", ""),
+                "topK": cfg.get("topK", 5),
+                "systemPrompt": cfg.get("systemPrompt", ""),
+            })
 
         return agents
 
@@ -142,7 +129,7 @@ async def on_chat_start():
         agents = await fetch_agents()
     except Exception as exc:
         await cl.Message(
-            content=f"Could not reach config-service ({CONFIG_URL}): {exc}\n\nEnsure all Flogo services are running.",
+            content=f"Could not reach design-service ({DESIGN_URL}): {exc}\n\nEnsure all Flogo services are running.",
             author="System",
         ).send()
         agents = []
