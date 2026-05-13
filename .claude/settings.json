@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 30,
+            "command": "python -c \"import sys,json,subprocess; data=json.load(sys.stdin); cmd=data.get('tool_input',{}).get('command',''); r=subprocess.run(['python','smoke_test.py'],capture_output=True,text=True,timeout=20,cwd='c:/Users/mpandav/Downloads/Work/TIBCO/git/flogo-agent-studio') if 'flogobuild' in cmd and 'build-exe' in cmd else None; out=r.stdout+r.stderr if r else ''; print(json.dumps({'systemMessage':'Smoke test after build:\\n'+out})) if r else None\""
+          }
+        ]
+      }
+    ]
+  }
+}
