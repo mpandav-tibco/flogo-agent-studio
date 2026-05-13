@@ -87,11 +87,11 @@ export const undeployAgent = (id: string): Promise<{ records: DeployStatus[] }> 
 export const getDeployStatus = (id: string): Promise<{ records: DeployStatus[] }> =>
   get(`${BASE}/${id}/deploy`).then(json<{ records: DeployStatus[] }>);
 
-export const exportKubernetes = (id: string): Promise<{ records: unknown[] }> =>
-  get(`${BASE}/${id}/export/kubernetes`).then(json<{ records: unknown[] }>);
+export const exportKubernetes = (id: string): Promise<string> =>
+  get(`${BASE}/${id}/export/kubernetes`).then((r) => r.text());
 
-export const exportDockerCompose = (id: string): Promise<{ records: unknown[] }> =>
-  get(`${BASE}/${id}/export/docker-compose`).then(json<{ records: unknown[] }>);
+export const exportDockerCompose = (id: string): Promise<string> =>
+  get(`${BASE}/${id}/export/docker-compose`).then((r) => r.text());
 
 // ── Feedback ──────────────────────────────────────────────────────────────────
 

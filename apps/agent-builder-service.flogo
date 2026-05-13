@@ -642,7 +642,7 @@
                 "Timeout": 0,
                 "headers": {
                   "mapping": {
-                    "Accept": "text/plain",
+                    "Accept": "application/json",
                     "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
                   }
                 }
@@ -650,7 +650,7 @@
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
-                "responseType": "application/json",
+                "responseType": "text/plain",
                 "responseOutput": "Raw"
               },
               "feSchemaMap": {}

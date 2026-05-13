@@ -206,13 +206,9 @@ export default function Editor() {
     mutationFn: ({ format }: { format: "kubernetes" | "docker-compose" }) =>
       format === "kubernetes" ? exportKubernetes(id!) : exportDockerCompose(id!),
     onSuccess: (data, { format }) => {
-      const records = data.records ?? [];
-      const content = records.length > 0
-        ? (typeof records[0] === "string" ? records[0] : JSON.stringify(records[0], null, 2))
-        : "(no content returned)";
       setExportContent({
         title: format === "kubernetes" ? "Kubernetes YAML" : "Docker Compose YAML",
-        content,
+        content: typeof data === "string" ? data : JSON.stringify(data, null, 2),
       });
     },
   });

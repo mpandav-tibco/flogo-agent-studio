@@ -298,13 +298,15 @@ banner(f"PHASE 5 - AGENT-CHAT-SERVICE (port 7001): RAG query against '{COLLECTIO
 QUESTION = "What AgenticAI activities does TIBCO Flogo provide for building AI agents?"
 
 step(5, f"Ask RAG question: '{QUESTION}'")
-chat_payload = {"message": QUESTION, "collectionName": COLLECTION}
+# /api/chat uses the 'chat' flow which looks up collectionName/topK from config-service
+# using agentId — send agentId, not collectionName directly
+chat_payload = {"message": QUESTION, "agentId": AGENT_ID, "sessionId": "e2e-journey-001"}
 print(f"       REQUEST : POST http://localhost:7001/api/chat")
 print(f"       BODY    : message='{QUESTION}'")
-print(f"       BODY    : collectionName={COLLECTION}")
+print(f"       BODY    : agentId={AGENT_ID}  (fetches collectionName/topK from config-service)")
 print(f"       PIPELINE: embed query -> search Weaviate -> rerank -> build answer")
 LOG.append(f"       REQUEST: POST /api/chat body={json.dumps(chat_payload)}")
-s, chat_resp, el = req("http://localhost:7001/api/chat", "POST", chat_payload)
+s, chat_resp, el = req("http://localhost:7001/api/chat", "POST", chat_payload, timeout=180)
 ok = show_result(s, el)
 ANSWER = ""
 if ok and isinstance(chat_resp, dict):
@@ -419,23 +421,23 @@ LOG.append(f"       RESPONSE: {body}")
 
 step(10, "Stream chat: full RAG+LLM pipeline with async SSE event emission")
 stream_payload = {
-    "message":        QUESTION,
-    "collectionName": COLLECTION,
-    "sessionId":      "e2e-journey-001"
+    "message":   QUESTION,
+    "agentId":   AGENT_ID,
+    "sessionId": "e2e-journey-001"
 }
 print(f"       REQUEST : POST http://localhost:7005/api/stream/chat")
 print(f"       BODY    : message='{QUESTION[:70]}'")
-print(f"       BODY    : collectionName={COLLECTION}  sessionId=e2e-journey-001")
+print(f"       BODY    : agentId={AGENT_ID}  sessionId=e2e-journey-001")
 print(f"       INTERNAL PIPELINE:")
 print(f"         1) EmitStart     -> SSE event 'stream.start' -> /events:7099")
 print(f"         2) CallRAG       -> POST http://localhost:7001/api/chat (agent-chat-service)")
 print(f"                            -> Weaviate embed + search + answer")
-print(f"         3) RunLLM        -> nemotron-3-nano:30b (context + question -> response)")
+print(f"         3) RunLLM        -> llama3.2:3b (context + question -> response)")
 print(f"         4) EmitAnswer    -> SSE event 'stream.answer' -> /events:7099")
 print(f"         5) EmitDone      -> SSE event 'stream.done'   -> /events:7099")
 print(f"         6) Return        -> HTTP 202 {{streaming:true, eventsUrl:/events}}")
 LOG.append(f"       REQUEST: POST /api/stream/chat body={json.dumps(stream_payload)}")
-s, body, el = req("http://localhost:7005/api/stream/chat", "POST", stream_payload, timeout=60)
+s, body, el = req("http://localhost:7005/api/stream/chat", "POST", stream_payload, timeout=180)
 ok = show_result(s, el)
 if ok and isinstance(body, dict):
     print(f"       RESPONSE: {body}")
@@ -511,7 +513,7 @@ TOOL_CALLS = [
      {"agentId": AGENT_ID},
      6, "feedback-service:7003 -> GET /api/feedback/{id}"),
     ("rag_chat",
-     {"message": QUESTION, "collectionName": COLLECTION},
+     {"message": QUESTION, "agentId": AGENT_ID, "sessionId": "mcp-journey-001"},
      7, "agent-chat-service:7001 -> POST /api/chat (RAG pipeline)"),
     ("analyze_flogo",
      {"content": json.dumps(FLOGO_SAMPLE), "fileName": "agent-studio-app.flogo", "rulesPath": "rules/", "tags": "mcp-journey"},
@@ -606,13 +608,16 @@ s, ds_body, el = req(f"{DS_BASE}/agents", "POST", ds_agent_payload)
 ok = show_result(s, el, ok_codes=(200, 201))
 DS_AGENT_ID = None
 if ok and isinstance(ds_body, dict):
-    DS_AGENT_ID = ds_body.get("id")
+    # design-service wraps results in {"records": [...]}
+    records = ds_body.get("records", [])
+    agent_rec = records[0] if records else ds_body
+    DS_AGENT_ID = agent_rec.get("id")
     print(f"       RESPONSE:")
-    print(f"         id              : {ds_body.get('id')}")
-    print(f"         name            : {ds_body.get('name')}")
-    print(f"         status          : {ds_body.get('status')}")
-    print(f"         version         : {ds_body.get('version')}")
-    LOG.append(f"       RESPONSE: {ds_body}")
+    print(f"         id              : {agent_rec.get('id')}")
+    print(f"         name            : {agent_rec.get('name')}")
+    print(f"         status          : {agent_rec.get('status')}")
+    print(f"         version         : {agent_rec.get('version')}")
+    LOG.append(f"       RESPONSE: {agent_rec}")
 else:
     print(f"       ERROR: {ds_body}"); all_ok = False
 
@@ -623,11 +628,12 @@ if DS_AGENT_ID:
     s, ds_get, el = req(f"{DS_BASE}/agents/{DS_AGENT_ID}")
     ok = show_result(s, el)
     if ok and isinstance(ds_get, dict):
+        rec = (ds_get.get("records") or [ds_get])[0]
         print(f"       RESPONSE:")
-        print(f"         id              : {ds_get.get('id')}")
-        print(f"         status          : {ds_get.get('status')}")
-        print(f"         version         : {ds_get.get('version')}")
-        LOG.append(f"       RESPONSE: {ds_get}")
+        print(f"         id              : {rec.get('id')}")
+        print(f"         status          : {rec.get('status')}")
+        print(f"         version         : {rec.get('version')}")
+        LOG.append(f"       RESPONSE: {rec}")
     else:
         print(f"       ERROR: {ds_get}"); all_ok = False
 
@@ -637,9 +643,10 @@ if DS_AGENT_ID:
     LOG.append(f"       REQUEST: PUT /api/v1/agents/{DS_AGENT_ID}")
     s, ds_upd, el = req(f"{DS_BASE}/agents/{DS_AGENT_ID}", "PUT", ds_upd_payload)
     ok = show_result(s, el)
-    if ok:
-        print(f"       RESPONSE: version={ds_upd.get('version') if isinstance(ds_upd, dict) else '?'}")
-        LOG.append(f"       RESPONSE: {ds_upd}")
+    if ok and isinstance(ds_upd, dict):
+        rec = (ds_upd.get("records") or [ds_upd])[0]
+        print(f"       RESPONSE: version={rec.get('version','?')}  status={rec.get('status','?')}")
+        LOG.append(f"       RESPONSE: {rec}")
 
     step(22, "List all templates")
     print(f"       REQUEST : GET {DS_BASE}/templates")
@@ -647,7 +654,9 @@ if DS_AGENT_ID:
     s, ds_tpl, el = req(f"{DS_BASE}/templates")
     ok = show_result(s, el, ok_codes=(200,))
     if ok:
-        count = len(ds_tpl) if isinstance(ds_tpl, list) else "?"
+        # templates may come as list or {records:[...]}
+        recs = ds_tpl.get("records", ds_tpl) if isinstance(ds_tpl, dict) else ds_tpl
+        count = len(recs) if isinstance(recs, list) else "?"
         print(f"       RESPONSE: {count} template(s)")
         LOG.append(f"       RESPONSE: {count} templates")
 
