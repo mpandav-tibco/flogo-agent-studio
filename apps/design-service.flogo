@@ -22,7 +22,7 @@
     {
       "ref": "#rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger \u2014 design-service on port 7020",
+      "description": "REST trigger — design-service on port 7020",
       "settings": {
         "port": 7020,
         "APISpecUpdate": false,
@@ -536,11 +536,11 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
-              "name": "message",
-              "type": "string"
+              "name": "data",
+              "type": "object"
             }
           ],
           "fe_metadata": {
@@ -1362,7 +1362,7 @@
           "info": {
             "title": "design-service",
             "version": "1.0.0",
-            "description": "REST trigger \u2014 design-service on port 7020"
+            "description": "REST trigger — design-service on port 7020"
           },
           "paths": {
             "/api/v1/agents": {
