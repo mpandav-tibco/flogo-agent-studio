@@ -82,7 +82,7 @@ agent-chat-service :7001
     |                       --> Weaviate :8080 (BM25 + vector hybrid search)
     |                       <-- top-K chunks
     |-- [AgentActivity] build prompt + call LLM
-    |                   --> Ollama :11434 (nemotron-3-nano:30b or user-chosen model)
+    |                   --> Ollama :11434 (llama3.2:3b or user-chosen model)
     |                   <-- generated answer
     |-- [actreturn] HTTP 200 {answer, duration, error}
 ```
@@ -94,7 +94,7 @@ POST /api/stream/chat  (sse-stream-service :7005)
     |-- [Log] session/collection metadata
     |-- [SSE Send] emit "stream.start" event --> :7099/events
     |-- [REST] POST agent-chat-service :7001/api/chat  (RAG answer)
-    |-- [AgentActivity] RunLLM: context-aware response (nemotron-3-nano:30b)
+    |-- [AgentActivity] RunLLM: context-aware response (llama3.2:3b)
     |                   Agent SDK: input=112 tok, output=98 tok, 1074ms
     |-- [SSE Send] emit "stream.answer" event --> :7099/events
     |-- [SSE Send] emit "stream.done"   event --> :7099/events

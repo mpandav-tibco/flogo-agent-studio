@@ -8,7 +8,8 @@
     "act_general_rest github.com/tibco/flogo-general/src/app/General/activity/rest",
     "act_mcptoolresult github.com/mpandav-tibco/flogo-extensions/mcptoolresult",
     "string github.com/project-flogo/contrib/function/string",
-    "coerce github.com/project-flogo/contrib/function/coerce"
+    "coerce github.com/project-flogo/contrib/function/coerce",
+    "github.com/mpandav-tibco/flogo-extensions/function/string"
   ],
   "name": "mcp-server",
   "description": "Flogo Agent Studio MCP Server. Exposes all Phase 1 services as MCP tools for Claude, Cursor, and any MCP client. Registered in .mcp.json as 'flogo-dev-assist'. Part of Flogo Agent Studio Phase 2.",
@@ -63,6 +64,13 @@
                 "value": "{\"type\": \"object\", \"properties\": {\"content\": {\"type\": \"string\", \"description\": \"The raw .flogo file content (JSON string)\"}, \"fileName\": {\"type\": \"string\", \"description\": \"Logical file name for context (e.g. my-app.flogo)\"}, \"rulesPath\": {\"type\": \"string\", \"description\": \"Optional: path to YAML rules directory override\"}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"description\": \"Optional: filter rules by tag\"}}, \"required\": [\"content\"]}"
               }
             }
+          },
+          "reply": {
+            "response": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           }
         },
         {
@@ -93,6 +101,13 @@
                 "value": "{\"type\": \"object\", \"properties\": {\"sessionId\": {\"type\": \"string\", \"description\": \"Conversation session ID for multi-turn context\"}, \"topK\": {\"type\": \"integer\", \"description\": \"Max source documents to retrieve (default: 5)\"}, \"message\": {\"type\": \"string\", \"description\": \"The user query/message\"}, \"collectionName\": {\"type\": \"string\", \"description\": \"The vector collection name (from get_agent.collectionName)\"}}, \"required\": [\"message\"]}"
               }
             }
+          },
+          "reply": {
+            "response": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           }
         },
         {
@@ -120,6 +135,13 @@
                 "type": "json",
                 "value": "{\"type\": \"object\", \"properties\": {}}"
               }
+            }
+          },
+          "reply": {
+            "response": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
             }
           }
         },
@@ -151,6 +173,13 @@
                 "value": "{\"type\": \"object\", \"properties\": {\"agentId\": {\"type\": \"string\", \"description\": \"The agent identifier\"}}, \"required\": [\"agentId\"]}"
               }
             }
+          },
+          "reply": {
+            "response": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           }
         },
         {
@@ -181,6 +210,13 @@
                 "value": "{\"type\": \"object\", \"properties\": {\"agentId\": {\"type\": \"string\"}, \"sessionId\": {\"type\": \"string\"}, \"messageId\": {\"type\": \"string\"}, \"rating\": {\"type\": \"string\", \"enum\": [\"thumbsUp\", \"thumbsDown\"]}, \"comment\": {\"type\": \"string\"}}, \"required\": [\"agentId\", \"sessionId\", \"messageId\", \"rating\"]}"
               }
             }
+          },
+          "reply": {
+            "response": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           }
         },
         {
@@ -208,6 +244,13 @@
                 "type": "json",
                 "value": "{\"type\": \"object\", \"properties\": {}}"
               }
+            }
+          },
+          "reply": {
+            "response": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
             }
           }
         },
@@ -401,7 +444,7 @@
           ],
           "output": [
             {
-              "name": "result",
+              "name": "response",
               "type": "any"
             }
           ]
@@ -506,7 +549,7 @@
           ],
           "output": [
             {
-              "name": "result",
+              "name": "response",
               "type": "any"
             }
           ]
@@ -605,7 +648,7 @@
           "input": [],
           "output": [
             {
-              "name": "result",
+              "name": "response",
               "type": "any"
             }
           ]
@@ -709,7 +752,7 @@
           ],
           "output": [
             {
-              "name": "result",
+              "name": "response",
               "type": "any"
             }
           ]
@@ -814,7 +857,7 @@
           ],
           "output": [
             {
-              "name": "result",
+              "name": "response",
               "type": "any"
             }
           ]
@@ -913,7 +956,7 @@
           "input": [],
           "output": [
             {
-              "name": "result",
+              "name": "response",
               "type": "any"
             }
           ]
@@ -1306,7 +1349,7 @@
     }
   ],
   "connections": {},
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLW1jcC9zcmMvYXBwL01DUCIsImlkIjoiTUNQRmxvZ28iLCJ2ZXJzaW9uIjoiMS4wLjIiLCJ0YWciOiIxLjAuMi1iMDEiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIE1vZGVsIENvbnRleHQgUHJvdG9jb2wgKE1DUCkiLCJzM2xvY2F0aW9uIjoibG9jYWwvTUNQRmxvZ28iLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfV0=",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLW1jcC9zcmMvYXBwL01DUCIsImlkIjoiTUNQRmxvZ28iLCJ2ZXJzaW9uIjoiMS4wLjIiLCJ0YWciOiIxLjAuMi1iMDEiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIE1vZGVsIENvbnRleHQgUHJvdG9jb2wgKE1DUCkiLCJzM2xvY2F0aW9uIjoibG9jYWwvTUNQRmxvZ28iLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tbWNwL3NyYy9hcHAvTUNQIiwiaWQiOiJNQ1AiLCJ2ZXJzaW9uIjoiMS4wLjEiLCJ0YWciOiIxLjAuMS1iMDIiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIE1vZGVsIENvbnRleHQgUHJvdG9jb2wgKE1DUCkiLCJzM2xvY2F0aW9uIjoiVGliY28vTUNQIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
   "metadata": {
     "endpoints": [],
     "flogoVersion": "2.26.3"
