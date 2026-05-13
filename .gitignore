@@ -23,6 +23,15 @@ chainlit/.chainlit/
 # ── Flogo design history ──────────────────────────────────────────────────────
 .flogodesign/
 
+# ── Runtime-created agents (UUID names from design-service) ──────────────────
+agents/*-*-*-*-*.json
+agents/test-*.json
+
+# ── Forge build artifacts ─────────────────────────────────────────────────────
+forge/dist/
+forge/node_modules/
+forge/tsconfig.*.tsbuildinfo
+
 # ── OS / editor noise ─────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
