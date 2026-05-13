@@ -19,6 +19,14 @@ import type { Agent, AgentConfig, FeedbackRecord, GeneratedConfig } from "../typ
 
 const PROVIDER_OPTIONS = ["Ollama", "OpenAI", "Anthropic", "Groq", "Custom"];
 
+const CHUNK_STRATEGY_OPTIONS = [
+  { value: "sentence",  label: "Sentence — Best for Q&A / RAG (recommended)" },
+  { value: "paragraph", label: "Paragraph — Dense prose documents" },
+  { value: "heading",   label: "Heading — Structured docs / wikis" },
+  { value: "fixed",     label: "Fixed — Unstructured / fixed-size chunks" },
+  { value: "none",      label: "None — Pre-chunked content" },
+];
+
 const PROVIDER_MODEL_HINTS: Record<string, string> = {
   Ollama:    "llama3.2:3b · llama3.1:8b · deepseek-r1:latest",
   OpenAI:    "gpt-4o · gpt-4o-mini · gpt-3.5-turbo",
@@ -33,6 +41,7 @@ interface FormState {
   systemPrompt: string;
   collectionName: string;
   topK: string;
+  chunkStrategy: string;
   llmProvider: string;
   llmModel: string;
   llmBaseUrl: string;
@@ -45,6 +54,7 @@ const DEFAULTS: FormState = {
   systemPrompt: "",
   collectionName: "",
   topK: "5",
+  chunkStrategy: "sentence",
   llmProvider: "Ollama",
   llmModel: "",
   llmBaseUrl: "http://localhost:11434",
@@ -59,6 +69,7 @@ function toFormState(agent: Agent): FormState {
     systemPrompt: c.systemPrompt ?? "",
     collectionName: c.collectionName ?? "",
     topK: String(c.topK ?? 5),
+    chunkStrategy: c.chunkStrategy ?? "sentence",
     llmProvider: c.llmProvider ?? "Ollama",
     llmModel: c.llmModel ?? "",
     llmBaseUrl: c.llmBaseUrl ?? "http://localhost:11434",
@@ -71,6 +82,7 @@ function toConfig(form: FormState): AgentConfig {
     systemPrompt: form.systemPrompt || undefined,
     collectionName: form.collectionName || undefined,
     topK: form.topK ? Number(form.topK) : undefined,
+    chunkStrategy: form.chunkStrategy || undefined,
     llmProvider: form.llmProvider || undefined,
     llmModel: form.llmModel || undefined,
     llmBaseUrl: form.llmBaseUrl || undefined,
@@ -87,6 +99,7 @@ function applyGenerated(form: FormState, gen: GeneratedConfig): FormState {
     systemPrompt: c.systemPrompt ?? form.systemPrompt,
     collectionName: c.collectionName ?? form.collectionName,
     topK: c.topK != null ? String(c.topK) : form.topK,
+    chunkStrategy: c.chunkStrategy ?? form.chunkStrategy,
     llmProvider: c.llmProvider ?? form.llmProvider,
     llmModel: c.llmModel ?? form.llmModel,
     llmBaseUrl: c.llmBaseUrl ?? form.llmBaseUrl,
@@ -343,6 +356,16 @@ export default function Editor() {
                 onChange={set("topK")}
                 className="input"
               />
+            </Field>
+            <Field label="Chunk Strategy">
+              <select value={form.chunkStrategy} onChange={set("chunkStrategy")} className="input">
+                {CHUNK_STRATEGY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400 mt-0.5">
+                How documents are split before embedding. Applied at ingest time.
+              </p>
             </Field>
           </section>
 

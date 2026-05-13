@@ -12,7 +12,8 @@
     "con_aws github.com/tibco/flogo-aws/src/app/AWS/connector",
     "act_aws_s3get github.com/tibco/wi-amazons3/src/app/AmazonS3/activity/get",
     "coerce github.com/project-flogo/contrib/function/coerce",
-    "string github.com/project-flogo/contrib/function/string"
+    "string github.com/project-flogo/contrib/function/string",
+    "github.com/mpandav-tibco/flogo-extensions/function/string"
   ],
   "name": "ingestion-service",
   "description": "Knowledge base ingestion service. Ensures VectorDB collections exist and ingests documents with chunking and embedding. Part of Flogo Agent Studio.",
@@ -388,7 +389,7 @@
             "activity": {
               "settings": {
                 "connection": "conn://vectordb-weaviate",
-                "chunkStrategy": "=$property[\"CHUNK_STRATEGY\"]",
+                "chunkStrategy": "=$flow.body.chunkStrategy",
                 "useConnectorEmbedding": true,
                 "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]"
               },
@@ -1311,7 +1312,7 @@
       "name": "CHUNK_STRATEGY",
       "type": "string",
       "description": "Document chunking strategy: heading | paragraph | sentence | fixed | none",
-      "value": "heading"
+      "value": "sentence"
     },
     {
       "name": "SERVICE_VERSION",
@@ -1348,7 +1349,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL21wYW5kYXYtdGliY28vZmxvZ28tZXh0ZW5zaW9ucy92ZWN0b3JkYiIsImlkIjoiVmVjdG9yREIiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJWZWN0b3JEQiBSQUcgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6ImxvY2FsL1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tYXdzL3NyYy9hcHAvQVdTIiwiaWQiOiJBV1MiLCJ2ZXJzaW9uIjoiMS4yLjIiLCJ0YWciOiIxLjIuMi1iMDIiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIEFXUyIsInMzbG9jYXRpb24iOiJUaWJjby9BV1MiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vd2ktYW1hem9uczMvc3JjL2FwcC9BbWF6b25TMyIsImlkIjoiQW1hem9uUzMiLCJ2ZXJzaW9uIjoiMS4zLjEiLCJ0YWciOiIxLjMuMS1iMDIiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIEFtYXpvblMzIiwiczNsb2NhdGlvbiI6IlRpYmNvL0FtYXpvblMzIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL21wYW5kYXYtdGliY28vZmxvZ28tZXh0ZW5zaW9ucy92ZWN0b3JkYiIsImlkIjoiVmVjdG9yREIiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJWZWN0b3JEQiBSQUcgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6ImxvY2FsL1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tYXdzL3NyYy9hcHAvQVdTIiwiaWQiOiJBV1MiLCJ2ZXJzaW9uIjoiMS4yLjIiLCJ0YWciOiIxLjIuMi1iMDIiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIEFXUyIsInMzbG9jYXRpb24iOiJUaWJjby9BV1MiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vd2ktYW1hem9uczMvc3JjL2FwcC9BbWF6b25TMyIsImlkIjoiQW1hem9uUzMiLCJ2ZXJzaW9uIjoiMS4zLjEiLCJ0YWciOiIxLjMuMS1iMDIiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIEFtYXpvbiBTMyIsInMzbG9jYXRpb24iOiJUaWJjby9BbWF6b25TMyIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9XQ==",
   "metadata": {
     "endpoints": [],
     "flogoVersion": "2.26.3"

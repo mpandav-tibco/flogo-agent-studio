@@ -217,6 +217,7 @@ DOC_TEXT = (
 step(3, f"Ingest AgenticAI capabilities document -> '{COLLECTION}' (Weaviate)")
 ingest_payload = {
     "collectionName": COLLECTION,
+    "chunkStrategy": "sentence",
     "documents": [{
         "text": DOC_TEXT,
         "metadata": {"source": "e2e-journey", "topic": "AgenticAI", "timestamp": ts()}

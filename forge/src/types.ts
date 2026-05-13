@@ -6,6 +6,7 @@ export interface AgentConfig {
   llmModel?: string;
   llmBaseUrl?: string;
   temperature?: number;
+  chunkStrategy?: string;
 }
 
 export interface Agent {
