@@ -1,6 +1,6 @@
 # Flogo Agent Studio — End-to-End Test Report
 
-**Date:** 2026-05-13  
+**Last Updated:** 2026-05-13 (Session 3 — Registry Unification + Validation)  
 **Platform:** TIBCO Flogo 2.26.3  
 **Build Context:** flogo-v2263-2498  
 **LLM Backend:** Ollama (local)  
@@ -8,6 +8,76 @@
 **Chat/Agent Model:** `llama3.2:3b`  
 **VectorDB:** Weaviate (local)  
 **Auth:** Basic Auth — `Authorization: Basic ZmxvZ286Y2hhbmdlbWU=` (`flogo:changeme`)
+
+---
+
+## Session 3 — 2026-05-13: Registry Unification + Validation Pass
+
+### Overview
+
+This session completed two major workstreams:
+
+1. **FDA Validation Pass** — All 10 Flogo apps validated with `fda check-mappings (cm)`. 7/10 fully clean; 3 have pre-existing `TR_REST_NO_SWAGGER` (ingestion, sse-stream, deploy).
+2. **Registry Unification** — design-service (port 7020, PostgreSQL) is now the single source of truth for agent config. agent-chat-service and sse-stream-service now read from design-service instead of config-service.
+
+### Validation Results
+
+| App | Status | Issues Fixed | Pre-existing |
+|-----|--------|-------------|-------------|
+| design-service.flogo | ✅ Clean | `create_agent` metadata output mismatch fixed | — |
+| agent-chat-service.flogo | ✅ Clean | — | — |
+| agent-builder-service.flogo | ✅ Clean | — | — |
+| mcp-server.flogo | ✅ Clean | — | — |
+| feedback-service.flogo | ✅ Clean | — | — |
+| rule-engine-service.flogo | ✅ Clean | — | — |
+| config-service.flogo | ✅ Clean | — | — |
+| ingestion-service.flogo | ⚠️ 1 error | — | `TR_REST_NO_SWAGGER` |
+| sse-stream-service.flogo | ⚠️ 1 error | Added missing stdlib string import | `TR_REST_NO_SWAGGER` |
+| deploy-service.flogo | ⚠️ 1 error | — | `TR_REST_NO_SWAGGER` |
+
+**Root cause of `TR_REST_NO_SWAGGER`:** These apps use `#tr_rest` trigger without a swagger spec. They work at runtime. Fix requires adding OpenAPI specs — deferred.
+
+### Fixes Applied This Session
+
+| # | What | Fix |
+|---|------|-----|
+| 1 | FDA config missing standard Flogo string functions (`string.concat`, `string.len`, etc.) | Added `fn_stdlib_string` entry to `flogo-custom-ext-fda-config.json` pointing to `github.com/project-flogo/contrib/function/string` |
+| 2 | design-service `create_agent` flow metadata: `{code: integer, message: string}` vs handler output `{code, data}` | `fda sa flow create_agent.metadata.output --jsonValue '[{"name":"code","type":"float64"},{"name":"data","type":"object"}]'` |
+| 3 | sse-stream-service missing stdlib string import | `fda add-import "github.com/project-flogo/contrib/function/string" --force` |
+| 4 | agent-chat-service reads agent config from design-service (registry unification) | Updated `GetAgentConfig` URI to `DESIGN_SERVICE_URL + "/api/v1/agents/" + agentId + "/config"` |
+| 5 | e2e test used config-service `agentId=default` for chat (incompatible with design-service UUIDs) | Added design-service agent discovery in e2e test; `DESIGN_AGENT_ID` used for chat calls |
+
+### E2E Test Results (2026-05-13, 100.8s)
+
+| Phase | Service | Step | Status | Notes |
+|-------|---------|------|--------|-------|
+| 1 | Health (all) | 1–10 | 9/10 ✅ | ingestion-service DOWN (pre-existing) |
+| 2 | config-service | List agents | ✅ | 8 agents |
+| 2 | config-service | Get default agent | ✅ | `collectionName=KnowledgeBase` |
+| 3 | ingestion-service | Ingest doc | ❌ | Port 7002 DOWN (pre-existing) |
+| 4 | rule-engine | Analyze flogo | ✅ | 21 rules, 0 findings |
+| 5 | agent-chat | RAG chat | ✅ | UUID `2099df99-...` from design-service; LLM answered in 66s |
+| 6 | feedback | Submit rating | ✅ | Appended to `default.jsonl` |
+| 6 | feedback | Get feedback | ✅ | Records returned |
+| 7 | agent-builder | Generate config | ✅ | LLM-generated in 3.2s |
+| 8 | sse-stream | Broadcast | ✅ | Event published |
+| 8 | sse-stream | Stream chat | ✅ | 202 Accepted in 22.7s (async SSE) |
+| 9 (MCP) | mcp-server | Session init | ❌ | `sessionId: None` — pre-existing MCP session issue |
+| 9 (MCP) | mcp-server | tools/list | ✅ | 46 tools registered |
+| 9 (MCP) | mcp-server | 6 tool calls | ✅ | All 6 returned HTTP 200 |
+| 10 | design-service | Create agent | ✅ | `status=draft` |
+| 10 | design-service | Get agent | ✅ | |
+| 10 | design-service | Update agent | ✅ | `version=2` |
+| 10 | design-service | List templates | ✅ | 3 templates |
+| 10 | deploy-service | Deploy (activate) | ✅ | `status=active` |
+| 10 | deploy-service | Get status | ⚠️ | Returns `records=0` (known deploy-service quirk) |
+| 10 | deploy-service | Export K8s | ✅ | |
+| 10 | deploy-service | Deactivate | ✅ | `status=draft` |
+| 10 | design-service | Delete (cleanup) | ✅ | Archived |
+
+**Overall: 25/27 steps passed.** 2 known pre-existing failures (ingestion-service DOWN, MCP session ID).
+
+---
 
 ---
 
@@ -38,33 +108,36 @@
 [Client]
    │
    ├──► [design-service :7020] ──────────────────► [PostgreSQL DB]
-   │         │ create/update/activate
+   │         │ create/update/activate (single source of truth for agents)
    │         ▼
    ├──► [deploy-service :7030] ──calls──► [design-service]
    │
    ├──► [config-service :7004] ──────────────────► [agents/*.json files]
+   │         (legacy, still running — used by MCP tools and agent-builder improve)
    │
    ├──► [ingestion-service :7002] ─────────────► [Weaviate VectorDB]
    │                                               └─► [Ollama Embeddings]
    │
    ├──► [agent-chat-service :7001]
-   │         ├──► [config-service :7004]  (get agent config)
+   │         ├──► [design-service :7020]  (GET /api/v1/agents/{id}/config — flat TEXT fields)
    │         ├──► [Weaviate VectorDB]     (RAG retrieval)
    │         └──► [Ollama LLM]            (generate answer)
    │
    ├──► [sse-stream-service :7005]
-   │         ├──► [agent-chat-service :7001] (RAG)
+   │         ├──► [agent-chat-service :7001] (RAG via design-service UUID)
    │         ├──► [Ollama agentactivity]     (streaming LLM)
    │         └──► [SSE clients :7099/events] (push events)
    │
    ├──► [agent-builder-service :7010]
-   │         ├──► [config-service :7004]   (read current config for improve)
+   │         ├──► [config-service :7004]   (read current config for improve — legacy)
    │         └──► [Ollama agentactivity]   (generate/improve/validate)
    │
    ├──► [feedback-service :7003] ──────────────► [feedback/*.jsonl files]
    │
    └──► [rule-engine-service :7000] ───────────► [Custom ruleengine activity]
 ```
+
+> **Note (Session 3):** After registry unification, agent-chat-service and sse-stream-service now call `design-service /api/v1/agents/{id}/config` for agent configuration. All agent IDs passed to these services must be design-service UUIDs (not config-service named IDs like `default`).
 
 ---
 
@@ -74,12 +147,13 @@
 
 | Step | Service | Action | Result |
 |------|---------|--------|--------|
-| 1 | design-service | Create agent | `id: ec22ce54-...`, status `draft` |
+| 1 | design-service | Create agent | `id: <UUID>`, status `draft` |
 | 2 | deploy-service | Activate agent | status → `active` |
-| 3 | config-service | Save chat config | `201 Created` |
-| 4 | ingestion-service | Ingest 2 docs | `chunksCreated: 2` in E2ETestCollection |
-| 5 | agent-chat-service | POST /api/chat | LLM answer about Flogo returned |
-| 6 | feedback-service | Submit rating 5 | Appended to `feedback/e2e-chain-agent.jsonl` |
+| 3 | ingestion-service | Ingest docs | `chunksCreated: N` in target collection |
+| 4 | agent-chat-service | POST /api/chat | LLM answer returned (use design-service UUID as agentId) |
+| 5 | feedback-service | Submit rating 5 | Appended to `feedback/{agentId}.jsonl` |
+
+> **Session 3 Note:** config-service `POST /api/agents` (Step 3 from prior session) replaced by ingestion-service for knowledge loading. agent-chat-service now requires design-service UUID as `agentId`.
 
 ---
 
@@ -179,17 +253,18 @@ Response: 200 OK
 
 #### POST `/api/chat` — Custom RAG + LLM (RAGQuery activity)
 
+> **Session 3:** `agentId` must be a design-service UUID (e.g. `2099df99-1e8b-4c95-9475-bf068a512cbd`). The service calls `design-service /api/v1/agents/{id}/config` (not config-service). Named IDs like `"default"` are no longer valid.
+
 ```
 Request:  POST http://localhost:7001/api/chat
 {
   "message": "What is TIBCO Flogo?",
-  "agentId": "default",
-  "collectionName": "KnowledgeBase",
+  "agentId": "2099df99-1e8b-4c95-9475-bf068a512cbd",
   "sessionId": "sess-001"
 }
 
 Flow:
-  1. GetAgentConfig → GET http://localhost:7004/api/agents/default
+  1. GetAgentConfig → GET http://localhost:7020/api/v1/agents/{id}/config  (design-service, flat TEXT fields)
   2. RAGQuery → Weaviate vector search (embed query via nomic-embed-text)
   3. Custom HTTP call to Ollama /v1/chat/completions
   4. Return formatted answer
@@ -847,6 +922,10 @@ Response: 200 OK
 | 8 | all services | `"version": "=$property[\"SERVICE_VERSION\"]"` in health returns literal | Nested expression in MAP not evaluated | Changed to static `"version": "1.0.0"` |
 | 9 | design-service | Same version expression issue | Same root cause | Changed to static `"version": "1.0.0"` |
 | 10 | ingestion | `ensure_collection` returned nested literal | Nested expression not evaluated | Changed to `"data": "=$activity[EnsureCollection]"` (top-level) |
+| 11 | all apps | `FUNCTION_NOT_FOUND` for `string.concat` etc. | FDA custom config only had custom string functions, not standard Flogo string functions | Added `fn_stdlib_string` entry to FDA config for `github.com/project-flogo/contrib/function/string` |
+| 12 | design-service | `FLOW_OUTPUT_VS_ACTION_OUTPUT_MISMATCH` in `create_agent` | Flow metadata declared `{code: integer, message: string}` but handler output mapped `{code, data}` | `fda sa flow create_agent.metadata.output --jsonValue '[{"name":"code","type":"float64"},{"name":"data","type":"object"}]'` |
+| 13 | sse-stream-service | `FUNCTION_IMPORT_MISSING` for string functions | No string import in flogo file | `fda add-import "github.com/project-flogo/contrib/function/string" --force` |
+| 14 | agent-chat-service | 400 error when `agentId=default` after registry unification | Chat service now calls design-service; config-service named IDs not valid | Updated `GetAgentConfig` URI to call `design-service /api/v1/agents/{id}/config`; e2e test updated to use design-service UUID |
 
 ### Critical Flogo Behavior: Nested Expression Evaluation
 
@@ -874,7 +953,7 @@ Only **top-level** mapping values are evaluated as expressions.
 | rule-engine | POST /api/analyze | `.flogo` file → json parser | ✅ |
 | rule-engine | POST /api/analyze | `.yaml` file → yaml parser | ✅ |
 | agent-chat | GET /api/health | Health check | ✅ |
-| agent-chat | POST /api/chat | RAG + custom LLM (RAGQuery) | ✅ |
+| agent-chat | POST /api/chat | RAG + custom LLM (RAGQuery) — via design-service UUID | ✅ |
 | agent-chat | POST /api/chat/retrieve | RAG only (no LLM) | ✅ |
 | agent-chat | POST /api/chat/agent | OOTB agentactivity | ✅ |
 | ingestion | GET /api/health | Health check | ✅ |

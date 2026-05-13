@@ -199,6 +199,17 @@ if ok and isinstance(agent_cfg, dict):
 else:
     all_ok = False
 
+# Discover active agent in design-service for use with agent-chat-service
+# (which now looks up agent config from design-service, not config-service)
+DESIGN_AGENT_ID = None
+s_ds, ds_agents, _ = req("http://localhost:7020/api/v1/agents")
+if s_ds == 200:
+    records = ds_agents if isinstance(ds_agents, list) else ds_agents.get("records", [])
+    active = [a for a in records if a.get("status") == "active"]
+    if active:
+        DESIGN_AGENT_ID = active[0]["id"]
+        LOG.append(f"       design-service active agent: {DESIGN_AGENT_ID} ({active[0].get('name','')})")
+
 # =============================================================================
 banner(f"PHASE 3 - INGESTION-SERVICE (port 7002): Load knowledge into '{COLLECTION}'")
 # =============================================================================
@@ -299,12 +310,13 @@ banner(f"PHASE 5 - AGENT-CHAT-SERVICE (port 7001): RAG query against '{COLLECTIO
 QUESTION = "What AgenticAI activities does TIBCO Flogo provide for building AI agents?"
 
 step(5, f"Ask RAG question: '{QUESTION}'")
-# /api/chat uses the 'chat' flow which looks up collectionName/topK from config-service
-# using agentId — send agentId, not collectionName directly
-chat_payload = {"message": QUESTION, "agentId": AGENT_ID, "sessionId": "e2e-journey-001"}
+# /api/chat uses the 'chat' flow which looks up collectionName/topK from design-service
+# using agentId — must be a design-service UUID (not a config-service named ID)
+_chat_agent_id = DESIGN_AGENT_ID or AGENT_ID
+chat_payload = {"message": QUESTION, "agentId": _chat_agent_id, "sessionId": "e2e-journey-001"}
 print(f"       REQUEST : POST http://localhost:7001/api/chat")
 print(f"       BODY    : message='{QUESTION}'")
-print(f"       BODY    : agentId={AGENT_ID}  (fetches collectionName/topK from config-service)")
+print(f"       BODY    : agentId={_chat_agent_id}  (fetches collectionName/topK from design-service)")
 print(f"       PIPELINE: embed query -> search Weaviate -> rerank -> build answer")
 LOG.append(f"       REQUEST: POST /api/chat body={json.dumps(chat_payload)}")
 s, chat_resp, el = req("http://localhost:7001/api/chat", "POST", chat_payload, timeout=180)
@@ -423,12 +435,12 @@ LOG.append(f"       RESPONSE: {body}")
 step(10, "Stream chat: full RAG+LLM pipeline with async SSE event emission")
 stream_payload = {
     "message":   QUESTION,
-    "agentId":   AGENT_ID,
+    "agentId":   DESIGN_AGENT_ID or AGENT_ID,
     "sessionId": "e2e-journey-001"
 }
 print(f"       REQUEST : POST http://localhost:7005/api/stream/chat")
 print(f"       BODY    : message='{QUESTION[:70]}'")
-print(f"       BODY    : agentId={AGENT_ID}  sessionId=e2e-journey-001")
+print(f"       BODY    : agentId={DESIGN_AGENT_ID or AGENT_ID}  sessionId=e2e-journey-001")
 print(f"       INTERNAL PIPELINE:")
 print(f"         1) EmitStart     -> SSE event 'stream.start' -> /events:7099")
 print(f"         2) CallRAG       -> POST http://localhost:7001/api/chat (agent-chat-service)")
@@ -514,7 +526,7 @@ TOOL_CALLS = [
      {"agentId": AGENT_ID},
      6, "feedback-service:7003 -> GET /api/feedback/{id}"),
     ("rag_chat",
-     {"message": QUESTION, "agentId": AGENT_ID, "sessionId": "mcp-journey-001"},
+     {"message": QUESTION, "agentId": DESIGN_AGENT_ID or AGENT_ID, "sessionId": "mcp-journey-001"},
      7, "agent-chat-service:7001 -> POST /api/chat (RAG pipeline)"),
     ("analyze_flogo",
      {"content": json.dumps(FLOGO_SAMPLE), "fileName": "agent-studio-app.flogo", "rulesPath": "rules/", "tags": "mcp-journey"},
