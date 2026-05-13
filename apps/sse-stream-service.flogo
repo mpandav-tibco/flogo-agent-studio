@@ -61,7 +61,7 @@
       "settings": {
         "port": 7005,
         "APISpecUpdate": false,
-        "swagger": "",
+        "swagger": "spec://SSEStream_API",
         "swaggerVersion": "v2",
         "authenticationType": "Basic",
         "username": "flogo",
@@ -636,5 +636,14 @@
   "metadata": {
     "endpoints": [],
     "flogoVersion": "2.26.3"
+  },
+  "specs": {
+    "f5d6621e-5fbf-4c0e-89b9-31f0b782da11": {
+      "id": "f5d6621e-5fbf-4c0e-89b9-31f0b782da11",
+      "name": "SSEStream_API",
+      "type": "OpenAPI",
+      "version": "1.0.0",
+      "content": "eyJvcGVuYXBpIjoiMy4wLjAiLCJpbmZvIjp7InRpdGxlIjoiU1NFIFN0cmVhbSBTZXJ2aWNlIEFQSSIsInZlcnNpb24iOiIxLjAuMCIsImRlc2NyaXB0aW9uIjoiU2VydmVyLVNlbnQgRXZlbnRzIHN0cmVhbWluZyBjaGF0IGFuZCBicm9hZGNhc3Qgc2VydmljZSJ9LCJzZXJ2ZXJzIjpbeyJ1cmwiOiJodHRwOi8vbG9jYWxob3N0OjcwMDUifV0sInNlY3VyaXR5IjpbeyJiYXNpY0F1dGgiOltdfV0sImNvbXBvbmVudHMiOnsic2VjdXJpdHlTY2hlbWVzIjp7ImJhc2ljQXV0aCI6eyJ0eXBlIjoiaHR0cCIsInNjaGVtZSI6ImJhc2ljIn19fSwicGF0aHMiOnsiL2FwaS9oZWFsdGgiOnsiZ2V0Ijp7InN1bW1hcnkiOiJIZWFsdGggY2hlY2siLCJvcGVyYXRpb25JZCI6ImhlYWx0aF9jaGVjayIsInJlc3BvbnNlcyI6eyIyMDAiOnsiZGVzY3JpcHRpb24iOiJTZXJ2aWNlIGhlYWx0aCBzdGF0dXMiLCJjb250ZW50Ijp7ImFwcGxpY2F0aW9uL2pzb24iOnsic2NoZW1hIjp7InR5cGUiOiJvYmplY3QiLCJwcm9wZXJ0aWVzIjp7InNlcnZpY2UiOnsidHlwZSI6InN0cmluZyJ9LCJzdGF0dXMiOnsidHlwZSI6InN0cmluZyJ9LCJwb3J0Ijp7InR5cGUiOiJpbnRlZ2VyIn0sInNzZUVuZHBvaW50Ijp7InR5cGUiOiJzdHJpbmcifSwic3RyZWFtRW5kcG9pbnQiOnsidHlwZSI6InN0cmluZyJ9fX19fX19fX0sIi9hcGkvc3RyZWFtL2NoYXQiOnsicG9zdCI6eyJzdW1tYXJ5IjoiU3RhcnQgYSBzdHJlYW1pbmcgUkFHK0xMTSBjaGF0IChhc3luYyBTU0UpIiwib3BlcmF0aW9uSWQiOiJzdHJlYW1fY2hhdCIsInJlcXVlc3RCb2R5Ijp7InJlcXVpcmVkIjp0cnVlLCJjb250ZW50Ijp7ImFwcGxpY2F0aW9uL2pzb24iOnsic2NoZW1hIjp7InR5cGUiOiJvYmplY3QiLCJyZXF1aXJlZCI6WyJtZXNzYWdlIiwiYWdlbnRJZCJdLCJwcm9wZXJ0aWVzIjp7Im1lc3NhZ2UiOnsidHlwZSI6InN0cmluZyJ9LCJhZ2VudElkIjp7InR5cGUiOiJzdHJpbmcifSwiY29sbGVjdGlvbk5hbWUiOnsidHlwZSI6InN0cmluZyJ9LCJzZXNzaW9uSWQiOnsidHlwZSI6InN0cmluZyJ9fX19fX0sInJlc3BvbnNlcyI6eyIyMDIiOnsiZGVzY3JpcHRpb24iOiJTdHJlYW1pbmcgc3RhcnRlZCDigJQgZXZlbnRzIHB1c2hlZCB2aWEgU1NFIGVuZHBvaW50IiwiY29udGVudCI6eyJhcHBsaWNhdGlvbi9qc29uIjp7InNjaGVtYSI6eyJ0eXBlIjoib2JqZWN0IiwicHJvcGVydGllcyI6eyJzdHJlYW1pbmciOnsidHlwZSI6ImJvb2xlYW4ifSwiZXZlbnRzVXJsIjp7InR5cGUiOiJzdHJpbmcifX19fX19fX19LCIvYXBpL3N0cmVhbS9icm9hZGNhc3QiOnsicG9zdCI6eyJzdW1tYXJ5IjoiQnJvYWRjYXN0IGFuIFNTRSBldmVudCB0byBhbGwgY29ubmVjdGVkIHN1YnNjcmliZXJzIiwib3BlcmF0aW9uSWQiOiJicm9hZGNhc3RfZXZlbnQiLCJyZXF1ZXN0Qm9keSI6eyJyZXF1aXJlZCI6dHJ1ZSwiY29udGVudCI6eyJhcHBsaWNhdGlvbi9qc29uIjp7InNjaGVtYSI6eyJ0eXBlIjoib2JqZWN0IiwicmVxdWlyZWQiOlsiZXZlbnQiXSwicHJvcGVydGllcyI6eyJldmVudCI6eyJ0eXBlIjoic3RyaW5nIn0sImRhdGEiOnsidHlwZSI6Im9iamVjdCJ9LCJzZXNzaW9uSWQiOnsidHlwZSI6InN0cmluZyJ9fX19fX0sInJlc3BvbnNlcyI6eyIyMDAiOnsiZGVzY3JpcHRpb24iOiJCcm9hZGNhc3QgcmVzdWx0IiwiY29udGVudCI6eyJhcHBsaWNhdGlvbi9qc29uIjp7InNjaGVtYSI6eyJ0eXBlIjoib2JqZWN0IiwicHJvcGVydGllcyI6eyJicm9hZGNhc3RlZCI6eyJ0eXBlIjoiYm9vbGVhbiJ9fX19fX19fX19fQ=="
+    }
   }
 }

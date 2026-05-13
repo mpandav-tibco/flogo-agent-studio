@@ -1,0 +1,86 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "SSE Stream Service API",
+    "version": "1.0.0",
+    "description": "Server-Sent Events streaming chat and broadcast service"
+  },
+  "servers": [{ "url": "http://localhost:7005" }],
+  "security": [{ "basicAuth": [] }],
+  "components": {
+    "securitySchemes": {
+      "basicAuth": { "type": "http", "scheme": "basic" }
+    }
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health check",
+        "operationId": "health_check",
+        "responses": {
+          "200": {
+            "description": "Service health status",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "service": { "type": "string" }, "status": { "type": "string" }, "port": { "type": "integer" }, "sseEndpoint": { "type": "string" }, "streamEndpoint": { "type": "string" } } } } }
+          }
+        }
+      }
+    },
+    "/api/stream/chat": {
+      "post": {
+        "summary": "Start a streaming RAG+LLM chat (async SSE)",
+        "operationId": "stream_chat",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message", "agentId"],
+                "properties": {
+                  "message": { "type": "string" },
+                  "agentId": { "type": "string" },
+                  "collectionName": { "type": "string" },
+                  "sessionId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Streaming started — events pushed via SSE endpoint",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "streaming": { "type": "boolean" }, "eventsUrl": { "type": "string" } } } } }
+          }
+        }
+      }
+    },
+    "/api/stream/broadcast": {
+      "post": {
+        "summary": "Broadcast an SSE event to all connected subscribers",
+        "operationId": "broadcast_event",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["event"],
+                "properties": {
+                  "event": { "type": "string" },
+                  "data": { "type": "object" },
+                  "sessionId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Broadcast result",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "broadcasted": { "type": "boolean" } } } } }
+          }
+        }
+      }
+    }
+  }
+}
