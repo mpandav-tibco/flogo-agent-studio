@@ -11,7 +11,6 @@
     "act_agentactivity github.com/tibco/flogo-ai-agent/src/app/AgenticAI/activity/agentactivity",
     "con_llmprovider github.com/tibco/flogo-ai-agent/src/app/AgenticAI/connector/llmprovider",
     "github.com/project-flogo/contrib/function/string",
-    "github.com/mpandav-tibco/flogo-extensions/function/string",
     "github.com/project-flogo/contrib/function/coerce"
   ],
   "name": "sse-stream-service",
@@ -30,7 +29,7 @@
     {
       "ref": "#trig_sse",
       "name": "sse-event-bus",
-      "description": "SSE event bus — clients connect to /events and receive streamed token events.",
+      "description": "SSE event bus \u2014 clients connect to /events and receive streamed token events.",
       "settings": {
         "port": 7099,
         "path": "/events",
@@ -57,7 +56,7 @@
     {
       "ref": "#tr_rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger — SSE stream service on port 7005 (same port; SSE trigger owns /events, REST trigger owns all other paths).",
+      "description": "REST trigger \u2014 SSE stream service on port 7005 (same port; SSE trigger owns /events, REST trigger owns all other paths).",
       "settings": {
         "port": 7005,
         "APISpecUpdate": false,
@@ -186,7 +185,7 @@
       "id": "flow:stream_chat",
       "data": {
         "name": "stream_chat",
-        "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: 'stream.start', 'stream.answer', 'stream.done'. Returns 202 immediately — SSE clients receive tokens in real time.",
+        "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: 'stream.start', 'stream.answer', 'stream.done'. Returns 202 immediately \u2014 SSE clients receive tokens in real time.",
         "links": [
           {
             "id": 1,

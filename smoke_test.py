@@ -3,25 +3,35 @@ Flogo Agent Studio — quick smoke test (health checks only, no LLM).
 Run after any flogobuild rebuild to verify no regressions.
 Exit 0 = all expected services up. Exit 1 = at least one expected service down.
 """
-import sys, time, urllib.request, urllib.error
+import sys, time, json, urllib.request, urllib.error
 
 AUTH = "Basic ZmxvZ286Y2hhbmdlbWU="
 
 SERVICES = [
     ("rule-engine-service",    7000, "/api/health",  True),
     ("agent-chat-service",     7001, "/api/health",  True),
-    ("ingestion-service",      7002, "/api/health",  False),  # pre-existing DOWN
+    ("ingestion-service",      7002, "/api/health",  True),
     ("feedback-service",       7003, "/api/health",  True),
     ("config-service",         7004, "/api/health",  True),
     ("sse-stream-service",     7005, "/api/health",  True),
     ("agent-builder-service",  7010, "/api/health",  True),
     ("design-service",         7020, "/api/health",  True),
     ("deploy-service",         7030, "/api/health",  True),
-    ("mcp-server",             3333, "/mcp",         False),  # MCP uses /mcp not /api/health
+    ("mcp-server",             3333, "/mcp",         True),
 ]
 
 def check(port, path, timeout=2):
     try:
+        if path == "/mcp":
+            # MCP requires POST with JSON-RPC initialize
+            payload = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize",
+                "params": {"protocolVersion": "2024-11-05", "capabilities": {},
+                           "clientInfo": {"name": "smoke-test", "version": "1.0"}}}).encode()
+            req = urllib.request.Request(f"http://localhost:{port}{path}", data=payload,
+                headers={"Content-Type": "application/json", "Accept": "application/json, text/event-stream"})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                body = json.loads(r.read().decode().split("data: ", 1)[-1].strip())
+                return "result" in body
         req = urllib.request.Request(
             f"http://localhost:{port}{path}",
             headers={"Authorization": AUTH}

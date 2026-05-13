@@ -7,8 +7,7 @@
     "act_default_actreturn github.com/project-flogo/contrib/activity/actreturn",
     "act_rest github.com/tibco/flogo-general/src/app/General/activity/rest",
     "coerce github.com/project-flogo/contrib/function/coerce",
-    "string github.com/project-flogo/contrib/function/string",
-    "github.com/mpandav-tibco/flogo-extensions/function/string"
+    "string github.com/project-flogo/contrib/function/string"
   ],
   "name": "deploy-service",
   "description": "Agent deployment service. Activates/deactivates agents in design-service and generates K8s/Docker Compose manifests for export. Part of Flogo Agent Studio.",
@@ -65,7 +64,7 @@
       },
       "id": "DeployRESTTrigger",
       "name": "DeployRESTTrigger",
-      "description": "REST trigger — deploy service on port 7030",
+      "description": "REST trigger \u2014 deploy service on port 7030",
       "ref": "#tr_rest",
       "handlers": [
         {
@@ -98,7 +97,7 @@
             "message": ""
           },
           "name": "deploy_agent",
-          "description": "Activate an agent — set status to active and return chat URL",
+          "description": "Activate an agent \u2014 set status to active and return chat URL",
           "schemas": {
             "output": {
               "pathParams": {
@@ -144,7 +143,7 @@
             "message": ""
           },
           "name": "undeploy_agent",
-          "description": "Deactivate an agent — set status back to draft",
+          "description": "Deactivate an agent \u2014 set status back to draft",
           "schemas": {
             "output": {
               "pathParams": {

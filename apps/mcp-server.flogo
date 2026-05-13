@@ -8,8 +8,7 @@
     "act_general_rest github.com/tibco/flogo-general/src/app/General/activity/rest",
     "act_mcptoolresult github.com/mpandav-tibco/flogo-extensions/mcptoolresult",
     "string github.com/project-flogo/contrib/function/string",
-    "coerce github.com/project-flogo/contrib/function/coerce",
-    "github.com/mpandav-tibco/flogo-extensions/function/string"
+    "coerce github.com/project-flogo/contrib/function/coerce"
   ],
   "name": "mcp-server",
   "description": "Flogo Agent Studio MCP Server. Exposes all Phase 1 services as MCP tools for Claude, Cursor, and any MCP client. Registered in .mcp.json as 'flogo-dev-assist'. Part of Flogo Agent Studio Phase 2.",
@@ -26,7 +25,7 @@
     {
       "ref": "#trig_mcpserver",
       "name": "flogo-dev-assist",
-      "description": "MCP Server — exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:3333/mcp.",
+      "description": "MCP Server \u2014 exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:3333/mcp.",
       "settings": {
         "serverName": "flogo-dev-assist",
         "serverVersion": "1.0.0",
@@ -279,7 +278,7 @@
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}"
+                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}"
               }
             }
           }

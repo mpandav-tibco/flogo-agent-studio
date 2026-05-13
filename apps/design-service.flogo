@@ -9,7 +9,6 @@
     "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/string",
     "github.com/tibco/wi-postgres/src/app/PostgreSQL/connector/connection",
-    "github.com/mpandav-tibco/flogo-extensions/function/string",
     "act_default_noop github.com/project-flogo/contrib/activity/noop"
   ],
   "name": "design-service",
@@ -22,7 +21,7 @@
     {
       "ref": "#rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger — design-service on port 7020",
+      "description": "REST trigger \u2014 design-service on port 7020",
       "settings": {
         "port": 7020,
         "APISpecUpdate": false,
@@ -618,7 +617,7 @@
               "settings": {
                 "mappings": {
                   "code": 200,
-                  "data": "=$activity[SelectAgent].Output.records[0]"
+                  "data": "=$activity[SelectAgent].Output"
                 }
               }
             }
@@ -1362,7 +1361,7 @@
           "info": {
             "title": "design-service",
             "version": "1.0.0",
-            "description": "REST trigger — design-service on port 7020"
+            "description": "REST trigger \u2014 design-service on port 7020"
           },
           "paths": {
             "/api/v1/agents": {

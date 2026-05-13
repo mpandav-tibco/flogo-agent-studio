@@ -9,11 +9,8 @@
     "act_default_actreturn github.com/project-flogo/contrib/activity/actreturn",
     "con_vectordb github.com/mpandav-tibco/flogo-extensions/vectordb/connector",
     "act_rest github.com/tibco/flogo-general/src/app/General/activity/rest",
-    "con_aws github.com/tibco/flogo-aws/src/app/AWS/connector",
-    "act_aws_s3get github.com/tibco/wi-amazons3/src/app/AmazonS3/activity/get",
     "coerce github.com/project-flogo/contrib/function/coerce",
-    "string github.com/project-flogo/contrib/function/string",
-    "github.com/mpandav-tibco/flogo-extensions/function/string"
+    "string github.com/project-flogo/contrib/function/string"
   ],
   "name": "ingestion-service",
   "description": "Knowledge base ingestion service. Ensures VectorDB collections exist and ingests documents with chunking and embedding. Part of Flogo Agent Studio.",
@@ -38,7 +35,7 @@
       },
       "id": "IngestionRESTTrigger",
       "name": "IngestionRESTTrigger",
-      "description": "REST trigger — ingestion service on port 7002",
+      "description": "REST trigger \u2014 ingestion service on port 7002",
       "ref": "#tr_rest",
       "handlers": [
         {
@@ -268,46 +265,6 @@
               }
             }
           }
-        },
-        {
-          "settings": {
-            "APISpecPath": "",
-            "Method": "POST",
-            "reqType": "application/json",
-            "Path": "/api/ingest/s3",
-            "OutputValidation": false
-          },
-          "action": {
-            "input": {
-              "body": "=$.body"
-            },
-            "output": {
-              "code": "=$.code",
-              "data": "=$.data"
-            },
-            "ref": "github.com/project-flogo/flow",
-            "settings": {
-              "flowURI": "res://flow:ingest_s3"
-            }
-          },
-          "reply": {
-            "code": 200,
-            "configureResponseCodes": false,
-            "data": {},
-            "responseBody": {},
-            "responseCodesSchema": {},
-            "message": ""
-          },
-          "name": "ingest_s3",
-          "description": "Ingest a document from an S3 bucket via con_aws S3 GetObject",
-          "schemas": {
-            "output": {
-              "body": {
-                "type": "json",
-                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"bucket\":{\"type\":\"string\"},\"key\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"}}}"
-              }
-            }
-          }
         }
       ]
     }
@@ -389,7 +346,7 @@
             "activity": {
               "settings": {
                 "connection": "conn://vectordb-weaviate",
-                "chunkStrategy": "=$flow.body.chunkStrategy",
+                "chunkStrategy": "=$property[\"CHUNK_STRATEGY\"]",
                 "useConnectorEmbedding": true,
                 "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]"
               },
@@ -444,7 +401,7 @@
       "id": "flow:ensure_collection",
       "data": {
         "name": "ensure_collection",
-        "description": "Creates or verifies a VectorDB collection. Idempotent — safe to call if the collection already exists.",
+        "description": "Creates or verifies a VectorDB collection. Idempotent \u2014 safe to call if the collection already exists.",
         "links": [
           {
             "id": 1,
@@ -503,7 +460,7 @@
             },
             "id": "EnsureCollection",
             "name": "EnsureCollection",
-            "description": "Create or verify VectorDB collection — idempotent"
+            "description": "Create or verify VectorDB collection \u2014 idempotent"
           },
           {
             "activity": {
@@ -1069,171 +1026,6 @@
                     "success": "=$activity[IngestContent].success",
                     "source": "confluence",
                     "spaceKey": "=$flow.body.spaceKey",
-                    "collectionName": "=$flow.body.collectionName",
-                    "chunksIngested": "=$activity[IngestContent].chunksIngested"
-                  }
-                }
-              }
-            }
-          }
-        ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
-        "metadata": {
-          "input": [
-            {
-              "name": "body",
-              "type": "object"
-            }
-          ],
-          "output": [
-            {
-              "name": "code",
-              "type": "integer"
-            },
-            {
-              "name": "data",
-              "type": "any"
-            }
-          ],
-          "fe_metadata": {}
-        }
-      }
-    },
-    {
-      "id": "flow:ingest_s3",
-      "data": {
-        "name": "ingest_s3",
-        "description": "Downloads an object from S3 via con_aws S3 GetObject and ingests into VectorDB.",
-        "links": [
-          {
-            "id": 1,
-            "from": "StartActivity",
-            "to": "LogRequest",
-            "type": "label",
-            "label": ""
-          },
-          {
-            "id": 2,
-            "from": "LogRequest",
-            "to": "GetS3Object",
-            "type": "label",
-            "label": ""
-          },
-          {
-            "id": 3,
-            "from": "GetS3Object",
-            "to": "EnsureCollection",
-            "type": "label",
-            "label": ""
-          },
-          {
-            "id": 4,
-            "from": "EnsureCollection",
-            "to": "IngestContent",
-            "type": "label",
-            "label": ""
-          },
-          {
-            "id": 5,
-            "from": "IngestContent",
-            "to": "Return",
-            "type": "label",
-            "label": ""
-          }
-        ],
-        "tasks": [
-          {
-            "id": "StartActivity",
-            "name": "StartActivity",
-            "description": "NoOp Activity",
-            "activity": {
-              "ref": "#act_default_noop"
-            }
-          },
-          {
-            "id": "LogRequest",
-            "name": "LogRequest",
-            "description": "Log S3 ingest request",
-            "activity": {
-              "ref": "#act_general_log",
-              "input": {
-                "Log Level": "INFO",
-                "flowInfo": false,
-                "message": "=string.concat(\"[Ingestion] S3 ingest: bucket=\", coerce.toString($flow.body.bucket), \" key=\", coerce.toString($flow.body.key))",
-                "logLevel": ""
-              }
-            }
-          },
-          {
-            "id": "GetS3Object",
-            "name": "GetS3Object",
-            "description": "Download object content from S3 via AWS con_aws S3 GetObject activity",
-            "activity": {
-              "ref": "#act_aws_s3get",
-              "settings": {
-                "connection": "conn://aws-default"
-              },
-              "input": {
-                "bucketName": "=$flow.body.bucket",
-                "objectKey": "=$flow.body.key"
-              }
-            }
-          },
-          {
-            "id": "EnsureCollection",
-            "name": "EnsureCollection",
-            "description": "Ensure VectorDB collection exists",
-            "activity": {
-              "ref": "#act_vectordb_createcollection",
-              "settings": {
-                "connection": "conn://vectordb-weaviate"
-              },
-              "input": {
-                "collectionName": "=$flow.body.collectionName"
-              }
-            }
-          },
-          {
-            "id": "IngestContent",
-            "name": "IngestContent",
-            "description": "Ingest S3 object content into VectorDB",
-            "activity": {
-              "ref": "#act_vectordb_ingestdocuments",
-              "settings": {
-                "connection": "conn://vectordb-weaviate",
-                "chunkStrategy": "=$property[\"CHUNK_STRATEGY\"]",
-                "useConnectorEmbedding": true,
-                "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]"
-              },
-              "input": {
-                "collectionName": "=$flow.body.collectionName",
-                "documents": [
-                  {
-                    "content": "=$activity[GetS3Object].content",
-                    "metadata": {
-                      "source": "s3",
-                      "bucket": "=$flow.body.bucket",
-                      "key": "=$flow.body.key"
-                    }
-                  }
-                ]
-              }
-            }
-          },
-          {
-            "id": "Return",
-            "name": "Return",
-            "description": "Return ingest result",
-            "activity": {
-              "ref": "#act_default_actreturn",
-              "settings": {
-                "mappings": {
-                  "code": 200,
-                  "data": {
-                    "success": "=$activity[IngestContent].success",
-                    "source": "s3",
-                    "bucket": "=$flow.body.bucket",
-                    "key": "=$flow.body.key",
                     "collectionName": "=$flow.body.collectionName",
                     "chunksIngested": "=$activity[IngestContent].chunksIngested"
                   }

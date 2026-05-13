@@ -11,8 +11,7 @@
     "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/string",
     "github.com/mpandav-tibco/flogo-extensions/vectordb/connector",
-    "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/connector/llmprovider",
-    "github.com/mpandav-tibco/flogo-extensions/function/string"
+    "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/connector/llmprovider"
   ],
   "name": "agent-chat-service",
   "description": "AI agent chat service. Accepts a user message, performs hybrid RAG retrieval, and generates an LLM answer. Part of Flogo Agent Studio.",
@@ -24,7 +23,7 @@
     {
       "ref": "#rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger \u2014 agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7001,
         "APISpecUpdate": false,
@@ -896,7 +895,7 @@
           "info": {
             "title": "agent-chat-service",
             "version": "1.0.0",
-            "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger \u2014 agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/chat": {

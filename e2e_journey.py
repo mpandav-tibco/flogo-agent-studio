@@ -155,12 +155,17 @@ for svc, port in SERVICES:
     if s != 200:
         all_ok = False
 
-sid_hc, _, el_hc = mcp_request("initialize", {
+sid_hc, hc_resp, el_hc = mcp_request("initialize", {
     "protocolVersion": "2024-11-05", "capabilities": {},
     "clientInfo": {"name": "health-check", "version": "1.0"}
 })
-icon = "OK  " if sid_hc else "FAIL"
-print(f"  [{icon}]  mcp-server                    port=3333  HTTP 200  ({el_hc}ms)  MCP 2024-11-05")
+# Stateless MCP servers don't return mcp-session-id — check for valid JSON-RPC result instead
+hc_ok = bool(hc_resp and "result" in hc_resp)
+icon = "OK  " if hc_ok else "FAIL"
+if not hc_ok:
+    all_ok = False
+session_mode = "stateless" if not sid_hc else f"session={sid_hc}"
+print(f"  [{icon}]  mcp-server                    port=3333  HTTP 200  ({el_hc}ms)  MCP 2024-11-05  ({session_mode})")
 LOG.append(f"  [{icon}] mcp-server port=3333 HTTP 200 ({el_hc}ms)")
 
 # =============================================================================
@@ -477,19 +482,22 @@ print(f"       REQUEST : POST http://localhost:3333/mcp")
 print(f"       BODY    : method=initialize  protocolVersion=2024-11-05")
 LOG.append(f"       REQUEST: POST /mcp method=initialize")
 sid, init_resp, el = mcp_request("initialize", init_params)
-ok = bool(sid)
+ok = bool(init_resp and "result" in init_resp)
+if not ok:
+    all_ok = False
 icon = "OK  " if ok else "FAIL"
 print(f"       --> HTTP 200  [{icon}]  ({el}ms)")
 LOG.append(f"       --> HTTP 200 [{icon}] ({el}ms)")
 if init_resp and "result" in init_resp:
     r = init_resp["result"]
     si = r.get("serverInfo", {})
+    session_mode = f"session={sid}" if sid else "stateless"
     print(f"       RESPONSE:")
-    print(f"         sessionId       : {sid}")
+    print(f"         mode            : {session_mode}")
     print(f"         serverName      : {si.get('name')}")
     print(f"         serverVersion   : {si.get('version')}")
     print(f"         protocolVersion : {r.get('protocolVersion')}")
-    LOG.append(f"       RESPONSE: session={sid} server={si}")
+    LOG.append(f"       RESPONSE: mode={session_mode} server={si}")
 
 mcp_notify(sid)
 print(f"       NOTIFY  : notifications/initialized sent -> session active")

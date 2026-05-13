@@ -9,8 +9,7 @@
     "rest_1 github.com/tibco/flogo-general/src/app/General/trigger/rest",
     "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/string",
-    "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/connector/llmprovider",
-    "github.com/mpandav-tibco/flogo-extensions/function/string"
+    "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/connector/llmprovider"
   ],
   "name": "agent-builder-service",
   "description": "LLM-assisted agent builder and registry management service. Generates agent JSON configs from natural language descriptions and validates them. Reads/writes to config-service (port 7004). Part of Flogo Agent Studio Phase 2.",
@@ -22,7 +21,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger â€” agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger \u00e2\u20ac\u201d agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7010,
         "APISpecUpdate": false,
@@ -137,7 +136,7 @@
           "name": "improve_agent"
         },
         {
-          "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
+          "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
           "settings": {
             "Method": "POST",
             "reqType": "application/json",
@@ -755,7 +754,7 @@
       "id": "flow:validate_agent",
       "data": {
         "name": "validate_agent",
-        "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
+        "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
         "links": [
           {
             "id": 1,
@@ -1013,7 +1012,7 @@
           "info": {
             "title": "agent-builder-service",
             "version": "1.0.0",
-            "description": "REST trigger â€” agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger \u00e2\u20ac\u201d agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/agent-builder/generate": {
@@ -1118,7 +1117,7 @@
                     }
                   }
                 },
-                "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
+                "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
                 "consumes": [
                   "application/json"
                 ]
