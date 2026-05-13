@@ -406,7 +406,16 @@
                 },
                 "Method": "POST",
                 "Uri": "=$property[\"RULE_ENGINE_URL\"]",
-                "body": "=$flow.body"
+                "body": "=$flow.body",
+                "dynamicRequestHeaders": {
+                  "Header": [
+                    {
+                      "Name": "Authorization",
+                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                      "Type": "string"
+                    }
+                  ]
+                }
               },
               "output": {
                 "configureResponseCodes": false,
@@ -517,7 +526,16 @@
                 },
                 "Method": "POST",
                 "Uri": "=$property[\"CHAT_SERVICE_URL\"]",
-                "body": "=$flow.body"
+                "body": "=$flow.body",
+                "dynamicRequestHeaders": {
+                  "Header": [
+                    {
+                      "Name": "Authorization",
+                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                      "Type": "string"
+                    }
+                  ]
+                }
               },
               "output": {
                 "configureResponseCodes": false,
@@ -861,7 +879,16 @@
                 },
                 "Method": "POST",
                 "Uri": "=$property[\"FEEDBACK_SERVICE_URL\"]",
-                "body": "=$flow.body"
+                "body": "=$flow.body",
+                "dynamicRequestHeaders": {
+                  "Header": [
+                    {
+                      "Name": "Authorization",
+                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                      "Type": "string"
+                    }
+                  ]
+                }
               },
               "output": {
                 "configureResponseCodes": false,
@@ -971,7 +998,16 @@
                   "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                 },
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"FEEDBACK_SERVICE_BASE_URL\"], \"/api/feedback\")"
+                "Uri": "=string.concat($property[\"FEEDBACK_SERVICE_BASE_URL\"], \"/api/feedback\")",
+                "dynamicRequestHeaders": {
+                  "Header": [
+                    {
+                      "Name": "Authorization",
+                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                      "Type": "string"
+                    }
+                  ]
+                }
               },
               "output": {
                 "configureResponseCodes": false,
@@ -1089,6 +1125,15 @@
                     "llmBaseUrl": "=$flow.body.llmBaseUrl",
                     "temperature": "=$flow.body.temperature"
                   }
+                },
+                "dynamicRequestHeaders": {
+                  "Header": [
+                    {
+                      "Name": "Authorization",
+                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                      "Type": "string"
+                    }
+                  ]
                 }
               },
               "output": {
@@ -1200,7 +1245,16 @@
                   "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                 },
                 "Method": "POST",
-                "Uri": "=string.concat($property[\"DEPLOY_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId), \"/deploy\")"
+                "Uri": "=string.concat($property[\"DEPLOY_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId), \"/deploy\")",
+                "dynamicRequestHeaders": {
+                  "Header": [
+                    {
+                      "Name": "Authorization",
+                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                      "Type": "string"
+                    }
+                  ]
+                }
               },
               "output": {
                 "configureResponseCodes": false,
@@ -1311,7 +1365,16 @@
                   "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                 },
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/templates\")"
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/templates\")",
+                "dynamicRequestHeaders": {
+                  "Header": [
+                    {
+                      "Name": "Authorization",
+                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                      "Type": "string"
+                    }
+                  ]
+                }
               },
               "output": {
                 "configureResponseCodes": false,
