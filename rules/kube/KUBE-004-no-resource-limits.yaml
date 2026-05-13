@@ -1,0 +1,40 @@
+rule:
+  id: KUBE-004
+  enabled: true
+  severity: ERROR
+  category: performance
+  title: Container Has No CPU/Memory Limits
+  description: >
+    Container "{{.Scope.name}}" does not define resource limits. Without
+    limits a runaway container can consume all CPU and memory on the node,
+    causing resource starvation and evictions for co-located workloads.
+  tags: [kubernetes, resources, limits, performance, stability]
+
+  applies_to: [.yaml, .yml]
+  parser: yaml
+
+  scope: $.spec.template.spec.containers[*]
+
+  match:
+    type: any_of
+    conditions:
+      - type: missing
+        path: resources.limits
+      - type: missing
+        path: resources.limits.cpu
+      - type: missing
+        path: resources.limits.memory
+
+  location: "container:{{.Scope.name}}"
+  recommendation: >
+    Set both CPU and memory limits in the container spec:
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+    Base limits on measured peak usage (kubectl top pod). Set limits
+    at 2–4x of typical usage to absorb burst traffic without throttling
+    under normal load.

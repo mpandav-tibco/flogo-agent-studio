@@ -1,0 +1,28 @@
+rule:
+  id: BWP-001
+  enabled: true
+  severity: WARNING
+  category: resilience
+  title: Process Has No Fault Handler
+  description: >
+    Process "{{.Scope.name}}" does not define a fault handler (Catch activity
+    or FaultHandler group). Unhandled exceptions will propagate and terminate
+    the process instance silently in production.
+  tags: [error-handling, fault, resilience, bw]
+
+  applies_to: [.process, .bwp, .xml]
+  parser: xml
+
+  scope: //pd:ProcessDef
+
+  match:
+    type: missing
+    path: .//pd:catch | .//pd:faultHandlers/pd:catch
+
+  location: "process:{{.Scope.name}}"
+  recommendation: >
+    Add a Catch activity in the Error scope or wrap the main sequence in a
+    scope with a fault handler. Log the error context ($error/data/error),
+    emit a structured error response to the caller, and decide whether to
+    rethrow or absorb the exception. At minimum catch java.lang.Exception
+    as a fallback.

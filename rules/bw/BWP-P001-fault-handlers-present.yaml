@@ -1,0 +1,26 @@
+rule:
+  id: BWP-P001
+  enabled: true
+  severity: GOOD
+  category: resilience
+  title: Process Defines Fault Handler
+  description: >
+    Process "{{.Scope.name}}" defines a fault handler, ensuring exceptions
+    are caught and managed rather than silently propagating to the caller.
+  tags: [error-handling, fault, resilience, best-practice, bw]
+
+  applies_to: [.process, .bwp, .xml]
+  parser: xml
+
+  scope: //pd:ProcessDef
+
+  match:
+    type: not_missing
+    path: .//pd:catch | .//pd:faultHandlers/pd:catch
+
+  location: "process:{{.Scope.name}}"
+  recommendation: >
+    Good practice: the process catches exceptions. Verify that the fault
+    handler logs structured error context ($error/data/error), emits a
+    consistent error response schema to callers, and does not swallow
+    exceptions that should be rethrown or alerted on.

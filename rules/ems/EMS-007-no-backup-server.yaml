@@ -1,0 +1,34 @@
+rule:
+  id: EMS-007
+  enabled: true
+  severity: WARNING
+  category: resilience
+  title: EMS Fault-Tolerant Backup Server Not Configured
+  description: >
+    EMS configuration "{{.Scope.name}}" does not define a fault-tolerant
+    backup server (ft_active or ft_heartbeat missing). A single-node EMS
+    deployment is a single point of failure for all messaging in the
+    system.
+  tags: [resilience, fault-tolerance, high-availability, ems]
+
+  applies_to: [.conf, .cfg]
+  parser: text
+
+  scope: file
+
+  match:
+    type: all_missing
+    paths:
+      - ft_active
+      - ft_heartbeat
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Configure EMS fault-tolerance with a primary and standby pair:
+      ft_active=tcp://backup-host:7222
+      ft_heartbeat=5
+      ft_activation=20
+      ft_reconnect_timeout=60
+    Store persistent message data on shared storage or use EMS replication
+    so the standby can take over without message loss. Test failover
+    regularly in a non-production environment.

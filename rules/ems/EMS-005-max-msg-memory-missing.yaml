@@ -1,0 +1,28 @@
+rule:
+  id: EMS-005
+  enabled: true
+  severity: WARNING
+  category: performance
+  title: EMS max_msg_memory Not Configured
+  description: >
+    EMS configuration "{{.Scope.name}}" does not set max_msg_memory.
+    Without this limit the broker may consume all available heap memory
+    during consumer lag spikes, causing broker instability or OOM crashes.
+  tags: [performance, memory, ems, stability]
+
+  applies_to: [.conf, .cfg]
+  parser: text
+
+  scope: file
+
+  match:
+    type: missing
+    path: max_msg_memory
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Set max_msg_memory in tibemsd.conf to a value appropriate for your
+    heap (typically 50–70% of available JVM heap):
+      max_msg_memory=512MB
+    Pair with destination-level max_msgs and max_bytes to implement
+    per-queue flow control before the global limit is reached.

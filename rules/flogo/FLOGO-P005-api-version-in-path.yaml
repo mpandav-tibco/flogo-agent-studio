@@ -1,0 +1,27 @@
+rule:
+  id: FLOGO-P005
+  enabled: true
+  severity: GOOD
+  category: maintainability
+  title: REST Handler Exposes a Versioned API Path
+  description: >
+    Trigger handler "{{.Scope.name}}" exposes its endpoint under a
+    versioned path (e.g. /api/v1/...), enabling non-breaking API evolution.
+  tags: [api, versioning, rest, best-practice]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.triggers[*].handlers[*]
+
+  match:
+    type: regex_match
+    path: settings[?(@.name=='path')].value
+    pattern: "/v\\d+/"
+
+  location: "handler:{{.Scope.name}}"
+  recommendation: >
+    Prefix all REST paths with a version segment: /api/v1/resource. This
+    allows a v2 to coexist with v1 without breaking existing consumers.
+    If the app is internal-only, a simpler /v1/ prefix still clarifies
+    contract stability.

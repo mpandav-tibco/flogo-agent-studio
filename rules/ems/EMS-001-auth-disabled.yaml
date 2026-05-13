@@ -1,0 +1,32 @@
+rule:
+  id: EMS-001
+  enabled: true
+  severity: ERROR
+  category: security
+  title: EMS Authentication Is Disabled
+  description: >
+    EMS configuration "{{.Scope.name}}" has authentication disabled
+    (authorization=disabled or authorization not set). Any client can
+    connect and publish/subscribe to any topic without credentials.
+  tags: [security, authentication, authorization, ems]
+
+  applies_to: [.conf, .cfg, .properties]
+  parser: text
+
+  scope: file
+
+  match:
+    type: any_of
+    conditions:
+      - type: regex_match
+        path: content
+        pattern: "(?m)^\\s*authorization\\s*=\\s*disabled"
+      - type: missing
+        path: authorization
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Set authorization=enabled in tibemsd.conf. Create users, roles, and
+    ACLs using the EMS administration tool (tibemsadmin). Restrict
+    publish/subscribe rights to specific topics per service identity.
+    Use client certificates or LDAP integration for mutual authentication.

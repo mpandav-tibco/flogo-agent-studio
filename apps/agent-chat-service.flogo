@@ -7,6 +7,7 @@
     "github.com/project-flogo/contrib/activity/actreturn",
     "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/activity/agentactivity",
     "github.com/tibco/flogo-general/src/app/General/trigger/rest",
+    "act_rest github.com/tibco/flogo-general/src/app/General/activity/rest",
     "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/string",
     "github.com/mpandav-tibco/flogo-extensions/vectordb/connector",
@@ -28,9 +29,9 @@
         "APISpecUpdate": false,
         "swagger": "",
         "swaggerVersion": "v2",
-        "authenticationType": "None",
-        "username": "",
-        "password": "",
+        "authenticationType": "Basic",
+        "username": "flogo",
+        "password": "=$property[\"API_KEY\"]",
         "apiVersion": "1.0.0",
         "secureConnection": false,
         "serverKey": "",
@@ -81,7 +82,7 @@
               },
               "body": {
                 "type": "json",
-                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"message\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"topK\":{\"type\":\"number\"},\"sessionId\":{\"type\":\"string\"},\"systemPrompt\":{\"type\":\"string\"}}}",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"},\"message\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"topK\":{\"type\":\"number\"},\"sessionId\":{\"type\":\"string\"},\"systemPrompt\":{\"type\":\"string\"}}}",
                 "fe_metadata": "{\"message\":\"abc\",\"collectionName\":\"abc\",\"topK\":134,\"sessionId\":\"abc\",\"systemPrompt\":\"abc\"}"
               }
             }
@@ -242,23 +243,22 @@
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest",
-            "type": "label",
-            "label": "Start to LogRequest"
+            "to": "LogRequest"
           },
           {
             "id": 2,
             "from": "LogRequest",
-            "to": "RAGQuery",
-            "type": "label",
-            "label": "LogRequest to RAGQuery"
+            "to": "GetAgentConfig"
           },
           {
             "id": 3,
+            "from": "GetAgentConfig",
+            "to": "RAGQuery"
+          },
+          {
+            "id": 4,
             "from": "RAGQuery",
-            "to": "Return",
-            "type": "label",
-            "label": "RAGQuery to Return"
+            "to": "Return"
           }
         ],
         "tasks": [
@@ -284,6 +284,30 @@
             }
           },
           {
+            "id": "GetAgentConfig",
+            "name": "GetAgentConfig",
+            "description": "Fetch per-agent config from config-service using the agentId in the request. Falls back gracefully if agentId is absent.",
+            "activity": {
+              "ref": "#act_rest",
+              "input": {
+                "Method": "GET",
+                "Uri": "=string.concat($property[\"CONFIG_SERVICE_URL\"], \"/api/agents/\", coerce.toString($flow.body.agentId))",
+                "headers": {
+                  "Content-Type": "application/json",
+                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                }
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                  }
+                }
+              }
+            }
+          },
+          {
             "id": "RAGQuery",
             "name": "RAGQuery",
             "description": "",
@@ -304,19 +328,19 @@
                 "useHybridSearch": true,
                 "hybridAlpha": 0.75,
                 "enableLLMGenerate": true,
-                "llmProvider": "OpenAI",
-                "llmBaseURL": "https://ollama.com",
-                "llmAPIKey": "954bd5d476ee456583f9a4079d24ac16.EP8HhAPYJyC4LELg-PfqTa6z",
-                "llmModel": "gemma3:4b-cloud",
+                "llmProvider": "=$property[\"LLM_PROVIDER\"]",
+                "llmBaseURL": "=$property[\"LLM_BASE_URL\"]",
+                "llmAPIKey": "=$property[\"LLM_API_KEY\"]",
+                "llmModel": "=$property[\"LLM_MODEL\"]",
                 "systemPrompt": "=$property[\"SYSTEM_PROMPT\"]",
                 "maxTokens": 1024,
                 "temperature": 0.1
               },
               "input": {
                 "queryText": "=$flow.body.message",
-                "collectionName": "=$flow.body.collectionName",
-                "topK": "=$flow.body.topK",
-                "systemPrompt": "=$flow.body.systemPrompt"
+                "collectionName": "=$activity[GetAgentConfig].responseBody.collectionName",
+                "topK": "=$activity[GetAgentConfig].responseBody.topK",
+                "systemPrompt": "=$activity[GetAgentConfig].responseBody.systemPrompt"
               }
             }
           },
@@ -747,7 +771,7 @@
     {
       "name": "LLM_MODEL",
       "type": "string",
-      "value": "gemma3:4b-cloud"
+      "value": "llama3.2:3b"
     },
     {
       "name": "SYSTEM_PROMPT",
@@ -760,6 +784,12 @@
       "value": "1.0.0"
     },
     {
+      "name": "CONFIG_SERVICE_URL",
+      "type": "string",
+      "description": "Base URL of the config-service for fetching per-agent configuration.",
+      "value": "http://localhost:7004"
+    },
+    {
       "name": "LLM_PROVIDER",
       "type": "string",
       "value": "OpenAI"
@@ -767,7 +797,7 @@
     {
       "name": "LLM_BASE_URL",
       "type": "string",
-      "value": "https://ollama.com/v1"
+      "value": "http://localhost:11434"
     },
     {
       "name": "LLM_API_KEY",
@@ -788,6 +818,18 @@
       "name": "OPENAI_API_KEY",
       "type": "string",
       "value": "ollama"
+    },
+    {
+      "name": "API_KEY",
+      "type": "string",
+      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
+      "value": "changeme"
+    },
+    {
+      "name": "API_AUTH_HEADER",
+      "type": "string",
+      "description": "Pre-computed Authorization header for outbound calls. Matches API_KEY=changeme by default.",
+      "value": "Basic ZmxvZ286Y2hhbmdlbWU="
     }
   ],
   "connections": {
@@ -828,7 +870,7 @@
         "llmProvider": "OpenAI",
         "anthropicProvider": "Default",
         "apiKey": "954bd5d476ee456583f9a4079d24ac16.EP8HhAPYJyC4LELg-PfqTa6z",
-        "llmProviderUrl": "https://ollama.com/v1"
+        "llmProviderUrl": "http://localhost:11434/v1"
       }
     }
   },

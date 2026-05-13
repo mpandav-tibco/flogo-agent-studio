@@ -1,0 +1,43 @@
+rule:
+  id: FLOGO-003
+  enabled: true
+  severity: WARNING
+  category: security
+  title: SSL Certificate Verification Disabled
+  description: >
+    Activity "{{.Scope.name}}" in flow "{{.Parent.name}}" has
+    skipSSLVerification enabled. Certificate validation is bypassed,
+    exposing the integration to man-in-the-middle attacks.
+  tags: [ssl, tls, security]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data.tasks[*]
+
+  when:
+    type: contains_any
+    path: activity.ref
+    substrings:
+      - "contrib/activity/rest"
+      - "activity/rest"
+      - "activity/http"
+
+  match:
+    type: any_of
+    conditions:
+      - type: equals
+        path: activity.input.skipSSLVerification
+        value: true
+      - type: equals
+        path: activity.input.skipSSLVerification
+        value: "true"
+      - type: equals
+        path: activity.settings.skipSSLVerification
+        value: true
+
+  location: "flow:{{.Parent.name}} / activity:{{.Scope.name}}"
+  recommendation: >
+    Set skipSSLVerification to false. If you need to trust a private CA,
+    configure a custom trust store via the connection settings rather than
+    disabling verification entirely.

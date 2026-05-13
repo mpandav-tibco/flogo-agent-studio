@@ -1,0 +1,29 @@
+rule:
+  id: MEM-002
+  enabled: true
+  severity: WARNING
+  category: memory
+  title: Excessive GC Overhead Detected
+  description: >
+    The JVM is spending more than 98% of CPU time on garbage collection
+    and recovering less than 2% of heap per GC cycle. This is a precursor
+    to an OutOfMemoryError and indicates severe heap pressure.
+  tags: [java, jvm, gc, memory, performance]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(GC overhead limit exceeded|excessive gc|Pause Full|high gc activity|GC pause.*[5-9]\\d{2}ms|GC pause.*\\d{4}ms)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Enable GC logging (-Xlog:gc*:file=gc.log:time,uptime) and analyse
+    pause durations. Short-term: increase heap size. Long-term: tune
+    the GC algorithm (G1GC or ZGC for low-pause requirements), reduce
+    object allocation rate (profile with async-profiler), and identify
+    long-lived objects that should be pooled or cached more efficiently.

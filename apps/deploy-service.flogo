@@ -1,0 +1,1008 @@
+{
+  "imports": [
+    "tr_rest github.com/tibco/flogo-general/src/app/General/trigger/rest",
+    "github.com/project-flogo/flow",
+    "act_default_noop github.com/project-flogo/contrib/activity/noop",
+    "act_general_log github.com/tibco/flogo-general/src/app/General/activity/log",
+    "act_default_actreturn github.com/project-flogo/contrib/activity/actreturn",
+    "act_rest github.com/tibco/flogo-general/src/app/General/activity/rest",
+    "coerce github.com/project-flogo/contrib/function/coerce",
+    "string github.com/project-flogo/contrib/function/string"
+  ],
+  "name": "deploy-service",
+  "description": "Agent deployment service. Activates/deactivates agents in design-service and generates K8s/Docker Compose manifests for export. Part of Flogo Agent Studio.",
+  "version": "1.0.0",
+  "type": "flogo:app",
+  "appModel": "1.1.1",
+  "tags": [],
+  "properties": [
+    {
+      "name": "DESIGN_SERVICE_URL",
+      "type": "string",
+      "description": "Base URL of the design-service for fetching and updating agent records.",
+      "value": "http://localhost:7020"
+    },
+    {
+      "name": "CHAT_SERVICE_URL",
+      "type": "string",
+      "description": "Base URL of the agent-chat-service used to construct chat URLs.",
+      "value": "http://localhost:7001"
+    },
+    {
+      "name": "SERVICE_VERSION",
+      "type": "string",
+      "description": "Deploy service version tag.",
+      "value": "1.0.0"
+    },
+    {
+      "name": "API_KEY",
+      "type": "string",
+      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
+      "value": "changeme"
+    },
+    {
+      "name": "API_AUTH_HEADER",
+      "type": "string",
+      "description": "Pre-computed Authorization header for outbound calls. Matches API_KEY=changeme by default.",
+      "value": "Basic ZmxvZ286Y2hhbmdlbWU="
+    }
+  ],
+  "triggers": [
+    {
+      "settings": {
+        "port": 7030,
+        "APISpecUpdate": false,
+        "swagger": "",
+        "swaggerVersion": "v2",
+        "authenticationType": "Basic",
+        "username": "flogo",
+        "password": "=$property[\"API_KEY\"]",
+        "apiVersion": "1.0.0",
+        "secureConnection": false,
+        "serverKey": "",
+        "caCertificate": ""
+      },
+      "id": "DeployRESTTrigger",
+      "name": "DeployRESTTrigger",
+      "description": "REST trigger — deploy service on port 7030",
+      "ref": "#tr_rest",
+      "handlers": [
+        {
+          "settings": {
+            "APISpecPath": "",
+            "Method": "POST",
+            "reqType": "application/json",
+            "Path": "/api/v1/agents/{agentId}/deploy",
+            "OutputValidation": false
+          },
+          "action": {
+            "input": {
+              "agentId": "=$.pathParams.agentId"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            },
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:deploy_agent"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "data": {},
+            "responseBody": {},
+            "responseCodesSchema": {},
+            "message": ""
+          },
+          "name": "deploy_agent",
+          "description": "Activate an agent — set status to active and return chat URL",
+          "schemas": {
+            "output": {
+              "pathParams": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"agentId\",\"type\":\"string\"}]"
+              },
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              }
+            }
+          }
+        },
+        {
+          "settings": {
+            "APISpecPath": "",
+            "Method": "DELETE",
+            "reqType": "application/json",
+            "Path": "/api/v1/agents/{agentId}/deploy",
+            "OutputValidation": false
+          },
+          "action": {
+            "input": {
+              "agentId": "=$.pathParams.agentId"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            },
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:undeploy_agent"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "data": {},
+            "responseBody": {},
+            "responseCodesSchema": {},
+            "message": ""
+          },
+          "name": "undeploy_agent",
+          "description": "Deactivate an agent — set status back to draft",
+          "schemas": {
+            "output": {
+              "pathParams": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"agentId\",\"type\":\"string\"}]"
+              },
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              }
+            }
+          }
+        },
+        {
+          "settings": {
+            "APISpecPath": "",
+            "Method": "GET",
+            "reqType": "application/json",
+            "Path": "/api/v1/agents/{agentId}/deploy",
+            "OutputValidation": false
+          },
+          "action": {
+            "input": {
+              "agentId": "=$.pathParams.agentId"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            },
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:get_deploy_status"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "data": {},
+            "responseBody": {},
+            "responseCodesSchema": {},
+            "message": ""
+          },
+          "name": "get_deploy_status",
+          "description": "Get current deployment status for an agent",
+          "schemas": {
+            "output": {
+              "pathParams": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"agentId\",\"type\":\"string\"}]"
+              },
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              }
+            }
+          }
+        },
+        {
+          "settings": {
+            "APISpecPath": "",
+            "Method": "GET",
+            "reqType": "application/json",
+            "Path": "/api/v1/agents/{agentId}/export/kubernetes",
+            "OutputValidation": false
+          },
+          "action": {
+            "input": {
+              "agentId": "=$.pathParams.agentId"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            },
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:export_kubernetes"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "data": {},
+            "responseBody": {},
+            "responseCodesSchema": {},
+            "message": ""
+          },
+          "name": "export_kubernetes",
+          "description": "Generate Kubernetes deployment manifests for an agent",
+          "schemas": {
+            "output": {
+              "pathParams": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"agentId\",\"type\":\"string\"}]"
+              },
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              }
+            }
+          }
+        },
+        {
+          "settings": {
+            "APISpecPath": "",
+            "Method": "GET",
+            "reqType": "application/json",
+            "Path": "/api/v1/agents/{agentId}/export/docker-compose",
+            "OutputValidation": false
+          },
+          "action": {
+            "input": {
+              "agentId": "=$.pathParams.agentId"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            },
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:export_compose"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "data": {},
+            "responseBody": {},
+            "responseCodesSchema": {},
+            "message": ""
+          },
+          "name": "export_compose",
+          "description": "Generate docker-compose manifest for an agent",
+          "schemas": {
+            "output": {
+              "pathParams": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"agentId\",\"type\":\"string\"}]"
+              },
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              }
+            }
+          }
+        },
+        {
+          "settings": {
+            "APISpecPath": "",
+            "Method": "GET",
+            "reqType": "application/json",
+            "Path": "/api/health",
+            "OutputValidation": false
+          },
+          "action": {
+            "input": {},
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            },
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:health_check"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "data": {},
+            "responseBody": {},
+            "responseCodesSchema": {},
+            "message": ""
+          },
+          "name": "health_check",
+          "description": "Service health check",
+          "schemas": {
+            "output": {}
+          }
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "id": "flow:deploy_agent",
+      "data": {
+        "name": "deploy_agent",
+        "description": "Activates an agent by setting status to active in design-service and returns the chat URL.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "LogRequest",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "GetAgentConfig",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 3,
+            "from": "GetAgentConfig",
+            "to": "ActivateAgent",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 4,
+            "from": "ActivateAgent",
+            "to": "Return",
+            "type": "label",
+            "label": ""
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "description": "Log deploy request",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[Deploy] Activating agent: \", coerce.toString($flow.agentId))",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "GetAgentConfig",
+            "name": "GetAgentConfig",
+            "description": "Fetch current agent record from design-service",
+            "activity": {
+              "ref": "#act_rest",
+              "input": {
+                "headers": {
+                  "Content-Type": "application/json",
+                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                },
+                "Method": "GET",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "ActivateAgent",
+            "name": "ActivateAgent",
+            "description": "Update agent status to active in design-service",
+            "activity": {
+              "ref": "#act_rest",
+              "input": {
+                "headers": {
+                  "Content-Type": "application/json",
+                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                },
+                "body": {
+                  "status": "active"
+                },
+                "Method": "PUT",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return deployment info",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": "=$activity[ActivateAgent].responseBody"
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "agentId",
+              "type": "string"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
+    },
+    {
+      "id": "flow:undeploy_agent",
+      "data": {
+        "name": "undeploy_agent",
+        "description": "Deactivates an agent by setting status back to draft in design-service.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "LogRequest",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "GetAgentConfig",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 3,
+            "from": "GetAgentConfig",
+            "to": "DeactivateAgent",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 4,
+            "from": "DeactivateAgent",
+            "to": "Return",
+            "type": "label",
+            "label": ""
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "description": "Log undeploy request",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[Deploy] Deactivating agent: \", coerce.toString($flow.agentId))",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "GetAgentConfig",
+            "name": "GetAgentConfig",
+            "description": "Fetch current agent record from design-service",
+            "activity": {
+              "ref": "#act_rest",
+              "input": {
+                "headers": {
+                  "Content-Type": "application/json",
+                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                },
+                "Method": "GET",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "DeactivateAgent",
+            "name": "DeactivateAgent",
+            "description": "Update agent status to draft in design-service",
+            "activity": {
+              "ref": "#act_rest",
+              "input": {
+                "headers": {
+                  "Content-Type": "application/json",
+                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                },
+                "body": {
+                  "status": "draft"
+                },
+                "Method": "PUT",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return deactivation result",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": "=$activity[DeactivateAgent].responseBody"
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "agentId",
+              "type": "string"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
+    },
+    {
+      "id": "flow:get_deploy_status",
+      "data": {
+        "name": "get_deploy_status",
+        "description": "Returns the current deployment status of an agent from design-service.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "GetAgentConfig",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 2,
+            "from": "GetAgentConfig",
+            "to": "Return",
+            "type": "label",
+            "label": ""
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "GetAgentConfig",
+            "name": "GetAgentConfig",
+            "description": "Fetch agent record from design-service",
+            "activity": {
+              "ref": "#act_rest",
+              "input": {
+                "headers": {
+                  "Content-Type": "application/json",
+                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                },
+                "Method": "GET",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return deploy status",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": "=$activity[GetAgentConfig].responseBody"
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "agentId",
+              "type": "string"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
+    },
+    {
+      "id": "flow:export_kubernetes",
+      "data": {
+        "name": "export_kubernetes",
+        "description": "Generates Kubernetes deployment, service, and configmap manifests for the agent.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "GetAgentConfig",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 2,
+            "from": "GetAgentConfig",
+            "to": "BuildDeploymentYAML",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 3,
+            "from": "BuildDeploymentYAML",
+            "to": "BuildServiceYAML",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 4,
+            "from": "BuildServiceYAML",
+            "to": "Return",
+            "type": "label",
+            "label": ""
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "GetAgentConfig",
+            "name": "GetAgentConfig",
+            "description": "Fetch agent record from design-service",
+            "activity": {
+              "ref": "#act_rest",
+              "input": {
+                "headers": {
+                  "Content-Type": "application/json",
+                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                },
+                "Method": "GET",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "BuildDeploymentYAML",
+            "name": "BuildDeploymentYAML",
+            "description": "Build Kubernetes Deployment manifest",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "DEBUG",
+                "flowInfo": false,
+                "message": "=string.concat(\"[Deploy] Generating K8s manifests for agent: \", coerce.toString($flow.agentId))",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "BuildServiceYAML",
+            "name": "BuildServiceYAML",
+            "description": "Build Kubernetes Service manifest",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "DEBUG",
+                "flowInfo": false,
+                "message": "=string.concat(\"[Deploy] K8s service manifest ready for agent: \", coerce.toString($flow.agentId))",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return K8s manifests as JSON",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": "=$activity[GetAgentConfig].responseBody"
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "agentId",
+              "type": "string"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
+    },
+    {
+      "id": "flow:export_compose",
+      "data": {
+        "name": "export_compose",
+        "description": "Generates a docker-compose manifest for the agent.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "GetAgentConfig",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 2,
+            "from": "GetAgentConfig",
+            "to": "Return",
+            "type": "label",
+            "label": ""
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "GetAgentConfig",
+            "name": "GetAgentConfig",
+            "description": "Fetch agent record from design-service",
+            "activity": {
+              "ref": "#act_rest",
+              "input": {
+                "headers": {
+                  "Content-Type": "application/json",
+                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                },
+                "Method": "GET",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return docker-compose manifest",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": "=$activity[GetAgentConfig].responseBody"
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "agentId",
+              "type": "string"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
+    },
+    {
+      "id": "flow:health_check",
+      "data": {
+        "name": "health_check",
+        "description": "Returns service health status.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "Return",
+            "type": "label",
+            "label": ""
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return health status",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": {
+                    "status": "ok",
+                    "service": "deploy-service",
+                    "version": "1.0.0"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "metadata": {
+          "input": [],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
+    }
+  ],
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
+  "metadata": {
+    "flogoVersion": "2.26.3"
+  }
+}

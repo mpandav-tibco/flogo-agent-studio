@@ -1,0 +1,27 @@
+rule:
+  id: FLOGO-009
+  enabled: true
+  severity: WARNING
+  category: maintainability
+  title: Flow Exceeds Recommended Activity Count
+  description: >
+    Flow "{{.Scope.name}}" contains more than 15 activities. Large
+    monolithic flows are hard to unit-test, difficult to reason about,
+    and create merge conflicts in team environments.
+  tags: [complexity, maintainability, size]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data
+
+  match:
+    type: count_greater_than
+    path: tasks
+    threshold: 15
+
+  location: "flow:{{.Scope.name}}"
+  recommendation: >
+    Break the flow into smaller, focused subflows — each with a single
+    responsibility. A good heuristic is that a flow should fit on one
+    screen without scrolling (7–10 activities maximum).

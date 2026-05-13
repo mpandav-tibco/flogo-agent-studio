@@ -1,0 +1,30 @@
+rule:
+  id: FLOGO-RT-002
+  enabled: true
+  severity: ERROR
+  category: flogo-runtime
+  title: Flogo App Port Already in Use
+  description: >
+    The Flogo application cannot bind to its configured port because
+    another process is already listening on that address. The trigger
+    will not start and the application will exit.
+  tags: [flogo, port, network, startup, configuration]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(address already in use|bind.*failed|EADDRINUSE|listen tcp.*address already in use|port.*already.*bound)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Identify which port is in conflict from the log message. Find the
+    conflicting process: lsof -i :<port> (Linux/Mac) or
+    netstat -ano | findstr :<port> (Windows). Either stop the conflicting
+    process or change the Flogo app's port via the trigger configuration
+    or the relevant app property (e.g. PORT, HTTP_PORT). In Docker
+    compose, ensure each service maps to a unique host port.

@@ -1,0 +1,30 @@
+rule:
+  id: BW-002
+  enabled: true
+  severity: ERROR
+  category: messaging
+  title: EMS Connection Failure in BW Log
+  description: >
+    A TIBCO EMS connection error was detected. BusinessWorks or Flogo
+    cannot reach the EMS broker; messaging-dependent flows will fail
+    until the connection is restored.
+  tags: [ems, jms, messaging, bw, connection]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(EMS.*connection.*failed|JMSException|javax\\.jms\\.JMS|TibjmsException|Could not connect.*EMS|EMS server.*unavailable)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Verify EMS broker status on the configured host:port. Check if the
+    EMS service is running (tibemsd process). Confirm firewall rules allow
+    traffic on port 7222 (or configured SSL port 7243). If using fault
+    tolerance, verify both primary and backup broker URLs are configured.
+    For Flogo: check the EMS connection settings including credentials,
+    host, and port. Check EMS server logs for concurrent connection limits.

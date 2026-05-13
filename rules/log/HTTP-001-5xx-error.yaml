@@ -1,0 +1,30 @@
+rule:
+  id: HTTP-001
+  enabled: true
+  severity: ERROR
+  category: http
+  title: HTTP 5xx Server Error Detected
+  description: >
+    An HTTP 5xx response was logged. Server-side errors indicate the
+    application or a downstream dependency encountered an unexpected
+    condition that prevented successful request processing.
+  tags: [http, 5xx, server-error, api]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(HTTP/[12]\\.[01]\\s+5\\d{2}|status[=:\\s]+5\\d{2}|\\b5[0-9]{2}\\s+\\w+\\s+Error|\"status\":\\s*5\\d{2})"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Identify the specific 5xx code: 500 (internal error — check stack trace),
+    502 (bad gateway — upstream returned invalid response), 503 (service
+    unavailable — overload or downstream down), 504 (gateway timeout — increase
+    timeout or fix slow downstream). Correlate with upstream caller logs using
+    X-Correlation-ID or traceparent header. For Flogo: check the flow's
+    error handler and the response code mapping in the REST trigger.

@@ -1,0 +1,33 @@
+rule:
+  id: KAFKA-001
+  enabled: true
+  severity: ERROR
+  category: messaging
+  title: Kafka Leader Not Available for Partition
+  description: >
+    Kafka reports that no leader is currently available for one or more
+    partitions. Produce or consume operations targeting those partitions
+    will fail until a leader is elected. This often indicates broker
+    instability or a recent rebalance.
+  tags: [kafka, messaging, leader-election, broker, partition]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(LEADER_NOT_AVAILABLE|leader not available|no leader.*partition|not a leader.*partition|LeaderNotAvailableException|UnknownTopicOrPartitionException)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Leader not available is often transient during broker restarts,
+    partition reassignments, or ISR shrinkage. Immediate: ensure the
+    Kafka client retries with back-off (retry.backoff.ms). Check broker
+    health: kafka-broker-api-versions.sh --bootstrap-server <host:9092>.
+    Check under-replicated partitions: kafka-topics.sh --describe
+    --under-replicated-partitions. If a broker is down, bring it back
+    or trigger partition rebalance. Review min.insync.replicas and
+    replication.factor settings for the affected topic.

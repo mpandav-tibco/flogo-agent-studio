@@ -2,6 +2,8 @@ Set-Location "c:\Users\mpandav\Downloads\Work\TIBCO\git\flogo-agent-studio"
 
 $apps = @(
     @{ exe = "bin\apps\rule-engine-service.exe";    out = "logs\rule-engine.log";    err = "logs\rule-engine-err.log"    },
+    @{ exe = "bin\apps\design-service.exe";         out = "logs\design-service.log"; err = "logs\design-service-err.log" },
+    @{ exe = "bin\apps\deploy-service.exe";         out = "logs\deploy-service.log"; err = "logs\deploy-service-err.log" },
     @{ exe = "bin\apps\agent-chat-service.exe";     out = "logs\agent-chat.log";     err = "logs\agent-chat-err.log"     },
     @{ exe = "bin\apps\ingestion-service.exe";      out = "logs\ingestion.log";      err = "logs\ingestion-err.log"      },
     @{ exe = "bin\apps\feedback-service.exe";       out = "logs\feedback.log";       err = "logs\feedback-err.log"       },

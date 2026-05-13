@@ -28,9 +28,9 @@
         "APISpecUpdate": false,
         "swagger": "",
         "swaggerVersion": "v2",
-        "authenticationType": "None",
-        "username": "",
-        "password": "",
+        "authenticationType": "Basic",
+        "username": "flogo",
+        "password": "=$property[\"API_KEY\"]",
         "apiVersion": "1.0.0",
         "secureConnection": false,
         "serverKey": "",
@@ -746,6 +746,12 @@
       "name": "SERVICE_VERSION",
       "type": "string",
       "value": "1.0.0"
+    },
+    {
+      "name": "API_KEY",
+      "type": "string",
+      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
+      "value": "changeme"
     }
   ],
   "connections": {},

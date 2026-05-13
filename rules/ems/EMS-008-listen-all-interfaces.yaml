@@ -1,0 +1,30 @@
+rule:
+  id: EMS-008
+  enabled: true
+  severity: WARNING
+  category: security
+  title: EMS Listening on All Network Interfaces
+  description: >
+    EMS configuration "{{.Scope.name}}" binds the listener to 0.0.0.0
+    (all interfaces). This exposes the broker on every network interface
+    of the host including public-facing ones, increasing the attack surface.
+  tags: [security, network, binding, ems]
+
+  applies_to: [.conf, .cfg]
+  parser: text
+
+  scope: file
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?m)^\\s*listen\\s*=.*://0\\.0\\.0\\.0:"
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Bind EMS to a specific internal IP address instead of 0.0.0.0:
+      listen=tcp://10.0.1.5:7222
+    If multi-interface binding is unavoidable, use host-based firewall
+    rules (iptables, Windows Firewall) to restrict port 7222 to trusted
+    source IPs only. For containerised deployments, rely on the container
+    network namespace to isolate the port.

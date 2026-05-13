@@ -1,0 +1,32 @@
+rule:
+  id: BW-005
+  enabled: true
+  severity: ERROR
+  category: database
+  title: Database Deadlock Detected
+  description: >
+    A deadlock was detected in a database transaction. One or more
+    transactions were rolled back by the database to resolve the lock
+    cycle. Deadlocks are a sign of concurrent access patterns that need
+    to be redesigned.
+  tags: [database, deadlock, transaction, concurrency]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(deadlock|Deadlock detected|ORA-00060|lock.*wait.*timeout|was deadlocked.*victim|transaction.*deadlock)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Deadlocks occur when two transactions hold locks each other needs.
+    Mitigations: (1) Access tables in a consistent order across all
+    transactions. (2) Keep transactions short — commit early, don't
+    interleave user interaction. (3) Add appropriate indexes to reduce
+    the row-lock scope. (4) Use SELECT ... WITH (UPDLOCK) or SELECT FOR
+    UPDATE to acquire locks eagerly in the correct order. The deadlock
+    victim transaction should be retried automatically by the application.

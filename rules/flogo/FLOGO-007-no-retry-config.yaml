@@ -1,0 +1,38 @@
+rule:
+  id: FLOGO-007
+  enabled: true
+  severity: WARNING
+  category: resilience
+  title: HTTP Activity Has No Retry Configuration
+  description: >
+    Activity "{{.Scope.name}}" in flow "{{.Parent.name}}" makes an HTTP
+    call with no retry policy. Transient network failures (5xx, socket
+    resets) will surface as immediate errors with no automatic recovery.
+  tags: [http, retry, resilience]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data.tasks[*]
+
+  when:
+    type: contains_any
+    path: activity.ref
+    substrings:
+      - "contrib/activity/rest"
+      - "activity/rest"
+      - "activity/http"
+
+  match:
+    type: all_missing
+    paths:
+      - activity.input.retryCount
+      - activity.input.maxRetries
+      - activity.input.retry
+      - activity.settings.retryCount
+
+  location: "flow:{{.Parent.name}} / activity:{{.Scope.name}}"
+  recommendation: >
+    Add a retryCount (e.g. 3) with exponential backoff on HTTP activities
+    that call external services. Use circuit-breaker patterns for services
+    with known reliability issues.

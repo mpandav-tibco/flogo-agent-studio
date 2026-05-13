@@ -1,0 +1,39 @@
+rule:
+  id: FLOGO-015
+  enabled: true
+  severity: WARNING
+  category: configuration
+  title: Connector Points to Localhost or Empty Host
+  description: >
+    Connection "{{.Scope.name}}" has its host set to localhost,
+    127.0.0.1, ::1, or is empty. A localhost address fails in any
+    containerised or multi-node deployment where services run on
+    separate hosts.
+  tags: [configuration, connector, localhost, deployment]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.connections[*]
+
+  match:
+    type: any_of
+    conditions:
+      - type: contains_any
+        path: settings[?(@.name=='host')].value
+        substrings:
+          - "localhost"
+          - "127.0.0.1"
+          - "::1"
+      - type: equals
+        path: settings[?(@.name=='host')].value
+        value: ""
+      - type: missing
+        path: settings[?(@.name=='host')].value
+
+  location: "connection:{{.Scope.name}}"
+  recommendation: >
+    Replace localhost with a DNS name or an app property reference
+    (e.g. =$property["DB_HOST"]). For Docker environments use the
+    service name defined in docker-compose.yml; for Kubernetes use
+    the service ClusterIP DNS name.

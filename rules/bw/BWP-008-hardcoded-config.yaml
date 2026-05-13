@@ -1,0 +1,29 @@
+rule:
+  id: BWP-008
+  enabled: true
+  severity: WARNING
+  category: configuration
+  title: Hardcoded Configuration Value in Substitution Variable
+  description: >
+    Substitution variable "{{.Scope.name}}" contains a literal value that
+    appears to be environment-specific (port number, hostname, or path).
+    Values hardcoded in .substvar files must be changed manually for each
+    deployment target.
+  tags: [configuration, substvar, environment, hardcoded, bw]
+
+  applies_to: [.substvar, .xml]
+  parser: xml
+
+  scope: //globalVariables/globalVariable | //moduleProperties/property
+
+  match:
+    type: regex_match
+    path: .//value | .//defaultValue
+    pattern: "^(\\d{4,5}|/[a-zA-Z]|[a-zA-Z]:\\\\)"
+
+  location: "variable:{{.Scope.name}}"
+  recommendation: >
+    Use deployment-profile-specific .substvar files (dev.substvar,
+    prod.substvar) or inject values at runtime via OS environment variables
+    bound to Module Properties. This way the same EAR is deployed unchanged
+    across environments with only the substvar file swapped out.

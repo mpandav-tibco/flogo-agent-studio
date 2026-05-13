@@ -1,0 +1,28 @@
+rule:
+  id: FLOGO-014
+  enabled: true
+  severity: INFO
+  category: performance
+  title: Same REST Endpoint Called Multiple Times in One Flow
+  description: >
+    Flow "{{.Scope.name}}" calls the same REST endpoint URI more than
+    once. Repeated identical calls add unnecessary latency and load on
+    the downstream service.
+  tags: [http, performance, caching, deduplication]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data
+
+  match:
+    type: duplicate_values
+    path: tasks[?(@.activity.ref =~ /activity\/rest|activity\/http/)].activity.input.uri
+    min_count: 2
+
+  location: "flow:{{.Scope.name}}"
+  recommendation: >
+    Cache the response from the first call in a flow variable and reuse
+    it in subsequent activities. If the calls must be independent (e.g.
+    different inputs), consider whether the flow can be restructured to
+    batch the requests.

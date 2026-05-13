@@ -1,0 +1,37 @@
+rule:
+  id: FLOGO-013
+  enabled: true
+  severity: WARNING
+  category: performance
+  title: JDBC Query Has No Pagination Guard
+  description: >
+    Activity "{{.Scope.name}}" in flow "{{.Parent.name}}" executes a
+    SELECT query with no pagination clause (LIMIT, TOP, ROWNUM, FETCH
+    FIRST). Unbounded queries may return millions of rows, causing
+    out-of-memory errors and slow response times under load.
+  tags: [jdbc, sql, performance, pagination]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data.tasks[*]
+
+  when:
+    type: contains_any
+    path: activity.ref
+    substrings:
+      - "activity/jdbc"
+      - "activity/sqloperation"
+      - "contrib/activity/jdbc"
+
+  match:
+    type: regex_not_match
+    path: activity.input.query
+    pattern: "(?i)(LIMIT|TOP\\s+\\d|ROWNUM|FETCH\\s+FIRST)"
+    requires_contains: "SELECT"
+
+  location: "flow:{{.Parent.name}} / activity:{{.Scope.name}}"
+  recommendation: >
+    Add LIMIT N (or equivalent for your DB dialect) to all SELECT
+    queries. Use cursor-based or offset pagination for large result sets
+    and add a max-row-count guard in the flow logic.

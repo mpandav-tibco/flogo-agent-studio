@@ -1,0 +1,35 @@
+rule:
+  id: FLOGO-P006
+  enabled: true
+  severity: GOOD
+  category: resilience
+  title: HTTP Activity Has Explicit Timeout Configured
+  description: >
+    Activity "{{.Scope.name}}" in flow "{{.Parent.name}}" sets an explicit
+    timeout, preventing the flow from hanging indefinitely on slow or
+    unresponsive downstream services.
+  tags: [http, timeout, resilience, best-practice]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data.tasks[*]
+
+  when:
+    type: contains_any
+    path: activity.ref
+    substrings:
+      - "contrib/activity/rest"
+      - "activity/rest"
+      - "activity/http"
+
+  match:
+    type: not_missing
+    path: activity.input.timeout
+
+  location: "flow:{{.Parent.name}} / activity:{{.Scope.name}}"
+  recommendation: >
+    A timeout is set on this activity. Ensure the value is appropriate
+    for the downstream SLA: typically 5–30 seconds for synchronous REST
+    calls, lower for health checks. Use an app property so it can be
+    tuned per environment without recompiling.

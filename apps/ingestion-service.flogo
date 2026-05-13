@@ -7,7 +7,12 @@
     "act_vectordb_createcollection github.com/mpandav-tibco/flogo-extensions/vectordb/activity/createCollection",
     "act_vectordb_ingestdocuments github.com/mpandav-tibco/flogo-extensions/vectordb/activity/ingestDocuments",
     "act_default_actreturn github.com/project-flogo/contrib/activity/actreturn",
-    "con_vectordb github.com/mpandav-tibco/flogo-extensions/vectordb/connector"
+    "con_vectordb github.com/mpandav-tibco/flogo-extensions/vectordb/connector",
+    "act_rest github.com/tibco/flogo-general/src/app/General/activity/rest",
+    "con_aws github.com/tibco/flogo-aws/src/app/AWS/connector",
+    "act_aws_s3get github.com/tibco/wi-amazons3/src/app/AmazonS3/activity/get",
+    "coerce github.com/project-flogo/contrib/function/coerce",
+    "string github.com/project-flogo/contrib/function/string"
   ],
   "name": "ingestion-service",
   "description": "Knowledge base ingestion service. Ensures VectorDB collections exist and ingests documents with chunking and embedding. Part of Flogo Agent Studio.",
@@ -22,9 +27,9 @@
         "APISpecUpdate": false,
         "swagger": "",
         "swaggerVersion": "v2",
-        "authenticationType": "None",
-        "username": "",
-        "password": "",
+        "authenticationType": "Basic",
+        "username": "flogo",
+        "password": "=$property[\"API_KEY\"]",
         "apiVersion": "1.0.0",
         "secureConnection": false,
         "serverKey": "",
@@ -141,6 +146,166 @@
           "description": "Service health check",
           "schemas": {
             "output": {}
+          }
+        },
+        {
+          "settings": {
+            "APISpecPath": "",
+            "Method": "POST",
+            "reqType": "application/json",
+            "Path": "/api/ingest/url",
+            "OutputValidation": false
+          },
+          "action": {
+            "input": {
+              "body": "=$.body"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            },
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:ingest_url"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "data": {},
+            "responseBody": {},
+            "responseCodesSchema": {},
+            "message": ""
+          },
+          "name": "ingest_url",
+          "description": "Crawl a URL and ingest its content into VectorDB",
+          "schemas": {
+            "output": {
+              "body": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"label\":{\"type\":\"string\"}}}"
+              }
+            }
+          }
+        },
+        {
+          "settings": {
+            "APISpecPath": "",
+            "Method": "POST",
+            "reqType": "application/json",
+            "Path": "/api/ingest/github",
+            "OutputValidation": false
+          },
+          "action": {
+            "input": {
+              "body": "=$.body"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            },
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:ingest_github"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "data": {},
+            "responseBody": {},
+            "responseCodesSchema": {},
+            "message": ""
+          },
+          "name": "ingest_github",
+          "description": "Ingest files from a GitHub repository via GitHub REST API",
+          "schemas": {
+            "output": {
+              "body": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"owner\":{\"type\":\"string\"},\"repo\":{\"type\":\"string\"},\"path\":{\"type\":\"string\"},\"branch\":{\"type\":\"string\"},\"token\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"}}}"
+              }
+            }
+          }
+        },
+        {
+          "settings": {
+            "APISpecPath": "",
+            "Method": "POST",
+            "reqType": "application/json",
+            "Path": "/api/ingest/confluence",
+            "OutputValidation": false
+          },
+          "action": {
+            "input": {
+              "body": "=$.body"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            },
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:ingest_confluence"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "data": {},
+            "responseBody": {},
+            "responseCodesSchema": {},
+            "message": ""
+          },
+          "name": "ingest_confluence",
+          "description": "Ingest pages from a Confluence space via Confluence REST API",
+          "schemas": {
+            "output": {
+              "body": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"baseUrl\":{\"type\":\"string\"},\"spaceKey\":{\"type\":\"string\"},\"token\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"limit\":{\"type\":\"integer\"}}}"
+              }
+            }
+          }
+        },
+        {
+          "settings": {
+            "APISpecPath": "",
+            "Method": "POST",
+            "reqType": "application/json",
+            "Path": "/api/ingest/s3",
+            "OutputValidation": false
+          },
+          "action": {
+            "input": {
+              "body": "=$.body"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            },
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:ingest_s3"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "data": {},
+            "responseBody": {},
+            "responseCodesSchema": {},
+            "message": ""
+          },
+          "name": "ingest_s3",
+          "description": "Ingest a document from an S3 bucket via con_aws S3 GetObject",
+          "schemas": {
+            "output": {
+              "body": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"bucket\":{\"type\":\"string\"},\"key\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"}}}"
+              }
+            }
           }
         }
       ]
@@ -345,12 +510,7 @@
               "settings": {
                 "mappings": {
                   "code": 200,
-                  "data": {
-                    "success": "=$activity[EnsureCollection].success",
-                    "collectionName": "=$flow.body.collectionName",
-                    "created": "=$activity[EnsureCollection].created",
-                    "error": "=$activity[EnsureCollection].error"
-                  }
+                  "data": "=$activity[EnsureCollection]"
                 }
               }
             },
@@ -413,7 +573,7 @@
                   "data": {
                     "status": "ok",
                     "service": "ingestion-service",
-                    "version": "=$property[\"SERVICE_VERSION\"]",
+                    "version": "1.0.0",
                     "port": 7002
                   }
                 }
@@ -440,9 +600,683 @@
           "fe_metadata": {}
         }
       }
+    },
+    {
+      "id": "flow:ingest_url",
+      "data": {
+        "name": "ingest_url",
+        "description": "Fetches content from a URL via REST GET and ingests it into VectorDB with chunking.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "LogRequest",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "FetchURL",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 3,
+            "from": "FetchURL",
+            "to": "EnsureCollection",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 4,
+            "from": "EnsureCollection",
+            "to": "IngestContent",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 5,
+            "from": "IngestContent",
+            "to": "Return",
+            "type": "label",
+            "label": ""
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp Activity",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "description": "Log URL ingest request",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[Ingestion] URL crawl request: url=\", coerce.toString($flow.body.url), \" collection=\", coerce.toString($flow.body.collectionName))",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "FetchURL",
+            "name": "FetchURL",
+            "description": "Fetch the URL content via HTTP GET",
+            "activity": {
+              "ref": "#act_rest",
+              "input": {
+                "method": "GET",
+                "uri": "=$flow.body.url",
+                "headers": {
+                  "Accept": "text/html,text/plain,application/json"
+                }
+              }
+            }
+          },
+          {
+            "id": "EnsureCollection",
+            "name": "EnsureCollection",
+            "description": "Ensure VectorDB collection exists",
+            "activity": {
+              "ref": "#act_vectordb_createcollection",
+              "settings": {
+                "connection": "conn://vectordb-weaviate"
+              },
+              "input": {
+                "collectionName": "=$flow.body.collectionName"
+              }
+            }
+          },
+          {
+            "id": "IngestContent",
+            "name": "IngestContent",
+            "description": "Ingest fetched URL content into VectorDB",
+            "activity": {
+              "ref": "#act_vectordb_ingestdocuments",
+              "settings": {
+                "connection": "conn://vectordb-weaviate",
+                "chunkStrategy": "=$property[\"CHUNK_STRATEGY\"]",
+                "useConnectorEmbedding": true,
+                "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]"
+              },
+              "input": {
+                "collectionName": "=$flow.body.collectionName",
+                "documents": [
+                  {
+                    "content": "=$activity[FetchURL].responseBody",
+                    "metadata": {
+                      "source": "url",
+                      "url": "=$flow.body.url",
+                      "label": "=$flow.body.label"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return ingest result",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": {
+                    "success": "=$activity[IngestContent].success",
+                    "url": "=$flow.body.url",
+                    "collectionName": "=$flow.body.collectionName",
+                    "chunksIngested": "=$activity[IngestContent].chunksIngested"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
+    },
+    {
+      "id": "flow:ingest_github",
+      "data": {
+        "name": "ingest_github",
+        "description": "Fetches file content from a GitHub repository via GitHub REST API and ingests into VectorDB.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "LogRequest",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "FetchGitHubContent",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 3,
+            "from": "FetchGitHubContent",
+            "to": "EnsureCollection",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 4,
+            "from": "EnsureCollection",
+            "to": "IngestContent",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 5,
+            "from": "IngestContent",
+            "to": "Return",
+            "type": "label",
+            "label": ""
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp Activity",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "description": "Log GitHub ingest request",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[Ingestion] GitHub ingest: \", coerce.toString($flow.body.owner), \"/\", coerce.toString($flow.body.repo), \" path=\", coerce.toString($flow.body.path))",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "FetchGitHubContent",
+            "name": "FetchGitHubContent",
+            "description": "Fetch file or directory listing from GitHub REST API",
+            "activity": {
+              "ref": "#act_rest",
+              "input": {
+                "method": "GET",
+                "uri": "=string.concat($property[\"GITHUB_API_BASE\"], \"/repos/\", coerce.toString($flow.body.owner), \"/\", coerce.toString($flow.body.repo), \"/contents/\", coerce.toString($flow.body.path), \"?ref=\", coerce.toString($flow.body.branch))",
+                "headers": {
+                  "Accept": "application/vnd.github.v3.raw",
+                  "Authorization": "=string.concat(\"Bearer \", coerce.toString($flow.body.token))"
+                }
+              }
+            }
+          },
+          {
+            "id": "EnsureCollection",
+            "name": "EnsureCollection",
+            "description": "Ensure VectorDB collection exists",
+            "activity": {
+              "ref": "#act_vectordb_createcollection",
+              "settings": {
+                "connection": "conn://vectordb-weaviate"
+              },
+              "input": {
+                "collectionName": "=$flow.body.collectionName"
+              }
+            }
+          },
+          {
+            "id": "IngestContent",
+            "name": "IngestContent",
+            "description": "Ingest GitHub file content into VectorDB",
+            "activity": {
+              "ref": "#act_vectordb_ingestdocuments",
+              "settings": {
+                "connection": "conn://vectordb-weaviate",
+                "chunkStrategy": "=$property[\"CHUNK_STRATEGY\"]",
+                "useConnectorEmbedding": true,
+                "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]"
+              },
+              "input": {
+                "collectionName": "=$flow.body.collectionName",
+                "documents": [
+                  {
+                    "content": "=$activity[FetchGitHubContent].responseBody",
+                    "metadata": {
+                      "source": "github",
+                      "owner": "=$flow.body.owner",
+                      "repo": "=$flow.body.repo",
+                      "path": "=$flow.body.path",
+                      "branch": "=$flow.body.branch"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return ingest result",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": {
+                    "success": "=$activity[IngestContent].success",
+                    "source": "github",
+                    "owner": "=$flow.body.owner",
+                    "repo": "=$flow.body.repo",
+                    "path": "=$flow.body.path",
+                    "collectionName": "=$flow.body.collectionName",
+                    "chunksIngested": "=$activity[IngestContent].chunksIngested"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
+    },
+    {
+      "id": "flow:ingest_confluence",
+      "data": {
+        "name": "ingest_confluence",
+        "description": "Fetches pages from a Confluence space via REST API and ingests into VectorDB.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "LogRequest",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "FetchConfluencePages",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 3,
+            "from": "FetchConfluencePages",
+            "to": "EnsureCollection",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 4,
+            "from": "EnsureCollection",
+            "to": "IngestContent",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 5,
+            "from": "IngestContent",
+            "to": "Return",
+            "type": "label",
+            "label": ""
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp Activity",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "description": "Log Confluence ingest request",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[Ingestion] Confluence ingest: spaceKey=\", coerce.toString($flow.body.spaceKey), \" baseUrl=\", coerce.toString($flow.body.baseUrl))",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "FetchConfluencePages",
+            "name": "FetchConfluencePages",
+            "description": "Fetch page list from Confluence REST API v2",
+            "activity": {
+              "ref": "#act_rest",
+              "input": {
+                "method": "GET",
+                "uri": "=string.concat(coerce.toString($flow.body.baseUrl), \"/wiki/api/v2/pages?spaceKey=\", coerce.toString($flow.body.spaceKey), \"&limit=\", coerce.toString($flow.body.limit), \"&body-format=storage\")",
+                "headers": {
+                  "Accept": "application/json",
+                  "Authorization": "=string.concat(\"Bearer \", coerce.toString($flow.body.token))"
+                }
+              }
+            }
+          },
+          {
+            "id": "EnsureCollection",
+            "name": "EnsureCollection",
+            "description": "Ensure VectorDB collection exists",
+            "activity": {
+              "ref": "#act_vectordb_createcollection",
+              "settings": {
+                "connection": "conn://vectordb-weaviate"
+              },
+              "input": {
+                "collectionName": "=$flow.body.collectionName"
+              }
+            }
+          },
+          {
+            "id": "IngestContent",
+            "name": "IngestContent",
+            "description": "Ingest Confluence pages into VectorDB",
+            "activity": {
+              "ref": "#act_vectordb_ingestdocuments",
+              "settings": {
+                "connection": "conn://vectordb-weaviate",
+                "chunkStrategy": "=$property[\"CHUNK_STRATEGY\"]",
+                "useConnectorEmbedding": true,
+                "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]"
+              },
+              "input": {
+                "collectionName": "=$flow.body.collectionName",
+                "documents": [
+                  {
+                    "content": "=$activity[FetchConfluencePages].responseBody",
+                    "metadata": {
+                      "source": "confluence",
+                      "spaceKey": "=$flow.body.spaceKey",
+                      "baseUrl": "=$flow.body.baseUrl"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return ingest result",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": {
+                    "success": "=$activity[IngestContent].success",
+                    "source": "confluence",
+                    "spaceKey": "=$flow.body.spaceKey",
+                    "collectionName": "=$flow.body.collectionName",
+                    "chunksIngested": "=$activity[IngestContent].chunksIngested"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
+    },
+    {
+      "id": "flow:ingest_s3",
+      "data": {
+        "name": "ingest_s3",
+        "description": "Downloads an object from S3 via con_aws S3 GetObject and ingests into VectorDB.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "LogRequest",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "GetS3Object",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 3,
+            "from": "GetS3Object",
+            "to": "EnsureCollection",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 4,
+            "from": "EnsureCollection",
+            "to": "IngestContent",
+            "type": "label",
+            "label": ""
+          },
+          {
+            "id": 5,
+            "from": "IngestContent",
+            "to": "Return",
+            "type": "label",
+            "label": ""
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp Activity",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "description": "Log S3 ingest request",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[Ingestion] S3 ingest: bucket=\", coerce.toString($flow.body.bucket), \" key=\", coerce.toString($flow.body.key))",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "GetS3Object",
+            "name": "GetS3Object",
+            "description": "Download object content from S3 via AWS con_aws S3 GetObject activity",
+            "activity": {
+              "ref": "#act_aws_s3get",
+              "settings": {
+                "connection": "conn://aws-default"
+              },
+              "input": {
+                "bucketName": "=$flow.body.bucket",
+                "objectKey": "=$flow.body.key"
+              }
+            }
+          },
+          {
+            "id": "EnsureCollection",
+            "name": "EnsureCollection",
+            "description": "Ensure VectorDB collection exists",
+            "activity": {
+              "ref": "#act_vectordb_createcollection",
+              "settings": {
+                "connection": "conn://vectordb-weaviate"
+              },
+              "input": {
+                "collectionName": "=$flow.body.collectionName"
+              }
+            }
+          },
+          {
+            "id": "IngestContent",
+            "name": "IngestContent",
+            "description": "Ingest S3 object content into VectorDB",
+            "activity": {
+              "ref": "#act_vectordb_ingestdocuments",
+              "settings": {
+                "connection": "conn://vectordb-weaviate",
+                "chunkStrategy": "=$property[\"CHUNK_STRATEGY\"]",
+                "useConnectorEmbedding": true,
+                "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]"
+              },
+              "input": {
+                "collectionName": "=$flow.body.collectionName",
+                "documents": [
+                  {
+                    "content": "=$activity[GetS3Object].content",
+                    "metadata": {
+                      "source": "s3",
+                      "bucket": "=$flow.body.bucket",
+                      "key": "=$flow.body.key"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return ingest result",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": {
+                    "success": "=$activity[IngestContent].success",
+                    "source": "s3",
+                    "bucket": "=$flow.body.bucket",
+                    "key": "=$flow.body.key",
+                    "collectionName": "=$flow.body.collectionName",
+                    "chunksIngested": "=$activity[IngestContent].chunksIngested"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "any"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
     }
   ],
   "properties": [
+    {
+      "name": "AWS_CONNECTION",
+      "type": "string",
+      "description": "Name of the configured AWS connection for S3 access.",
+      "value": "aws-default"
+    },
+    {
+      "name": "GITHUB_API_BASE",
+      "type": "string",
+      "description": "GitHub API base URL.",
+      "value": "https://api.github.com"
+    },
     {
       "name": "VECTORDB_HOST",
       "type": "string",
@@ -483,6 +1317,12 @@
       "name": "SERVICE_VERSION",
       "type": "string",
       "value": "1.0.0"
+    },
+    {
+      "name": "API_KEY",
+      "type": "string",
+      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
+      "value": "changeme"
     }
   ],
   "connections": {
@@ -508,7 +1348,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL21wYW5kYXYtdGliY28vZmxvZ28tZXh0ZW5zaW9ucy92ZWN0b3JkYiIsImlkIjoiVmVjdG9yREIiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJWZWN0b3JEQiBSQUcgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6ImxvY2FsL1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfV0=",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL21wYW5kYXYtdGliY28vZmxvZ28tZXh0ZW5zaW9ucy92ZWN0b3JkYiIsImlkIjoiVmVjdG9yREIiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJWZWN0b3JEQiBSQUcgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6ImxvY2FsL1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tYXdzL3NyYy9hcHAvQVdTIiwiaWQiOiJBV1MiLCJ2ZXJzaW9uIjoiMS4yLjIiLCJ0YWciOiIxLjIuMi1iMDIiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIEFXUyIsInMzbG9jYXRpb24iOiJUaWJjby9BV1MiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vd2ktYW1hem9uczMvc3JjL2FwcC9BbWF6b25TMyIsImlkIjoiQW1hem9uUzMiLCJ2ZXJzaW9uIjoiMS4zLjEiLCJ0YWciOiIxLjMuMS1iMDIiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIEFtYXpvblMzIiwiczNsb2NhdGlvbiI6IlRpYmNvL0FtYXpvblMzIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
   "metadata": {
     "endpoints": [],
     "flogoVersion": "2.26.3"

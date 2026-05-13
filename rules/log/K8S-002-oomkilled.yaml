@@ -1,0 +1,30 @@
+rule:
+  id: K8S-002
+  enabled: true
+  severity: ERROR
+  category: kubernetes
+  title: Container Killed Due to Out-Of-Memory (OOMKilled)
+  description: >
+    A container was terminated by the Linux kernel OOM killer because it
+    exceeded its memory limit. The workload is experiencing memory pressure
+    and may be losing in-flight requests at the moment of the kill.
+  tags: [kubernetes, oom, memory, limits]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "OOMKilled|OOM Killed|OutOfMemory|exit code 137"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Run: kubectl describe pod <pod-name> to confirm OOMKilled exit reason.
+    Increase the container memory limit or reduce memory usage in the app.
+    Profile heap usage with the app's tooling before raising the limit.
+    Check for memory leaks (unbounded caches, connection pools not released).
+    Consider enabling JVM -XX:MaxRAMPercentage for Java apps to align
+    with the container limit automatically.

@@ -1,0 +1,36 @@
+rule:
+  id: KUBE-007
+  enabled: true
+  severity: WARNING
+  category: maintainability
+  title: Workload Deployed to Default Namespace
+  description: >
+    Workload "{{.Scope.name}}" does not specify a namespace or targets the
+    "default" namespace. Deploying to default mixes workloads, makes RBAC
+    harder to scope, and complicates multi-tenancy on shared clusters.
+  tags: [kubernetes, namespace, multi-tenancy, maintainability]
+
+  applies_to: [.yaml, .yml]
+  parser: yaml
+
+  scope: $.metadata
+
+  match:
+    type: any_of
+    conditions:
+      - type: missing
+        path: namespace
+      - type: equals
+        path: namespace
+        value: "default"
+
+  location: "workload:{{.Scope.name}}"
+  recommendation: >
+    Set an explicit namespace in metadata that reflects the application,
+    team, or environment:
+      metadata:
+        name: my-service
+        namespace: payments-prod
+    Create namespaces with kubectl create namespace <name> and bind
+    RBAC roles at the namespace level. Use NetworkPolicies to isolate
+    namespace traffic. Never deploy production workloads to "default".

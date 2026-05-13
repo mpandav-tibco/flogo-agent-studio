@@ -3,17 +3,15 @@
     "github.com/project-flogo/flow",
     "github.com/project-flogo/contrib/activity/noop",
     "github.com/tibco/flogo-general/src/app/General/activity/log",
-    "github.com/tibco/flogo-files/src/app/File/activity/list",
+    "github.com/tibco/wi-postgres/src/app/PostgreSQL/activity/query",
     "github.com/project-flogo/contrib/activity/actreturn",
-    "github.com/tibco/flogo-files/src/app/File/activity/read",
-    "github.com/tibco/flogo-files/src/app/File/activity/write",
-    "github.com/tibco/flogo-files/src/app/File/activity/remove",
     "github.com/tibco/flogo-general/src/app/General/trigger/rest",
     "github.com/project-flogo/contrib/function/coerce",
-    "github.com/project-flogo/contrib/function/string"
+    "github.com/project-flogo/contrib/function/string",
+    "github.com/tibco/wi-postgres/src/app/PostgreSQL/connector/connection"
   ],
-  "name": "config-service",
-  "description": "Multi-agent registry and configuration service. Stores agent definitions as JSON files in AGENTS_DIR. Supports CRUD for agent configs. Part of Flogo Agent Studio.",
+  "name": "design-service",
+  "description": "Agent Studio design-time service on port 7020. PostgreSQL-backed CRUD for agent definitions.",
   "version": "1.0.0",
   "type": "flogo:app",
   "appModel": "1.1.1",
@@ -22,9 +20,9 @@
     {
       "ref": "#rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger — config service on port 7004 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger — design-service on port 7020",
       "settings": {
-        "port": 7004,
+        "port": 7020,
         "APISpecUpdate": false,
         "swagger": "",
         "swaggerVersion": "v2",
@@ -36,25 +34,23 @@
         "serverKey": "",
         "caCertificate": ""
       },
-      "id": "ConfigRESTTrigger",
+      "id": "DesignRESTTrigger",
       "handlers": [
         {
-          "description": "Lists all .json files in AGENTS_DIR using the OOTB List Files activity. Returns fileMetadata array (name, fullPath, size, modTime).",
+          "description": "Create a new agent, generate UUID via PostgreSQL, return created row.",
           "settings": {
-            "Method": "GET",
+            "Method": "POST",
             "reqType": "application/json",
-            "Path": "/api/agents",
+            "Path": "/api/v1/agents",
             "OutputValidation": false
           },
           "action": {
             "ref": "github.com/project-flogo/flow",
             "settings": {
-              "flowURI": "res://flow:list_agents"
+              "flowURI": "res://flow:create_agent"
             },
             "input": {
-              "headers": "=$.headers",
-              "requestURI": "=$.requestURI",
-              "method": "=$.method"
+              "body": "=$.body"
             },
             "output": {
               "code": "=$.code",
@@ -64,7 +60,7 @@
           "reply": {
             "code": 200,
             "configureResponseCodes": false,
-            "message": {}
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -82,14 +78,14 @@
               }
             }
           },
-          "name": "list_agents"
+          "name": "create_agent"
         },
         {
-          "description": "Reads AGENTS_DIR/{agentId}.json using OOTB Read File. Returns textContent (raw JSON string) for the agent config.",
+          "description": "Fetch single agent by id.",
           "settings": {
             "Method": "GET",
             "reqType": "application/json",
-            "Path": "/api/agents/{agentId}",
+            "Path": "/api/v1/agents/{agentId}",
             "OutputValidation": false
           },
           "action": {
@@ -108,7 +104,7 @@
           "reply": {
             "code": 200,
             "configureResponseCodes": false,
-            "message": {}
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -134,20 +130,20 @@
           "name": "get_agent"
         },
         {
-          "description": "Writes AGENTS_DIR/{body.id}.json using OOTB Write File (overwrite=true). Body must contain an 'id' field.",
+          "description": "List agents, optionally filtered by status.",
           "settings": {
-            "Method": "POST",
+            "Method": "GET",
             "reqType": "application/json",
-            "Path": "/api/agents",
+            "Path": "/api/v1/agents",
             "OutputValidation": false
           },
           "action": {
             "ref": "github.com/project-flogo/flow",
             "settings": {
-              "flowURI": "res://flow:create_agent"
+              "flowURI": "res://flow:list_agents"
             },
             "input": {
-              "body": "=$.body"
+              "status": "=$.queryParams.status"
             },
             "output": {
               "code": "=$.code",
@@ -157,7 +153,7 @@
           "reply": {
             "code": 200,
             "configureResponseCodes": false,
-            "message": {}
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -172,22 +168,17 @@
                 "type": "json",
                 "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
                 "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
-              },
-              "body": {
-                "type": "json",
-                "value": "{\"type\":\"object\",\"properties\":{}}",
-                "fe_metadata": "{\"type\":\"object\",\"properties\":{}}"
               }
             }
           },
-          "name": "create_agent"
+          "name": "list_agents"
         },
         {
-          "description": "Overwrites AGENTS_DIR/{agentId}.json using OOTB Write File (overwrite=true). Path agentId is authoritative.",
+          "description": "Update agent definition, bump version.",
           "settings": {
             "Method": "PUT",
             "reqType": "application/json",
-            "Path": "/api/agents/{agentId}",
+            "Path": "/api/v1/agents/{agentId}",
             "OutputValidation": false
           },
           "action": {
@@ -207,7 +198,7 @@
           "reply": {
             "code": 200,
             "configureResponseCodes": false,
-            "message": {}
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -233,11 +224,11 @@
           "name": "update_agent"
         },
         {
-          "description": "Removes AGENTS_DIR/{agentId}.json using OOTB Remove File. Returns 200 even if file did not exist (Remove File fails for missing file — error surfaced in response).",
+          "description": "Soft-delete agent (set status=archived).",
           "settings": {
             "Method": "DELETE",
             "reqType": "application/json",
-            "Path": "/api/agents/{agentId}",
+            "Path": "/api/v1/agents/{agentId}",
             "OutputValidation": false
           },
           "action": {
@@ -256,7 +247,7 @@
           "reply": {
             "code": 200,
             "configureResponseCodes": false,
-            "message": {}
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -282,7 +273,48 @@
           "name": "delete_agent"
         },
         {
-          "description": "Returns service health status and version.",
+          "description": "Return built-in agent template catalogue.",
+          "settings": {
+            "Method": "GET",
+            "reqType": "application/json",
+            "Path": "/api/v1/templates",
+            "OutputValidation": false
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:list_templates"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "message": ""
+          },
+          "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
+            "output": {
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              }
+            }
+          },
+          "name": "list_templates"
+        },
+        {
+          "description": "Returns service health and DB connectivity status.",
           "settings": {
             "Method": "GET",
             "reqType": "application/json",
@@ -302,7 +334,7 @@
           "reply": {
             "code": 200,
             "configureResponseCodes": false,
-            "message": {}
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -327,10 +359,10 @@
   ],
   "resources": [
     {
-      "id": "flow:list_agents",
+      "id": "flow:create_agent",
       "data": {
-        "name": "list_agents",
-        "description": "Lists all .json files in AGENTS_DIR using the OOTB List Files activity. Returns fileMetadata array (name, fullPath, size, modTime).",
+        "name": "create_agent",
+        "description": "Create a new agent, generate UUID via PostgreSQL, return created row.",
         "links": [
           {
             "id": 1,
@@ -342,16 +374,16 @@
           {
             "id": 2,
             "from": "LogRequest",
-            "to": "ListAgentFiles",
+            "to": "InsertAgent",
             "type": "label",
-            "label": "LogRequest to ListAgentFiles"
+            "label": "LogRequest to InsertAgent"
           },
           {
             "id": 3,
-            "from": "ListAgentFiles",
+            "from": "InsertAgent",
             "to": "Return",
             "type": "label",
-            "label": "ListAgentFiles to Return"
+            "label": "InsertAgent to Return"
           }
         ],
         "tasks": [
@@ -372,42 +404,39 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "[Config] List agents",
+                "message": "=string.concat(\"[Design] create_agent: \", coerce.toString($flow.body.name))",
                 "logLevel": ""
               }
             }
           },
           {
-            "id": "ListAgentFiles",
-            "name": "ListAgentFiles",
-            "description": "List all .json files in AGENTS_DIR using glob pattern",
+            "id": "InsertAgent",
+            "name": "InsertAgent",
+            "description": "INSERT agent into PostgreSQL, UUID generated by DB.",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#list",
+              "ref": "#query",
               "input": {
-                "mode": "Files and Directories",
+                "Connection": "conn://design-db",
+                "Schema": "public",
+                "Query": "INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
+                "manualmode": false,
+                "State": "252bcb93-5235-46bf-9308-f68e4e72f928INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', ?config::jsonb, NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
                 "input": {
                   "mapping": {
-                    "fileName": "=string.concat($property[\"AGENTS_DIR\"], \"/*.json\")"
+                    "parameters": {
+                      "name": "=$flow.body.name",
+                      "description": "=$flow.body.description",
+                      "config": "=coerce.toString($flow.body.config)"
+                    }
                   }
                 }
-              },
-              "schemas": {
-                "input": {
-                  "input": {
-                    "type": "json",
-                    "value": "{\"properties\":{\"fileName\":{\"type\":\"string\"}},\"required\":[\"fileName\"],\"type\":\"object\"}",
-                    "fe_metadata": "{\"properties\":{\"fileName\":{\"type\":\"string\"}},\"required\":[\"fileName\"],\"type\":\"object\"}"
-                  }
-                },
-                "output": {
-                  "output": {
-                    "type": "json",
-                    "value": "{\"properties\":{\"fileMetadata\":{\"items\":{\"properties\":{\"fullPath\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"size\":{\"type\":\"number\"},\"mode\":{\"type\":\"string\"},\"modTime\":{\"type\":\"string\",\"format\":\"date-time\"},\"isDir\":{\"type\":\"boolean\"}},\"type\":\"object\"},\"type\":\"array\"}},\"type\":\"object\"}",
-                    "fe_metadata": "{\"properties\":{\"fileMetadata\":{\"items\":{\"properties\":{\"fullPath\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"size\":{\"type\":\"number\"},\"mode\":{\"type\":\"string\"},\"modTime\":{\"type\":\"string\",\"format\":\"date-time\"},\"isDir\":{\"type\":\"boolean\"}},\"type\":\"object\"},\"type\":\"array\"}},\"type\":\"object\"}"
-                  }
-                }
-              },
-              "feSchemaMap": {}
+              }
             }
           },
           {
@@ -418,14 +447,14 @@
               "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "code": 200,
-                  "data": "=$activity[ListAgentFiles].output.fileMetadata"
+                  "code": 201,
+                  "data": "=$activity[InsertAgent].Output"
                 }
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJMaXN0QWdlbnRGaWxlcyI6eyJ4Ijo0NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJJbnNlcnRBZ2VudCI6eyJ4Ijo0NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9fQ==",
         "metadata": {
           "input": [
             {
@@ -451,13 +480,13 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "any"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
-            "input": "{\"type\":\"object\",\"title\":\"ConfigRESTTrigger\",\"properties\":{\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
-            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"data\":{\"type\":\"any\"}},\"required\":[]}"
+            "input": "{\"type\":\"object\",\"title\":\"DesignRESTTrigger\",\"properties\":{\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"message\":{\"type\":\"string\"}},\"required\":[]}"
           }
         },
         "explicitReply": true
@@ -467,28 +496,21 @@
       "id": "flow:get_agent",
       "data": {
         "name": "get_agent",
-        "description": "Reads AGENTS_DIR/{agentId}.json using OOTB Read File. Returns textContent (raw JSON string) for the agent config.",
+        "description": "Fetch single agent by id.",
         "links": [
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest",
+            "to": "SelectAgent",
             "type": "label",
-            "label": "Start to LogRequest"
+            "label": "Start to SelectAgent"
           },
           {
             "id": 2,
-            "from": "LogRequest",
-            "to": "ReadAgentFile",
-            "type": "label",
-            "label": "LogRequest to ReadAgentFile"
-          },
-          {
-            "id": 3,
-            "from": "ReadAgentFile",
+            "from": "SelectAgent",
             "to": "Return",
             "type": "label",
-            "label": "ReadAgentFile to Return"
+            "label": "SelectAgent to Return"
           }
         ],
         "tasks": [
@@ -501,51 +523,31 @@
             }
           },
           {
-            "id": "LogRequest",
-            "name": "LogRequest",
+            "id": "SelectAgent",
+            "name": "SelectAgent",
             "description": "",
-            "activity": {
-              "ref": "#log",
-              "input": {
-                "Log Level": "INFO",
-                "flowInfo": false,
-                "message": "=string.concat(\"[Config] Get agent: \", coerce.toString($flow.agentId))",
-                "logLevel": ""
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
               }
-            }
-          },
-          {
-            "id": "ReadAgentFile",
-            "name": "ReadAgentFile",
-            "description": "Read agent JSON config file from AGENTS_DIR",
+            },
             "activity": {
-              "ref": "#read",
+              "ref": "#query",
               "input": {
-                "readAs": "Text",
-                "compress": "None",
+                "Connection": "conn://design-db",
+                "Schema": "public",
+                "Query": "SELECT id, name, description, status, config::text as config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
+                "manualmode": false,
+                "State": "08b2ee28-918b-4127-a95c-de11c2717832SELECT id, name, description, status, config::text as config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
                 "input": {
                   "mapping": {
-                    "fileName": "=string.concat($property[\"AGENTS_DIR\"], \"/\", $flow.agentId, \".json\")"
+                    "parameters": {
+                      "agentId": "=$flow.agentId"
+                    }
                   }
                 }
-              },
-              "schemas": {
-                "input": {
-                  "input": {
-                    "type": "json",
-                    "value": "{\"properties\":{\"fileName\":{\"type\":\"string\"}},\"required\":[\"fileName\"],\"type\":\"object\"}",
-                    "fe_metadata": "{\"properties\":{\"fileName\":{\"type\":\"string\"}},\"required\":[\"fileName\"],\"type\":\"object\"}"
-                  }
-                },
-                "output": {
-                  "output": {
-                    "type": "json",
-                    "value": "{\"properties\":{\"fileMetadata\":{\"properties\":{\"fullPath\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"size\":{\"type\":\"number\"},\"mode\":{\"type\":\"string\"},\"modTime\":{\"type\":\"string\",\"format\":\"date-time\"},\"isDir\":{\"type\":\"boolean\"}},\"type\":\"object\"},\"fileContent\":{\"properties\":{\"textContent\":{\"type\":\"string\"}},\"type\":\"object\"}},\"type\":\"object\"}",
-                    "fe_metadata": "{\"properties\":{\"fileMetadata\":{\"properties\":{\"fullPath\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"size\":{\"type\":\"number\"},\"mode\":{\"type\":\"string\"},\"modTime\":{\"type\":\"string\",\"format\":\"date-time\"},\"isDir\":{\"type\":\"boolean\"}},\"type\":\"object\"},\"fileContent\":{\"properties\":{\"textContent\":{\"type\":\"string\"}},\"type\":\"object\"}},\"type\":\"object\"}"
-                  }
-                }
-              },
-              "feSchemaMap": {}
+              }
             }
           },
           {
@@ -557,13 +559,13 @@
               "settings": {
                 "mappings": {
                   "code": 200,
-                  "data": "=$activity[ReadAgentFile].output.fileContent.textContent"
+                  "data": "=$activity[SelectAgent].Output"
                 }
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSZWFkQWdlbnRGaWxlIjp7IngiOjQ1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6NjUwLCJ5Ijo1MH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJTZWxlY3RBZ2VudCI6eyJ4IjoyNTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjQ1MCwieSI6NTB9fQ==",
         "metadata": {
           "input": [
             {
@@ -574,47 +576,40 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
           "fe_metadata": {
             "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
-            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"integer\"},\"data\":{\"type\":\"any\"}}}"
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
           }
         },
         "explicitReply": true
       }
     },
     {
-      "id": "flow:create_agent",
+      "id": "flow:list_agents",
       "data": {
-        "name": "create_agent",
-        "description": "Writes AGENTS_DIR/{body.id}.json using OOTB Write File (overwrite=true). Body must contain an 'id' field.",
+        "name": "list_agents",
+        "description": "List agents, optionally filtered by status.",
         "links": [
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest",
+            "to": "SelectAgents",
             "type": "label",
-            "label": "Start to LogRequest"
+            "label": "Start to SelectAgents"
           },
           {
             "id": 2,
-            "from": "LogRequest",
-            "to": "WriteAgentFile",
-            "type": "label",
-            "label": "LogRequest to WriteAgentFile"
-          },
-          {
-            "id": 3,
-            "from": "WriteAgentFile",
+            "from": "SelectAgents",
             "to": "Return",
             "type": "label",
-            "label": "WriteAgentFile to Return"
+            "label": "SelectAgents to Return"
           }
         ],
         "tasks": [
@@ -627,54 +622,23 @@
             }
           },
           {
-            "id": "LogRequest",
-            "name": "LogRequest",
-            "description": "Simple Log Message Activity",
-            "activity": {
-              "ref": "#log",
-              "input": {
-                "Log Level": "INFO",
-                "flowInfo": false,
-                "message": "=string.concat(\"[Config] Create agent: \", coerce.toString($flow.body.id))",
-                "logLevel": ""
+            "id": "SelectAgents",
+            "name": "SelectAgents",
+            "description": "",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
               }
-            }
-          },
-          {
-            "id": "WriteAgentFile",
-            "name": "WriteAgentFile",
-            "description": "Write agent config JSON to AGENTS_DIR/{id}.json. overwrite=true replaces if exists.",
+            },
             "activity": {
-              "ref": "#write",
+              "ref": "#query",
               "input": {
-                "writeAs": "Text",
-                "createNonExistingDir": false,
-                "compress": "None",
-                "input": {
-                  "mapping": {
-                    "fileName": "=string.concat($property[\"AGENTS_DIR\"], \"/\", $flow.body.id, \".json\")",
-                    "overwrite": true,
-                    "textContent": "=coerce.toString($flow.body)"
-                  }
-                }
-              },
-              "schemas": {
-                "input": {
-                  "input": {
-                    "type": "json",
-                    "value": "{\"properties\":{\"fileName\":{\"type\":\"string\"},\"overwrite\":{\"type\":\"boolean\"},\"textContent\":{\"type\":\"string\"}},\"required\":[\"fileName\",\"overwrite\",\"textContent\"],\"type\":\"object\"}",
-                    "fe_metadata": "{\"properties\":{\"fileName\":{\"type\":\"string\"},\"overwrite\":{\"type\":\"boolean\"},\"textContent\":{\"type\":\"string\"}},\"required\":[\"fileName\",\"overwrite\",\"textContent\"],\"type\":\"object\"}"
-                  }
-                },
-                "output": {
-                  "output": {
-                    "type": "json",
-                    "value": "{\"properties\":{\"fileMetadata\":{\"properties\":{\"fullPath\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"size\":{\"type\":\"number\"},\"mode\":{\"type\":\"string\"},\"modTime\":{\"type\":\"string\",\"format\":\"date-time\"},\"isDir\":{\"type\":\"boolean\"}},\"type\":\"object\"}},\"type\":\"object\"}",
-                    "fe_metadata": "{\"properties\":{\"fileMetadata\":{\"properties\":{\"fullPath\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"size\":{\"type\":\"number\"},\"mode\":{\"type\":\"string\"},\"modTime\":{\"type\":\"string\",\"format\":\"date-time\"},\"isDir\":{\"type\":\"boolean\"}},\"type\":\"object\"}},\"type\":\"object\"}"
-                  }
-                }
-              },
-              "feSchemaMap": {}
+                "Connection": "conn://design-db",
+                "Schema": "public",
+                "Query": "SELECT id, name, description, status, config::text as config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC",
+                "manualmode": false
+              }
             }
           },
           {
@@ -685,34 +649,34 @@
               "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "code": 201,
-                  "data": "=$activity[WriteAgentFile].output.fileMetadata"
+                  "code": 200,
+                  "data": "=$activity[SelectAgents].Output.records"
                 }
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJXcml0ZUFnZW50RmlsZSI6eyJ4Ijo0NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJTZWxlY3RBZ2VudHMiOnsieCI6MjUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo0NTAsInkiOjUwfX0=",
         "metadata": {
           "input": [
             {
-              "name": "body",
-              "type": "object"
+              "name": "status",
+              "type": "string"
             }
           ],
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
           "fe_metadata": {
-            "input": "{\"type\":\"object\",\"title\":\"ConfigRESTTrigger\",\"properties\":{\"body\":{\"type\":\"object\",\"properties\":{}}}}",
-            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"data\":{\"type\":\"any\"}},\"required\":[]}"
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"status\":{\"type\":\"string\"}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
           }
         },
         "explicitReply": true
@@ -722,28 +686,21 @@
       "id": "flow:update_agent",
       "data": {
         "name": "update_agent",
-        "description": "Overwrites AGENTS_DIR/{agentId}.json using OOTB Write File (overwrite=true). Path agentId is authoritative.",
+        "description": "Update agent definition, bump version.",
         "links": [
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest",
+            "to": "UpdateAgent",
             "type": "label",
-            "label": "Start to LogRequest"
+            "label": "Start to UpdateAgent"
           },
           {
             "id": 2,
-            "from": "LogRequest",
-            "to": "WriteAgentFile",
-            "type": "label",
-            "label": "LogRequest to WriteAgentFile"
-          },
-          {
-            "id": 3,
-            "from": "WriteAgentFile",
+            "from": "UpdateAgent",
             "to": "Return",
             "type": "label",
-            "label": "WriteAgentFile to Return"
+            "label": "UpdateAgent to Return"
           }
         ],
         "tasks": [
@@ -756,54 +713,35 @@
             }
           },
           {
-            "id": "LogRequest",
-            "name": "LogRequest",
+            "id": "UpdateAgent",
+            "name": "UpdateAgent",
             "description": "",
-            "activity": {
-              "ref": "#log",
-              "input": {
-                "Log Level": "INFO",
-                "flowInfo": false,
-                "message": "=string.concat(\"[Config] Update agent: \", coerce.toString($flow.agentId))",
-                "logLevel": ""
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
               }
-            }
-          },
-          {
-            "id": "WriteAgentFile",
-            "name": "WriteAgentFile",
-            "description": "Overwrite agent config — path agentId is authoritative, ignores body.id",
+            },
             "activity": {
-              "ref": "#write",
+              "ref": "#query",
               "input": {
-                "writeAs": "Text",
-                "createNonExistingDir": false,
-                "compress": "None",
+                "Connection": "conn://design-db",
+                "Schema": "public",
+                "Query": "UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
+                "manualmode": false,
+                "State": "65e5e38e-29c0-4cb1-a016-8b5f8fbb25a2UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(?config::jsonb, config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
                 "input": {
                   "mapping": {
-                    "fileName": "=string.concat($property[\"AGENTS_DIR\"], \"/\", $flow.agentId, \".json\")",
-                    "overwrite": true,
-                    "textContent": "=coerce.toString($flow.body)"
+                    "parameters": {
+                      "agentId": "=$flow.agentId",
+                      "name": "=$flow.body.name",
+                      "description": "=$flow.body.description",
+                      "config": "=coerce.toString($flow.body.config)",
+                      "status": "=$flow.body.status"
+                    }
                   }
                 }
-              },
-              "schemas": {
-                "input": {
-                  "input": {
-                    "type": "json",
-                    "value": "{\"properties\":{\"fileName\":{\"type\":\"string\"},\"overwrite\":{\"type\":\"boolean\"},\"textContent\":{\"type\":\"string\"}},\"required\":[\"fileName\",\"overwrite\",\"textContent\"],\"type\":\"object\"}",
-                    "fe_metadata": "{\"properties\":{\"fileName\":{\"type\":\"string\"},\"overwrite\":{\"type\":\"boolean\"},\"textContent\":{\"type\":\"string\"}},\"required\":[\"fileName\",\"overwrite\",\"textContent\"],\"type\":\"object\"}"
-                  }
-                },
-                "output": {
-                  "output": {
-                    "type": "json",
-                    "value": "{\"properties\":{\"fileMetadata\":{\"properties\":{\"fullPath\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"size\":{\"type\":\"number\"},\"mode\":{\"type\":\"string\"},\"modTime\":{\"type\":\"string\",\"format\":\"date-time\"},\"isDir\":{\"type\":\"boolean\"}},\"type\":\"object\"}},\"type\":\"object\"}",
-                    "fe_metadata": "{\"properties\":{\"fileMetadata\":{\"properties\":{\"fullPath\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"size\":{\"type\":\"number\"},\"mode\":{\"type\":\"string\"},\"modTime\":{\"type\":\"string\",\"format\":\"date-time\"},\"isDir\":{\"type\":\"boolean\"}},\"type\":\"object\"}},\"type\":\"object\"}"
-                  }
-                }
-              },
-              "feSchemaMap": {}
+              }
             }
           },
           {
@@ -815,13 +753,13 @@
               "settings": {
                 "mappings": {
                   "code": 200,
-                  "data": "=$activity[WriteAgentFile].output.fileMetadata"
+                  "data": "=$activity[UpdateAgent].Output"
                 }
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJXcml0ZUFnZW50RmlsZSI6eyJ4Ijo0NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJVcGRhdGVBZ2VudCI6eyJ4IjoyNTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjQ1MCwieSI6NTB9fQ==",
         "metadata": {
           "input": [
             {
@@ -836,16 +774,16 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
           "fe_metadata": {
             "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"},\"body\":{\"type\":\"object\",\"properties\":{}}}}",
-            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"integer\"},\"data\":{\"type\":\"any\"}}}"
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
           }
         },
         "explicitReply": true
@@ -855,28 +793,21 @@
       "id": "flow:delete_agent",
       "data": {
         "name": "delete_agent",
-        "description": "Removes AGENTS_DIR/{agentId}.json using OOTB Remove File. Returns 200 even if file did not exist (Remove File fails for missing file — error surfaced in response).",
+        "description": "Soft-delete agent (set status=archived).",
         "links": [
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest",
+            "to": "ArchiveAgent",
             "type": "label",
-            "label": "Start to LogRequest"
+            "label": "Start to ArchiveAgent"
           },
           {
             "id": 2,
-            "from": "LogRequest",
-            "to": "RemoveAgentFile",
-            "type": "label",
-            "label": "LogRequest to RemoveAgentFile"
-          },
-          {
-            "id": 3,
-            "from": "RemoveAgentFile",
+            "from": "ArchiveAgent",
             "to": "Return",
             "type": "label",
-            "label": "RemoveAgentFile to Return"
+            "label": "ArchiveAgent to Return"
           }
         ],
         "tasks": [
@@ -889,50 +820,31 @@
             }
           },
           {
-            "id": "LogRequest",
-            "name": "LogRequest",
+            "id": "ArchiveAgent",
+            "name": "ArchiveAgent",
             "description": "",
-            "activity": {
-              "ref": "#log",
-              "input": {
-                "Log Level": "INFO",
-                "flowInfo": false,
-                "message": "=string.concat(\"[Config] Delete agent: \", coerce.toString($flow.agentId))",
-                "logLevel": ""
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
               }
-            }
-          },
-          {
-            "id": "RemoveAgentFile",
-            "name": "RemoveAgentFile",
-            "description": "Remove agent config file. Note: Remove File fails if file does not exist.",
+            },
             "activity": {
-              "ref": "#remove",
+              "ref": "#query",
               "input": {
-                "removeRecursive": false,
+                "Connection": "conn://design-db",
+                "Schema": "public",
+                "Query": "UPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
+                "manualmode": false,
+                "State": "9f39b740-36ab-4e88-a7c4-2084e96d84bbUPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
                 "input": {
                   "mapping": {
-                    "fileName": "=string.concat($property[\"AGENTS_DIR\"], \"/\", $flow.agentId, \".json\")"
+                    "parameters": {
+                      "agentId": "=$flow.agentId"
+                    }
                   }
                 }
-              },
-              "schemas": {
-                "input": {
-                  "input": {
-                    "type": "json",
-                    "value": "{\"properties\":{\"fileName\":{\"type\":\"string\"}},\"required\":[\"fileName\"],\"type\":\"object\"}",
-                    "fe_metadata": "{\"properties\":{\"fileName\":{\"type\":\"string\"}},\"required\":[\"fileName\"],\"type\":\"object\"}"
-                  }
-                },
-                "output": {
-                  "output": {
-                    "type": "json",
-                    "value": "{\"properties\":{\"fileMetadata\":{\"properties\":{\"fullPath\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"size\":{\"type\":\"number\"},\"mode\":{\"type\":\"string\"},\"modTime\":{\"type\":\"string\",\"format\":\"date-time\"},\"isDir\":{\"type\":\"boolean\"}},\"type\":\"object\"}},\"type\":\"object\"}",
-                    "fe_metadata": "{\"properties\":{\"fileMetadata\":{\"properties\":{\"fullPath\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"size\":{\"type\":\"number\"},\"mode\":{\"type\":\"string\"},\"modTime\":{\"type\":\"string\",\"format\":\"date-time\"},\"isDir\":{\"type\":\"boolean\"}},\"type\":\"object\"}},\"type\":\"object\"}"
-                  }
-                }
-              },
-              "feSchemaMap": {}
+              }
             }
           },
           {
@@ -944,13 +856,18 @@
               "settings": {
                 "mappings": {
                   "code": 200,
-                  "data": "=$activity[RemoveAgentFile].output.fileMetadata"
+                  "data": {
+                    "mapping": {
+                      "archived": true,
+                      "agentId": "=$flow.agentId"
+                    }
+                  }
                 }
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSZW1vdmVBZ2VudEZpbGUiOnsieCI6NDUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo2NTAsInkiOjUwfX0=",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJBcmNoaXZlQWdlbnQiOnsieCI6MjUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo0NTAsInkiOjUwfX0=",
         "metadata": {
           "input": [
             {
@@ -961,26 +878,26 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
           "fe_metadata": {
             "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
-            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"integer\"},\"data\":{\"type\":\"any\"}}}"
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
           }
         },
         "explicitReply": true
       }
     },
     {
-      "id": "flow:health_check",
+      "id": "flow:list_templates",
       "data": {
-        "name": "health_check",
-        "description": "Returns service health status and version.",
+        "name": "list_templates",
+        "description": "Return built-in agent template catalogue.",
         "links": [
           {
             "id": 1,
@@ -1009,9 +926,44 @@
                 "mappings": {
                   "code": 200,
                   "data": {
-                    "status": "ok",
-                    "service": "config-service",
-                    "version": "1.0.0"
+                    "mapping": [
+                      {
+                        "id": "tpl-general-rag",
+                        "name": "General RAG Assistant",
+                        "description": "General-purpose question-answering agent over a knowledge base using hybrid RAG.",
+                        "config": {
+                          "llmProvider": "Ollama",
+                          "llmModel": "nemotron-mini:4b",
+                          "temperature": 0.7,
+                          "topK": 5,
+                          "systemPrompt": "You are a helpful assistant. Answer questions accurately using the provided context."
+                        }
+                      },
+                      {
+                        "id": "tpl-flogo-analyzer",
+                        "name": "Flogo App Analyzer",
+                        "description": "Specialized agent for analyzing TIBCO Flogo application files.",
+                        "config": {
+                          "llmProvider": "Ollama",
+                          "llmModel": "nemotron-mini:4b",
+                          "temperature": 0.2,
+                          "topK": 10,
+                          "systemPrompt": "You are a TIBCO Flogo expert. Analyze Flogo application files for best practices and correctness."
+                        }
+                      },
+                      {
+                        "id": "tpl-support-agent",
+                        "name": "Customer Support Agent",
+                        "description": "Support agent that answers customer questions using a product knowledge base.",
+                        "config": {
+                          "llmProvider": "Ollama",
+                          "llmModel": "nemotron-mini:4b",
+                          "temperature": 0.5,
+                          "topK": 7,
+                          "systemPrompt": "You are a friendly customer support agent. Use the provided documentation to answer customer questions accurately."
+                        }
+                      }
+                    ]
                   }
                 }
               }
@@ -1024,15 +976,114 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
           "fe_metadata": {
-            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"integer\"},\"data\":{\"type\":\"any\"}}}"
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
+      }
+    },
+    {
+      "id": "flow:health_check",
+      "data": {
+        "name": "health_check",
+        "description": "Returns service health and DB connectivity status.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "PingDB",
+            "type": "label",
+            "label": "Start to PingDB"
+          },
+          {
+            "id": 2,
+            "from": "PingDB",
+            "to": "Return",
+            "type": "label",
+            "label": "PingDB to Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "description": "",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "PingDB",
+            "name": "PingDB",
+            "description": "",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
+            "activity": {
+              "ref": "#query",
+              "input": {
+                "Connection": "conn://design-db",
+                "Schema": "public",
+                "Query": "SELECT 1 AS alive",
+                "manualmode": false,
+                "State": "a83aa72b-8f64-4a19-abf7-3653c2e3c312SELECT 1 AS alive",
+                "input": {
+                  "mapping": {
+                    "parameters": {}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": {
+                    "mapping": {
+                      "status": "ok",
+                      "service": "design-service",
+                      "version": "1.0.0",
+                      "port": 7020,
+                      "database": "connected"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJQaW5nREIiOnsieCI6MjUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo0NTAsInkiOjUwfX0=",
+        "metadata": {
+          "input": [],
+          "output": [
+            {
+              "name": "code",
+              "type": "float64"
+            },
+            {
+              "name": "data",
+              "type": "object"
+            }
+          ],
+          "fe_metadata": {
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
           }
         },
         "explicitReply": true
@@ -1041,9 +1092,9 @@
   ],
   "properties": [
     {
-      "name": "AGENTS_DIR",
+      "name": "DB_PORT",
       "type": "string",
-      "value": "./agents"
+      "value": "5432"
     },
     {
       "name": "SERVICE_VERSION",
@@ -1053,56 +1104,113 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
       "value": "changeme"
+    },
+    {
+      "name": "PostgreSQL.Design_Service_DB.Host",
+      "type": "string",
+      "value": "localhost"
+    },
+    {
+      "name": "PostgreSQL.Design_Service_DB.Port",
+      "type": "float64",
+      "value": 5432
+    },
+    {
+      "name": "PostgreSQL.Design_Service_DB.Database_Name",
+      "type": "string",
+      "value": "flogo_agent_studio"
+    },
+    {
+      "name": "PostgreSQL.Design_Service_DB.User",
+      "type": "string",
+      "value": "flogo"
+    },
+    {
+      "name": "PostgreSQL.Design_Service_DB.Password",
+      "type": "string",
+      "value": "changeme"
+    },
+    {
+      "name": "PostgreSQL.Design_Service_DB.Maximum_Open_Connections",
+      "type": "float64",
+      "value": 10
+    },
+    {
+      "name": "PostgreSQL.Design_Service_DB.Maximum_Idle_Connections",
+      "type": "float64",
+      "value": 5
+    },
+    {
+      "name": "PostgreSQL.Design_Service_DB.Maximum_Connection_Lifetime",
+      "type": "string",
+      "value": 0
+    },
+    {
+      "name": "PostgreSQL.Design_Service_DB.Maximum_Connection_Retry_Attempts",
+      "type": "float64",
+      "value": 3
+    },
+    {
+      "name": "PostgreSQL.Design_Service_DB.Connection_Retry_Delay",
+      "type": "float64",
+      "value": 5
+    },
+    {
+      "name": "PostgreSQL.Design_Service_DB.Connection_Timeout",
+      "type": "float64",
+      "value": 30
     }
   ],
-  "connections": {},
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1maWxlcy9zcmMvYXBwL0ZpbGUiLCJpZCI6IkZpbGUiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMC1iMTQiLCJuYW1lIjoiRmlsZSIsInMzbG9jYXRpb24iOiJUaWJjby9GaWxlIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
+  "connections": {
+    "design-db": {
+      "id": "design-db",
+      "name": "Design Service DB",
+      "ref": "#connection",
+      "isGlobal": false,
+      "settings": {
+        "databaseType": "PostgreSQL",
+        "name": "Design Service DB",
+        "host": "=$property[\"PostgreSQL.Design_Service_DB.Host\"]",
+        "port": "=$property[\"PostgreSQL.Design_Service_DB.Port\"]",
+        "databaseName": "=$property[\"PostgreSQL.Design_Service_DB.Database_Name\"]",
+        "user": "=$property[\"PostgreSQL.Design_Service_DB.User\"]",
+        "password": "=$property[\"PostgreSQL.Design_Service_DB.Password\"]",
+        "maxopenconnection": "=$property[\"PostgreSQL.Design_Service_DB.Maximum_Open_Connections\"]",
+        "maxidleconnection": "=$property[\"PostgreSQL.Design_Service_DB.Maximum_Idle_Connections\"]",
+        "connmaxlifetime": "=$property[\"PostgreSQL.Design_Service_DB.Maximum_Connection_Lifetime\"]",
+        "maxconnectattempts": "=$property[\"PostgreSQL.Design_Service_DB.Maximum_Connection_Retry_Attempts\"]",
+        "connectionretrydelay": "=$property[\"PostgreSQL.Design_Service_DB.Connection_Retry_Delay\"]",
+        "connectiontimeout": "=$property[\"PostgreSQL.Design_Service_DB.Connection_Timeout\"]",
+        "onprem": false,
+        "tlsconfig": false,
+        "tlsparam": "VerifyCA"
+      }
+    }
+  },
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby93aS1wb3N0Z3Jlcy9zcmMvYXBwL1Bvc3RncmVTUUwiLCJpZCI6IlBvc3RncmVTUUwiLCJ2ZXJzaW9uIjoiMi43LjEiLCJ0YWciOiIyLjcuMS1iMDEiLCJuYW1lIjoiUG9zdGdyZVNRTCIsInMzbG9jYXRpb24iOiJUaWJjby9Qb3N0Z3JlU1FMIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
   "metadata": {
     "endpoints": [
       {
         "protocol": "http",
-        "port": "7004",
+        "port": "7020",
         "spec": {
-          "name": "config-service",
+          "name": "design-service",
           "version": "1.0.0"
         },
-        "title": "ConfigRESTTrigger",
+        "title": "DesignRESTTrigger",
         "swagger": {
           "swagger": "2.0",
           "info": {
-            "title": "config-service",
+            "title": "design-service",
             "version": "1.0.0",
-            "description": "REST trigger — config service on port 7004 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger — design-service on port 7020"
           },
           "paths": {
-            "/api/agents": {
-              "get": {
-                "summary": "list_agents",
-                "operationId": "get_api_agents",
-                "parameters": [
-                  {
-                    "name": "Authorization",
-                    "in": "header",
-                    "description": "Request parameter",
-                    "required": false,
-                    "type": "string"
-                  }
-                ],
-                "responses": {
-                  "200": {
-                    "description": "Rest Response",
-                    "schema": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "description": "Lists all .json files in AGENTS_DIR using the OOTB List Files activity. Returns fileMetadata array (name, fullPath, size, modTime)."
-              },
+            "/api/v1/agents": {
               "post": {
                 "summary": "create_agent",
-                "operationId": "post_api_agents",
+                "operationId": "post_api_v1_agents",
                 "parameters": [
                   {
                     "name": "Authorization",
@@ -1110,15 +1218,6 @@
                     "description": "Request parameter",
                     "required": false,
                     "type": "string"
-                  },
-                  {
-                    "name": "body",
-                    "in": "body",
-                    "description": "request body parameter",
-                    "required": true,
-                    "schema": {
-                      "$ref": "#/definitions/schema1"
-                    }
                   }
                 ],
                 "responses": {
@@ -1129,16 +1228,38 @@
                     }
                   }
                 },
-                "description": "Writes AGENTS_DIR/{body.id}.json using OOTB Write File (overwrite=true). Body must contain an 'id' field.",
+                "description": "Create a new agent, generate UUID via PostgreSQL, return created row.",
                 "consumes": [
                   "application/json"
                 ]
+              },
+              "get": {
+                "summary": "list_agents",
+                "operationId": "get_api_v1_agents",
+                "parameters": [
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "List agents, optionally filtered by status."
               }
             },
-            "/api/agents/{agentId}": {
+            "/api/v1/agents/{agentId}": {
               "get": {
                 "summary": "get_agent",
-                "operationId": "get_api_agents_agentId",
+                "operationId": "get_api_v1_agents_agentId",
                 "parameters": [
                   {
                     "name": "agentId",
@@ -1163,11 +1284,11 @@
                     }
                   }
                 },
-                "description": "Reads AGENTS_DIR/{agentId}.json using OOTB Read File. Returns textContent (raw JSON string) for the agent config."
+                "description": "Fetch single agent by id."
               },
               "put": {
                 "summary": "update_agent",
-                "operationId": "put_api_agents_agentId",
+                "operationId": "put_api_v1_agents_agentId",
                 "parameters": [
                   {
                     "name": "agentId",
@@ -1192,14 +1313,14 @@
                     }
                   }
                 },
-                "description": "Overwrites AGENTS_DIR/{agentId}.json using OOTB Write File (overwrite=true). Path agentId is authoritative.",
+                "description": "Update agent definition, bump version.",
                 "consumes": [
                   "application/json"
                 ]
               },
               "delete": {
                 "summary": "delete_agent",
-                "operationId": "delete_api_agents_agentId",
+                "operationId": "delete_api_v1_agents_agentId",
                 "parameters": [
                   {
                     "name": "agentId",
@@ -1224,10 +1345,34 @@
                     }
                   }
                 },
-                "description": "Removes AGENTS_DIR/{agentId}.json using OOTB Remove File. Returns 200 even if file did not exist (Remove File fails for missing file — error surfaced in response).",
+                "description": "Soft-delete agent (set status=archived).",
                 "consumes": [
                   "application/json"
                 ]
+              }
+            },
+            "/api/v1/templates": {
+              "get": {
+                "summary": "list_templates",
+                "operationId": "get_api_v1_templates",
+                "parameters": [
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Return built-in agent template catalogue."
               }
             },
             "/api/health": {
@@ -1251,16 +1396,11 @@
                     }
                   }
                 },
-                "description": "Returns service health status and version."
+                "description": "Returns service health and DB connectivity status."
               }
             }
           },
-          "definitions": {
-            "schema1": {
-              "type": "object",
-              "properties": {}
-            }
-          }
+          "definitions": {}
         }
       }
     ],

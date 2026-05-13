@@ -1,0 +1,31 @@
+rule:
+  id: K8S-004
+  enabled: true
+  severity: WARNING
+  category: kubernetes
+  title: Readiness Probe Failing
+  description: >
+    A pod's readiness probe is failing. Kubernetes has removed the pod
+    from the service endpoint, meaning it is no longer receiving traffic.
+    Ongoing probe failures indicate the application is not healthy.
+  tags: [kubernetes, readiness, probe, health]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(readiness probe failed|Readiness probe errored|probe failed for pod)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Check what endpoint the readiness probe hits (kubectl describe pod)
+    and call it manually from within the pod to see the raw error:
+    kubectl exec <pod> -- curl -v http://localhost:<port>/api/health
+    Common causes: the app is still initialising (increase initialDelaySeconds),
+    a downstream dependency (DB, cache) is unreachable, or the health
+    endpoint itself has a bug. Fix the root cause rather than increasing
+    failureThreshold to hide the symptom.

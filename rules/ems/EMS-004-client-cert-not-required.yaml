@@ -1,0 +1,32 @@
+rule:
+  id: EMS-004
+  enabled: true
+  severity: WARNING
+  category: security
+  title: EMS Client Certificate Verification Not Required
+  description: >
+    EMS configuration "{{.Scope.name}}" does not set ssl_require_client_cert=true.
+    The broker accepts connections from any client without verifying its
+    identity, enabling unauthenticated TLS connections.
+  tags: [security, ssl, client-cert, mutual-tls, ems]
+
+  applies_to: [.conf, .cfg]
+  parser: text
+
+  scope: file
+
+  match:
+    type: any_of
+    conditions:
+      - type: missing
+        path: ssl_require_client_cert
+      - type: regex_match
+        path: content
+        pattern: "(?m)^\\s*ssl_require_client_cert\\s*=\\s*false"
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Set ssl_require_client_cert=true in tibemsd.conf to enforce mutual TLS.
+    Provision client certificates for each service account and distribute
+    them via your PKI. Combine with certificate-to-username mapping
+    (ssl_username_as_certificate_cn=true) for automatic identity binding.

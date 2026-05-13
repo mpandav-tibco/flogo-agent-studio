@@ -1,0 +1,30 @@
+rule:
+  id: FLOGO-RT-001
+  enabled: true
+  severity: ERROR
+  category: flogo-runtime
+  title: Flogo Trigger Failed to Start or Errored
+  description: >
+    A Flogo trigger failed to initialise or encountered a runtime error.
+    The trigger will not accept incoming requests until the underlying
+    issue is resolved and the application is restarted.
+  tags: [flogo, trigger, startup, runtime]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(trigger.*failed|failed.*to.*start.*trigger|trigger.*error|error.*starting.*trigger|trigger.*panic)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Check the full stack trace in the surrounding log lines. Common causes:
+    port already in use (see FLOGO-RT-002), missing or invalid connection
+    configuration, or a misconfigured handler path. Verify the trigger
+    configuration in the .flogo file and that all required connection
+    properties are set. Restart the application after fixing the
+    configuration.

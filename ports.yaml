@@ -61,6 +61,12 @@ flogo_services:
 
 other_services:
 
+  deploy:
+    port: 7030
+    description: "Deploy service — POST/DELETE/GET /api/v1/agents/{agentId}/deploy (activate/deactivate), GET /api/v1/agents/{agentId}/export/kubernetes|docker-compose (manifest generation), GET /api/health"
+    app: "apps/deploy-service.flogo"
+    status: active  # Sprint 5
+
   chainlit-ui:
     port: 7080
     description: "Chainlit chat UI (Python, thin proxy). Multi-agent selector, RAG chat, thumbs-up/down feedback. Run: chainlit run chainlit/app.py --port 7080"

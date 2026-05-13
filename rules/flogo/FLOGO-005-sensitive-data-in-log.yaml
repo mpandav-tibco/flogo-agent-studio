@@ -1,0 +1,45 @@
+rule:
+  id: FLOGO-005
+  enabled: true
+  severity: WARNING
+  category: security
+  title: Sensitive Field Reference in Log Message
+  description: >
+    Activity "{{.Scope.name}}" in flow "{{.Parent.name}}" logs a value
+    whose name suggests it may contain sensitive data (password, token,
+    secret, key, credential). Sensitive data in logs violates most
+    compliance policies and persists in log aggregation systems.
+  tags: [log, security, pii, compliance]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data.tasks[*]
+
+  when:
+    type: contains_any
+    path: activity.ref
+    substrings:
+      - "activity/log"
+      - "contrib/activity/log"
+
+  match:
+    type: contains_any
+    path: activity.input.message
+    substrings:
+      - "password"
+      - "passwd"
+      - "secret"
+      - "apikey"
+      - "api_key"
+      - "token"
+      - "credential"
+      - "private_key"
+      - "access_key"
+
+  location: "flow:{{.Parent.name}} / activity:{{.Scope.name}}"
+  recommendation: >
+    Remove sensitive field references from log messages. Log a masked
+    value (e.g. "****") or an opaque identifier instead of the raw value.
+    Use structured logging and a log scrubbing policy if sensitive data
+    must be traced.

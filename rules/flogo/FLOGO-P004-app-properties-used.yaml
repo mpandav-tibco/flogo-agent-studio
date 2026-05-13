@@ -1,0 +1,28 @@
+rule:
+  id: FLOGO-P004
+  enabled: true
+  severity: GOOD
+  category: configuration
+  title: App Uses Application Properties for Configuration
+  description: >
+    Project "{{.Scope.name}}" defines application properties, indicating
+    configuration is externalised and environment-portable.
+  tags: [configuration, app-properties, environment, best-practice]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.
+
+  match:
+    type: count_greater_than
+    path: properties
+    min_count: 1
+
+  location: "project:{{.Scope.name}}"
+  recommendation: >
+    Application properties (top-level "properties" array) allow the same
+    binary to run in dev, staging, and production by injecting values via
+    environment variables. Reference them with =$property["PROP_NAME"].
+    Ensure all environment-specific values (hosts, ports, credentials)
+    are properties, not literals.

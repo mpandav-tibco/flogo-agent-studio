@@ -1,0 +1,42 @@
+rule:
+  id: FLOGO-010
+  enabled: true
+  severity: INFO
+  category: observability
+  title: No Correlation ID Header Propagated
+  description: >
+    No HTTP activity in the application propagates a correlation or
+    trace header (X-Correlation-ID, X-Request-ID, X-Trace-ID,
+    traceparent). Without a correlation ID, requests cannot be traced
+    across service boundaries in logs or APM tools.
+  tags: [observability, tracing, correlation-id]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data.tasks[*]
+
+  when:
+    type: contains_any
+    path: activity.ref
+    substrings:
+      - "contrib/activity/rest"
+      - "activity/rest"
+      - "activity/http"
+
+  match:
+    type: none_contain
+    path: activity.input.headers
+    keys:
+      - X-Correlation-ID
+      - X-Request-ID
+      - X-Trace-ID
+      - traceparent
+      - x-correlation-id
+      - x-request-id
+
+  location: "flow:{{.Parent.name}} / activity:{{.Scope.name}}"
+  recommendation: >
+    Pass a correlation ID header on all outbound HTTP calls. Generate
+    one at the trigger boundary (e.g. from the inbound request header
+    or a UUID mapper) and thread it through every downstream call.

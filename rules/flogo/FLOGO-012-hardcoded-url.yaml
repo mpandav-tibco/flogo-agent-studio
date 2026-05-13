@@ -1,0 +1,38 @@
+rule:
+  id: FLOGO-012
+  enabled: true
+  severity: WARNING
+  category: configuration
+  title: Hardcoded URL in REST Activity
+  description: >
+    Activity "{{.Scope.name}}" in flow "{{.Parent.name}}" uses a literal
+    HTTP/HTTPS URL. Hardcoded URLs cannot be changed per environment
+    without recompiling or redeploying the application.
+  tags: [configuration, url, environment, hardcoded]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data.tasks[*]
+
+  when:
+    type: contains_any
+    path: activity.ref
+    substrings:
+      - "contrib/activity/rest"
+      - "activity/rest"
+      - "activity/http"
+
+  match:
+    type: contains_any
+    path: activity.input.uri
+    substrings:
+      - "http://"
+      - "https://"
+
+  location: "flow:{{.Parent.name}} / activity:{{.Scope.name}}"
+  recommendation: >
+    Replace literal URLs with app property references:
+    =$property["SERVICE_BASE_URL"]. Inject the value via environment
+    variables so the same binary runs correctly in dev, staging, and
+    production without changes.

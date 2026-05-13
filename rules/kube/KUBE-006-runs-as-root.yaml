@@ -1,0 +1,38 @@
+rule:
+  id: KUBE-006
+  enabled: true
+  severity: ERROR
+  category: security
+  title: Container May Run as Root
+  description: >
+    Container "{{.Scope.name}}" does not set securityContext.runAsNonRoot=true
+    or specify a non-zero runAsUser. If the container image defaults to root,
+    a process escape grants full host access.
+  tags: [security, least-privilege, root, kubernetes]
+
+  applies_to: [.yaml, .yml]
+  parser: yaml
+
+  scope: $.spec.template.spec.containers[*]
+
+  match:
+    type: any_of
+    conditions:
+      - type: missing
+        path: securityContext.runAsNonRoot
+      - type: equals
+        path: securityContext.runAsUser
+        value: "0"
+
+  location: "container:{{.Scope.name}}"
+  recommendation: >
+    Add a security context that prevents root execution:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+    Ensure your container image is built with a non-root user. Use
+    Dockerfile USER instruction or set the user in the build process.
+    Apply at the pod level (spec.securityContext) as the default and
+    override per container where needed.

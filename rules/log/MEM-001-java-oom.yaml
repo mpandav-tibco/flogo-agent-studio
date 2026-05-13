@@ -1,0 +1,29 @@
+rule:
+  id: MEM-001
+  enabled: true
+  severity: ERROR
+  category: memory
+  title: Java OutOfMemoryError Detected
+  description: >
+    The JVM threw an OutOfMemoryError. The heap, metaspace, or another
+    memory region is exhausted. The JVM may still be running but in a
+    degraded or unpredictable state; the process should be restarted.
+  tags: [java, jvm, oom, memory, heap]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(java\\.lang\\.OutOfMemoryError|OutOfMemoryError: Java heap space|OutOfMemoryError: GC overhead|OutOfMemoryError: Metaspace)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Capture a heap dump at the time of the error (-XX:+HeapDumpOnOutOfMemoryError).
+    Analyse with Eclipse MAT or JProfiler to find the largest retained set.
+    Common causes: unbounded caches, connection pool leaks, large payload
+    held in memory, improper finaliser usage. Increase heap (-Xmx) only as
+    a temporary measure while investigating the root cause.

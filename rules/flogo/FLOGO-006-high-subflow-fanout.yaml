@@ -1,0 +1,27 @@
+rule:
+  id: FLOGO-006
+  enabled: true
+  severity: INFO
+  category: maintainability
+  title: High Subflow Fan-Out
+  description: >
+    Flow "{{.Scope.name}}" calls more than 4 subflows. High fan-out
+    increases cognitive load, makes call-graph tracing harder, and can
+    hide circular dependency risks.
+  tags: [subflow, complexity, maintainability]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data
+
+  match:
+    type: count_greater_than
+    path: tasks[?(@.activity.ref =~ /activity\/subflow|contrib\/activity\/subflow/)]
+    threshold: 4
+
+  location: "flow:{{.Scope.name}}"
+  recommendation: >
+    Consider grouping related subflow calls behind a coordinator subflow
+    or restructuring into independent service calls. Aim for a fan-out
+    of 3 or fewer subflows per flow for readability.

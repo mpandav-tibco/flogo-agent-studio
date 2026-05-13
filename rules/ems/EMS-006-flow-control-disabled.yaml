@@ -1,0 +1,37 @@
+rule:
+  id: EMS-006
+  enabled: true
+  severity: WARNING
+  category: performance
+  title: EMS Flow Control Not Enabled
+  description: >
+    EMS configuration "{{.Scope.name}}" does not enable flow control
+    (flow_control=enabled or per-destination limits missing). Producers
+    can overwhelm consumers, building up unbounded message backlogs that
+    exhaust broker memory.
+  tags: [performance, flow-control, backpressure, ems]
+
+  applies_to: [.conf, .cfg]
+  parser: text
+
+  scope: file
+
+  match:
+    type: any_of
+    conditions:
+      - type: missing
+        path: flow_control
+      - type: regex_match
+        path: content
+        pattern: "(?m)^\\s*flow_control\\s*=\\s*disabled"
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Enable server-level flow control with flow_control=enabled in
+    tibemsd.conf. Complement with per-destination limits in queues.conf
+    or topics.conf:
+      [QUEUE_NAME]
+      max_msgs=100000
+      max_bytes=256MB
+      flowcontrol=enabled
+    Tune limits based on expected peak throughput and consumer lag.

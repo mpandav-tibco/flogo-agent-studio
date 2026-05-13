@@ -1,0 +1,30 @@
+rule:
+  id: BW-004
+  enabled: true
+  severity: ERROR
+  category: configuration
+  title: Application Property or Variable Not Found
+  description: >
+    A required application property, global variable, or module property
+    could not be resolved at runtime. Any activity or mapping that
+    references the missing value will fail or produce empty results.
+  tags: [configuration, properties, variables, bw, flogo]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(property.*not found|variable.*not found|unresolved.*property|failed to resolve.*property|\\$property\\[.*\\].*not found|GlobalVariable.*not found)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Identify the missing property name from the log message. For Flogo:
+    verify the property exists in the .flogo file's properties array and
+    that the environment variable override (if used) is set before starting
+    the app. For BW: check the GlobalVariables.substvar or Module Properties
+    in the EAR config. Ensure all required properties are set in each
+    deployment environment's config before launch.

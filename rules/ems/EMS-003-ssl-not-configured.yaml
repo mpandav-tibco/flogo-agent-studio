@@ -1,0 +1,30 @@
+rule:
+  id: EMS-003
+  enabled: true
+  severity: ERROR
+  category: security
+  title: EMS SSL/TLS Not Configured
+  description: >
+    EMS configuration "{{.Scope.name}}" does not define an SSL listener.
+    All client-to-broker and broker-to-broker traffic is transmitted
+    in plaintext, exposing messages and credentials to interception.
+  tags: [security, ssl, tls, encryption, ems]
+
+  applies_to: [.conf, .cfg]
+  parser: text
+
+  scope: file
+
+  match:
+    type: missing
+    path: ssl_server_identity | listen_ssl | ssl_listen
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Configure an SSL listener in tibemsd.conf:
+      listen=ssl://0.0.0.0:7243
+      ssl_server_identity=server.pem
+      ssl_server_key=server.key
+    Use TLS 1.2 or higher. Disable deprecated protocols with
+    ssl_protocol_min=TLSv1.2. Enforce mutual TLS for broker-to-broker
+    (fault-tolerant) connections.

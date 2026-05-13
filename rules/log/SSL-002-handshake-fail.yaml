@@ -1,0 +1,32 @@
+rule:
+  id: SSL-002
+  enabled: true
+  severity: ERROR
+  category: security
+  title: SSL/TLS Handshake Failure
+  description: >
+    An SSL/TLS handshake failed. A secure connection could not be
+    established between the client and server. Depending on which side
+    failed, the connection is dropped without any data exchange.
+  tags: [ssl, tls, handshake, certificate, security]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(tls handshake.*fail|ssl handshake.*fail|handshake.*exception|SSLHandshakeException|remote error.*tls|certificate verify failed|x509: certificate.*unknown)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Common causes: (1) Untrusted CA — the client's truststore does not
+    contain the server's CA certificate. Add the CA cert to the truststore.
+    (2) Protocol mismatch — client and server negotiated incompatible TLS
+    versions. Ensure both support TLS 1.2+. (3) Cipher mismatch — check
+    ssl_cipher_suites configuration on both sides. (4) Certificate name
+    mismatch — the CN/SAN on the server cert doesn't match the hostname
+    used to connect. For Flogo: verify the connection's truststore/keystore
+    configuration and the hostname in the connector URL.

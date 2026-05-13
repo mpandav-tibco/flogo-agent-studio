@@ -1,0 +1,30 @@
+rule:
+  id: BWP-007
+  enabled: true
+  severity: WARNING
+  category: configuration
+  title: Localhost Address in HTTP or JDBC Binding
+  description: >
+    Resource "{{.Scope.name}}" references localhost, 127.0.0.1, or ::1.
+    These addresses resolve only on the local machine and fail in any
+    containerised or distributed deployment.
+  tags: [configuration, localhost, deployment, bw]
+
+  applies_to: [.process, .bwp, .xml, .substvar]
+  parser: xml
+
+  scope: //*[local-name()='host' or local-name()='url' or local-name()='URL' or local-name()='jdbcUrl']
+
+  match:
+    type: contains_any
+    path: text()
+    substrings:
+      - "localhost"
+      - "127.0.0.1"
+      - "::1"
+
+  location: "resource:{{.Scope.name}}"
+  recommendation: >
+    Replace localhost with a Global Variable or Module Property referencing
+    the proper host. For Docker: use the service name from docker-compose.yml.
+    For Kubernetes: use the ClusterIP DNS name (service.namespace.svc.cluster.local).

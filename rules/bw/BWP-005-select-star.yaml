@@ -1,0 +1,28 @@
+rule:
+  id: BWP-005
+  enabled: true
+  severity: WARNING
+  category: performance
+  title: SELECT * Used in JDBC Activity
+  description: >
+    Activity "{{.Scope.name}}" in process "{{.Parent.name}}" uses SELECT *
+    which retrieves all columns including large BLOB/CLOB fields and schema
+    noise. This inflates network traffic, memory usage, and mapping
+    complexity.
+  tags: [jdbc, sql, performance, select-star, bw]
+
+  applies_to: [.process, .bwp, .xml]
+  parser: xml
+
+  scope: //pd:Activity[pd:type='JDBC.JDBCQuery' or pd:type='com.tibco.bw.palette.jdbc.activity.JDBCQueryActivity']
+
+  match:
+    type: regex_match
+    path: .//config/statement | .//inputBindings//queryStatement
+    pattern: "(?i)SELECT\\s+\\*"
+
+  location: "process:{{.Parent.name}} / activity:{{.Scope.name}}"
+  recommendation: >
+    List only the columns the process actually uses: SELECT id, name, status
+    FROM orders. This reduces memory footprint, eliminates implicit coupling
+    to schema changes, and prevents accidental exposure of sensitive columns.

@@ -1,0 +1,40 @@
+rule:
+  id: FLOGO-011
+  enabled: true
+  severity: WARNING
+  category: performance
+  title: Entire Flow or Activity Object Logged
+  description: >
+    Activity "{{.Scope.name}}" in flow "{{.Parent.name}}" maps an entire
+    $flow or $activity object into a log message. This serializes the
+    full object tree, flooding logs with potentially megabytes of data
+    per request and exposing all internal state.
+  tags: [log, performance, security, verbosity]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data.tasks[*]
+
+  when:
+    type: contains_any
+    path: activity.ref
+    substrings:
+      - "activity/log"
+      - "contrib/activity/log"
+
+  match:
+    type: contains_any
+    path: activity.input.message
+    substrings:
+      - "=$flow"
+      - "=$activity["
+      - "=$flow.input"
+      - "=$flow.output"
+
+  location: "flow:{{.Parent.name}} / activity:{{.Scope.name}}"
+  recommendation: >
+    Log specific fields instead of whole objects. For example, use
+    =$flow.body.orderId instead of =$flow. If full-payload logging is
+    needed for debugging, gate it behind a log-level property and
+    disable it in production.

@@ -1,0 +1,32 @@
+rule:
+  id: BWP-004
+  enabled: true
+  severity: WARNING
+  category: resilience
+  title: HTTP Activity Has No Retry Configuration
+  description: >
+    Activity "{{.Scope.name}}" in process "{{.Parent.name}}" performs an HTTP
+    call without configuring retry attempts or retry interval. Transient
+    network errors will fail the process immediately with no recovery.
+  tags: [http, retry, resilience, bw]
+
+  applies_to: [.process, .bwp, .xml]
+  parser: xml
+
+  scope: //pd:Activity[pd:type='HTTP.SendHTTPRequest' or pd:type='com.tibco.bw.palette.restclient.activity.RESTClientActivity']
+
+  match:
+    type: any_of
+    conditions:
+      - type: missing
+        path: .//config/retryCount
+      - type: equals
+        path: .//config/retryCount
+        value: "0"
+
+  location: "process:{{.Parent.name}} / activity:{{.Scope.name}}"
+  recommendation: >
+    Set retryCount to at least 2 and retryInterval to 1000ms for transient
+    error recovery. Use exponential back-off if supported by the palette
+    version. Gate retries on retriable HTTP status codes (429, 502, 503, 504)
+    and wrap non-retriable errors in a fault handler.

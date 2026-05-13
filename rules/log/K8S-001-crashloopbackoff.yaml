@@ -1,0 +1,30 @@
+rule:
+  id: K8S-001
+  enabled: true
+  severity: ERROR
+  category: kubernetes
+  title: CrashLoopBackOff Detected
+  description: >
+    A container is repeatedly crashing and Kubernetes has put it into
+    CrashLoopBackOff back-off. The application is failing to start or
+    is exiting shortly after start.
+  tags: [kubernetes, crashloop, pod, restart]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "CrashLoopBackOff"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Run: kubectl describe pod <pod-name> -n <namespace> to see the
+    restart count and last exit reason. Run: kubectl logs <pod-name>
+    --previous to see the last crash output. Common causes: missing
+    environment variables, failed health check causing immediate kill,
+    OOM (check limits), bad entrypoint, or missing config files.
+    Fix the root cause before increasing restartPolicy backoff limits.

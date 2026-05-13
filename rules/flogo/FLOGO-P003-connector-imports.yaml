@@ -1,0 +1,27 @@
+rule:
+  id: FLOGO-P003
+  enabled: true
+  severity: GOOD
+  category: maintainability
+  title: App Declares Connector Imports
+  description: >
+    Project "{{.Scope.name}}" explicitly declares connector imports,
+    ensuring reproducible builds and clear dependency tracking.
+  tags: [imports, connectors, build, best-practice]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.
+
+  match:
+    type: count_greater_than
+    path: imports[?(@.type=='flogo:connector')]
+    min_count: 1
+
+  location: "project:{{.Scope.name}}"
+  recommendation: >
+    Connector imports appear in the top-level "imports" array with
+    type "flogo:connector". Verify all connectors used in activities
+    are listed here so that flogobuild can resolve them consistently
+    across environments.

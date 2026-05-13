@@ -1,0 +1,30 @@
+rule:
+  id: BW-001
+  enabled: true
+  severity: ERROR
+  category: database
+  title: JDBC / Database Error in BW Log
+  description: >
+    A JDBC or SQL error was detected in the log. The BusinessWorks process
+    or Flogo flow failed to execute a database operation. Depending on the
+    error type, data may be incomplete or in an inconsistent state.
+  tags: [jdbc, database, sql, bw, error]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(SQLException|JDBCException|ORA-\\d{4,5}|SQL Server.*Error|JDBC.*failed|database.*error|DB.*connection.*failed)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Identify the SQL error code in the surrounding log context. ORA-xxxxx
+    codes are documented in Oracle's error reference; SQL Server errors in
+    Microsoft's sys.messages. Common issues: constraint violations (check
+    input data), connection exhaustion (check pool config), lock timeouts
+    (check long-running transactions and index coverage). For Flogo/BW:
+    verify the JDBC connector credentials, host, and pool settings.

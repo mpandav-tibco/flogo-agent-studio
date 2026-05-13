@@ -1,0 +1,31 @@
+rule:
+  id: SSL-001
+  enabled: true
+  severity: ERROR
+  category: security
+  title: SSL/TLS Certificate Expired
+  description: >
+    An SSL/TLS certificate has expired. All connections to or from this
+    endpoint will be rejected by clients that enforce certificate validity,
+    causing a complete service outage for TLS-enabled consumers.
+  tags: [ssl, tls, certificate, expiry, security]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(certificate.*expired|certificate.*expir|x509.*certificate.*expired|ssl.*certificate.*expired|cert.*expired|tls.*expired)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Renew the certificate immediately using your PKI or certificate
+    authority (Let's Encrypt, internal CA). After renewal: update the
+    certificate in the service's keystore/truststore, restart the
+    service, and verify connectivity. To prevent recurrence: set up
+    automated certificate renewal (cert-manager on K8s, acme.sh,
+    or your CA's API) and add a monitoring alert at 30/7 days before
+    expiry. Audit all certificates in the deployment for upcoming expirations.

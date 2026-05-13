@@ -1,0 +1,30 @@
+rule:
+  id: BW-003
+  enabled: true
+  severity: ERROR
+  category: filesystem
+  title: File System Error in BW/Flogo Log
+  description: >
+    A file I/O error was detected. A process or flow attempted to read or
+    write a file and failed. This may indicate a missing file, permission
+    issue, or full disk.
+  tags: [file, io, filesystem, bw, flogo]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(FileNotFoundException|IOException.*file|No such file or directory|Permission denied.*file|disk.*full|ENOENT|EACCES|file.*not.*found)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Identify the file path from the surrounding log context. Verify: the
+    file exists at the expected path, the process user has read/write
+    permission, and sufficient disk space is available (df -h). For
+    container deployments: confirm the volume mount is present and the
+    path matches the mount point. For Flogo file activities: check the
+    file path expression and whether it uses absolute vs relative paths.

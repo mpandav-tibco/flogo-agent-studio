@@ -34,7 +34,22 @@
         "corsEnabled": true,
         "heartbeatInterval": 30
       },
-      "id": "SSEEventBus"
+      "id": "SSEEventBus",
+      "handlers": [
+        {
+          "name": "sse_connect",
+          "description": "Invoked once per new SSE client connection on /events. Logs the connection event.",
+          "settings": {},
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:sse_connect"
+            },
+            "input": {},
+            "output": {}
+          }
+        }
+      ]
     },
     {
       "ref": "#tr_rest",
@@ -45,9 +60,9 @@
         "APISpecUpdate": false,
         "swagger": "",
         "swaggerVersion": "v2",
-        "authenticationType": "None",
-        "username": "",
-        "password": "",
+        "authenticationType": "Basic",
+        "username": "flogo",
+        "password": "=$property[\"API_KEY\"]",
         "apiVersion": "1.0.0",
         "secureConnection": false,
         "serverKey": "",
@@ -254,10 +269,19 @@
               "input": {
                 "body": "=$flow.body",
                 "headers": {
-                  "Content-Type": "application/json"
+                  "Content-Type": "application/json",
+                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
                 },
                 "Method": "POST",
                 "Uri": "=$property[\"CHAT_SERVICE_URL\"]"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                  }
+                }
               }
             }
           },
@@ -483,7 +507,7 @@
                   "data": {
                     "status": "ok",
                     "service": "sse-stream-service",
-                    "version": "=$property[\"SERVICE_VERSION\"]",
+                    "version": "1.0.0",
                     "port": 7005,
                     "sseEndpoint": "/events",
                     "streamEndpoint": "/api/stream/chat"
@@ -507,6 +531,58 @@
           ]
         }
       }
+    },
+    {
+      "id": "flow:sse_connect",
+      "data": {
+        "name": "sse_connect",
+        "description": "Handles a new SSE client connection on /events. Logs the connection event.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogConnect"
+          },
+          {
+            "id": 2,
+            "from": "LogConnect",
+            "to": "Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogConnect",
+            "name": "LogConnect",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "[SSE] new client connected to /events",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          }
+        ],
+        "metadata": {
+          "input": [],
+          "output": []
+        }
+      }
     }
   ],
   "properties": [
@@ -520,7 +596,7 @@
       "name": "LLM_MODEL",
       "type": "string",
       "description": "LLM model for streaming responses. Override at deployment.",
-      "value": "nemotron-3-nano:30b"
+      "value": "llama3.2:3b"
     },
     {
       "name": "SYSTEM_PROMPT",
@@ -532,6 +608,12 @@
       "name": "SERVICE_VERSION",
       "type": "string",
       "value": "1.0.0"
+    },
+    {
+      "name": "API_KEY",
+      "type": "string",
+      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
+      "value": "changeme"
     }
   ],
   "connections": {
@@ -543,7 +625,7 @@
         "name": "LLM Provider",
         "llmProvider": "OpenAI",
         "apiKey": "954bd5d476ee456583f9a4079d24ac16.EP8HhAPYJyC4LELg-PfqTa6z",
-        "llmProviderUrl": "https://ollama.com/v1"
+        "llmProviderUrl": "http://localhost:11434/v1"
       }
     }
   },

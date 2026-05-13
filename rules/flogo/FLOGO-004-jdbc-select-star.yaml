@@ -1,0 +1,37 @@
+rule:
+  id: FLOGO-004
+  enabled: true
+  severity: WARNING
+  category: performance
+  title: JDBC Activity Uses SELECT *
+  description: >
+    Activity "{{.Scope.name}}" in flow "{{.Parent.name}}" executes a
+    SELECT * query. Fetching all columns wastes network bandwidth and
+    memory, and breaks silently when the schema changes.
+  tags: [jdbc, sql, performance]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data.tasks[*]
+
+  when:
+    type: contains_any
+    path: activity.ref
+    substrings:
+      - "activity/jdbc"
+      - "activity/sqloperation"
+      - "contrib/activity/jdbc"
+
+  match:
+    type: contains_any
+    path: activity.input.query
+    substrings:
+      - "SELECT *"
+      - "select *"
+
+  location: "flow:{{.Parent.name}} / activity:{{.Scope.name}}"
+  recommendation: >
+    Replace SELECT * with an explicit column list. This reduces payload
+    size, prevents accidental exposure of new columns, and makes the
+    intent of the query clear.

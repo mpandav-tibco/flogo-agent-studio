@@ -6,7 +6,9 @@
     "act_general_log github.com/tibco/flogo-general/src/app/General/activity/log",
     "act_default_actreturn github.com/project-flogo/contrib/activity/actreturn",
     "act_general_rest github.com/tibco/flogo-general/src/app/General/activity/rest",
-    "act_mcptoolresult github.com/mpandav-tibco/flogo-extensions/mcptoolresult"
+    "act_mcptoolresult github.com/mpandav-tibco/flogo-extensions/mcptoolresult",
+    "string github.com/project-flogo/contrib/function/string",
+    "coerce github.com/project-flogo/contrib/function/coerce"
   ],
   "name": "mcp-server",
   "description": "Flogo Agent Studio MCP Server. Exposes all Phase 1 services as MCP tools for Claude, Cursor, and any MCP client. Registered in .mcp.json as 'flogo-dev-assist'. Part of Flogo Agent Studio Phase 2.",
@@ -23,7 +25,7 @@
     {
       "ref": "#trig_mcpserver",
       "name": "flogo-dev-assist",
-      "description": "MCP Server \u2014 exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:3333/mcp.",
+      "description": "MCP Server — exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:3333/mcp.",
       "settings": {
         "serverName": "flogo-dev-assist",
         "serverVersion": "1.0.0",
@@ -208,6 +210,94 @@
               }
             }
           }
+        },
+        {
+          "name": "create_agent",
+          "description": "Create a new AI agent in design-service with name, description, and LLM/RAG config.",
+          "settings": {
+            "handlerType": "Tool",
+            "resourceUri": "",
+            "handlerName": "create_agent",
+            "handlerDescription": "Create a new AI agent in Flogo Agent Studio. Provide name, description, and config (systemPrompt, collectionName, topK, llmProvider, llmModel, temperature). Returns the created agent record including its ID."
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:create_agent"
+            },
+            "input": {
+              "body": "=$.arguments"
+            },
+            "output": {
+              "response": "=$.response"
+            }
+          },
+          "schemas": {
+            "output": {
+              "arguments": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}"
+              }
+            }
+          }
+        },
+        {
+          "name": "deploy_agent",
+          "description": "Activate an agent so it is ready to handle chat requests. Delegates to deploy-service on port 7030.",
+          "settings": {
+            "handlerType": "Tool",
+            "resourceUri": "",
+            "handlerName": "deploy_agent",
+            "handlerDescription": "Activate an AI agent by setting its status to active. Once active the agent can serve chat requests. Returns agentId, status, and chat URL."
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:deploy_agent_tool"
+            },
+            "input": {
+              "agentId": "=$.arguments.agentId"
+            },
+            "output": {
+              "response": "=$.response"
+            }
+          },
+          "schemas": {
+            "output": {
+              "arguments": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\",\"description\":\"The agent ID to activate\"}},\"required\":[\"agentId\"]}"
+              }
+            }
+          }
+        },
+        {
+          "name": "list_templates",
+          "description": "List available agent templates from design-service. Use before create_agent to pick a starting config.",
+          "settings": {
+            "handlerType": "Tool",
+            "resourceUri": "",
+            "handlerName": "list_templates",
+            "handlerDescription": "List all AI agent templates from the Flogo Agent Studio registry. Each template includes id, name, description, and a pre-configured config block you can pass directly to create_agent."
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:list_templates_tool"
+            },
+            "input": {},
+            "output": {
+              "response": "=$.response"
+            }
+          },
+          "schemas": {
+            "output": {
+              "arguments": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{}}"
+              }
+            }
+          }
         }
       ]
     }
@@ -269,7 +359,8 @@
               "ref": "#act_general_rest",
               "input": {
                 "headers": {
-                  "Content-Type": "application/json"
+                  "Content-Type": "application/json",
+                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                 },
                 "Method": "POST",
                 "Uri": "=$property[\"RULE_ENGINE_URL\"]",
@@ -373,7 +464,8 @@
               "ref": "#act_general_rest",
               "input": {
                 "headers": {
-                  "Content-Type": "application/json"
+                  "Content-Type": "application/json",
+                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                 },
                 "Method": "POST",
                 "Uri": "=$property[\"CHAT_SERVICE_URL\"]",
@@ -477,7 +569,8 @@
               "ref": "#act_general_rest",
               "input": {
                 "headers": {
-                  "Accept": "application/json"
+                  "Accept": "application/json",
+                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                 },
                 "Method": "GET",
                 "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/agents\")"
@@ -575,7 +668,8 @@
               "ref": "#act_general_rest",
               "input": {
                 "headers": {
-                  "Accept": "application/json"
+                  "Accept": "application/json",
+                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                 },
                 "Method": "GET",
                 "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/agents/\", $flow.agentId)"
@@ -678,7 +772,8 @@
               "ref": "#act_general_rest",
               "input": {
                 "headers": {
-                  "Content-Type": "application/json"
+                  "Content-Type": "application/json",
+                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                 },
                 "Method": "POST",
                 "Uri": "=$property[\"FEEDBACK_SERVICE_URL\"]",
@@ -782,7 +877,8 @@
               "ref": "#act_general_rest",
               "input": {
                 "headers": {
-                  "Accept": "application/json"
+                  "Accept": "application/json",
+                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                 },
                 "Method": "GET",
                 "Uri": "=string.concat($property[\"FEEDBACK_SERVICE_BASE_URL\"], \"/api/feedback\")"
@@ -823,6 +919,329 @@
           ]
         }
       }
+    },
+    {
+      "id": "flow:create_agent",
+      "data": {
+        "name": "create_agent",
+        "description": "MCP tool: creates a new agent in design-service and returns the created agent record.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "CallService"
+          },
+          {
+            "id": 3,
+            "from": "CallService",
+            "to": "MapResult"
+          },
+          {
+            "id": 4,
+            "from": "MapResult",
+            "to": "Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "[MCP] create_agent tool invoked",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "CallService",
+            "name": "CallService",
+            "description": "POST to design-service /api/v1/agents",
+            "activity": {
+              "ref": "#act_general_rest",
+              "input": {
+                "headers": {
+                  "Content-Type": "application/json",
+                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
+                },
+                "Method": "POST",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents\")",
+                "body": {
+                  "name": "=$flow.body.name",
+                  "description": "=$flow.body.description",
+                  "config": {
+                    "systemPrompt": "=$flow.body.systemPrompt",
+                    "collectionName": "=$flow.body.collectionName",
+                    "topK": "=$flow.body.topK",
+                    "llmProvider": "=$flow.body.llmProvider",
+                    "llmModel": "=$flow.body.llmModel",
+                    "llmBaseUrl": "=$flow.body.llmBaseUrl",
+                    "temperature": "=$flow.body.temperature"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "MapResult",
+            "name": "MapResult",
+            "activity": {
+              "ref": "#act_mcptoolresult",
+              "input": {
+                "data": "=coerce.toString($activity[CallService].responseBody)"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].result"
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4IjoxMDAsInkiOjEwMH19",
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "response",
+              "type": "any"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
+    },
+    {
+      "id": "flow:deploy_agent_tool",
+      "data": {
+        "name": "deploy_agent_tool",
+        "description": "MCP tool: activates an agent via deploy-service.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "CallService"
+          },
+          {
+            "id": 3,
+            "from": "CallService",
+            "to": "MapResult"
+          },
+          {
+            "id": 4,
+            "from": "MapResult",
+            "to": "Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "[MCP] deploy_agent_tool tool invoked",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "CallService",
+            "name": "CallService",
+            "description": "POST to deploy-service /api/v1/agents/{agentId}/deploy",
+            "activity": {
+              "ref": "#act_general_rest",
+              "input": {
+                "headers": {
+                  "Content-Type": "application/json",
+                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
+                },
+                "Method": "POST",
+                "Uri": "=string.concat($property[\"DEPLOY_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId), \"/deploy\")"
+              }
+            }
+          },
+          {
+            "id": "MapResult",
+            "name": "MapResult",
+            "activity": {
+              "ref": "#act_mcptoolresult",
+              "input": {
+                "data": "=coerce.toString($activity[CallService].responseBody)"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].result"
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4IjoxMDAsInkiOjEwMH19",
+        "metadata": {
+          "input": [
+            {
+              "name": "agentId",
+              "type": "string"
+            }
+          ],
+          "output": [
+            {
+              "name": "response",
+              "type": "any"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
+    },
+    {
+      "id": "flow:list_templates_tool",
+      "data": {
+        "name": "list_templates_tool",
+        "description": "MCP tool: retrieves available agent templates from design-service.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "CallService"
+          },
+          {
+            "id": 3,
+            "from": "CallService",
+            "to": "MapResult"
+          },
+          {
+            "id": 4,
+            "from": "MapResult",
+            "to": "Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#act_default_noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "[MCP] list_templates_tool tool invoked",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "CallService",
+            "name": "CallService",
+            "description": "GET design-service /api/v1/templates",
+            "activity": {
+              "ref": "#act_general_rest",
+              "input": {
+                "headers": {
+                  "Content-Type": "application/json",
+                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
+                },
+                "Method": "GET",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/templates\")"
+              }
+            }
+          },
+          {
+            "id": "MapResult",
+            "name": "MapResult",
+            "activity": {
+              "ref": "#act_mcptoolresult",
+              "input": {
+                "data": "=coerce.toString($activity[CallService].responseBody)"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#act_default_actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].result"
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4IjoxMDAsInkiOjEwMH19",
+        "metadata": {
+          "input": [],
+          "output": [
+            {
+              "name": "response",
+              "type": "any"
+            }
+          ],
+          "fe_metadata": {}
+        }
+      }
     }
   ],
   "properties": [
@@ -860,6 +1279,30 @@
       "name": "SERVICE_VERSION",
       "type": "string",
       "value": "1.0.0"
+    },
+    {
+      "name": "API_KEY",
+      "type": "string",
+      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
+      "value": "changeme"
+    },
+    {
+      "name": "API_AUTH_HEADER",
+      "type": "string",
+      "description": "Pre-computed Authorization header for outbound calls. Matches API_KEY=changeme by default.",
+      "value": "Basic OmNoYW5nZW1l"
+    },
+    {
+      "name": "DESIGN_SERVICE_URL",
+      "type": "string",
+      "description": "Design service base URL.",
+      "value": "http://localhost:7020"
+    },
+    {
+      "name": "DEPLOY_SERVICE_URL",
+      "type": "string",
+      "description": "Deploy service base URL.",
+      "value": "http://localhost:7030"
     }
   ],
   "connections": {},

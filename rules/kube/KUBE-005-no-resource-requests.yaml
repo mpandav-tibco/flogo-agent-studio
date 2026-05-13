@@ -1,0 +1,41 @@
+rule:
+  id: KUBE-005
+  enabled: true
+  severity: WARNING
+  category: performance
+  title: Container Has No CPU/Memory Requests
+  description: >
+    Container "{{.Scope.name}}" does not define resource requests.
+    Without requests the Kubernetes scheduler cannot make informed
+    placement decisions, leading to over-committed nodes and degraded
+    performance under load.
+  tags: [kubernetes, resources, requests, scheduling, performance]
+
+  applies_to: [.yaml, .yml]
+  parser: yaml
+
+  scope: $.spec.template.spec.containers[*]
+
+  match:
+    type: any_of
+    conditions:
+      - type: missing
+        path: resources.requests
+      - type: missing
+        path: resources.requests.cpu
+      - type: missing
+        path: resources.requests.memory
+
+  location: "container:{{.Scope.name}}"
+  recommendation: >
+    Define CPU and memory requests alongside limits:
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+    Requests represent the guaranteed reservation; limits cap peak usage.
+    Use VPA (Vertical Pod Autoscaler) in recommendation mode to observe
+    real usage before setting these values in production.

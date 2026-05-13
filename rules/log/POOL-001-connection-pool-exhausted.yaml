@@ -1,0 +1,32 @@
+rule:
+  id: POOL-001
+  enabled: true
+  severity: ERROR
+  category: database
+  title: Database Connection Pool Exhausted
+  description: >
+    The database or HTTP connection pool is exhausted. New requests
+    cannot acquire a connection and will fail or queue indefinitely.
+    This is a leading indicator of a connection leak or under-provisioned
+    pool under load.
+  tags: [database, connection-pool, jdbc, performance]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(connection pool.*exhausted|pool.*no connections available|timeout.*waiting.*connection|HikariPool.*connection is not available|getConnection.*timed out|pool size.*exceeded)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Immediate: check if any long-running queries are holding connections.
+    Run: SELECT * FROM information_schema.processlist (MySQL) or pg_stat_activity
+    (PostgreSQL) to find blocking queries. Medium-term: increase pool size
+    if the DB server can handle more connections. Long-term: identify
+    connection leaks (connections not closed in catch/finally blocks) using
+    pool metrics. For Flogo: check the connector's max-connections setting
+    and whether it matches your concurrency needs.

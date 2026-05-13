@@ -1,0 +1,31 @@
+rule:
+  id: NET-001
+  enabled: true
+  severity: ERROR
+  category: network
+  title: Connection Refused to Downstream Service
+  description: >
+    A "connection refused" error indicates that the target host:port is
+    reachable at the network level but nothing is listening on the port.
+    The downstream service may be down, not yet started, or on a different
+    port.
+  tags: [network, connectivity, connection-refused, downstream]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(connection refused|ECONNREFUSED|connect: connection refused)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Verify the target service is running and listening on the expected port.
+    Check for recent deployments or restarts of the downstream service.
+    For Flogo apps: verify the REST activity URL and port match the actual
+    service endpoint. In Docker/K8s: confirm the service name and port in
+    docker-compose.yml or the K8s Service spec. Implement retry logic with
+    exponential back-off for transient failures.

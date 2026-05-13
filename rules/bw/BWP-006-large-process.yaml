@@ -1,0 +1,28 @@
+rule:
+  id: BWP-006
+  enabled: true
+  severity: WARNING
+  category: maintainability
+  title: Process Has Too Many Activities
+  description: >
+    Process "{{.Scope.name}}" contains more than 20 activities, indicating
+    it may be doing too much in a single unit. Large processes are harder to
+    test, debug, and maintain.
+  tags: [maintainability, complexity, decomposition, bw]
+
+  applies_to: [.process, .bwp, .xml]
+  parser: xml
+
+  scope: //pd:ProcessDef
+
+  match:
+    type: count_greater_than
+    path: .//pd:Activity
+    min_count: 20
+
+  location: "process:{{.Scope.name}}"
+  recommendation: >
+    Decompose the process into smaller sub-processes using Call Process
+    activities. Each sub-process should represent a single business step.
+    Aim for fewer than 15 activities per process. Common split points:
+    data validation, enrichment, transformation, and downstream dispatch.

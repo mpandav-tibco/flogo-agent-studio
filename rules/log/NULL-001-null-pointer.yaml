@@ -1,0 +1,31 @@
+rule:
+  id: NULL-001
+  enabled: true
+  severity: ERROR
+  category: runtime
+  title: NullPointerException Detected
+  description: >
+    A NullPointerException (NPE) was thrown at runtime. Execution of the
+    current operation halted. The stack trace in the surrounding log lines
+    identifies the exact source location.
+  tags: [java, npe, null, runtime-error]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(NullPointerException|NPE at |null pointer|nil pointer dereference)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Read the stack trace below this line to identify the class and method.
+    The NPE indicates an object was used before being initialised or an
+    optional return value was not checked. For Flogo: an NPE in a mapper
+    often means a JSONPath expression returned null when the field was
+    absent — use conditional mapping or a default value. For Go-based
+    Flogo runtimes: nil pointer dereference usually means an activity
+    received an unexpected empty input struct.

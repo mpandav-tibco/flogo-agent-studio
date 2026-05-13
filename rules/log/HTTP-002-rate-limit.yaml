@@ -1,0 +1,30 @@
+rule:
+  id: HTTP-002
+  enabled: true
+  severity: WARNING
+  category: http
+  title: HTTP 429 Rate Limit Exceeded
+  description: >
+    A downstream API returned HTTP 429 Too Many Requests. The calling
+    flow is exceeding the rate limit of the target service and requests
+    are being rejected without processing.
+  tags: [http, rate-limit, throttling, api, 429]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(429|Too Many Requests|rate limit exceeded|rate.limit.*exceeded|throttled|quota.*exceeded)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Check the Retry-After header in the response for the mandated wait
+    time. Implement exponential back-off with jitter before retrying.
+    For APIs with a fixed quota: batch requests or cache responses where
+    the data allows it. For Flogo: use a timer activity to implement
+    delay before retry. Consider requesting a higher quota tier from the
+    API provider if the current limit is insufficient for your workload.

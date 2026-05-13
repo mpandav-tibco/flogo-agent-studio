@@ -1,0 +1,30 @@
+rule:
+  id: NET-002
+  enabled: true
+  severity: WARNING
+  category: network
+  title: Network Timeout Detected
+  description: >
+    A network call timed out. The downstream service received the
+    connection but did not respond within the configured timeout window,
+    indicating performance degradation or overload on the target.
+  tags: [network, timeout, latency, downstream]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(context deadline exceeded|i/o timeout|request timeout|ETIMEDOUT|connection timed out|read timeout|write timeout)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Identify which downstream service is timing out from the log context
+    surrounding this line. Correlate with the downstream service's own
+    logs for latency spikes. Short-term: verify timeout values are
+    appropriate (not too tight). Long-term: add circuit breaker patterns,
+    monitor downstream p99 latency, and implement proper back-pressure.
+    For Flogo: check the timeout setting in the REST activity configuration.

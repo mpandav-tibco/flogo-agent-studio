@@ -27,9 +27,9 @@
         "APISpecUpdate": false,
         "swagger": "",
         "swaggerVersion": "v2",
-        "authenticationType": "None",
-        "username": "",
-        "password": "",
+        "authenticationType": "Basic",
+        "username": "flogo",
+        "password": "=$property[\"API_KEY\"]",
         "apiVersion": "1.0.0",
         "secureConnection": false,
         "serverKey": "",
@@ -570,7 +570,8 @@
                 "Timeout": 0,
                 "headers": {
                   "mapping": {
-                    "Accept": "application/json"
+                    "Accept": "application/json",
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
                   }
                 }
               },
@@ -853,7 +854,7 @@
                     "mapping": {
                       "status": "ok",
                       "service": "agent-builder-service",
-                      "version": "=$property[\"SERVICE_VERSION\"]",
+                      "version": "1.0.0",
                       "port": 7010,
                       "llmModel": "=$property[\"LLM_MODEL\"]"
                     }
@@ -914,6 +915,18 @@
       "name": "SERVICE_VERSION",
       "type": "string",
       "value": "1.0.0"
+    },
+    {
+      "name": "API_KEY",
+      "type": "string",
+      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
+      "value": "changeme"
+    },
+    {
+      "name": "API_AUTH_HEADER",
+      "type": "string",
+      "description": "Pre-computed Authorization header for outbound calls. Matches API_KEY=changeme by default.",
+      "value": "Basic ZmxvZ286Y2hhbmdlbWU="
     }
   ],
   "connections": {

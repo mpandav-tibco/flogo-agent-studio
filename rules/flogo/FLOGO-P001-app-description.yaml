@@ -1,0 +1,25 @@
+rule:
+  id: FLOGO-P001
+  enabled: true
+  severity: GOOD
+  category: maintainability
+  title: App Has a Description
+  description: >
+    Project "{{.Scope.name}}" has a non-empty description, making it easier
+    for teams to understand its purpose at a glance.
+  tags: [documentation, maintainability, best-practice]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.
+
+  match:
+    type: not_empty
+    path: description
+
+  location: "project:{{.Scope.name}}"
+  recommendation: >
+    Keep the description concise (1–2 sentences): what the app does, which
+    team owns it, and any operational notes. Update it whenever the app's
+    purpose changes.

@@ -1,0 +1,28 @@
+rule:
+  id: BWP-002
+  enabled: true
+  severity: WARNING
+  category: configuration
+  title: Hardcoded HTTP URL in HTTP Activity
+  description: >
+    Activity "{{.Scope.name}}" in process "{{.Parent.name}}" contains a
+    literal HTTP or HTTPS URL. Hardcoded URLs cannot be changed per
+    environment without modifying the process definition.
+  tags: [configuration, url, environment, hardcoded, bw]
+
+  applies_to: [.process, .bwp, .xml]
+  parser: xml
+
+  scope: //pd:Activity[pd:type='com.tibco.pe.core.CallProcessActivity' or pd:type='HTTP.SendHTTPRequest']
+
+  match:
+    type: regex_match
+    path: .//config/url | .//inputBindings//URL
+    pattern: "https?://"
+
+  location: "process:{{.Parent.name}} / activity:{{.Scope.name}}"
+  recommendation: >
+    Move the base URL to a Global Variable or Module Property:
+    %%Connections/MyService/baseUrl%%. Inject the value per deployment
+    profile so the same EAR runs in dev, QA, and production without
+    rebuilding.

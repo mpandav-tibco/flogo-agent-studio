@@ -1,0 +1,27 @@
+rule:
+  id: FLOGO-P002
+  enabled: true
+  severity: GOOD
+  category: maintainability
+  title: Flow Names Use snake_case Convention
+  description: >
+    Flow "{{.Scope.name}}" follows the snake_case naming convention,
+    ensuring consistency across the project and making flow names
+    script-safe.
+  tags: [naming, maintainability, convention, best-practice]
+
+  applies_to: [.flogo, .json]
+  parser: json
+
+  scope: $.resources[*].data
+
+  match:
+    type: regex_match
+    path: name
+    pattern: "^[a-z][a-z0-9_]*$"
+
+  location: "flow:{{.Scope.name}}"
+  recommendation: >
+    Use lowercase letters, digits, and underscores only. Start with a
+    letter. Examples: get_order, process_payment_webhook, sync_inventory.
+    Avoid spaces, hyphens, or CamelCase.

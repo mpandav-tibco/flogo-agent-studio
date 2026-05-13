@@ -1,0 +1,35 @@
+rule:
+  id: KUBE-003
+  enabled: true
+  severity: WARNING
+  category: resilience
+  title: Container Has No Liveness Probe
+  description: >
+    Container "{{.Scope.name}}" in the workload does not define a
+    liveness probe. Kubernetes cannot detect a frozen or deadlocked
+    application and will not restart it automatically, resulting in a
+    permanently unhealthy pod serving errors.
+  tags: [kubernetes, liveness, resilience, deployment]
+
+  applies_to: [.yaml, .yml]
+  parser: yaml
+
+  scope: $.spec.template.spec.containers[*]
+
+  match:
+    type: missing
+    path: livenessProbe
+
+  location: "container:{{.Scope.name}}"
+  recommendation: >
+    Add a livenessProbe that checks a lightweight health endpoint:
+      livenessProbe:
+        httpGet:
+          path: /api/health
+          port: 8080
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        failureThreshold: 5
+    Set initialDelaySeconds longer than startupProbe or readinessProbe.
+    Avoid probing endpoints that perform heavy logic or hit external
+    dependencies, as failures will trigger unnecessary restarts.

@@ -1,0 +1,34 @@
+rule:
+  id: KUBE-002
+  enabled: true
+  severity: WARNING
+  category: resilience
+  title: Container Has No Readiness Probe
+  description: >
+    Container "{{.Scope.name}}" in the workload does not define a
+    readiness probe. Kubernetes will route traffic to the pod immediately
+    after the container starts, before the application is ready to serve
+    requests, causing transient errors during rollouts.
+  tags: [kubernetes, readiness, resilience, deployment]
+
+  applies_to: [.yaml, .yml]
+  parser: yaml
+
+  scope: $.spec.template.spec.containers[*]
+
+  match:
+    type: missing
+    path: readinessProbe
+
+  location: "container:{{.Scope.name}}"
+  recommendation: >
+    Add a readinessProbe to the container spec. For HTTP services:
+      readinessProbe:
+        httpGet:
+          path: /api/health
+          port: 8080
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        failureThreshold: 3
+    For TCP services use tcpSocket. Set initialDelaySeconds to account
+    for slow startup; tune failureThreshold to avoid premature pod removal.
