@@ -1,6 +1,6 @@
 # Flogo Agent Studio
 
-A production-grade, multi-agent AI platform built entirely on **TIBCO Flogo 2.26.3**. Every service — from RAG retrieval to SSE streaming to MCP tool exposure — is a compiled Flogo application running as a standalone binary with no runtime dependencies.
+A production-grade, multi-agent AI platform built entirely on **TIBCO Flogo 2.26.3**. Every service — from RAG retrieval to SSE streaming to MCP tool exposure — is a compiled Flogo application running as a standalone binary with no runtime dependencies. A React design studio (Forge) and Chainlit chat UI complete the full-stack experience.
 
 ---
 
@@ -136,8 +136,11 @@ MCP Client (Claude, Cursor)
 | ingestion-service | 7002 | `bin/apps/ingestion-service.exe` | Document ingestion into Weaviate |
 | feedback-service | 7003 | `bin/apps/feedback-service.exe` | Per-agent feedback storage (JSONL) |
 | config-service | 7004 | `bin/apps/config-service.exe` | Multi-agent JSON configuration registry |
-| sse-stream-service | 7005 | `bin/apps/sse-stream-service.exe` | SSE broadcast + RAG+LLM streaming pipeline |
-| agent-builder-service | 7010 | `bin/apps/agent-builder-service.exe` | LLM-generated agent configurations |
+| sse-stream-service | 7005 | `bin/apps/sse-stream-service.exe` | SSE broadcast + RAG+LLM streaming pipeline (SSE events on :7099) |
+| agent-builder-service | 7010 | `bin/apps/agent-builder-service.exe` | LLM-generated agent configurations + feedback-driven improvement |
+| design-service | 7020 | `bin/apps/design-service.exe` | Agent lifecycle management (create/update/delete, PostgreSQL-backed) |
+| forge UI | 7025 | `forge/` (React + Vite) | Visual design studio: create → configure → deploy → export |
+| deploy-service | 7030 | `bin/apps/deploy-service.exe` | Agent deployment lifecycle + K8s/docker-compose manifest generation |
 | mcp-server | 3333 | `bin/apps/mcp-server.exe` | MCP gateway (JSON-RPC 2.0 over SSE transport) |
 | chainlit-ui | 7080 | `chainlit/app.py` | Browser chat UI (Python, Chainlit) |
 
@@ -153,9 +156,11 @@ MCP Client (Claude, Cursor)
 | Use | Model | Notes |
 |---|---|---|
 | Document/query embedding | `nomic-embed-text` (Ollama) | 768-dimension vectors |
-| RAG answer generation | configured per-agent | `gemma3:4b-cloud` default in agent-chat |
-| Agent config generation | `nemotron-3-nano:30b` | Best for structured JSON output |
-| SSE stream LLM | `nemotron-3-nano:30b` | Context-aware streaming responses |
+| RAG answer generation | configured per-agent | `llama3.2:3b` recommended for local |
+| Agent config generation | `llama3.2:3b` | Returns structured JSON via Ollama |
+| SSE stream LLM | `llama3.2:3b` | Context-aware streaming responses |
+
+> **Confirmed available models (2026-05-13):** `llama3.2:3b`, `llama3.1:8b`, `deepseek-r1:latest`, `nomic-embed-text:latest`
 
 ---
 
@@ -249,11 +254,37 @@ GET  /api/health
 
 ```
 POST /api/agent-builder/generate
-{ "prompt": "Create a FAQ agent for ...", "model": "nemotron-mini-4b-instruct" }
+{ "prompt": "Create a FAQ agent for ...", "model": "llama3.2:3b" }
 --> { "config": { "id": "...", "name": "...", "collectionName": "...", ... } }
 
 POST /api/agent-builder/improve   (refine existing config with LLM)
 POST /api/agent-builder/validate  (validate config structure)
+GET  /api/health
+```
+
+### design-service (port 7020)
+
+```
+POST /api/v1/agents
+{ "name": "My Agent", "description": "...", "config": { "systemPrompt": "...", "collectionName": "...", "llmModel": "llama3.2:3b" } }
+--> { "id": "uuid", "name": "...", "status": "draft", "version": 1 }
+
+GET  /api/v1/agents          --> list all agents
+GET  /api/v1/agents/{id}     --> get one agent
+PUT  /api/v1/agents/{id}     --> update agent
+DEL  /api/v1/agents/{id}     --> delete agent
+GET  /api/v1/templates       --> list templates
+GET  /api/health
+```
+
+### deploy-service (port 7030)
+
+```
+POST /api/v1/agents/{id}/deploy   --> activate agent (status=active)
+GET  /api/v1/agents/{id}/deploy   --> get deploy status
+DEL  /api/v1/agents/{id}/deploy   --> deactivate agent (status=draft)
+GET  /api/v1/agents/{id}/export/kubernetes     --> K8s Deployment+Service YAML
+GET  /api/v1/agents/{id}/export/docker-compose --> docker-compose YAML
 GET  /api/health
 ```
 
@@ -284,7 +315,18 @@ flogo-agent-studio/
 │   ├── config-service.flogo
 │   ├── sse-stream-service.flogo
 │   ├── agent-builder-service.flogo
-│   └── mcp-server.flogo
+│   ├── mcp-server.flogo
+│   ├── design-service.flogo
+│   └── deploy-service.flogo
+├── forge/                       # React + Vite design studio (port 7025)
+│   ├── src/
+│   │   ├── pages/Editor.tsx     # Create/edit agent + deploy + AI generate + feedback
+│   │   ├── pages/Gallery.tsx    # Agent list with status filter tabs
+│   │   ├── api.ts               # REST calls (design, deploy, feedback, agent-builder)
+│   │   └── types.ts             # Agent, DeployStatus, FeedbackRecord types
+│   ├── vite.config.ts           # Dev server + API proxy rules
+│   ├── Dockerfile               # Multi-stage: node build → nginx serve
+│   └── nginx.conf               # nginx reverse proxy for docker-compose
 ├── bin/
 │   └── apps/                    # Compiled binaries (flogobuild output)
 │       ├── rule-engine-service.exe
@@ -313,7 +355,7 @@ flogo-agent-studio/
 ├── ports.yaml                   # Canonical port registry
 ├── start-all.ps1                # Windows: start all services with log capture
 ├── e2e_test.py                  # Integration tests (30 tests)
-├── e2e_journey.py               # Single-scenario E2E journey test (19 steps)
+├── e2e_journey.py               # End-to-end scenario across all 10 services (27 steps)
 └── show_results.py              # Live service test log runner
 ```
 
@@ -324,10 +366,11 @@ flogo-agent-studio/
 ### Prerequisites
 
 - Weaviate running on `localhost:8080` (via Docker: `docker compose up weaviate -d`)
+- PostgreSQL running on `localhost:5432` (via Docker: `docker compose up postgres -d`)
 - Ollama running on `localhost:11434` with models pulled:
   ```
   ollama pull nomic-embed-text
-  ollama pull nemotron-3-nano:30b
+  ollama pull llama3.2:3b
   ```
 - Flogo binaries built with `flogobuild` (see Building section)
 
@@ -338,7 +381,17 @@ cd flogo-agent-studio
 .\start-all.ps1
 ```
 
-This starts all 8 Flogo services with stdout/stderr redirected to `logs/`.
+This starts all 10 Flogo services with stdout/stderr redirected to `logs/`.
+
+### Start Forge UI (dev mode)
+
+```bash
+cd forge
+npm install
+npm run dev   # starts at http://localhost:7025
+```
+
+The Forge design studio lets you create, configure, deploy, and export agents visually.
 
 ### Start all services (Docker Compose)
 
@@ -346,7 +399,7 @@ This starts all 8 Flogo services with stdout/stderr redirected to `logs/`.
 docker compose up -d
 ```
 
-Brings up Weaviate, Ollama, all 8 Flogo services, and the Chainlit UI.
+Brings up Weaviate, PostgreSQL, Ollama, all 10 Flogo services, Forge UI, and the Chainlit chat UI.
 
 ### Verify everything is healthy
 
@@ -357,8 +410,7 @@ python show_results.py
 ### Run the integration test suite
 
 ```bash
-python e2e_test.py        # 30-test suite covering all services and MCP tools
-python e2e_journey.py     # Single end-to-end scenario across all 8 services
+python e2e_journey.py     # 27-step end-to-end scenario across all 10 services
 ```
 
 ---
@@ -374,7 +426,7 @@ flogobuild build-exe -f apps/rule-engine-service.flogo -c flogo-v2263-2498 -o ./
 # Build all services
 for svc in rule-engine-service agent-chat-service ingestion-service \
            feedback-service config-service sse-stream-service \
-           agent-builder-service mcp-server; do
+           agent-builder-service design-service deploy-service mcp-server; do
   flogobuild build-exe -f apps/${svc}.flogo -c flogo-v2263-2498 -o ./bin
 done
 ```
@@ -424,36 +476,27 @@ Agents are stored as JSON files in `agents/`. Example:
 
 ## E2E Test Results
 
-Verified 2026-05-12 with all 8 services running on `localhost`.
+Verified 2026-05-13 with all 10 services running on `localhost`.
 
 ```
-e2e_test.py     : 30/30 tests PASSED
-e2e_journey.py  : 19/19 steps PASSED  (9.9 seconds wall clock)
+e2e_journey.py  : 27/27 steps across 10 services
 ```
 
 ### Journey steps and timings
 
-| Phase | Step | Service | Duration |
+| Phase | Steps | Service | What's tested |
 |---|---|---|---|
-| 1 | Health check ×8 | All services | ~1–39ms each |
-| 2 | List agents | config-service | 1.5ms |
-| 2 | Get default agent config | config-service | 1.5ms |
-| 3 | Ingest AgenticAI doc → Weaviate | ingestion-service | 2,237ms |
-| 4 | Run quality rules (2 rules) | rule-engine-service | 4.8ms |
-| 5 | RAG query → Weaviate → LLM answer | agent-chat-service | 1,072ms |
-| 6 | Submit feedback (rating=5) | feedback-service | 6.2ms |
-| 6 | Retrieve feedback records | feedback-service | 10.8ms |
-| 7 | LLM-generate agent config (937 tokens) | agent-builder-service | 3,022ms |
-| 8 | Broadcast SSE event | sse-stream-service | 1.5ms |
-| 8 | Stream chat: RAG+LLM pipeline | sse-stream-service | 2,174ms |
-| 9 | MCP initialize + 6 tool calls | mcp-server | ~1–1,061ms each |
-
-### LLM token usage (from agent-builder-service and sse-stream-service logs)
-
-| Call | Model | Input tokens | Output tokens | Total | Time |
-|---|---|---|---|---|---|
-| Agent config generation | nemotron-3-nano:30b | 256 | 681 | 937 | 3,002ms |
-| Stream chat LLM stage | nemotron-3-nano:30b | 112 | 98 | 210 | 1,074ms |
+| 1 | Health checks ×10 | All services | ports 7000–7030 + MCP :3333 |
+| 2 | List + get agent config | config-service :7004 | Registry query |
+| 3 | Ingest AgenticAI doc → Weaviate | ingestion-service :7002 | 768-dim embedding + vector store |
+| 4 | Run quality rules | rule-engine-service :7000 | YAML rule evaluation |
+| 5 | RAG query → Weaviate → LLM answer | agent-chat-service :7001 | Full RAG pipeline |
+| 6 | Submit + retrieve feedback | feedback-service :7003 | JSONL write/read |
+| 7 | LLM-generate agent config | agent-builder-service :7010 | llama3.2:3b structured JSON |
+| 8 | Broadcast SSE + stream chat | sse-stream-service :7005 | SSE emission + RAG+LLM |
+| 9 | MCP initialize + 6 tool calls | mcp-server :3333 | Full JSON-RPC round-trip |
+| 9 | design-service: create/get/update/list | design-service :7020 | PostgreSQL CRUD |
+| 10 | deploy: activate/status/export/deactivate | deploy-service :7030 | K8s YAML + lifecycle |
 
 ---
 
@@ -465,8 +508,8 @@ Each service is a visual flow — trigger → activities → return — compiled
 **Why Weaviate + nomic-embed-text?**
 Weaviate provides hybrid search (BM25 + vector) out of the box. `nomic-embed-text` runs locally via Ollama and produces 768-dimension embeddings — no external API calls needed for knowledge retrieval.
 
-**Why nemotron-3-nano:30b for structured generation?**
-The agent-builder-service requires the LLM to output valid JSON. `nemotron-3-nano:30b` reliably produces bare JSON without wrapping it in markdown code fences, which smaller models (e.g. `gemma3:4b`) do incorrectly.
+**Why llama3.2:3b for structured generation?**
+The agent-builder-service requires the LLM to output valid JSON. `llama3.2:3b` runs locally via Ollama and produces structured JSON reliably with a carefully crafted system prompt (IMPORTANT: Output ONLY a raw JSON object. No markdown. No code fences.).
 
 **Why MCP over direct REST for AI IDE integration?**
 MCP is the standard protocol for AI tool use. By wrapping the REST services behind a single MCP server, any MCP-capable client (Claude Code, Cursor, VS Code Copilot) gains access to all capabilities through native tool calls — no custom plugin required.

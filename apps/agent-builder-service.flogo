@@ -505,9 +505,9 @@
           {
             "id": 3,
             "from": "ReadCurrentConfig",
-            "to": "SuggestImprovements",
+            "to": "ReadFeedback",
             "type": "label",
-            "label": "ReadCurrentConfig to SuggestImprovements"
+            "label": "ReadCurrentConfig to ReadFeedback"
           },
           {
             "id": 4,
@@ -515,6 +515,13 @@
             "to": "Return",
             "type": "label",
             "label": "SuggestImprovements to Return"
+          },
+          {
+            "id": 5,
+            "from": "ReadFeedback",
+            "to": "SuggestImprovements",
+            "type": "label",
+            "label": "ReadFeedback to SuggestImprovements"
           }
         ],
         "tasks": [
@@ -606,6 +613,50 @@
             }
           },
           {
+            "id": "ReadFeedback",
+            "name": "ReadFeedback",
+            "description": "GET feedback records for agentId from feedback-service",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
+            "activity": {
+              "ref": "#rest",
+              "input": {
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
+                "Method": "GET",
+                "Uri": "=string.concat(\"http://localhost:7003/api/feedback/\", $flow.body.agentId)",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Accept": "text/plain",
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                  }
+                }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "application/json",
+                "responseOutput": "Raw"
+              },
+              "feSchemaMap": {}
+            }
+          },
+          {
             "id": "SuggestImprovements",
             "name": "SuggestImprovements",
             "description": "LLM reviews the current config and recent feedback to produce an improved version.",
@@ -627,7 +678,7 @@
                 "systemPrompt": "IMPORTANT: Output ONLY a raw JSON object. No markdown. No code fences. No backticks. No explanation. Your response MUST start with { and end with }. Using ``` will cause a fatal parse error. You are an AI agent configuration expert. Review the provided Flogo Agent Studio agent config and suggest improvements. Return a JSON object with two fields: \"improved\" (the full improved config JSON object) and \"changes\" (array of strings describing what changed and why). Focus on: systemPrompt clarity, appropriate temperature for the use case, correct tool selection, and meaningful description. Return ONLY the raw JSON object starting with { and ending with }."
               },
               "input": {
-                "userPrompt": "=string.concat(\"Review and improve this agent config: \", coerce.toString($activity[ReadCurrentConfig].responseBody), \". Recent feedback/issues: \", coerce.toString($flow.body.feedback))",
+                "userPrompt": "=string.concat(\"Review and improve this agent config: \", coerce.toString($activity[ReadCurrentConfig].responseBody), \". Recent user feedback (JSONL): \", coerce.toString($activity[ReadFeedback].responseBody), \". Additional context: \", coerce.toString($flow.body.feedback))",
                 "conversationId": ""
               }
             }

@@ -34,8 +34,10 @@ def logline(label, value, indent=4):
         print(f"{pad}{label}: {value}")
         LOG.append(f"{pad}{label}: {value}")
 
+AUTH_HEADER = "Basic ZmxvZ286Y2hhbmdlbWU="
+
 def req(url, method="GET", body=None, timeout=60):
-    h = {"Content-Type": "application/json"}
+    h = {"Content-Type": "application/json", "Authorization": AUTH_HEADER}
     data = json.dumps(body).encode() if body else None
     r = urllib.request.Request(url, data=data, headers=h, method=method)
     t0 = time.time()
@@ -130,7 +132,7 @@ journey_start = time.time()
 all_ok = True
 
 # =============================================================================
-banner("PHASE 1 - HEALTH CHECKS (all 8 services)")
+banner("PHASE 1 - HEALTH CHECKS (all 10 services)")
 # =============================================================================
 SERVICES = [
     ("rule-engine-service",    7000),
@@ -140,6 +142,8 @@ SERVICES = [
     ("config-service",         7004),
     ("sse-stream-service",     7005),
     ("agent-builder-service",  7010),
+    ("design-service",         7020),
+    ("deploy-service",         7030),
 ]
 print()
 for svc, port in SERVICES:
@@ -364,19 +368,19 @@ else:
 banner("PHASE 7 - AGENT-BUILDER-SERVICE (port 7010): LLM-generated agent config")
 # =============================================================================
 
-step(8, "Generate an improved agent config via LLM (nemotron-3-nano:30b)")
+step(8, "Generate an improved agent config via LLM (llama3.2:3b)")
 builder_payload = {
     "prompt": (
         "Create an AI agent configuration for a TIBCO Flogo AgenticAI capabilities assistant. "
         "The agent should answer questions about Flogo activities, MCP tools, SSE streaming, "
         "VectorDB RAG queries, and agent orchestration patterns."
     ),
-    "model": "nemotron-mini-4b-instruct"
+    "model": "llama3.2:3b"
 }
 print(f"       REQUEST : POST http://localhost:7010/api/agent-builder/generate")
 print(f"       BODY    : model={builder_payload['model']}")
 print(f"       BODY    : prompt='{builder_payload['prompt'][:80]}...'")
-print(f"       LLM     : nemotron-3-nano:30b (via Ollama)")
+print(f"       LLM     : llama3.2:3b (via Ollama)")
 LOG.append(f"       REQUEST: POST /api/agent-builder/generate")
 s, body, el = req("http://localhost:7010/api/agent-builder/generate", "POST", builder_payload, timeout=90)
 ok = show_result(s, el)
@@ -576,6 +580,143 @@ for tool_name, args, mid, backend_note in TOOL_CALLS:
         print(f"       ERROR: {data}"); all_ok = False
 
 # =============================================================================
+banner("PHASE 9 - DESIGN-SERVICE (port 7020): Agent lifecycle management (PostgreSQL)")
+# =============================================================================
+
+DS_BASE = "http://localhost:7020/api/v1"
+
+step(19, "Create a new agent via design-service")
+ds_agent_payload = {
+    "name": "E2E Journey Agent",
+    "description": "Agent created by e2e_journey.py integration test",
+    "config": {
+        "systemPrompt": "You are a test agent created by the E2E journey.",
+        "collectionName": COLLECTION,
+        "topK": 5,
+        "llmProvider": "Ollama",
+        "llmModel": "llama3.2:3b",
+        "llmBaseUrl": "http://localhost:11434",
+        "temperature": 0.7
+    }
+}
+print(f"       REQUEST : POST {DS_BASE}/agents")
+print(f"       BODY    : name=E2E Journey Agent  collectionName={COLLECTION}")
+LOG.append(f"       REQUEST: POST /api/v1/agents")
+s, ds_body, el = req(f"{DS_BASE}/agents", "POST", ds_agent_payload)
+ok = show_result(s, el, ok_codes=(200, 201))
+DS_AGENT_ID = None
+if ok and isinstance(ds_body, dict):
+    DS_AGENT_ID = ds_body.get("id")
+    print(f"       RESPONSE:")
+    print(f"         id              : {ds_body.get('id')}")
+    print(f"         name            : {ds_body.get('name')}")
+    print(f"         status          : {ds_body.get('status')}")
+    print(f"         version         : {ds_body.get('version')}")
+    LOG.append(f"       RESPONSE: {ds_body}")
+else:
+    print(f"       ERROR: {ds_body}"); all_ok = False
+
+if DS_AGENT_ID:
+    step(20, f"Get agent '{DS_AGENT_ID}' from design-service")
+    print(f"       REQUEST : GET {DS_BASE}/agents/{DS_AGENT_ID}")
+    LOG.append(f"       REQUEST: GET /api/v1/agents/{DS_AGENT_ID}")
+    s, ds_get, el = req(f"{DS_BASE}/agents/{DS_AGENT_ID}")
+    ok = show_result(s, el)
+    if ok and isinstance(ds_get, dict):
+        print(f"       RESPONSE:")
+        print(f"         id              : {ds_get.get('id')}")
+        print(f"         status          : {ds_get.get('status')}")
+        print(f"         version         : {ds_get.get('version')}")
+        LOG.append(f"       RESPONSE: {ds_get}")
+    else:
+        print(f"       ERROR: {ds_get}"); all_ok = False
+
+    step(21, "Update agent description via PUT")
+    ds_upd_payload = {"description": "Updated by e2e_journey.py PUT test"}
+    print(f"       REQUEST : PUT {DS_BASE}/agents/{DS_AGENT_ID}")
+    LOG.append(f"       REQUEST: PUT /api/v1/agents/{DS_AGENT_ID}")
+    s, ds_upd, el = req(f"{DS_BASE}/agents/{DS_AGENT_ID}", "PUT", ds_upd_payload)
+    ok = show_result(s, el)
+    if ok:
+        print(f"       RESPONSE: version={ds_upd.get('version') if isinstance(ds_upd, dict) else '?'}")
+        LOG.append(f"       RESPONSE: {ds_upd}")
+
+    step(22, "List all templates")
+    print(f"       REQUEST : GET {DS_BASE}/templates")
+    LOG.append(f"       REQUEST: GET /api/v1/templates")
+    s, ds_tpl, el = req(f"{DS_BASE}/templates")
+    ok = show_result(s, el, ok_codes=(200,))
+    if ok:
+        count = len(ds_tpl) if isinstance(ds_tpl, list) else "?"
+        print(f"       RESPONSE: {count} template(s)")
+        LOG.append(f"       RESPONSE: {count} templates")
+
+# =============================================================================
+banner("PHASE 10 - DEPLOY-SERVICE (port 7030): Agent deployment lifecycle")
+# =============================================================================
+
+DEP_BASE = "http://localhost:7030/api/v1"
+
+if DS_AGENT_ID:
+    step(23, f"Deploy (activate) agent '{DS_AGENT_ID}'")
+    print(f"       REQUEST : POST {DEP_BASE}/agents/{DS_AGENT_ID}/deploy")
+    LOG.append(f"       REQUEST: POST /api/v1/agents/{DS_AGENT_ID}/deploy")
+    s, dep_body, el = req(f"{DEP_BASE}/agents/{DS_AGENT_ID}/deploy", "POST", {})
+    ok = show_result(s, el)
+    if ok and isinstance(dep_body, dict):
+        records = dep_body.get("records", [])
+        status = records[0].get("status") if records else "?"
+        print(f"       RESPONSE:")
+        print(f"         status          : {status}")
+        print(f"         records         : {len(records)}")
+        LOG.append(f"       RESPONSE: {dep_body}")
+    else:
+        print(f"       ERROR: {dep_body}"); all_ok = False
+
+    step(24, "Get deployment status")
+    print(f"       REQUEST : GET {DEP_BASE}/agents/{DS_AGENT_ID}/deploy")
+    LOG.append(f"       REQUEST: GET /api/v1/agents/{DS_AGENT_ID}/deploy")
+    s, dep_status, el = req(f"{DEP_BASE}/agents/{DS_AGENT_ID}/deploy")
+    ok = show_result(s, el)
+    if ok and isinstance(dep_status, dict):
+        records = dep_status.get("records", [])
+        status = records[0].get("status") if records else "?"
+        print(f"       RESPONSE: status={status}  records={len(records)}")
+        LOG.append(f"       RESPONSE: {dep_status}")
+
+    step(25, "Export Kubernetes YAML")
+    print(f"       REQUEST : GET {DEP_BASE}/agents/{DS_AGENT_ID}/export/kubernetes")
+    LOG.append(f"       REQUEST: GET /api/v1/agents/{DS_AGENT_ID}/export/kubernetes")
+    s, k8s_body, el = req(f"{DEP_BASE}/agents/{DS_AGENT_ID}/export/kubernetes")
+    ok = show_result(s, el)
+    if ok and isinstance(k8s_body, dict):
+        records = k8s_body.get("records", [])
+        print(f"       RESPONSE: {len(records)} record(s)")
+        if records:
+            yaml_preview = str(records[0])[:200]
+            print(f"         preview         : {yaml_preview}...")
+        LOG.append(f"       RESPONSE: {k8s_body}")
+
+    step(26, "Deactivate (undeploy) agent")
+    print(f"       REQUEST : DELETE {DEP_BASE}/agents/{DS_AGENT_ID}/deploy")
+    LOG.append(f"       REQUEST: DELETE /api/v1/agents/{DS_AGENT_ID}/deploy")
+    s, undep_body, el = req(f"{DEP_BASE}/agents/{DS_AGENT_ID}/deploy", "DELETE")
+    ok = show_result(s, el)
+    if ok:
+        records = undep_body.get("records", []) if isinstance(undep_body, dict) else []
+        status = records[0].get("status") if records else "?"
+        print(f"       RESPONSE: status={status}")
+        LOG.append(f"       RESPONSE: {undep_body}")
+
+    step(27, "Cleanup — delete test agent from design-service")
+    print(f"       REQUEST : DELETE {DS_BASE}/agents/{DS_AGENT_ID}")
+    LOG.append(f"       REQUEST: DELETE /api/v1/agents/{DS_AGENT_ID}")
+    s, del_body, el = req(f"{DS_BASE}/agents/{DS_AGENT_ID}", "DELETE")
+    ok = show_result(s, el, ok_codes=(200, 204))
+    print(f"       RESPONSE: {del_body if del_body else '(no body)'}")
+    LOG.append(f"       RESPONSE: {del_body}")
+
+# =============================================================================
 banner("JOURNEY COMPLETE - FINAL OUTCOME")
 # =============================================================================
 
@@ -596,9 +737,11 @@ print(f"""
   | rule-engine-service         | 7000 | Run quality rules against flogo app                |
   | agent-chat-service          | 7001 | RAG query: embed->search Weaviate->answer          |
   | feedback-service            | 7003 | Write/read user ratings and comments (JSONL)       |
-  | agent-builder-service       | 7010 | LLM-generated agent config (nemotron-3-nano:30b)   |
+  | agent-builder-service       | 7010 | LLM-generated agent config (llama3.2:3b)           |
   | sse-stream-service          | 7005 | Broadcast SSE event + RAG+LLM streaming pipeline   |
   | mcp-server                  | 3333 | MCP gateway - all 6 tools via JSON-RPC             |
+  | design-service              | 7020 | Create/read/update/delete agents (PostgreSQL)      |
+  | deploy-service              | 7030 | Activate/deactivate/export agents                  |
   +-----------------------------+------+----------------------------------------------------+
 
   MCP TOOLS EXERCISED:
@@ -609,7 +752,7 @@ print(f"""
     rag_chat        -> agent-chat        POST /api/chat (Weaviate RAG)
     analyze_flogo   -> rule-engine       POST /api/analyze
 
-  RESULT   : {"ALL 19 STEPS PASSED" if all_ok else "SOME STEPS FAILED - see above"}
+  RESULT   : {"ALL 27 STEPS PASSED" if all_ok else "SOME STEPS FAILED - see above"}
   STATUS   : {"SUCCESS" if all_ok else "FAILED"}
 """)
 LOG.append(f"\nRESULT: {'ALL STEPS PASSED' if all_ok else 'SOME STEPS FAILED'}")

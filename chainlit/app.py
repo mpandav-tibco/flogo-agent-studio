@@ -2,9 +2,9 @@
 Flogo Agent Studio — Chainlit UI (port 7080)
 
 Thin proxy to the Flogo Agent Studio REST services:
-  - config-service    (port 7004) — multi-agent registry
+  - config-service     (port 7004) — multi-agent registry
   - agent-chat-service (port 7001) — RAG chat + agentactivity
-  - feedback-service  (port 7003) — thumbs-up/down ratings
+  - feedback-service   (port 7003) — thumbs-up/down ratings
 """
 
 import os
@@ -21,21 +21,26 @@ FEEDBACK_URL = os.getenv("FEEDBACK_SERVICE_URL", "http://localhost:7003")
 
 REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT", "60"))
 
+# Basic auth header — matches Flogo service default credentials
+_AUTH_HEADER = {"Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="}
+
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 async def fetch_agents() -> list[dict]:
     """Load all registered agents from config-service.
 
-    config-service list_agents returns fileMetadata (file-level data from act_file_list).
+    config-service list_agents returns a raw JSON array of file metadata entries.
     Each entry has a fileName like "default.json". We extract the agentId then call
     get_agent for each to hydrate the full config object.
     """
     async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
         # Step 1: list agent files
-        resp = await client.get(f"{CONFIG_URL}/api/agents")
+        resp = await client.get(f"{CONFIG_URL}/api/agents", headers=_AUTH_HEADER)
         resp.raise_for_status()
         body = resp.json()
-        file_entries = body.get("agents", [])
+        # config-service returns a raw list, not {"agents": [...]}
+        file_entries = body if isinstance(body, list) else body.get("agents", [])
 
         # Extract agent IDs from filenames ("default.json" → "default")
         agent_ids: list[str] = []
@@ -47,11 +52,14 @@ async def fetch_agents() -> list[dict]:
         if not agent_ids:
             return []
 
-        # Step 2: hydrate each agent config (get_agent returns config as JSON string)
+        # Step 2: hydrate each agent config
         agents: list[dict] = []
         for agent_id in agent_ids:
             try:
-                r = await client.get(f"{CONFIG_URL}/api/agents/{agent_id}")
+                r = await client.get(
+                    f"{CONFIG_URL}/api/agents/{agent_id}",
+                    headers=_AUTH_HEADER,
+                )
                 if r.status_code == 200:
                     data = r.json()
                     config_raw = data.get("config", "{}")
@@ -65,17 +73,27 @@ async def fetch_agents() -> list[dict]:
         return agents
 
 
-async def post_chat(agent_id: str, query: str, session_id: str, top_k: int = 5) -> dict:
+async def post_chat(
+    agent_id: str,
+    query: str,
+    session_id: str,
+    collection_name: str = "",
+    top_k: int = 5,
+) -> dict:
     """Call agent-chat-service POST /api/chat."""
     async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
+        payload: dict = {
+            "message": query,          # field name is "message" not "query"
+            "agentId": agent_id,
+            "sessionId": session_id,
+            "topK": top_k,
+        }
+        if collection_name:
+            payload["collectionName"] = collection_name
         resp = await client.post(
             f"{CHAT_URL}/api/chat",
-            json={
-                "query": query,
-                "agentId": agent_id,
-                "sessionId": session_id,
-                "topK": top_k,
-            },
+            json=payload,
+            headers=_AUTH_HEADER,
         )
         resp.raise_for_status()
         return resp.json()
@@ -100,6 +118,7 @@ async def post_feedback(
                     "rating": rating,
                     "comment": comment,
                 },
+                headers=_AUTH_HEADER,
             )
     except Exception as exc:
         print(f"[Feedback] failed to submit: {exc}")
@@ -130,7 +149,7 @@ async def on_chat_start():
 
     if not agents:
         # Fall back to a minimal default so the session is usable
-        agents = [{"id": "default", "name": "Default Agent", "description": "General assistant"}]
+        agents = [{"id": "default", "name": "Default Agent", "description": "General assistant", "collectionName": ""}]
 
     cl.user_session.set("agents", agents)
 
@@ -149,6 +168,7 @@ async def on_chat_start():
     default_agent = agents[0]
     cl.user_session.set("agent_id", default_agent.get("id", "default"))
     cl.user_session.set("agent_name", default_agent.get("name", "Agent"))
+    cl.user_session.set("collection_name", default_agent.get("collectionName", ""))
 
     welcome = (
         f"**Flogo Agent Studio**\n\n"
@@ -165,13 +185,14 @@ async def select_agent(action: cl.Action):
     agents: list[dict] = cl.user_session.get("agents", [])
     agent_id = action.payload.get("agentId", action.value)
 
-    # Find full agent record for the name
     matched = next((a for a in agents if a.get("id") == agent_id), None)
     agent_name = matched.get("name", agent_id) if matched else agent_id
     description = matched.get("description", "") if matched else ""
+    collection_name = matched.get("collectionName", "") if matched else ""
 
     cl.user_session.set("agent_id", agent_id)
     cl.user_session.set("agent_name", agent_name)
+    cl.user_session.set("collection_name", collection_name)
 
     await cl.Message(
         content=f"Switched to **{agent_name}**\n{description}",
@@ -191,9 +212,9 @@ async def thumbs_down(action: cl.Action):
 
 
 async def _record_feedback(rating: str, action: cl.Action):
-    session_id   = cl.user_session.get("session_id", "unknown")
-    agent_id     = cl.user_session.get("last_agent_id") or cl.user_session.get("agent_id", "default")
-    message_id   = cl.user_session.get("last_message_id", "unknown")
+    session_id = cl.user_session.get("session_id", "unknown")
+    agent_id   = cl.user_session.get("last_agent_id") or cl.user_session.get("agent_id", "default")
+    message_id = cl.user_session.get("last_message_id", "unknown")
 
     await post_feedback(agent_id, session_id, message_id, rating)
     emoji = "👍" if rating == "thumbsUp" else "👎"
@@ -203,17 +224,18 @@ async def _record_feedback(rating: str, action: cl.Action):
 
 @cl.on_message
 async def on_message(message: cl.Message):
-    agent_id   = cl.user_session.get("agent_id", "default")
-    agent_name = cl.user_session.get("agent_name", "Agent")
-    session_id = cl.user_session.get("session_id", str(uuid.uuid4()))
-    message_id = str(uuid.uuid4())
+    agent_id        = cl.user_session.get("agent_id", "default")
+    agent_name      = cl.user_session.get("agent_name", "Agent")
+    session_id      = cl.user_session.get("session_id", str(uuid.uuid4()))
+    collection_name = cl.user_session.get("collection_name", "")
+    message_id      = str(uuid.uuid4())
 
     cl.user_session.set("last_message_id", message_id)
     cl.user_session.set("last_agent_id", agent_id)
 
     async with cl.Step(name=f"{agent_name} — thinking", show_input=False) as step:
         try:
-            result = await post_chat(agent_id, message.content, session_id)
+            result = await post_chat(agent_id, message.content, session_id, collection_name)
         except httpx.HTTPStatusError as exc:
             step.output = f"HTTP {exc.response.status_code}: {exc.response.text}"
             await cl.Message(
@@ -229,35 +251,28 @@ async def on_message(message: cl.Message):
             ).send()
             return
 
-        answer        = result.get("answer") or result.get("data", {}).get("answer", str(result))
-        sources       = result.get("sourceDocuments") or result.get("data", {}).get("sourceDocuments", [])
-        duration_ms   = result.get("durationMs") or result.get("data", {}).get("durationMs", 0)
+        # agent-chat returns: {answer, formattedContext, duration, error}
+        answer          = result.get("answer") or result.get("data", {}).get("answer", str(result))
+        formatted_ctx   = result.get("formattedContext") or result.get("data", {}).get("formattedContext", "")
+        duration        = result.get("duration") or result.get("data", {}).get("duration", "")
 
-        step.output = f"Retrieved {len(sources)} source(s) in {duration_ms}ms"
+        step.output = f"Done in {duration}" if duration else "Done"
 
-    # Build source elements
+    # Build source elements from formattedContext (pre-formatted string from service)
     elements = []
-    if sources:
-        source_lines = []
-        for i, doc in enumerate(sources, 1):
-            title  = doc.get("title") or doc.get("source") or f"Source {i}"
-            score  = doc.get("score", 0)
-            source_lines.append(f"**{i}. {title}** (score: {score:.3f})")
-            content_preview = (doc.get("content") or doc.get("text") or "")[:400]
-            if content_preview:
-                source_lines.append(f"_{content_preview}…_")
+    if formatted_ctx:
         elements.append(
             cl.Text(
                 name="Sources",
-                content="\n\n".join(source_lines),
+                content=formatted_ctx,
                 display="side",
             )
         )
 
     # Feedback actions
     feedback_actions = [
-        cl.Action(name="thumbs_up",   value=message_id, label="👍 Good answer",    payload={}),
-        cl.Action(name="thumbs_down", value=message_id, label="👎 Not helpful",    payload={}),
+        cl.Action(name="thumbs_up",   value=message_id, label="👍 Good answer", payload={}),
+        cl.Action(name="thumbs_down", value=message_id, label="👎 Not helpful", payload={}),
     ]
 
     await cl.Message(

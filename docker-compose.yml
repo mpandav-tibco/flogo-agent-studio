@@ -19,12 +19,18 @@ version: "3.9"
 #   7002  ingestion-service
 #   7003  feedback-service
 #   7004  config-service
+#   7005  sse-stream-service (REST)
 #   7010  agent-builder-service
-#   3333  mcp-server
+#   7020  design-service
+#   7025  forge UI (nginx)
+#   7030  deploy-service
 #   7080  chainlit-ui
+#   7099  sse-stream-service (SSE event bus)
+#   3333  mcp-server
 #   8080  weaviate (http)
 #   50051 weaviate (grpc)
 #   11434 ollama
+#   5432  postgres
 
 networks:
   agent-studio:
@@ -35,6 +41,7 @@ volumes:
   agents_data:
   feedback_data:
   rules_data:
+  postgres_data:
 
 # ── Shared Flogo environment ───────────────────────────────────────────────────
 x-flogo-env: &flogo-env
@@ -197,11 +204,12 @@ services:
     restart: unless-stopped
     ports:
       - "7005:7005"
+      - "7099:7099"
     environment:
       <<: *flogo-env
       FLOGO_APP_PROPS_ENV: auto
-      CHAT_SERVICE_URL: http://agent-chat:7001/api/chat
-      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      CHAT_SERVICE_URL: http://agent-chat:7001
+      LLM_MODEL: ${LLM_MODEL:-llama3.2:3b}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     networks:
       - agent-studio
@@ -222,7 +230,7 @@ services:
     environment:
       <<: *flogo-env
       FLOGO_APP_PROPS_ENV: auto
-      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_MODEL: ${LLM_MODEL:-llama3.2:3b}
       CONFIG_SERVICE_BASE_URL: http://config:7004
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     networks:
@@ -257,6 +265,92 @@ services:
       agent-chat:
         condition: service_healthy
       config:
+        condition: service_healthy
+      feedback:
+        condition: service_healthy
+
+  # ── Phase 3 Services (Design + Deploy) ────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: agentforge
+      POSTGRES_USER: flogo
+      POSTGRES_PASSWORD: changeme
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - agent-studio
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flogo -d agentforge"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  design-service:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:design-service-${VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "7020:7020"
+    environment:
+      <<: *flogo-env
+      FLOGO_APP_PROPS_ENV: auto
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: agentforge
+      DB_USER: flogo
+      DB_PASSWORD: changeme
+    networks:
+      - agent-studio
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7020/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  deploy-service:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:deploy-service-${VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "7030:7030"
+    environment:
+      <<: *flogo-env
+      FLOGO_APP_PROPS_ENV: auto
+      DESIGN_SERVICE_URL: http://design-service:7020
+    networks:
+      - agent-studio
+    depends_on:
+      design-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7030/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Forge UI ───────────────────────────────────────────────────────────────
+
+  forge:
+    build:
+      context: ./forge
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "7025:80"
+    networks:
+      - agent-studio
+    depends_on:
+      design-service:
+        condition: service_healthy
+      deploy-service:
+        condition: service_healthy
+      agent-builder:
         condition: service_healthy
       feedback:
         condition: service_healthy
