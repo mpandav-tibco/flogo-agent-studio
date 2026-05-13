@@ -523,10 +523,10 @@ LOG.append("\n  Calling all 6 MCP tools:")
 TOOL_CALLS = [
     ("list_agents",
      {},
-     3, "config-service:7004 -> GET /api/agents"),
+     3, "design-service:7020 -> GET /api/v1/agents"),
     ("get_agent",
-     {"agentId": AGENT_ID},
-     4, "config-service:7004 -> GET /api/agents/{id}"),
+     {"agentId": DESIGN_AGENT_ID or AGENT_ID},
+     4, "design-service:7020 -> GET /api/v1/agents/{id}"),
     ("submit_feedback",
      {"agentId": AGENT_ID, "rating": 5, "comment": "MCP round-trip works perfectly", "sessionId": "mcp-journey-001"},
      5, "feedback-service:7003 -> POST /api/feedback"),

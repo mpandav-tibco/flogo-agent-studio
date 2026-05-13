@@ -10,9 +10,12 @@ import argparse
 import glob
 import json
 import os
+import re
 import sys
 
 import httpx
+
+_UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
 
 DESIGN_URL = os.getenv("DESIGN_URL", "http://localhost:7020")
 AUTH = "Basic ZmxvZ286Y2hhbmdlbWU="
@@ -26,7 +29,8 @@ IDENTITY_KEYS = {"id", "name", "description", "created", "version", "active", "t
 def migrate(activate: bool = False):
     # Only migrate named (non-UUID) agent files
     all_files = glob.glob(os.path.join(AGENTS_DIR, "*.json"))
-    files = [f for f in all_files if "-" not in os.path.basename(f)]
+    files = [f for f in all_files
+             if not _UUID_RE.match(os.path.splitext(os.path.basename(f))[0])]
     print(f"Found {len(files)} named agent file(s) to migrate (skipping UUID-named files)")
 
     for path in files:
@@ -40,7 +44,9 @@ def migrate(activate: bool = False):
         name = data.get("name", agent_id)
         try:
             list_r = httpx.get(f"{DESIGN_URL}/api/v1/agents", headers=HEADERS, timeout=10)
-            existing = list_r.json() if list_r.status_code == 200 else []
+            body = list_r.json() if list_r.status_code == 200 else []
+            # design-service returns {"records": [...]} (object) or [...] (legacy array)
+            existing = body.get("records", body) if isinstance(body, dict) else body
             if isinstance(existing, list):
                 match = next((a for a in existing if a.get("name") == name), None)
             else:

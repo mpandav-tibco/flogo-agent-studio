@@ -708,7 +708,7 @@
               "settings": {
                 "mappings": {
                   "code": 200,
-                  "data": "=$activity[SelectAgents].Output.records"
+                  "data": "=$activity[SelectAgents].Output"
                 }
               }
             }

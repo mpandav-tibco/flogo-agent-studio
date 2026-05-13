@@ -407,6 +407,12 @@
                 "Method": "POST",
                 "Uri": "=$property[\"RULE_ENGINE_URL\"]",
                 "body": "=$flow.body"
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "text/plain",
+                "responseOutput": "Raw"
               }
             }
           },
@@ -429,7 +435,7 @@
             "activity": {
               "ref": "#act_mcptoolresult",
               "input": {
-                "data": "=coerce.toString($activity[CallRuleEngine].responseBody)"
+                "data": "=coerce.toString($activity[CallRuleEngine].responseBody.data)"
               }
             }
           }
@@ -512,6 +518,12 @@
                 "Method": "POST",
                 "Uri": "=$property[\"CHAT_SERVICE_URL\"]",
                 "body": "=$flow.body"
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "text/plain",
+                "responseOutput": "Raw"
               }
             }
           },
@@ -534,7 +546,7 @@
             "activity": {
               "ref": "#act_mcptoolresult",
               "input": {
-                "data": "=coerce.toString($activity[CallChatService].responseBody)"
+                "data": "=coerce.toString($activity[CallChatService].responseBody.data)"
               }
             }
           }
@@ -615,7 +627,22 @@
                   "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                 },
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/agents\")"
+                "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/v1/agents\")",
+                "dynamicRequestHeaders": {
+                  "Header": [
+                    {
+                      "Name": "Authorization",
+                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                      "Type": "string"
+                    }
+                  ]
+                }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "text/plain",
+                "responseOutput": "Raw"
               }
             }
           },
@@ -638,7 +665,7 @@
             "activity": {
               "ref": "#act_mcptoolresult",
               "input": {
-                "data": "=coerce.toString($activity[CallConfigService].responseBody)"
+                "data": "=coerce.toString($activity[CallConfigService].responseBody.data)"
               }
             }
           }
@@ -714,7 +741,22 @@
                   "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                 },
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/agents/\", $flow.agentId)"
+                "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/v1/agents/\", $flow.agentId)",
+                "dynamicRequestHeaders": {
+                  "Header": [
+                    {
+                      "Name": "Authorization",
+                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                      "Type": "string"
+                    }
+                  ]
+                }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "text/plain",
+                "responseOutput": "Raw"
               }
             }
           },
@@ -737,7 +779,7 @@
             "activity": {
               "ref": "#act_mcptoolresult",
               "input": {
-                "data": "=coerce.toString($activity[CallConfigService].responseBody)"
+                "data": "=coerce.toString($activity[CallConfigService].responseBody.data)"
               }
             }
           }
@@ -820,6 +862,12 @@
                 "Method": "POST",
                 "Uri": "=$property[\"FEEDBACK_SERVICE_URL\"]",
                 "body": "=$flow.body"
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "text/plain",
+                "responseOutput": "Raw"
               }
             }
           },
@@ -842,7 +890,7 @@
             "activity": {
               "ref": "#act_mcptoolresult",
               "input": {
-                "data": "=coerce.toString($activity[CallFeedbackService].responseBody)"
+                "data": "=coerce.toString($activity[CallFeedbackService].responseBody.data)"
               }
             }
           }
@@ -924,6 +972,12 @@
                 },
                 "Method": "GET",
                 "Uri": "=string.concat($property[\"FEEDBACK_SERVICE_BASE_URL\"], \"/api/feedback\")"
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "text/plain",
+                "responseOutput": "Raw"
               }
             }
           },
@@ -946,7 +1000,7 @@
             "activity": {
               "ref": "#act_mcptoolresult",
               "input": {
-                "data": "=coerce.toString($activity[CallFeedbackService].responseBody)"
+                "data": "=coerce.toString($activity[CallFeedbackService].responseBody.data)"
               }
             }
           }
@@ -1036,6 +1090,12 @@
                     "temperature": "=$flow.body.temperature"
                   }
                 }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "text/plain",
+                "responseOutput": "Raw"
               }
             }
           },
@@ -1045,7 +1105,7 @@
             "activity": {
               "ref": "#act_mcptoolresult",
               "input": {
-                "data": "=coerce.toString($activity[CallService].responseBody)"
+                "data": "=coerce.toString($activity[CallService].responseBody.data)"
               }
             }
           },
@@ -1141,6 +1201,12 @@
                 },
                 "Method": "POST",
                 "Uri": "=string.concat($property[\"DEPLOY_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId), \"/deploy\")"
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "text/plain",
+                "responseOutput": "Raw"
               }
             }
           },
@@ -1150,7 +1216,7 @@
             "activity": {
               "ref": "#act_mcptoolresult",
               "input": {
-                "data": "=coerce.toString($activity[CallService].responseBody)"
+                "data": "=coerce.toString($activity[CallService].responseBody.data)"
               }
             }
           },
@@ -1246,6 +1312,12 @@
                 },
                 "Method": "GET",
                 "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/templates\")"
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "text/plain",
+                "responseOutput": "Raw"
               }
             }
           },
@@ -1255,7 +1327,7 @@
             "activity": {
               "ref": "#act_mcptoolresult",
               "input": {
-                "data": "=coerce.toString($activity[CallService].responseBody)"
+                "data": "=coerce.toString($activity[CallService].responseBody.data)"
               }
             }
           },
@@ -1332,7 +1404,7 @@
       "name": "API_AUTH_HEADER",
       "type": "string",
       "description": "Pre-computed Authorization header for outbound calls. Matches API_KEY=changeme by default.",
-      "value": "Basic OmNoYW5nZW1l"
+      "value": "Basic ZmxvZ286Y2hhbmdlbWU="
     },
     {
       "name": "DESIGN_SERVICE_URL",
