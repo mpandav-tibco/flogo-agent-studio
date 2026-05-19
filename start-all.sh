@@ -155,6 +155,18 @@ done
 
 echo ""
 echo "Started: $started service(s)  |  Skipped: $skipped (binary not built yet)"
+
+# ── Runtime Manager (port 7050) ───────────────────────────────────────────────
+# Starts after platform Flogo services. Manages per-agent process groups:
+# each deployed (active) agent gets its own chat+sse+ingestion+chainlit stack.
+if [[ -f "services/runtime-manager.py" ]]; then
+  python3 services/runtime-manager.py > logs/runtime-manager.log 2>&1 &
+  echo "START runtime-manager  (port 7050, pid $!)"
+else
+  echo "SKIP  runtime-manager  (services/runtime-manager.py not found)"
+fi
+
+echo ""
 echo "Waiting 5s for readiness..."
 sleep 5
 echo "Ready."

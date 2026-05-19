@@ -68,9 +68,34 @@ other_services:
 
   chainlit-ui:
     port: 7080
-    description: "Chainlit chat UI (Python, thin proxy). Multi-agent selector, RAG chat, thumbs-up/down feedback. Run: chainlit run chainlit/app.py --port 7080"
-    service: "chainlit/app.py"
+    description: "Chainlit chat UI — shared/dev mode (AGENT_ID not set). Multi-agent selector, RAG chat, feedback. Run: chainlit run chainlit/app.py --port 7080"
+    service: "ui/chainlit/app.py"
     status: active  # Phase 2
+
+  runtime-manager:
+    port: 7050
+    description: "Runtime Manager — manages per-agent process groups. REST: POST/DELETE /api/agents/{id}/start|stop, GET /api/agents, GET /api/health. Started by start-all.sh after platform services."
+    service: "services/runtime-manager.py"
+    status: active
+
+agent_runtime_pool:
+  description: >
+    Per-agent isolated process groups spawned by runtime-manager.
+    Each deployed (active) agent occupies one slot.
+    Slot N → base port = 7200 + N×10. Up to 10 concurrent agents.
+    In K8s, ports are internal to the agent pod — Ingress handles external routing.
+  slots: 10
+  ports_per_slot: 10
+  base_port: 7200
+  slot_layout:
+    chat_service:   "base + 1  (agent-chat-service)"
+    sse_rest:       "base + 2  (sse-stream-service REST)"
+    sse_events:     "base + 3  (sse-stream-service SSE event bus)"
+    ingestion:      "base + 4  (ingestion-service)"
+    chainlit_ui:    "base + 5  (chainlit, AGENT_ID baked in)"
+  examples:
+    slot_0: "7201 / 7202 / 7203 / 7204 / 7205"
+    slot_9: "7291 / 7292 / 7293 / 7294 / 7295"
 
 external_dependencies:
 

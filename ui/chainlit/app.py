@@ -40,6 +40,11 @@ REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT", "60"))
 # Basic auth header — matches Flogo service default credentials
 _AUTH_HEADER = {"Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="}
 
+# ── Single-agent mode ─────────────────────────────────────────────────────────
+# When AGENT_ID is set (injected by Runtime Manager), this Chainlit instance
+# is dedicated to one agent — no selector, no profile switcher.
+AGENT_ID = os.getenv("AGENT_ID", "").strip()
+
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -216,9 +221,12 @@ def agent_label(agent: dict) -> str:
 
 @cl.set_chat_profiles
 async def set_chat_profiles(current_user, language=None):
-    """Register each active agent as a Chainlit Chat Profile (shown in the UI sidebar).
-    NOTE: Chainlit 2.x calls this with (user, language) — both args must be accepted.
+    """Register active agents as Chainlit Chat Profiles.
+    In single-agent mode (AGENT_ID set) no profiles are registered — the agent
+    is fixed and the profile picker would be confusing/misleading.
     """
+    if AGENT_ID:
+        return []   # single-agent mode: no profile selector
     try:
         agents = await fetch_agents()
     except Exception:
@@ -265,7 +273,35 @@ async def on_chat_start():
     cl.user_session.set("last_message_id", None)
     cl.user_session.set("last_agent_id", None)
 
-    # Load agents from config-service
+    # ── Single-agent mode: AGENT_ID is baked in by Runtime Manager ────────────
+    if AGENT_ID:
+        try:
+            agents = await fetch_agents()   # fetch to get full config
+            agent  = next((a for a in agents if a["id"] == AGENT_ID), None)
+        except Exception:
+            agent = None
+
+        if not agent:
+            # Runtime Manager set AGENT_ID but design-service doesn't know it yet
+            # (race on first start). Use a minimal placeholder.
+            agent = {"id": AGENT_ID, "name": "Agent", "description": "", "collectionName": ""}
+
+        cl.user_session.set("agents",          [agent])
+        cl.user_session.set("agent_id",        agent["id"])
+        cl.user_session.set("agent_name",       agent.get("name", "Agent"))
+        cl.user_session.set("collection_name",  agent.get("collectionName", ""))
+
+        await cl.Message(
+            content=(
+                f"**{agent.get('name', 'Agent')}**\n\n"
+                + (agent.get('description', '') + "\n\n" if agent.get('description') else "")
+                + "Type a message to start chatting."
+            ),
+            author="System",
+        ).send()
+        return
+
+    # ── Shared mode: load all active agents and let the user pick ─────────────
     try:
         agents = await fetch_agents()
     except Exception as exc:
