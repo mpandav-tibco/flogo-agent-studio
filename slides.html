@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AgentForge Studio — Demo Deck</title>
+<style>
+  :root {
+    --teal:   #3bbfbb;
+    --teal2:  #2a9e9a;
+    --teal-l: #dcf2f0;
+    --yellow: #f9ea35;
+    --dark:   #2d2a26;
+    --gray:   #5a5a5a;
+    --light:  #f5f7f7;
+    --white:  #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: #1a1a1a;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Deck container ──────────────────────────────── */
+  .deck {
+    width: 960px; height: 540px;
+    position: relative; overflow: hidden;
+  }
+  .slide {
+    position: absolute; inset: 0;
+    display: none; flex-direction: column;
+    padding: 52px 64px;
+    background: var(--white);
+  }
+  .slide.active { display: flex; }
+
+  /* ── Slide variants ──────────────────────────────── */
+  .slide.title-slide {
+    background: linear-gradient(135deg, var(--dark) 0%, #1a3a38 100%);
+    color: var(--white);
+    align-items: flex-start; justify-content: center;
+  }
+  .slide.dark-slide {
+    background: var(--dark); color: var(--white);
+  }
+  .slide.teal-slide {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal2) 100%);
+    color: var(--white);
+  }
+  .slide.light-slide {
+    background: var(--light); color: var(--dark);
+  }
+
+  /* ── Typography ──────────────────────────────────── */
+  .slide-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 2px;
+    text-transform: uppercase; opacity: 0.55;
+    margin-bottom: 18px;
+  }
+  h1 { font-size: 42px; font-weight: 700; line-height: 1.15; }
+  h2 { font-size: 30px; font-weight: 700; margin-bottom: 24px; }
+  h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  .sub { font-size: 18px; opacity: 0.7; margin-top: 12px; font-weight: 300; }
+  .tagline {
+    font-size: 13px; margin-top: 40px; opacity: 0.5;
+    letter-spacing: 0.5px;
+  }
+  p { font-size: 15px; line-height: 1.65; color: inherit; opacity: 0.85; }
+  ul { list-style: none; margin-top: 4px; }
+  ul li { font-size: 14px; line-height: 1.7; padding-left: 18px; position: relative; }
+  ul li::before { content: '▸'; position: absolute; left: 0; color: var(--teal); }
+  .dark-slide ul li::before, .teal-slide ul li::before { color: var(--yellow); }
+
+  /* ── Logo inline ─────────────────────────────────── */
+  .logo-inline {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 32px;
+  }
+  .logo-hex {
+    width: 52px; height: 52px; flex-shrink: 0;
+  }
+  .logo-text { line-height: 1.1; }
+  .logo-text .lt1 { font-size: 22px; font-weight: 300; color: rgba(255,255,255,0.8); }
+  .logo-text .lt2 { font-size: 22px; font-weight: 700; color: var(--teal); }
+  .logo-text .lt3 { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.5px; }
+
+  /* ── Two-col layout ──────────────────────────────── */
+  .cols { display: flex; gap: 32px; flex: 1; }
+  .col { flex: 1; }
+  .col.narrow { flex: 0 0 260px; }
+
+  /* ── Highlight boxes ──────────────────────────────── */
+  .hbox {
+    background: var(--teal-l); border-left: 4px solid var(--teal);
+    border-radius: 6px; padding: 14px 16px; margin-bottom: 12px;
+  }
+  .hbox.yellow { background: #fffde6; border-color: var(--yellow); }
+  .hbox h3 { color: var(--dark); margin-bottom: 4px; font-size: 14px; }
+  .hbox p  { font-size: 13px; color: var(--gray); }
+
+  /* ── Chip / badge ────────────────────────────────── */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .chip {
+    background: rgba(59,191,187,0.15); color: var(--teal2);
+    border: 1px solid rgba(59,191,187,0.35);
+    border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 500;
+  }
+  .dark-slide .chip { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.2); }
+
+  /* ── Service table ───────────────────────────────── */
+  .svc-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    margin-top: 8px;
+  }
+  .svc-card {
+    background: rgba(59,191,187,0.08); border: 1px solid rgba(59,191,187,0.2);
+    border-radius: 8px; padding: 12px 14px;
+  }
+  .svc-card .name { font-size: 12px; font-weight: 600; color: var(--teal2); }
+  .svc-card .port { font-size: 11px; color: var(--gray); margin: 2px 0 4px; }
+  .svc-card .desc { font-size: 11px; color: var(--gray); line-height: 1.4; }
+
+  /* ── Code block ──────────────────────────────────── */
+  pre {
+    background: #1e2a2a; color: #a8d5d3; border-radius: 8px;
+    padding: 16px 18px; font-size: 12px; line-height: 1.6;
+    font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+    overflow: hidden;
+  }
+  pre .c { color: #5a8a87; }
+  pre .k { color: var(--yellow); }
+  pre .s { color: #98d4b4; }
+
+  /* ── Flow diagram ────────────────────────────────── */
+  .flow { display: flex; align-items: center; gap: 0; margin: 16px 0; flex-wrap: wrap; }
+  .flow-box {
+    background: var(--teal-l); border: 1.5px solid var(--teal);
+    border-radius: 6px; padding: 8px 14px; font-size: 12px;
+    font-weight: 600; color: var(--teal2); white-space: nowrap;
+  }
+  .flow-arrow {
+    font-size: 18px; color: var(--teal); margin: 0 6px; opacity: 0.6;
+  }
+  .dark-slide .flow-box { background: rgba(59,191,187,0.12); color: var(--teal); border-color: rgba(59,191,187,0.4); }
+
+  /* ── Architecture ASCII ──────────────────────────── */
+  .arch {
+    font-family: 'Cascadia Code','Fira Code','Courier New',monospace;
+    font-size: 11px; line-height: 1.7; color: var(--teal-l);
+    flex: 1; white-space: pre;
+  }
+
+  /* ── Stats row ───────────────────────────────────── */
+  .stats { display: flex; gap: 24px; margin: 20px 0; }
+  .stat { text-align: center; }
+  .stat .n { font-size: 36px; font-weight: 700; color: var(--teal); line-height: 1; }
+  .stat .l { font-size: 11px; color: var(--gray); margin-top: 4px; }
+
+  /* ── Navigation ──────────────────────────────────── */
+  .nav {
+    display: flex; align-items: center; gap: 16px;
+    margin-top: 16px; color: rgba(255,255,255,0.5);
+    font-size: 13px; user-select: none;
+  }
+  .nav button {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    color: white; border-radius: 6px; padding: 6px 16px; cursor: pointer;
+    font-size: 13px; transition: background 0.15s;
+  }
+  .nav button:hover { background: rgba(255,255,255,0.2); }
+  #counter { min-width: 48px; text-align: center; }
+
+  /* ── Slide number watermark ──────────────────────── */
+  .slide-num {
+    position: absolute; bottom: 16px; right: 20px;
+    font-size: 11px; opacity: 0.25; font-weight: 600;
+  }
+
+  /* ── Divider ─────────────────────────────────────── */
+  .divider { height: 3px; width: 48px; background: var(--teal); border-radius: 2px; margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+<!-- ═══════════════════ SLIDE 1 — TITLE ═══════════════════ -->
+<div class="slide title-slide active">
+  <div class="logo-inline">
+    <svg class="logo-hex" viewBox="0 0 52 57" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#3bbfbb"/>
+          <stop offset="100%" stop-color="#2a9e9a"/>
+        </linearGradient>
+      </defs>
+      <polygon points="26,2 48,14.5 48,39.5 26,52 4,39.5 4,14.5" fill="url(#lg1)"/>
+      <path d="M 8,38 C 14,22 38,34 44,18" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="8"  cy="38" r="4.5" fill="#f9ea35"/>
+      <circle cx="26" cy="28" r="3.5" fill="white"/>
+      <circle cx="44" cy="18" r="4.5" fill="#f9ea35"/>
+    </svg>
+    <div class="logo-text">
+      <div><span class="lt1">Agent</span><span class="lt2">Forge</span></div>
+      <div class="lt3">powered by TIBCO Flogo</div>
+    </div>
+  </div>
+
+  <h1>Build · Deploy · Chat<br/>with AI Agents</h1>
+  <p class="sub">A production-grade multi-agent AI platform built entirely<br/>on TIBCO Flogo 2.26.3 compiled Go services.</p>
+  <div class="tagline">AgentForge Studio · Demo Deck · 2026</div>
+  <span class="slide-num" style="color:rgba(255,255,255,0.2)">1</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 2 — THE PROBLEM ═══════════════════ -->
+<div class="slide light-slide">
+  <div class="slide-label">The Challenge</div>
+  <h2>Enterprises need AI agents that <span style="color:var(--teal)">actually work</span></h2>
+  <div class="cols" style="margin-top:8px;">
+    <div class="col">
+      <div class="hbox">
+        <h3>Knowledge is siloed</h3>
+        <p>Proprietary docs, wikis, and APIs sit in disconnected systems — LLMs can't reach them out of the box.</p>
+      </div>
+      <div class="hbox">
+        <h3>Agents are fragile</h3>
+        <p>Generic chatbots hallucinate. Without grounding in real knowledge, answers drift or fabricate.</p>
+      </div>
+      <div class="hbox">
+        <h3>Integration is manual</h3>
+        <p>Connecting agents to existing tooling (IDEs, pipelines, APIs) requires bespoke glue code per tool.</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="hbox yellow">
+        <h3>No lifecycle management</h3>
+        <p>Creating, versioning, deploying, and retiring agents is ad-hoc — no consistent design surface.</p>
+      </div>
+      <div class="hbox yellow">
+        <h3>Observability is an afterthought</h3>
+        <p>Tracing a question from user to vector store to LLM to response requires custom instrumentation.</p>
+      </div>
+      <div class="hbox yellow">
+        <h3>Runtime lock-in</h3>
+        <p>Python notebooks and Node.js scripts don't survive production — they need containers, orchestration, ops.</p>
+      </div>
+    </div>
+  </div>
+  <span class="slide-num">2</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 3 — THE SOLUTION ═══════════════════ -->
+<div class="slide teal-slide">
+  <div class="slide-label" style="color:rgba(255,255,255,0.6)">The Solution</div>
+  <h2>AgentForge Studio</h2>
+  <p style="font-size:16px; opacity:0.9; max-width:620px; margin-bottom:28px;">
+    A complete, integrated AI agent platform where <strong>every microservice is a compiled Flogo flow</strong> — no runtime dependencies, 
+    native Go speed, built-in OTel tracing.
+  </p>
+  <div class="cols">
+    <div class="col">
+      <ul>
+        <li>RAG-grounded answers from your own knowledge base</li>
+        <li>Visual agent design portal (AgentForge UI)</li>
+        <li>LLM-generated agent configuration</li>
+        <li>Real-time streaming chat (SSE)</li>
+      </ul>
+    </div>
+    <div class="col">
+      <ul>
+        <li>Full agent lifecycle: create → deploy → export</li>
+        <li>Static quality analysis for Flogo apps</li>
+        <li>MCP gateway for Claude, Cursor, VS Code Copilot</li>
+        <li>OpenTelemetry distributed tracing across all services</li>
+      </ul>
+    </div>
+  </div>
+  <div class="stats" style="margin-top:28px;">
+    <div class="stat"><div class="n" style="color:var(--yellow)">9</div><div class="l" style="color:rgba(255,255,255,0.6)">Flogo Services</div></div>
+    <div class="stat"><div class="n" style="color:var(--yellow)">2</div><div class="l" style="color:rgba(255,255,255,0.6)">UI Portals</div></div>
+    <div class="stat"><div class="n" style="color:var(--yellow)">&lt;50ms</div><div class="l" style="color:rgba(255,255,255,0.6)">Service Startup</div></div>
+    <div class="stat"><div class="n" style="color:var(--yellow)">9</div><div class="l" style="color:rgba(255,255,255,0.6)">MCP Tools</div></div>
+    <div class="stat"><div class="n" style="color:var(--yellow)">32/32</div><div class="l" style="color:rgba(255,255,255,0.6)">E2E Tests Pass</div></div>
+  </div>
+  <span class="slide-num" style="color:rgba(255,255,255,0.25)">3</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 4 — ARCHITECTURE ═══════════════════ -->
+<div class="slide dark-slide">
+  <div class="slide-label" style="color:rgba(255,255,255,0.4)">Architecture</div>
+  <div class="cols">
+    <div class="col">
+      <h2>Platform Overview</h2>
+      <pre class="arch"> ┌────────────┐  ┌────────────┐  ┌────────────┐
+ │ AgentForge │  │  Chainlit  │  │ Claude /   │
+ │ UI :7025   │  │ Chat :7080 │  │ Cursor IDE │
+ └─────┬──────┘  └─────┬──────┘  └─────┬──────┘
+       │               │               │ MCP
+       └───────────────┴──────────┐    │
+                                  ▼    ▼
+                         ┌────────────────────┐
+                         │   Flogo Services   │
+                         │  (9 Go binaries)   │
+                         └────────┬───────────┘
+                                  │
+              ┌───────────────────┼──────────────┐
+              ▼                   ▼              ▼
+       ┌────────────┐   ┌──────────────┐  ┌──────────┐
+       │  Weaviate  │   │  PostgreSQL  │  │  Ollama  │
+       │  VectorDB  │   │  Agent Store │  │  LLM     │
+       └────────────┘   └──────────────┘  └──────────┘</pre>
+    </div>
+    <div class="col narrow">
+      <h2>&nbsp;</h2>
+      <p style="font-size:13px; opacity:0.7; margin-bottom:16px;">All services communicate over localhost REST. OTel traces flow to a collector on port 4317.</p>
+      <div class="chips">
+        <div class="chip">TIBCO Flogo 2.26.3</div>
+        <div class="chip">Native Go binaries</div>
+        <div class="chip">Weaviate hybrid search</div>
+        <div class="chip">Ollama local LLM</div>
+        <div class="chip">PostgreSQL</div>
+        <div class="chip">OpenTelemetry</div>
+        <div class="chip">MCP protocol</div>
+        <div class="chip">React + Vite</div>
+        <div class="chip">Chainlit</div>
+      </div>
+    </div>
+  </div>
+  <span class="slide-num" style="color:rgba(255,255,255,0.15)">4</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 5 — SERVICES ═══════════════════ -->
+<div class="slide light-slide">
+  <div class="slide-label">Platform Services</div>
+  <h2>9 Flogo Microservices</h2>
+  <div class="svc-grid">
+    <div class="svc-card">
+      <div class="name">design-service</div>
+      <div class="port">:7020</div>
+      <div class="desc">Agent CRUD lifecycle — PostgreSQL-backed registry</div>
+    </div>
+    <div class="svc-card">
+      <div class="name">deploy-service</div>
+      <div class="port">:7030</div>
+      <div class="desc">Activate agents; export K8s + docker-compose YAML</div>
+    </div>
+    <div class="svc-card">
+      <div class="name">agent-builder-service</div>
+      <div class="port">:7010</div>
+      <div class="desc">LLM-generated configs + feedback-driven improvement</div>
+    </div>
+    <div class="svc-card">
+      <div class="name">agent-chat-service</div>
+      <div class="port">:7001</div>
+      <div class="desc">RAG pipeline: embed → Weaviate search → LLM answer</div>
+    </div>
+    <div class="svc-card">
+      <div class="name">ingestion-service</div>
+      <div class="port">:7002</div>
+      <div class="desc">Ingest documents (URL, GitHub, raw text) into Weaviate</div>
+    </div>
+    <div class="svc-card">
+      <div class="name">feedback-service</div>
+      <div class="port">:7003</div>
+      <div class="desc">Per-agent ratings and comments (JSONL storage)</div>
+    </div>
+    <div class="svc-card">
+      <div class="name">rule-engine-service</div>
+      <div class="port">:7097</div>
+      <div class="desc">Static analysis of Flogo apps against YAML rules</div>
+    </div>
+    <div class="svc-card">
+      <div class="name">sse-stream-service</div>
+      <div class="port">:7005</div>
+      <div class="desc">SSE broadcast hub + streaming RAG+LLM pipeline</div>
+    </div>
+    <div class="svc-card">
+      <div class="name">mcp-server</div>
+      <div class="port">:7333</div>
+      <div class="desc">MCP gateway — 9 tools over Streamable HTTP (JSON-RPC 2.0)</div>
+    </div>
+  </div>
+  <span class="slide-num">5</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 6 — RAG PIPELINE ═══════════════════ -->
+<div class="slide">
+  <div class="slide-label">Core Feature</div>
+  <h2>RAG Chat Pipeline</h2>
+  <p style="margin-bottom:20px; color:var(--gray);">Every answer is grounded in your knowledge base — no hallucination from unconstrained generation.</p>
+  <div class="flow">
+    <div class="flow-box">User Question</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">nomic-embed-text<br/><span style="font-weight:400; font-size:11px">768-dim embedding</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Weaviate<br/><span style="font-weight:400; font-size:11px">BM25 + vector hybrid</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Top-K Chunks<br/><span style="font-weight:400; font-size:11px">retrieved context</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Ollama LLM<br/><span style="font-weight:400; font-size:11px">grounded answer</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Response</div>
+  </div>
+  <div class="cols" style="margin-top:16px;">
+    <div class="col">
+      <div class="hbox">
+        <h3>Document Ingestion</h3>
+        <p>Upload URLs, GitHub repos, or raw text. The ingestion-service chunks, embeds, and stores in Weaviate. One REST call, any source.</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="hbox">
+        <h3>Streaming via SSE</h3>
+        <p>The sse-stream-service runs the same RAG pipeline and streams tokens token-by-token to any browser via Server-Sent Events.</p>
+      </div>
+    </div>
+  </div>
+  <span class="slide-num">6</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 7 — AGENTFORGE UI ═══════════════════ -->
+<div class="slide light-slide">
+  <div class="slide-label">Design Portal</div>
+  <h2>AgentForge UI <span style="color:var(--teal); font-size:18px; font-weight:400">localhost:7025</span></h2>
+  <div class="cols">
+    <div class="col">
+      <div class="hbox">
+        <h3>Agent Gallery</h3>
+        <p>Browse all agents with status tabs (All / Active / Draft / Archived). Search by name or description. One-click deploy or undeploy.</p>
+      </div>
+      <div class="hbox">
+        <h3>Agent Editor</h3>
+        <p>Configure system prompt, LLM model, knowledge base collection, chunk strategy, and max tokens in a structured form.</p>
+      </div>
+      <div class="hbox">
+        <h3>AI-Generate Config</h3>
+        <p>Describe what you want in plain English — the agent-builder-service generates a complete JSON config using the LLM of your choice.</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="hbox">
+        <h3>One-Click Deploy</h3>
+        <p>Activate agents instantly via the deploy-service. Status transitions: draft → active → archived.</p>
+      </div>
+      <div class="hbox">
+        <h3>Export for Production</h3>
+        <p>Download a Kubernetes Deployment + Service YAML, or a docker-compose stack — ready to ship.</p>
+      </div>
+      <div class="hbox">
+        <h3>Feedback Loop</h3>
+        <p>View per-agent feedback ratings and use "Improve" to feed them back to the agent-builder-service for LLM-driven refinement.</p>
+      </div>
+    </div>
+  </div>
+  <span class="slide-num">7</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 8 — MCP INTEGRATION ═══════════════════ -->
+<div class="slide dark-slide">
+  <div class="slide-label" style="color:rgba(255,255,255,0.4)">MCP Integration</div>
+  <div class="cols">
+    <div class="col">
+      <h2>Your AI IDE<br/>gets 9 new tools</h2>
+      <p style="opacity:0.7; margin-bottom:20px; font-size:14px;">Add one line to <code style="color:var(--teal)">.mcp.json</code> and Claude Code, Cursor, and VS Code Copilot can call every AgentForge capability natively.</p>
+      <pre>{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"agentforge"</span>: {
+      <span class="k">"type"</span>: <span class="s">"http"</span>,
+      <span class="k">"url"</span>: <span class="s">"http://localhost:7333/mcp"</span>
+    }
+  }
+}</pre>
+    </div>
+    <div class="col narrow">
+      <h2>&nbsp;</h2>
+      <ul>
+        <li><code style="color:var(--teal); font-size:12px">list_agents</code> — browse the registry</li>
+        <li><code style="color:var(--teal); font-size:12px">get_agent</code> — fetch a config</li>
+        <li><code style="color:var(--teal); font-size:12px">create_agent</code> — register a new agent</li>
+        <li><code style="color:var(--teal); font-size:12px">update_agent</code> — update a config</li>
+        <li><code style="color:var(--teal); font-size:12px">deploy_agent</code> — activate / deactivate</li>
+        <li><code style="color:var(--teal); font-size:12px">rag_chat</code> — ask a question</li>
+        <li><code style="color:var(--teal); font-size:12px">ingest_documents</code> — load knowledge</li>
+        <li><code style="color:var(--teal); font-size:12px">submit_feedback</code> — rate a session</li>
+        <li><code style="color:var(--teal); font-size:12px">analyze_flogo</code> — quality analysis</li>
+      </ul>
+    </div>
+  </div>
+  <span class="slide-num" style="color:rgba(255,255,255,0.15)">8</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 9 — FLOGO ADVANTAGE ═══════════════════ -->
+<div class="slide">
+  <div class="slide-label">Why Flogo</div>
+  <h2>Native Go · No Runtime · <span style="color:var(--teal)">Production Ready</span></h2>
+  <div class="cols" style="margin-top:8px;">
+    <div class="col">
+      <div class="hbox">
+        <h3>Compiled binaries</h3>
+        <p>Each Flogo app compiles to a single self-contained Go binary via <code>flogobuild</code>. No Node.js, no Python, no JVM. Cold start under 50ms.</p>
+      </div>
+      <div class="hbox">
+        <h3>Visual flow design</h3>
+        <p>Every service is a Trigger → Activities → Return flow, designed visually and version-controlled as a .flogo JSON file.</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="hbox">
+        <h3>Built-in activities</h3>
+        <p>VectorDB, AgentActivity, SSE, REST, File, Log, PostgreSQL — all OOTB. Zero boilerplate for common patterns.</p>
+      </div>
+      <div class="hbox">
+        <h3>OTel out of the box</h3>
+        <p>Set <code>FLOGO_OTEL_TRACE=true</code> and every service emits spans to an OTLP collector. Trace a question end-to-end across all hops.</p>
+      </div>
+    </div>
+  </div>
+  <span class="slide-num">9</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 10 — DEMO FLOW ═══════════════════ -->
+<div class="slide teal-slide">
+  <div class="slide-label" style="color:rgba(255,255,255,0.6)">Demo Walkthrough</div>
+  <h2>End-to-End Journey</h2>
+  <div class="cols">
+    <div class="col">
+      <ul style="font-size:14px;">
+        <li style="margin-bottom:10px"><strong>1. Open AgentForge</strong> → localhost:7025 · browse existing agents</li>
+        <li style="margin-bottom:10px"><strong>2. Create agent</strong> → pick template or AI-generate config from a prompt</li>
+        <li style="margin-bottom:10px"><strong>3. Ingest docs</strong> → paste a URL or upload text · watch ingestion-service embed & store</li>
+        <li style="margin-bottom:10px"><strong>4. Deploy agent</strong> → one click · status goes draft → active</li>
+        <li style="margin-bottom:10px"><strong>5. Chat in Chainlit</strong> → localhost:7080 · RAG-grounded answers streaming in real time</li>
+      </ul>
+    </div>
+    <div class="col">
+      <ul style="font-size:14px;">
+        <li style="margin-bottom:10px"><strong>6. Submit feedback</strong> → rate the response from the chat UI</li>
+        <li style="margin-bottom:10px"><strong>7. Improve agent</strong> → Forge reads feedback · LLM refines config</li>
+        <li style="margin-bottom:10px"><strong>8. Analyze Flogo app</strong> → upload a .flogo file · get rule report in &lt;200ms</li>
+        <li style="margin-bottom:10px"><strong>9. Call via MCP</strong> → in Claude Code, call <code>rag_chat</code> with your question</li>
+        <li style="margin-bottom:10px"><strong>10. Export</strong> → download K8s YAML · agent is production-ready</li>
+      </ul>
+    </div>
+  </div>
+  <span class="slide-num" style="color:rgba(255,255,255,0.25)">10</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 11 — GETTING STARTED ═══════════════════ -->
+<div class="slide dark-slide">
+  <div class="slide-label" style="color:rgba(255,255,255,0.4)">Getting Started</div>
+  <div class="cols">
+    <div class="col">
+      <h2>Up in 3 steps</h2>
+      <pre><span class="c"># 1. Start infrastructure</span>
+docker compose up weaviate postgres -d
+
+<span class="c"># 2. Pull LLM models</span>
+ollama pull nomic-embed-text
+ollama pull llama3.2:3b
+
+<span class="c"># 3. Start everything</span>
+./start-all.sh</pre>
+      <p style="font-size:13px; opacity:0.6; margin-top:12px;">Forge UI and Chainlit start first, then all 9 Flogo services once UIs are ready.</p>
+    </div>
+    <div class="col narrow">
+      <h2>&nbsp;</h2>
+      <div style="margin-top:8px;">
+        <p style="font-size:13px; opacity:0.7; margin-bottom:16px;"><strong style="color:var(--teal)">AgentForge Portal</strong><br/>http://localhost:7025</p>
+        <p style="font-size:13px; opacity:0.7; margin-bottom:16px;"><strong style="color:var(--teal)">Chainlit Chat</strong><br/>http://localhost:7080</p>
+        <p style="font-size:13px; opacity:0.7; margin-bottom:16px;"><strong style="color:var(--teal)">MCP Server</strong><br/>http://localhost:7333/mcp</p>
+        <p style="font-size:13px; opacity:0.7; margin-bottom:16px;"><strong style="color:var(--teal)">Run E2E tests</strong><br/>python3 tests/e2e_journey.py</p>
+      </div>
+    </div>
+  </div>
+  <span class="slide-num" style="color:rgba(255,255,255,0.15)">11</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 12 — CLOSING ═══════════════════ -->
+<div class="slide title-slide">
+  <div class="logo-inline">
+    <svg class="logo-hex" viewBox="0 0 52 57" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="26,2 48,14.5 48,39.5 26,52 4,39.5 4,14.5" fill="url(#lg1)"/>
+      <path d="M 8,38 C 14,22 38,34 44,18" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="8"  cy="38" r="4.5" fill="#f9ea35"/>
+      <circle cx="26" cy="28" r="3.5" fill="white"/>
+      <circle cx="44" cy="18" r="4.5" fill="#f9ea35"/>
+    </svg>
+    <div class="logo-text">
+      <div><span class="lt1">Agent</span><span class="lt2">Forge</span></div>
+      <div class="lt3">powered by TIBCO Flogo</div>
+    </div>
+  </div>
+  <div class="divider" style="background:var(--teal);"></div>
+  <h1 style="font-size:34px; margin-bottom:16px;">Ready to build<br/>production AI agents?</h1>
+  <div class="chips" style="margin-top:8px;">
+    <div class="chip" style="background:rgba(59,191,187,0.2); border-color:rgba(59,191,187,0.5); color:#a8e8e6">9 Flogo services</div>
+    <div class="chip" style="background:rgba(59,191,187,0.2); border-color:rgba(59,191,187,0.5); color:#a8e8e6">RAG + streaming</div>
+    <div class="chip" style="background:rgba(59,191,187,0.2); border-color:rgba(59,191,187,0.5); color:#a8e8e6">MCP integration</div>
+    <div class="chip" style="background:rgba(59,191,187,0.2); border-color:rgba(59,191,187,0.5); color:#a8e8e6">OTel tracing</div>
+    <div class="chip" style="background:rgba(59,191,187,0.2); border-color:rgba(59,191,187,0.5); color:#a8e8e6">32/32 E2E passing</div>
+  </div>
+  <p class="tagline" style="margin-top:32px;">github.com/mpandav-tibco/flogo-agent-studio</p>
+  <span class="slide-num" style="color:rgba(255,255,255,0.2)">12</span>
+</div>
+
+</div><!-- /deck -->
+
+<!-- Navigation -->
+<div class="nav">
+  <button onclick="prev()">← Prev</button>
+  <span id="counter">1 / 12</span>
+  <button onclick="next()">Next →</button>
+  <span style="margin-left:16px; font-size:11px; opacity:0.4">← → arrow keys</span>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+
+  function show(n) {
+    slides[cur].classList.remove('active');
+    cur = (n + total) % total;
+    slides[cur].classList.add('active');
+    document.getElementById('counter').textContent = (cur + 1) + ' / ' + total;
+  }
+  function next() { show(cur + 1); }
+  function prev() { show(cur - 1); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  next();
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    prev();
+  });
+</script>
+</body>
+</html>
