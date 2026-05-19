@@ -9,6 +9,24 @@ cd "$SCRIPT_DIR"
 
 mkdir -p logs data/feedback
 
+# ── Helpers ───────────────────────────────────────────────────────────────────
+wait_for_port() {
+  local label=$1 port=$2 timeout=${3:-30}
+  local i=0
+  printf 'Waiting for %s (port %s)' "$label" "$port"
+  while (( i < timeout )); do
+    if nc -z -w1 127.0.0.1 "$port" 2>/dev/null; then
+      echo " ✓"
+      return 0
+    fi
+    printf '.'
+    sleep 1
+    (( i++ )) || true
+  done
+  echo " TIMEOUT (${timeout}s) — continuing anyway"
+  return 0
+}
+
 # ── Service-specific env vars (read by Flogo via FLOGO_APP_PROPS_ENV=auto) ───
 export FLOGO_APP_PROPS_ENV=auto
 export RULES_PATH="./config/rules"
@@ -40,7 +58,44 @@ else
   echo "OTel disabled (OTEL_ENABLED=false)"
 fi
 
-# Array of: "binary:log-prefix:port"
+# ── Forge UI (AgentForge — port 7025) ───────────────────────────────────────
+if [[ -d "ui/forge" ]] && command -v npm &>/dev/null; then
+  if [[ ! -d "ui/forge/node_modules" ]]; then
+    echo "Installing Forge dependencies..."
+    npm --prefix ui/forge install --silent
+  fi
+  npm --prefix ui/forge run dev > logs/forge.log 2>&1 &
+  echo "START forge-ui    (port 7025, pid $!)"
+else
+  echo "SKIP  forge-ui    (ui/forge not found or npm unavailable)"
+fi
+
+# ── Chainlit UI (port 7080) ───────────────────────────────────────────────────
+if [[ -d "ui/chainlit" ]]; then
+  CHAINLIT_CMD=""
+  if command -v chainlit &>/dev/null; then
+    CHAINLIT_CMD="chainlit run app.py --port 7080 --headless"
+  elif python3 -m chainlit --version &>/dev/null 2>&1; then
+    CHAINLIT_CMD="python3 -m chainlit run app.py --port 7080 --headless"
+  fi
+
+  if [[ -n "$CHAINLIT_CMD" ]]; then
+    (cd ui/chainlit && $CHAINLIT_CMD) > logs/chainlit.log 2>&1 &
+    echo "START chainlit-ui (port 7080, pid $!)"
+  else
+    echo "SKIP  chainlit-ui (chainlit not installed — run: pip install chainlit)"
+  fi
+else
+  echo "SKIP  chainlit-ui (ui/chainlit not found)"
+fi
+
+# ── Wait for UIs to be ready before starting Flogo services ──────────────────
+echo ""
+wait_for_port "forge-ui"    7025 30
+wait_for_port "chainlit-ui" 7080 30
+echo ""
+
+# ── Array of: "binary:log-prefix:port"
 SERVICES=(
   "services/bin/rule-engine-service:rule-engine:7097"
   "services/bin/agent-chat-service:agent-chat:7001"
