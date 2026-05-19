@@ -35,7 +35,7 @@ State persistence: data/agent-runtime.json
   still alive; dead ones are restarted on the next reconciliation pass.
 
 Usage:
-  python3 services/runtime-manager.py
+  python3 deployment.py
 """
 
 import asyncio
@@ -64,7 +64,7 @@ _AUTH_HEADER = os.getenv("SERVICE_AUTH_HEADER", "Basic ZmxvZ286Y2hhbmdlbWU=")
 
 # Resolved once at startup from the location of this file
 _THIS_FILE   = Path(__file__).resolve()
-PROJECT_ROOT = _THIS_FILE.parent.parent          # flogo-agent-studio/
+PROJECT_ROOT = _THIS_FILE.parent                 # flogo-agent-studio/
 
 SERVICES_BIN     = PROJECT_ROOT / "services" / "bin"
 SERVICES_APPS    = PROJECT_ROOT / "services" / "apps"
