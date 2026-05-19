@@ -16,7 +16,7 @@ SERVICES = [
     ("agent-builder-service",  7010, "/api/health",  True),
     ("design-service",         7020, "/api/health",  True),
     ("deploy-service",         7030, "/api/health",  True),
-    ("mcp-server",             3333, "/mcp",         True),
+    ("mcp-server",             7333, "/mcp",         True),
 ]
 
 def check(port, path, timeout=2):

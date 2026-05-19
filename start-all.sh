@@ -20,28 +20,29 @@ export FEEDBACK_LOG_PATH="./data/feedback/feedback.jsonl"
 OTEL_ENABLED="${OTEL_ENABLED:-true}"
 
 if [[ "$OTEL_ENABLED" == "true" ]]; then
-  # Traces/metrics/logs → OTel Collector gRPC (collector forwards to Elastic APM)
-  export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317"
-  export OTEL_EXPORTER_OTLP_PROTOCOL="grpc"
-  export OTEL_TRACES_EXPORTER="otlp"
-  export OTEL_METRICS_EXPORTER="otlp"
-  export OTEL_PROPAGATORS="tracecontext,baggage"
+  # Flogo-native OTel env vars (from wi-contrib/integrations/opentelemetry):
+  #   FLOGO_OTEL_TRACE=true     — enables the OTel tracer registration
+  #   FLOGO_OTEL_OTLP_ENDPOINT  — gRPC: host:port (no scheme), HTTP: http://host:port
+  #   FLOGO_OTEL_METRICS=true   — enables OTel metrics export
+  export FLOGO_OTEL_TRACE="true"
+  export FLOGO_OTEL_METRICS="true"
+  export FLOGO_OTEL_OTLP_ENDPOINT="localhost:4317"   # gRPC (no http:// = gRPC insecure)
 
-  # Flogo-specific OTel + structured logging
+  # Flogo-specific logging + span type
   export FLOGO_OTEL_SPAN_KIND="SERVER"          # REST services are SERVER spans
-  export FLOGO_LOG_CTX="TRUE"                   # inject trace_id/span_id into logs
-  export FLOGO_LOG_FORMAT="JSON"                # machine-readable logs for Filebeat
+  export FLOGO_LOG_CTX="TRUE"                   # inject trace_id/span_id into JSON logs
+  export FLOGO_LOG_FORMAT="JSON"                # machine-readable logs for Fluent Bit
   export FLOGO_ENV="dev"                        # sets deployment.environment in traces
   export FLOGO_LOG_CTX_FIELDS="service.namespace=flogo-agent-studio,service.environment=dev"
 
-  echo "OTel → http://localhost:4317 (OTLP gRPC)"
+  echo "OTel → gRPC localhost:4317 (FLOGO_OTEL_TRACE=true)"
 else
   echo "OTel disabled (OTEL_ENABLED=false)"
 fi
 
 # Array of: "binary:log-prefix:port"
 SERVICES=(
-  "services/bin/rule-engine-service:rule-engine:7000"
+  "services/bin/rule-engine-service:rule-engine:7097"
   "services/bin/agent-chat-service:agent-chat:7001"
   "services/bin/ingestion-service:ingestion:7002"
   "services/bin/feedback-service:feedback:7003"
@@ -50,7 +51,7 @@ SERVICES=(
   "services/bin/agent-builder-service:agent-builder:7010"
   "services/bin/design-service:design:7020"
   "services/bin/deploy-service:deploy:7030"
-  "services/bin/mcp-server:mcp-server:3333"
+  "services/bin/mcp-server:mcp-server:7333"
 )
 
 started=0
@@ -66,7 +67,33 @@ for entry in "${SERVICES[@]}"; do
   if [[ ! -x "$exe" ]]; then
     chmod +x "$exe"
   fi
-  OTEL_SERVICE_NAME="${name}" "$exe" > "logs/${name}.log" 2> "logs/${name}-err.log" &
+  # For services with 2.26.3-incompatible embedded JSON, use -app to override with fixed source file.
+  # Workaround: MCP trigger tracingMiddleware crashes on nil params (BUG-REPORT-MCP-TRIGGER-NIL-PANIC.md)
+  # Disable OTel tracing for mcp-server until the MCP trigger is patched.
+  APP_OVERRIDE=""
+  if [[ -f "services/apps/${name}-service.flogo" ]]; then
+    APP_OVERRIDE="-app services/apps/${name}-service.flogo"
+  elif [[ -f "services/apps/${name}.flogo" ]]; then
+    APP_OVERRIDE="-app services/apps/${name}.flogo"
+  fi
+
+  # Per-service env file — supplies all app properties as env vars so that
+  # FLOGO_APP_PROPS_ENV=auto resolves them without emitting startup WARNings.
+  # Launched via services/launch.py because some property names (e.g.
+  # VECTORDB_VECTORDB-WEAVIATE_TIMEOUT_(SECONDS)) contain characters that bash
+  # export cannot handle; Python's os.execve passes them directly to the kernel.
+  SVC_ENV_FILE="services/env/${name}-service.env"
+  if [[ ! -f "$SVC_ENV_FILE" ]]; then
+    SVC_ENV_FILE="services/env/${name}.env"
+  fi
+
+  if [[ "$name" == "mcp-server" ]]; then
+    OTEL_SERVICE_NAME="${name}" FLOGO_OTEL_TRACE="false" \
+      python3 services/launch.py "$SVC_ENV_FILE" "$exe" $APP_OVERRIDE > "logs/${name}.log" 2>&1 &
+  else
+    OTEL_SERVICE_NAME="${name}" \
+      python3 services/launch.py "$SVC_ENV_FILE" "$exe" $APP_OVERRIDE > "logs/${name}.log" 2>&1 &
+  fi
   echo "START $name  (port $port, pid $!)"
   ((started++)) || true
   sleep 0.2

@@ -66,7 +66,7 @@ def show_result(status, elapsed, ok_codes=(200, 201, 202)):
     LOG.append(f"       --> HTTP {status} [{icon}] ({elapsed}ms)")
     return ok
 
-MCP_URL = "http://localhost:3333/mcp"
+MCP_URL = "http://localhost:7333/mcp"
 
 def parse_sse(content):
     for line in content.split("\n"):
@@ -100,14 +100,11 @@ def mcp_request(method, params=None, msg_id=1, session_id=None):
         return session_id, {"error": str(e)}, 0
 
 def mcp_notify(session_id):
-    payload = {"jsonrpc": "2.0", "method": "notifications/initialized"}
-    hdrs = {"Accept": "application/json, text/event-stream", "Content-Type": "application/json", "mcp-session-id": session_id}
-    data = json.dumps(payload).encode()
-    r = urllib.request.Request(MCP_URL, data=data, headers=hdrs, method="POST")
-    try:
-        urllib.request.urlopen(r, timeout=5)
-    except Exception:
-        pass
+    # Skip notifications/initialized for stateless MCP servers.
+    # The Flogo MCP trigger has a nil-pointer dereference in tracingMiddleware when
+    # processing this notification (go-sdk calls GetMeta on a nil *InitializedParams).
+    # Stateless servers do not require this notification to accept tool calls.
+    pass
 
 def mcp_tool(tool_name, args, session_id, msg_id):
     sid, resp, elapsed = mcp_request("tools/call", {"name": tool_name, "arguments": args}, msg_id, session_id)
@@ -135,7 +132,7 @@ all_ok = True
 banner("PHASE 1 - HEALTH CHECKS (all 10 services)")
 # =============================================================================
 SERVICES = [
-    ("rule-engine-service",    7000),
+    ("rule-engine-service",    7097),
     ("agent-chat-service",     7001),
     ("ingestion-service",      7002),
     ("feedback-service",       7003),
@@ -164,8 +161,8 @@ icon = "OK  " if hc_ok else "FAIL"
 if not hc_ok:
     all_ok = False
 session_mode = "stateless" if not sid_hc else f"session={sid_hc}"
-print(f"  [{icon}]  mcp-server                    port=3333  HTTP 200  ({el_hc}ms)  MCP 2024-11-05  ({session_mode})")
-LOG.append(f"  [{icon}] mcp-server port=3333 HTTP 200 ({el_hc}ms)")
+print(f"  [{icon}]  mcp-server                    port=7333  HTTP 200  ({el_hc}ms)  MCP 2024-11-05  ({session_mode})")
+LOG.append(f"  [{icon}] mcp-server port=7333 HTTP 200 ({el_hc}ms)")
 
 # =============================================================================
 banner("PHASE 2 - DESIGN-SERVICE (port 7020): Discover agents")
@@ -263,7 +260,7 @@ else:
     print(f"       ERROR: {body}"); all_ok = False
 
 # =============================================================================
-banner("PHASE 4 - RULE-ENGINE-SERVICE (port 7000): Analyze Flogo app quality")
+banner("PHASE 4 - RULE-ENGINE-SERVICE (port 7097): Analyze Flogo app quality")
 # =============================================================================
 
 FLOGO_SAMPLE = {
@@ -286,11 +283,11 @@ analyze_payload = {
     "rulesPath": "rules/",
     "tags":      "production,ai-agent"
 }
-print(f"       REQUEST : POST http://localhost:7000/api/analyze")
+print(f"       REQUEST : POST http://localhost:7097/api/analyze")
 print(f"       BODY    : fileName=agent-studio-app.flogo  tags=production,ai-agent")
 print(f"       BODY    : content={{ name=agent-studio-app type=flogo:app version=1.0.0 }}")
 LOG.append(f"       REQUEST: POST /api/analyze")
-s, body, el = req("http://localhost:7000/api/analyze", "POST", analyze_payload)
+s, body, el = req("http://localhost:7097/api/analyze", "POST", analyze_payload)
 ok = show_result(s, el)
 if ok and isinstance(body, dict):
     ov = body.get("overview", {})
@@ -426,14 +423,14 @@ else:
 banner("PHASE 8 - SSE-STREAM-SERVICE (port 7005): Broadcast + RAG+LLM stream")
 # =============================================================================
 
-step(9, "Broadcast 'session.start' event to all SSE subscribers")
+step(9, "Broadcast 'message' event to all SSE subscribers")
 bc_payload = {
-    "eventType": "session.start",
+    "eventType": "message",
     "sessionId": "e2e-journey-001",
     "data": {"user": "e2e-journey", "topic": "AgenticAI", "timestamp": ts()}
 }
 print(f"       REQUEST : POST http://localhost:7005/api/stream/broadcast")
-print(f"       BODY    : eventType=session.start  sessionId=e2e-journey-001")
+print(f"       BODY    : eventType=message  sessionId=e2e-journey-001")
 print(f"       ACTION  : SSE event broadcast to all connected /events subscribers")
 LOG.append(f"       REQUEST: POST /api/stream/broadcast")
 s, body, el = req("http://localhost:7005/api/stream/broadcast", "POST", bc_payload)
@@ -469,7 +466,7 @@ else:
     print(f"       ERROR: {body}"); all_ok = False
 
 # =============================================================================
-banner("PHASE 9 - MCP SERVER (port 3333): All 6 tools via Model Context Protocol")
+banner("PHASE 9 - MCP SERVER (port 7333): All 6 tools via Model Context Protocol")
 # =============================================================================
 
 print(f"  Transport : Streamable HTTP (JSON-RPC 2.0 + SSE)")
@@ -482,7 +479,7 @@ init_params = {
     "capabilities": {"roots": {"listChanged": True}},
     "clientInfo": {"name": "e2e-journey-client", "version": "1.0.0"}
 }
-print(f"       REQUEST : POST http://localhost:3333/mcp")
+print(f"       REQUEST : POST http://localhost:7333/mcp")
 print(f"       BODY    : method=initialize  protocolVersion=2024-11-05")
 LOG.append(f"       REQUEST: POST /mcp method=initialize")
 sid, init_resp, el = mcp_request("initialize", init_params)
@@ -507,7 +504,7 @@ mcp_notify(sid)
 print(f"       NOTIFY  : notifications/initialized sent -> session active")
 
 step(12, "tools/list -> discover all registered MCP tools")
-print(f"       REQUEST : POST http://localhost:3333/mcp  method=tools/list")
+print(f"       REQUEST : POST http://localhost:7333/mcp  method=tools/list")
 LOG.append(f"       REQUEST: POST /mcp method=tools/list")
 _, tools_resp, el = mcp_request("tools/list", msg_id=2, session_id=sid)
 icon = "OK  " if (tools_resp and "result" in tools_resp) else "FAIL"
@@ -542,7 +539,7 @@ TOOL_CALLS = [
      7, "agent-chat-service:7001 -> POST /api/chat (RAG pipeline)"),
     ("analyze_flogo",
      {"content": json.dumps(FLOGO_SAMPLE), "fileName": "agent-studio-app.flogo", "rulesPath": "rules/", "tags": "mcp-journey"},
-     8, "rule-engine-service:7000 -> POST /api/analyze"),
+     8, "rule-engine-service:7097 -> POST /api/analyze"),
 ]
 
 for tool_name, args, mid, backend_note in TOOL_CALLS:

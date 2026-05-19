@@ -10,8 +10,8 @@
 flogo_services:
 
   rule-engine:
-    port: 7000
-    description: "Generic YAML rule engine — POST /api/analyze, GET /api/health"
+    port: 7097
+    description: "Generic YAML rule engine — POST /api/analyze, GET /api/health (note: port 7000 is taken by macOS AirPlay on Ventura+)"
     app: "apps/rule-engine-service.flogo"
     status: active
 
@@ -53,7 +53,7 @@ flogo_services:
     status: active  # Phase 2
 
   mcp-server:
-    port: 3333
+    port: 7333
     description: "Flogo Agent Studio MCP Server ('flogo-dev-assist'). Exposes analyze_flogo, rag_chat, list_agents, get_agent, submit_feedback, get_feedback as MCP tools. Registered in .mcp.json."
     app: "apps/mcp-server.flogo"
     status: active  # Phase 2

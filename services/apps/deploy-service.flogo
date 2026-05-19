@@ -410,7 +410,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", $flow.agentId)",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -421,8 +421,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
                   }
                 }
               },
@@ -476,7 +475,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "PUT",
-                "Uri": "",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", $flow.agentId)",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -487,8 +486,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
                   }
                 },
                 "body": {
@@ -646,7 +644,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", $flow.agentId)",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -657,8 +655,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
                   }
                 }
               },
@@ -712,7 +709,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "PUT",
-                "Uri": "",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", $flow.agentId)",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -723,8 +720,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
                   }
                 },
                 "body": {
@@ -854,7 +850,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", $flow.agentId)",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -865,8 +861,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
                   }
                 }
               },
@@ -1005,7 +1000,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", $flow.agentId)",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -1016,8 +1011,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
                   }
                 }
               },
@@ -1170,7 +1164,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", $flow.agentId)",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -1181,8 +1175,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
                   }
                 }
               },

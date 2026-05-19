@@ -476,7 +476,7 @@
                 "Schema": "public",
                 "Query": "INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
                 "manualmode": false,
-                "State": "d7c86ee2-7d9d-4075-bbd0-d8e2eb7b99ccINSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
+                "State": "6b167662-530c-4777-989b-cf15978cd388INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -589,7 +589,7 @@
                 "Schema": "public",
                 "Query": "SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
                 "manualmode": false,
-                "State": "6e466828-8bc5-42e8-a812-b1104ac8590bSELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
+                "State": "6a0567a3-746e-4b35-8f18-e4ab856619c8SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -688,7 +688,7 @@
                 "Schema": "public",
                 "Query": "SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC",
                 "manualmode": false,
-                "State": "446b728a-0a0d-4d0a-9f91-910160d10397SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC"
+                "State": "436c4a00-9454-4ac4-babf-328f2b2d16f3SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC"
               }
             }
           },
@@ -780,7 +780,7 @@
                 "Schema": "public",
                 "Query": "UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
                 "manualmode": false,
-                "State": "ac00da47-ea01-4df4-9a31-7e5557fdd680UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
+                "State": "81f7d73b-1baa-4632-8011-5fa9e6805783UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -887,7 +887,7 @@
                 "Schema": "public",
                 "Query": "UPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
                 "manualmode": false,
-                "State": "418f4ca3-231a-4ccf-8396-c186dd4ed309UPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
+                "State": "8f0627f8-edf2-46de-944c-9a83d9dba32aUPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -1088,7 +1088,7 @@
                 "Schema": "public",
                 "Query": "SELECT 1 AS alive",
                 "manualmode": false,
-                "State": "89bb56ee-c333-4fb9-8b6a-5343b177f020SELECT 1 AS alive",
+                "State": "aece208b-2ef3-4310-912a-edabdabe70b7SELECT 1 AS alive",
                 "input": {
                   "mapping": {
                     "parameters": {}
@@ -1191,7 +1191,7 @@
                 "fetchMetadata": "",
                 "Fields": [],
                 "RuntimeQuery": "",
-                "State": "3cc055dc-01eb-40ac-91da-98c7a002d38eSELECT config->>'collectionName' as \"collectionName\", config->>'topK' as \"topK\", config->>'systemPrompt' as \"systemPrompt\", config->>'llmProvider' as \"llmProvider\", config->>'llmModel' as \"llmModel\", config->>'llmBaseUrl' as \"llmBaseUrl\", config->>'temperature' as \"temperature\", config->>'chunkStrategy' as \"chunkStrategy\" FROM agents WHERE id = ?agentId",
+                "State": "1fa6b1ef-6599-49bf-b66f-381ccf461668SELECT config->>'collectionName' as \"collectionName\", config->>'topK' as \"topK\", config->>'systemPrompt' as \"systemPrompt\", config->>'llmProvider' as \"llmProvider\", config->>'llmModel' as \"llmModel\", config->>'llmBaseUrl' as \"llmBaseUrl\", config->>'temperature' as \"temperature\", config->>'chunkStrategy' as \"chunkStrategy\" FROM agents WHERE id = ?agentId",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -1285,7 +1285,7 @@
     {
       "name": "PostgreSQL.Design_Service_DB.Password",
       "type": "string",
-      "value": "SECRET:YqxoCaUk0AbPvNj661rs5WwhQA9v4Rpp"
+      "value": "SECRET:2i3S5Wj6CDX60c96ety/fg3Bt3m7xVDw"
     },
     {
       "name": "PostgreSQL.Design_Service_DB.Maximum_Open_Connections",
@@ -1330,7 +1330,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:4RQytssyG1UoQ1bTV3rCVe7mDveo6BUY"
+      "value": "SECRET:jCP9BxTqY3nD3MJRU4GkyH1ydy7gz4BZ"
     }
   ],
   "connections": {
@@ -1342,6 +1342,7 @@
       "settings": {
         "databaseType": "PostgreSQL",
         "name": "Design Service DB",
+        "description": "",
         "host": "=$property[\"PostgreSQL.Design_Service_DB.Host\"]",
         "port": "=$property[\"PostgreSQL.Design_Service_DB.Port\"]",
         "databaseName": "=$property[\"PostgreSQL.Design_Service_DB.Database_Name\"]",
@@ -1355,7 +1356,10 @@
         "connectiontimeout": "=$property[\"PostgreSQL.Design_Service_DB.Connection_Timeout\"]",
         "onprem": false,
         "tlsconfig": false,
-        "tlsparam": "VerifyCA"
+        "tlsparam": "VerifyCA",
+        "cacert": "",
+        "clientcert": "",
+        "clientkey": ""
       }
     }
   },

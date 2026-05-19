@@ -1,18 +1,23 @@
 {
-  "name": "Support Agent",
-  "description": "Customer-facing support agent. Answers queries from a support knowledge base with concise, actionable responses. maxTokens is intentionally low (1024) to keep replies brief and scannable for end users.",
-  "systemPrompt": "You are a friendly and professional support agent. Help users resolve their issues using the provided knowledge base. Keep responses concise and actionable — avoid lengthy preamble. If the issue is not covered by your knowledge base, say: 'I don't have enough information to help with this — please contact our support team directly.'",
-  "collectionName": "SupportBase",
-  "llmProvider": "Ollama",
-  "llmBaseUrl": "http://localhost:11434",
-  "apiKey": "",
-  "model": "llama3.2:3b",
-  "temperature": 0.3,
-  "maxTokens": 1024,
-  "topK": 5,
-  "tools": ["ragQuery"],
-  "chunkStrategy": "sentence",
-  "tags": ["support", "customer-facing"],
-  "version": "1.0.0",
-  "active": false
+    "name": "Support Agent",
+    "description": "Customer-facing support agent. Answers queries from a support knowledge base with concise, actionable responses. maxTokens is intentionally low (1024) to keep replies brief and scannable for end users.",
+    "systemPrompt": "You are a friendly and professional support agent. Help users resolve their issues using the provided knowledge base. Keep responses concise and actionable — avoid lengthy preamble. If the issue is not covered by your knowledge base, say: 'I don't have enough information to help with this — please contact our support team directly.'",
+    "collectionName": "SupportBase",
+    "llmProvider": "Ollama",
+    "llmBaseUrl": "http://localhost:11434",
+    "apiKey": "",
+    "model": "llama3.2:3b",
+    "temperature": 0.3,
+    "maxTokens": 1024,
+    "topK": 5,
+    "tools": [
+        "ragQuery"
+    ],
+    "chunkStrategy": "sentence",
+    "tags": [
+        "support",
+        "customer-facing"
+    ],
+    "version": "1.0.0",
+    "active": false
 }

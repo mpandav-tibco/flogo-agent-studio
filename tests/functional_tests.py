@@ -26,10 +26,10 @@ PORTS  = {
     "agent-builder":  7010,
     "design":         7020,
     "deploy":         7030,
-    "mcp":            3333,
+    "mcp":            7333,
 }
 COLLECTION = "FunctionalTestKB"
-MCP_URL    = "http://localhost:3333/mcp"
+MCP_URL    = "http://localhost:7333/mcp"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Test result tracking
@@ -447,7 +447,7 @@ def test_feedback():
 # ═════════════════════════════════════════════════════════════════════════════
 def test_rule_engine():
     service("rule-engine")
-    base = "http://localhost:7000"
+    base = "http://localhost:7097"
 
     s, _ = req(f"{base}/api/health")
     if s == 403:
@@ -627,7 +627,7 @@ def test_mcp():
     service("mcp")
 
     if not _mcp_is_up():
-        skip("all MCP tests", "MCP server not running on port 3333")
+        skip("all MCP tests", "MCP server not running on port 7333")
         return
 
     # ── initialize ────────────────────────────────────────────────────────────

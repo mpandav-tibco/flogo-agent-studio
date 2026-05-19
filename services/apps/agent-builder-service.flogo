@@ -104,7 +104,7 @@
             },
             "output": {
               "code": "=$.code",
-              "message": "=coerce.toString($.data)"
+              "data": "=$.data"
             }
           },
           "reply": {
@@ -511,17 +511,17 @@
           },
           {
             "id": 4,
-            "from": "SuggestImprovements",
-            "to": "Return",
-            "type": "label",
-            "label": "SuggestImprovements to Return"
-          },
-          {
-            "id": 5,
             "from": "ReadFeedback",
             "to": "SuggestImprovements",
             "type": "label",
             "label": "ReadFeedback to SuggestImprovements"
+          },
+          {
+            "id": 5,
+            "from": "SuggestImprovements",
+            "to": "ReturnImproved",
+            "type": "label",
+            "label": "SuggestImprovements to ReturnImproved"
           }
         ],
         "tasks": [
@@ -567,7 +567,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat(\"http://localhost:7020/api/v1/agents/\", coerce.toString($flow.body.agentId), \"/config\")",
+                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", $flow.body.agentId)",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -632,7 +632,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat(\"http://localhost:7003/api/feedback/\", $flow.body.agentId)",
+                "Uri": "=string.concat($property[\"FEEDBACK_SERVICE_URL\"], \"/api/feedback/\", $flow.body.agentId)",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -650,8 +650,34 @@
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
-                "responseType": "text/plain",
-                "responseOutput": "Raw"
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "responseBody": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
+                }
               },
               "feSchemaMap": {}
             }
@@ -684,9 +710,9 @@
             }
           },
           {
-            "id": "Return",
-            "name": "Return",
-            "description": "",
+            "id": "ReturnImproved",
+            "name": "ReturnImproved",
+            "description": "Return the improved agent config",
             "activity": {
               "ref": "#actreturn",
               "settings": {
@@ -694,9 +720,8 @@
                   "code": 200,
                   "data": {
                     "mapping": {
-                      "agentId": "=$flow.body.agentId",
-                      "current": "=$activity[ReadCurrentConfig].responseBody",
-                      "suggestions": "=$activity[SuggestImprovements].response"
+                      "config": "=$activity[SuggestImprovements].response",
+                      "agentId": "=$flow.body.agentId"
                     }
                   }
                 }
@@ -704,7 +729,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjE4MSwieSI6NDF9LCJSZWFkQ3VycmVudENvbmZpZyI6eyJ4IjoxOTAsInkiOjE5N30sIlN1Z2dlc3RJbXByb3ZlbWVudHMiOnsieCI6NjUwLCJ5IjozNTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo0NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUmVhZEN1cnJlbnRDb25maWciOnsieCI6NDUwLCJ5IjoyNTB9LCJSZWFkRmVlZGJhY2siOnsieCI6NjUwLCJ5IjozNTB9LCJTdWdnZXN0SW1wcm92ZW1lbnRzIjp7IngiOjg1MCwieSI6NDUwfSwiUmV0dXJuSW1wcm92ZWQiOnsieCI6MTA1MCwieSI6NTUwfX0=",
         "metadata": {
           "input": [
             {
@@ -945,12 +970,12 @@
     {
       "name": "AgenticAI.LLM_Provider.API_Key",
       "type": "string",
-      "value": "SECRET:m5zg+R+XC0GRI8sxpv8YEjFACL8tww=="
+      "value": "SECRET:sBS/r9h8R3wkjXy5ggVOY4vP8vEmdw9dSF2zgr3q/UM1nZZsjME+LXpMIHIHRkMN0jwMNCKtNG7p1cTonzip3K/bLtwld2cAyg=="
     },
     {
       "name": "AgenticAI.LLM_Provider.LLM_Base_URL",
       "type": "string",
-      "value": "http://localhost:11434/v1"
+      "value": "https://ollama.com/v1"
     },
     {
       "name": "LLM_MODEL",
@@ -970,14 +995,22 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
-      "value": "changeme"
+      "value": "SECRET:OVRS1aWZPdjDhwHdVq/X81Z3kwq9VnLu"
     },
     {
       "name": "API_AUTH_HEADER",
       "type": "string",
-      "description": "Pre-computed Authorization header for outbound calls. Matches API_KEY=changeme by default.",
       "value": "Basic ZmxvZ286Y2hhbmdlbWU="
+    },
+    {
+      "name": "DESIGN_SERVICE_URL",
+      "type": "string",
+      "value": "http://localhost:7020"
+    },
+    {
+      "name": "FEEDBACK_SERVICE_URL",
+      "type": "string",
+      "value": "http://localhost:7003"
     }
   ],
   "connections": {
@@ -989,14 +1022,14 @@
       "settings": {
         "name": "LLM Provider",
         "description": "",
-        "llmProvider": "OpenAI",
+        "llmProvider": "=$property[\"AgenticAI.LLM_Provider.LLM_Provider\"]",
         "anthropicProvider": "Default",
-        "apiKey": "954bd5d476ee456583f9a4079d24ac16.EP8HhAPYJyC4LELg-PfqTa6z",
-        "llmProviderUrl": "https://ollama.com/v1"
+        "apiKey": "=$property[\"AgenticAI.LLM_Provider.API_Key\"]",
+        "llmProviderUrl": "=$property[\"AgenticAI.LLM_Provider.LLM_Base_URL\"]"
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLWFpLWFnZW50L3NyYy9hcHAvQWdlbnRpY0FJIiwiaWQiOiJBZ2VudGljQUkiLCJ2ZXJzaW9uIjoiMC45LjAiLCJ0YWciOiIwLjkuMC1iMDMiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIEFnZW50aWMgQUkgKFRlY2ggUHJldmlldykiLCJzM2xvY2F0aW9uIjoiVGliY28vQWdlbnRpY0FJIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1haS1hZ2VudC9zcmMvYXBwL0FnZW50aWNBSSIsImlkIjoiQWdlbnRpY0FJIiwidmVyc2lvbiI6IjAuOS4xIiwidGFnIjoiMC45LjEtYjAyIiwibmFtZSI6IkFnZW50aWMgQUkgKFRlY2ggUHJldmlldykiLCJzM2xvY2F0aW9uIjoiVGliY28vQWdlbnRpY0FJIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
   "metadata": {
     "endpoints": [
       {

@@ -9,8 +9,7 @@
     "github.com/tibco/flogo-mcp/src/app/MCP/trigger/mcpserver",
     "github.com/project-flogo/contrib/function/array",
     "github.com/project-flogo/contrib/function/coerce",
-    "github.com/project-flogo/contrib/function/string",
-    "fn_general_utils github.com/project-flogo/contrib/function/utils"
+    "github.com/project-flogo/contrib/function/string"
   ],
   "name": "mcp-server",
   "description": "Flogo Agent Studio MCP Server. Exposes all Phase 1 services as MCP tools for Claude, Cursor, and any MCP client. Registered in .mcp.json as 'flogo-dev-assist'. Part of Flogo Agent Studio Phase 2.",
@@ -22,15 +21,17 @@
     {
       "ref": "#mcpserver",
       "name": "flogo-mcp-mcpsever",
-      "description": "MCP Server \u2014 exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:3333/mcp.",
+      "description": "MCP Server \u2014 exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:7333/mcp.",
       "settings": {
-        "serverName": "flogo-dev-assist",
+        "serverName": "flogo-agent-studio-assist",
         "serverVersion": "1.0.0",
         "serverType": "HTTP",
-        "serverPort": "3333",
+        "serverPort": "7333",
         "statelessServer": false,
         "serverEndpointPath": "/mcp",
         "enableTLS": false,
+        "serverCertificate": "",
+        "serverPrivateKey": "",
         "authType": "None",
         "authToken": ""
       },
@@ -498,8 +499,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                   }
                 },
                 "dynamicRequestHeaders": {
@@ -518,8 +518,8 @@
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
-                "responseType": "text/plain",
-                "responseOutput": "Raw"
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
@@ -703,8 +703,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                   }
                 },
                 "dynamicRequestHeaders": {
@@ -723,8 +722,8 @@
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
-                "responseType": "text/plain",
-                "responseOutput": "Raw"
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
@@ -897,7 +896,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "",
+                "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/v1/agents\")",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -907,9 +906,8 @@
                 "Timeout": 0,
                 "headers": {
                   "mapping": {
-                    "Accept": "application/json",
-                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Content-Type": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                   }
                 },
                 "dynamicRequestHeaders": {
@@ -927,8 +925,8 @@
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
-                "responseType": "text/plain",
-                "responseOutput": "Raw"
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
@@ -1095,7 +1093,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "",
+                "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/v1/agents/\", $flow.agentId)",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -1105,9 +1103,8 @@
                 "Timeout": 0,
                 "headers": {
                   "mapping": {
-                    "Accept": "application/json",
-                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Content-Type": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                   }
                 },
                 "dynamicRequestHeaders": {
@@ -1125,8 +1122,8 @@
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
-                "responseType": "text/plain",
-                "responseOutput": "Raw"
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
@@ -1310,8 +1307,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                   }
                 },
                 "dynamicRequestHeaders": {
@@ -1330,8 +1326,8 @@
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
-                "responseType": "text/plain",
-                "responseOutput": "Raw"
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
@@ -1515,8 +1511,7 @@
                 "headers": {
                   "mapping": {
                     "Accept": "application/json",
-                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                   }
                 },
                 "dynamicRequestHeaders": {
@@ -1534,8 +1529,8 @@
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
-                "responseType": "text/plain",
-                "responseOutput": "Raw"
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
@@ -1713,8 +1708,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                   }
                 },
                 "dynamicRequestHeaders": {
@@ -1747,8 +1741,8 @@
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
-                "responseType": "text/plain",
-                "responseOutput": "Raw"
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
@@ -1932,8 +1926,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                   }
                 },
                 "dynamicRequestHeaders": {
@@ -1951,8 +1944,8 @@
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
-                "responseType": "text/plain",
-                "responseOutput": "Raw"
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
@@ -2136,8 +2129,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
-                    "X-Request-ID": "=utils.uuid()"
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
                   }
                 },
                 "dynamicRequestHeaders": {
@@ -2155,8 +2147,8 @@
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
-                "responseType": "text/plain",
-                "responseOutput": "Raw"
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
@@ -2280,7 +2272,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:sMg2BZ59jclKl6GnqLoPtrHh/yWS5ufo"
+      "value": "SECRET:plwdsWAUsTUL2aXfaJXFkNuEAXMIL+Q5"
     },
     {
       "name": "API_AUTH_HEADER",
@@ -2311,7 +2303,7 @@
     "endpoints": [
       {
         "protocol": "http",
-        "port": "3333",
+        "port": "7333",
         "title": "FlogoDevAssistMCP",
         "type": "public"
       }

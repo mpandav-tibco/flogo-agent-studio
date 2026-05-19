@@ -252,6 +252,13 @@
             "to": "RAGQuery",
             "type": "label",
             "label": "LogRequest to RAGQuery"
+          },
+          {
+            "id": 3,
+            "from": "RAGQuery",
+            "to": "Return",
+            "type": "label",
+            "label": "RAGQuery to Return"
           }
         ],
         "tasks": [
@@ -312,9 +319,23 @@
                 "systemPrompt": "=$flow.body.systemPrompt"
               }
             }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return the RAG query result (answer, sourceDocuments, duration, error) as the HTTP response body",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": "=$activity[RAGQuery]"
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdRdWVyeSI6eyJ4Ijo2NTAsInkiOjUwfX0=",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUkFHUXVlcnkiOnsieCI6NDUwLCJ5IjoyNTB9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9fQ==",
         "metadata": {
           "input": [
             {
@@ -713,7 +734,7 @@
     {
       "name": "AgenticAI.llm-provider.API_Key",
       "type": "string",
-      "value": "SECRET:8m6pNqAh7gfHufN4GAwvmeKojnzZYGkMewAFm3WWyzp8Bf5ZJ3PBA0CeObFdby2+14BGcrVpK5MHnaDWEkN/A84DC2Dn8yCiMA=="
+      "value": "SECRET:w88h0d4Or5PF76d1d1VyVJPV5LLQLA2caJULHKoF+FqWbS+V8aUEYA8pwitdCYaoDnx9ld8ccU94NKUQp11z4Mb0wdjVSFQ5UQ=="
     },
     {
       "name": "AgenticAI.llm-provider.LLM_Base_URL",
@@ -768,7 +789,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:3ccO8oQyCPcTHicvAa1QBC8hyyAno6s2"
+      "value": "SECRET:lAa367JcuhIRd36cQtGXhLx0wBi/lB7l"
     },
     {
       "name": "API_AUTH_HEADER",
@@ -781,72 +802,77 @@
       "value": "http://localhost:7020"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Connection_Name",
+      "name": "VectorDB_vectordb-weaviate_Connection_Name",
       "type": "string",
       "value": "vectordb-weaviate"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].DB_Provider",
+      "name": "VectorDB.vectordb-weaviate.Connection_Name",
+      "type": "string",
+      "value": "vectordb-weaviate"
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.DB_Provider",
       "type": "string",
       "value": "weaviate"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Host",
+      "name": "VectorDB.vectordb-weaviate.Host",
       "type": "string",
       "value": "localhost"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Port",
+      "name": "VectorDB.vectordb-weaviate.Port",
       "type": "float64",
       "value": 18080
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].API_Key",
+      "name": "VectorDB.vectordb-weaviate.API_Key",
       "type": "string",
       "value": ""
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Secure_Connection",
+      "name": "VectorDB.vectordb-weaviate.Secure_Connection",
       "type": "boolean",
       "value": false
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Timeout_(seconds)",
+      "name": "VectorDB.vectordb-weaviate.Timeout_(seconds)",
       "type": "float64",
       "value": 30
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Max_Retries",
+      "name": "VectorDB.vectordb-weaviate.Max_Retries",
       "type": "float64",
       "value": 3
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Retry_Backoff_(ms)",
+      "name": "VectorDB.vectordb-weaviate.Retry_Backoff_(ms)",
       "type": "float64",
       "value": 500
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].HTTP_Scheme",
+      "name": "VectorDB.vectordb-weaviate.HTTP_Scheme",
       "type": "string",
       "value": "http"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Configure_Embedding_Provider",
+      "name": "VectorDB.vectordb-weaviate.Configure_Embedding_Provider",
       "type": "boolean",
       "value": true
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_Provider",
+      "name": "VectorDB.vectordb-weaviate.Embedding_Provider",
       "type": "string",
-      "value": "OpenAI"
+      "value": "Ollama"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_API_Key",
+      "name": "VectorDB.vectordb-weaviate.Embedding_API_Key",
       "type": "string",
       "value": ""
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_Base_URL",
+      "name": "VectorDB.vectordb-weaviate.Embedding_Base_URL",
       "type": "string",
       "value": "http://localhost:11434/v1"
     }
@@ -865,11 +891,17 @@
         "apiKey": "=$property[\"VectorDB.vectordb-weaviate.API_Key\"]",
         "useTLS": "=$property[\"VectorDB.vectordb-weaviate.Secure_Connection\"]",
         "tlsInsecureSkipVerify": false,
+        "tlsServerName": "",
+        "caCert": "",
+        "clientCert": "",
+        "clientKey": "",
         "timeoutSeconds": "=$property[\"VectorDB.vectordb-weaviate.Timeout_(seconds)\"]",
         "maxRetries": "=$property[\"VectorDB.vectordb-weaviate.Max_Retries\"]",
         "retryBackoffMs": "=$property[\"VectorDB.vectordb-weaviate.Retry_Backoff_(ms)\"]",
         "grpcPort": 50051,
         "scheme": "=$property[\"VectorDB.vectordb-weaviate.HTTP_Scheme\"]",
+        "username": "",
+        "password": "",
         "dbName": "default",
         "defaultMetricType": "cosine",
         "enableEmbedding": "=$property[\"VectorDB.vectordb-weaviate.Configure_Embedding_Provider\"]",

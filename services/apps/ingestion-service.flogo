@@ -22,7 +22,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger — ingestion service on port 7002",
+      "description": "REST trigger \u2014 ingestion service on port 7002",
       "settings": {
         "port": 7002,
         "APISpecUpdate": false,
@@ -89,7 +89,7 @@
           "name": "ingest_documents"
         },
         {
-          "description": "Creates or verifies a VectorDB collection. Idempotent — safe to call if the collection already exists.",
+          "description": "Creates or verifies a VectorDB collection. Idempotent \u2014 safe to call if the collection already exists.",
           "settings": {
             "APISpecPath": "",
             "Method": "POST",
@@ -476,7 +476,7 @@
       "id": "flow:ensure_collection",
       "data": {
         "name": "ensure_collection",
-        "description": "Creates or verifies a VectorDB collection. Idempotent — safe to call if the collection already exists.",
+        "description": "Creates or verifies a VectorDB collection. Idempotent \u2014 safe to call if the collection already exists.",
         "links": [
           {
             "id": 1,
@@ -526,7 +526,7 @@
           {
             "id": "EnsureCollection",
             "name": "EnsureCollection",
-            "description": "Create or verify VectorDB collection — idempotent",
+            "description": "Create or verify VectorDB collection \u2014 idempotent",
             "activity": {
               "ref": "#createCollection",
               "settings": {
@@ -732,7 +732,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "",
+                "Uri": "=$flow.body.url",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -1391,75 +1391,80 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:u///1oN3/3B7ksAuMKRH4wEXykXmnfKP"
+      "value": "SECRET:QdzugLnJJBgYmO5kijxU3dY41Klo5uuY"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Connection_Name",
+      "name": "VectorDB_vectordb-weaviate_Connection_Name",
       "type": "string",
       "value": "vectordb-weaviate"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].DB_Provider",
+      "name": "VectorDB.vectordb-weaviate.Connection_Name",
+      "type": "string",
+      "value": "vectordb-weaviate"
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.DB_Provider",
       "type": "string",
       "value": "weaviate"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Host",
+      "name": "VectorDB.vectordb-weaviate.Host",
       "type": "string",
       "value": "localhost"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Port",
+      "name": "VectorDB.vectordb-weaviate.Port",
       "type": "float64",
       "value": 18080
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].API_Key",
+      "name": "VectorDB.vectordb-weaviate.API_Key",
       "type": "string",
       "value": ""
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Secure_Connection",
+      "name": "VectorDB.vectordb-weaviate.Secure_Connection",
       "type": "boolean",
       "value": false
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Timeout_(seconds)",
+      "name": "VectorDB.vectordb-weaviate.Timeout_(seconds)",
       "type": "float64",
       "value": 30
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Max_Retries",
+      "name": "VectorDB.vectordb-weaviate.Max_Retries",
       "type": "float64",
       "value": 3
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Retry_Backoff_(ms)",
+      "name": "VectorDB.vectordb-weaviate.Retry_Backoff_(ms)",
       "type": "float64",
       "value": 500
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].HTTP_Scheme",
+      "name": "VectorDB.vectordb-weaviate.HTTP_Scheme",
       "type": "string",
       "value": "http"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Configure_Embedding_Provider",
+      "name": "VectorDB.vectordb-weaviate.Configure_Embedding_Provider",
       "type": "boolean",
       "value": true
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_Provider",
+      "name": "VectorDB.vectordb-weaviate.Embedding_Provider",
       "type": "string",
-      "value": "OpenAI"
+      "value": "Ollama"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_API_Key",
+      "name": "VectorDB.vectordb-weaviate.Embedding_API_Key",
       "type": "string",
       "value": ""
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_Base_URL",
+      "name": "VectorDB.vectordb-weaviate.Embedding_Base_URL",
       "type": "string",
       "value": "http://localhost:11434/v1"
     }
@@ -1487,11 +1492,17 @@
         "apiKey": "=$property[\"VectorDB.vectordb-weaviate.API_Key\"]",
         "useTLS": "=$property[\"VectorDB.vectordb-weaviate.Secure_Connection\"]",
         "tlsInsecureSkipVerify": false,
+        "tlsServerName": "",
+        "caCert": "",
+        "clientCert": "",
+        "clientKey": "",
         "timeoutSeconds": "=$property[\"VectorDB.vectordb-weaviate.Timeout_(seconds)\"]",
         "maxRetries": "=$property[\"VectorDB.vectordb-weaviate.Max_Retries\"]",
         "retryBackoffMs": "=$property[\"VectorDB.vectordb-weaviate.Retry_Backoff_(ms)\"]",
-        "grpcPort": 6334,
+        "grpcPort": 50051,
         "scheme": "=$property[\"VectorDB.vectordb-weaviate.HTTP_Scheme\"]",
+        "username": "",
+        "password": "",
         "dbName": "default",
         "defaultMetricType": "cosine",
         "enableEmbedding": "=$property[\"VectorDB.vectordb-weaviate.Configure_Embedding_Provider\"]",
@@ -1517,7 +1528,7 @@
           "info": {
             "title": "ingestion-service",
             "version": "1.0.0",
-            "description": "REST trigger — ingestion service on port 7002"
+            "description": "REST trigger \u2014 ingestion service on port 7002"
           },
           "paths": {
             "/api/ingest": {
@@ -1577,7 +1588,7 @@
                     }
                   }
                 },
-                "description": "Creates or verifies a VectorDB collection. Idempotent — safe to call if the collection already exists.",
+                "description": "Creates or verifies a VectorDB collection. Idempotent \u2014 safe to call if the collection already exists.",
                 "consumes": [
                   "application/json"
                 ]

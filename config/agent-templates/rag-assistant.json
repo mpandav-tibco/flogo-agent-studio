@@ -1,18 +1,23 @@
 {
-  "name": "RAG Assistant",
-  "description": "General-purpose knowledge base assistant. Retrieves relevant context from VectorDB and answers questions using an LLM. Suitable as a starting point for most Q&A agents.",
-  "systemPrompt": "You are a helpful assistant. Answer questions accurately using the provided context. If the context does not contain enough information to answer confidently, say so clearly and avoid guessing.",
-  "collectionName": "KnowledgeBase",
-  "llmProvider": "Ollama",
-  "llmBaseUrl": "http://localhost:11434",
-  "apiKey": "",
-  "model": "llama3.2:3b",
-  "temperature": 0.7,
-  "maxTokens": 2048,
-  "topK": 5,
-  "tools": ["ragQuery"],
-  "chunkStrategy": "sentence",
-  "tags": ["general", "rag"],
-  "version": "1.0.0",
-  "active": false
+    "name": "RAG Assistant",
+    "description": "General-purpose knowledge base assistant. Retrieves relevant context from VectorDB and answers questions using an LLM. Suitable as a starting point for most Q&A agents.",
+    "systemPrompt": "You are a helpful assistant. Answer questions accurately using the provided context. If the context does not contain enough information to answer confidently, say so clearly and avoid guessing.",
+    "collectionName": "KnowledgeBase",
+    "llmProvider": "Ollama",
+    "llmBaseUrl": "http://localhost:11434",
+    "apiKey": "",
+    "model": "llama3.2:3b",
+    "temperature": 0.7,
+    "maxTokens": 2048,
+    "topK": 5,
+    "tools": [
+        "ragQuery"
+    ],
+    "chunkStrategy": "sentence",
+    "tags": [
+        "general",
+        "rag"
+    ],
+    "version": "1.0.0",
+    "active": false
 }

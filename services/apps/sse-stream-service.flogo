@@ -356,8 +356,7 @@
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
-                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                    "X-Request-ID": "=$flow.headers[\"X-Request-ID\"]"
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
                   }
                 },
                 "body": "=$flow.body"
@@ -415,7 +414,7 @@
                 "systemPrompt": "=$property[\"SYSTEM_PROMPT\"]"
               },
               "input": {
-                "userPrompt": "=string.concat(\"Context:\\n\", coerce.toString($activity[CallRAG].responseBody.answer), \"\\n\\nQuestion: \", coerce.toString($flow.body.message))",
+                "userPrompt": "=$flow.body.message",
                 "conversationId": "=$flow.body.sessionId"
               }
             }
@@ -441,8 +440,7 @@
                   "mapping": {
                     "sessionId": "=$flow.body.sessionId",
                     "agentId": "=$flow.body.agentId",
-                    "answer": "=$activity[RunLLM].response",
-                    "sources": "=$activity[CallRAG].responseBody.sourceDocuments"
+                    "answer": "=$activity[RunLLM].response"
                   }
                 }
               }

@@ -1,19 +1,26 @@
 {
-  "name": "Analyzer Agent",
-  "description": "Specialist agent for structured analysis tasks. Queries a curated rules collection and returns findings with severity levels. Low temperature (0.2) ensures consistent, deterministic output — important for rule-based evaluation.",
-  "systemPrompt": "You are a domain expert tasked with structured analysis. Evaluate the provided content against the rules and best practices retrieved from context. Return your findings in this format for each issue found:\n- Severity: critical | high | medium | low | info\n- Component: <affected area>\n- Finding: <clear description of the issue>\n- Recommendation: <specific actionable fix>\n\nIf no issues are found, state that explicitly. Do not invent issues not supported by the retrieved context.",
-  "collectionName": "RulesBase",
-  "llmProvider": "Ollama",
-  "llmBaseUrl": "http://localhost:11434",
-  "apiKey": "",
-  "model": "llama3.2:3b",
-  "temperature": 0.2,
-  "maxTokens": 4096,
-  "topK": 10,
-  "tools": ["ragQuery", "ruleAnalysis"],
-  "chunkStrategy": "paragraph",
-  "rulesPath": "./config/rules",
-  "tags": ["analysis", "rules", "structured-output"],
-  "version": "1.0.0",
-  "active": false
+    "name": "Analyzer Agent",
+    "description": "Specialist agent for structured analysis tasks. Queries a curated rules collection and returns findings with severity levels. Low temperature (0.2) ensures consistent, deterministic output — important for rule-based evaluation.",
+    "systemPrompt": "You are a domain expert tasked with structured analysis. Evaluate the provided content against the rules and best practices retrieved from context. Return your findings in this format for each issue found:\n- Severity: critical | high | medium | low | info\n- Component: <affected area>\n- Finding: <clear description of the issue>\n- Recommendation: <specific actionable fix>\n\nIf no issues are found, state that explicitly. Do not invent issues not supported by the retrieved context.",
+    "collectionName": "RulesBase",
+    "llmProvider": "Ollama",
+    "llmBaseUrl": "http://localhost:11434",
+    "apiKey": "",
+    "model": "llama3.2:3b",
+    "temperature": 0.2,
+    "maxTokens": 4096,
+    "topK": 10,
+    "tools": [
+        "ragQuery",
+        "ruleAnalysis"
+    ],
+    "chunkStrategy": "paragraph",
+    "rulesPath": "./config/rules",
+    "tags": [
+        "analysis",
+        "rules",
+        "structured-output"
+    ],
+    "version": "1.0.0",
+    "active": false
 }
