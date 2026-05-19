@@ -18,7 +18,7 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
 # ─────────────────────────────────────────────────────────────────────────────
 AUTH   = "Basic ZmxvZ286Y2hhbmdlbWU="
 PORTS  = {
-    "rule-engine":    7000,
+    "rule-engine":    7097,
     "agent-chat":     7001,
     "ingestion":      7002,
     "feedback":       7003,
@@ -568,9 +568,10 @@ def test_agent_builder():
     }, timeout=90)
     check("POST /api/agent-builder/improve → 200", s == 200, f"HTTP {s}: {b}")
     if isinstance(b, dict) and s == 200:
-        imp_cfg = b.get("config", {})
-        check("improve → config.systemPrompt non-empty",
-              bool(imp_cfg.get("systemPrompt")), f"config keys={list(imp_cfg.keys())}")
+        # response shape: {agentId, current, suggestions: {improved: {...}, changes: [...]}}
+        imp_cfg = b.get("suggestions", {}).get("improved", {})
+        check("improve → suggestions.improved.systemPrompt non-empty",
+              bool(imp_cfg.get("systemPrompt")), f"suggestions.improved keys={list(imp_cfg.keys())}")
 
     # ── validate ──────────────────────────────────────────────────────────────
     s, b = req(f"{base}/api/agent-builder/validate", "POST", {
@@ -611,10 +612,21 @@ def mcp_req(method: str, params=None, msg_id: int = 1, session_id=None):
     except Exception as e:
         return session_id, {"error": str(e)}
 
+def _mcp_is_up() -> bool:
+    """MCP server uses JSON-RPC over SSE — plain HTTP health check returns 404.
+    Use a lightweight initialize to verify the server is responsive."""
+    _, resp = mcp_req("initialize", {
+        "protocolVersion": "2024-11-05",
+        "capabilities": {},
+        "clientInfo": {"name": "healthcheck", "version": "1.0"},
+    })
+    return isinstance(resp, dict) and "result" in resp
+
+
 def test_mcp():
     service("mcp")
 
-    if not is_up(3333):
+    if not _mcp_is_up():
         skip("all MCP tests", "MCP server not running on port 3333")
         return
 
@@ -717,7 +729,7 @@ def main():
     # Service health pre-check
     print("\n  Service availability:")
     for svc, port in PORTS.items():
-        up = is_up(port)
+        up = _mcp_is_up() if svc == "mcp" else is_up(port)
         print(f"    {'✓' if up else '✗'}  {svc:<20} port {port}  {'UP' if up else 'DOWN'}")
 
     t0 = time.time()
