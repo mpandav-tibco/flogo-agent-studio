@@ -35,8 +35,7 @@ flogo_services:
 
   config:
     port: 7004
-    description: "Multi-agent registry — superseded by design-service (7020) which owns all agent CRUD. config-service.flogo kept for reference only."
-    app: "apps/config-service.flogo"
+    description: "Multi-agent registry — superseded by design-service (7020) which owns all agent CRUD. Source and binary removed."
     status: retired  # Retired: agent registry moved to design-service (7020) with PostgreSQL backing
 
   sse-stream:
