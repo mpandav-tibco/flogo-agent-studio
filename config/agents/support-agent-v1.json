@@ -1,1 +1,0 @@
-{"active":true,"collectionName":"SupportBase","description":"Customer support agent","id":"support-agent-v1","llmProvider":"ollama","maxTokens":500,"model":"llama3","name":"Support Agent","systemPrompt":"Help customers","tags":["support"],"temperature":0.3,"tools":["ragQuery"],"topK":5,"version":"1.0.0"}
