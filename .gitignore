@@ -37,3 +37,4 @@ forge/tsconfig.*.tsbuildinfo
 Thumbs.db
 *.swp
 *.swo
+chainlit.md

@@ -20,7 +20,7 @@ _UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 DESIGN_URL = os.getenv("DESIGN_URL", "http://localhost:7020")
 AUTH = "Basic ZmxvZ286Y2hhbmdlbWU="
 HEADERS = {"Authorization": AUTH, "Content-Type": "application/json"}
-AGENTS_DIR = os.path.join(os.path.dirname(__file__), "..", "agents")
+AGENTS_DIR = os.path.join(os.path.dirname(__file__), "..", "config", "agents")
 
 # Fields that belong to the identity/metadata layer, not the agent config
 IDENTITY_KEYS = {"id", "name", "description", "created", "version", "active", "tags"}

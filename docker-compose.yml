@@ -102,7 +102,7 @@ services:
       RULES_PATH: /app/rules
     volumes:
       - rules_data:/app/rules
-      - ./rules:/app/rules:ro
+      - ./config/rules:/app/rules:ro
     networks:
       - agent-studio
     healthcheck:
@@ -316,7 +316,7 @@ services:
 
   forge:
     build:
-      context: ./forge
+      context: ./ui/forge
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
@@ -337,7 +337,7 @@ services:
 
   chainlit-ui:
     build:
-      context: ./chainlit
+      context: ./ui/chainlit
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:

@@ -7,20 +7,25 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-mkdir -p logs
+mkdir -p logs data/feedback
+
+# ── Service-specific env vars (read by Flogo via FLOGO_APP_PROPS_ENV=auto) ───
+export RULES_PATH="./config/rules"
+export FEEDBACK_DIR="./data/feedback"
+export FEEDBACK_LOG_PATH="./data/feedback/feedback.jsonl"
 
 # Array of: "binary:log-prefix:port"
 SERVICES=(
-  "bin/rule-engine-service:rule-engine:7000"
-  "bin/agent-chat-service:agent-chat:7001"
-  "bin/ingestion-service:ingestion:7002"
-  "bin/feedback-service:feedback:7003"
+  "services/bin/rule-engine-service:rule-engine:7000"
+  "services/bin/agent-chat-service:agent-chat:7001"
+  "services/bin/ingestion-service:ingestion:7002"
+  "services/bin/feedback-service:feedback:7003"
   # config-service (7004) retired — superseded by design-service (7020)
-  "bin/sse-stream-service:sse-stream:7005"
-  "bin/agent-builder-service:agent-builder:7010"
-  "bin/design-service:design:7020"
-  "bin/deploy-service:deploy:7030"
-  "bin/mcp-server:mcp-server:3333"
+  "services/bin/sse-stream-service:sse-stream:7005"
+  "services/bin/agent-builder-service:agent-builder:7010"
+  "services/bin/design-service:design:7020"
+  "services/bin/deploy-service:deploy:7030"
+  "services/bin/mcp-server:mcp-server:3333"
 )
 
 started=0
