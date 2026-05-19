@@ -10,6 +10,7 @@ cd "$SCRIPT_DIR"
 mkdir -p logs data/feedback
 
 # ── Service-specific env vars (read by Flogo via FLOGO_APP_PROPS_ENV=auto) ───
+export FLOGO_APP_PROPS_ENV=auto
 export RULES_PATH="./config/rules"
 export FEEDBACK_DIR="./data/feedback"
 export FEEDBACK_LOG_PATH="./data/feedback/feedback.jsonl"
