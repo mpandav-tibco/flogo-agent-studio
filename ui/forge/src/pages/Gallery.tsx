@@ -117,8 +117,8 @@ export default function Gallery() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`flex items-center gap-1.5 text-sm px-3 py-1 rounded-md capitalize transition-colors ${activeTab === tab
-                    ? "bg-brand-500 text-white"
-                    : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                  ? "bg-brand-500 text-white"
+                  : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"
                   }`}
               >
                 {tab}

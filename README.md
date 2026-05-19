@@ -1,6 +1,6 @@
 # AgentForge Studio
 
-**AgentForge Studio** is a production-grade multi-agent AI platform built entirely on **TIBCO Flogo 2.26.3**. Nine compiled Go services handle RAG retrieval, streaming, rule analysis, agent lifecycle, and MCP tool exposure. The **AgentForge** React portal and **Chainlit** chat UI complete the full-stack experience.
+**AgentForge Studio** is a multi-agent AI platform built entirely on **TIBCO Flogo**. Nine  services handle RAG retrieval, streaming, rule analysis, agent lifecycle, and MCP tool exposure. The **AgentForge** React portal and **Chainlit** chat UI complete the full-stack experience.
 
 ---
 
@@ -8,23 +8,23 @@
 
 ```
  ┌─────────────────────┐   ┌────────────────────────────────┐
- │  AgentForge UI       │   │  Claude / Cursor / IDE         │
- │  (React · port 7025) │   │  (MCP client)                  │
+ │  AgentForge UI      │   │  Claude / Cursor / IDE         │
+ │ (React · port 7025) │   │  (MCP client)                  │
  └──────────┬──────────┘   └──────────────┬─────────────────┘
-            │ REST                         │ JSON-RPC 2.0 (Streamable HTTP)
+            │ REST                        │ JSON-RPC 2.0 (Streamable HTTP)
  ┌──────────┴──────────┐                  │
  │  Chainlit Chat UI   │                  │
- │  (Python · port 7080)│                  │
+ │ (Python · port 7080)│                  │
  └──────────┬──────────┘                  │
             │                             ▼
             │           ┌─────────────────────────────────┐
-            │           │  mcp-server          port 7333   │
-            │           │  (Flogo · MCP gateway)           │
+            │           │  mcp-server          port 7333  │
+            │           │  (Flogo · MCP gateway)          │
             │           └────────────┬────────────────────┘
             │                        │ proxies to internal REST
             ▼                        ▼
  ┌──────────────────────────────────────────────────────────┐
- │                  Flogo Service Mesh                       │
+ │                  Flogo Service Mesh                      │
  │                                                          │
  │  design-service        7020   agent-chat-service   7001  │
  │  deploy-service        7030   ingestion-service    7002  │
@@ -32,17 +32,17 @@
  │  rule-engine-service   7097   sse-stream-service   7005  │
  └───────────────────────┬──────────────────────────────────┘
                          │
-          ┌──────────────┴──────────────┐
-          ▼                             ▼
- ┌─────────────────┐         ┌─────────────────────┐
- │  Weaviate        │         │  Ollama              │
- │  VectorDB :8080  │         │  LLM runtime :11434  │
- └─────────────────┘         └─────────────────────┘
-          │
- ┌────────┴────────┐
- │  PostgreSQL      │
- │  :5432           │
- └─────────────────┘
+          ┌──────────────┴──────────────┐────────────────────────────┐
+          ▼                             ▼                            ▼
+ ┌─────────────────-┐        ┌─────────────────────-┐       ┌────────┴────────┐
+ │  Weaviate        │        │  Ollama              │       │  PostgreSQL     │
+ │  VectorDB :8080  │        │  LLM runtime :11434  │       │  :5432          │ 
+ └─────────────────-┘        └─────────────────────-┘       └─────────────────┘
+ 
+ 
+ 
+ 
+         
 ```
 
 ---
@@ -57,7 +57,7 @@
 | `agent-chat-service` | 7001 | RAG pipeline: embed → Weaviate hybrid search → LLM answer |
 | `ingestion-service` | 7002 | Document ingestion into Weaviate (URL, GitHub, raw text) |
 | `feedback-service` | 7003 | Per-agent rating + comment storage (JSONL) |
-| `rule-engine-service` | 7097 | Static analysis of Flogo apps against YAML rule sets |
+| `rule-engine-service` | 7097 | Static analysis of data against YAML rule sets |
 | `sse-stream-service` | 7005 | SSE broadcast hub + streaming RAG+LLM pipeline |
 | `mcp-server` | 7333 | MCP Streamable HTTP gateway (9 tools) |
 | **AgentForge UI** | 7025 | React + Vite design portal |
