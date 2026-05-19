@@ -68,8 +68,7 @@ for entry in "${SERVICES[@]}"; do
     chmod +x "$exe"
   fi
   # For services with 2.26.3-incompatible embedded JSON, use -app to override with fixed source file.
-  # Workaround: MCP trigger tracingMiddleware crashes on nil params (BUG-REPORT-MCP-TRIGGER-NIL-PANIC.md)
-  # Disable OTel tracing for mcp-server until the MCP trigger is patched.
+  # mcp-server: OTel tracing disabled — MCP trigger tracingMiddleware panics on nil params.
   APP_OVERRIDE=""
   if [[ -f "services/apps/${name}-service.flogo" ]]; then
     APP_OVERRIDE="-app services/apps/${name}-service.flogo"

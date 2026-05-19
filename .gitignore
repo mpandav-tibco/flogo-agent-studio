@@ -8,6 +8,9 @@ logs/*.log
 logs/*-err.log
 logs/*.md
 
+# ── Generated test reports ────────────────────────────────────────────────────
+tests/*.md
+
 # ── Runtime data ──────────────────────────────────────────────────────────────
 data/feedback/*.jsonl
 !data/feedback/default.jsonl
