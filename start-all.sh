@@ -15,6 +15,30 @@ export RULES_PATH="./config/rules"
 export FEEDBACK_DIR="./data/feedback"
 export FEEDBACK_LOG_PATH="./data/feedback/feedback.jsonl"
 
+# ── OpenTelemetry ─────────────────────────────────────────────────────────────
+# Set OTEL_ENABLED=false to skip OTel (e.g. when observability stack is not up)
+OTEL_ENABLED="${OTEL_ENABLED:-true}"
+
+if [[ "$OTEL_ENABLED" == "true" ]]; then
+  # Traces/metrics/logs → OTel Collector gRPC (collector forwards to Elastic APM)
+  export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317"
+  export OTEL_EXPORTER_OTLP_PROTOCOL="grpc"
+  export OTEL_TRACES_EXPORTER="otlp"
+  export OTEL_METRICS_EXPORTER="otlp"
+  export OTEL_PROPAGATORS="tracecontext,baggage"
+
+  # Flogo-specific OTel + structured logging
+  export FLOGO_OTEL_SPAN_KIND="SERVER"          # REST services are SERVER spans
+  export FLOGO_LOG_CTX="TRUE"                   # inject trace_id/span_id into logs
+  export FLOGO_LOG_FORMAT="JSON"                # machine-readable logs for Filebeat
+  export FLOGO_ENV="dev"                        # sets deployment.environment in traces
+  export FLOGO_LOG_CTX_FIELDS="service.namespace=flogo-agent-studio,service.environment=dev"
+
+  echo "OTel → http://localhost:4317 (OTLP gRPC)"
+else
+  echo "OTel disabled (OTEL_ENABLED=false)"
+fi
+
 # Array of: "binary:log-prefix:port"
 SERVICES=(
   "services/bin/rule-engine-service:rule-engine:7000"
@@ -42,7 +66,7 @@ for entry in "${SERVICES[@]}"; do
   if [[ ! -x "$exe" ]]; then
     chmod +x "$exe"
   fi
-  "$exe" > "logs/${name}.log" 2> "logs/${name}-err.log" &
+  OTEL_SERVICE_NAME="${name}" "$exe" > "logs/${name}.log" 2> "logs/${name}-err.log" &
   echo "START $name  (port $port, pid $!)"
   ((started++)) || true
   sleep 0.2
