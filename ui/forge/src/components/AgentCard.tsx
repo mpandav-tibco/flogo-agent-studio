@@ -59,6 +59,11 @@ export default function AgentCard({ agent, onToggleDeploy, deployPending }: Agen
   const model = agent.config?.llmModel ?? "default model";
   const isActive = agent.status === "active";
   const borderClass = STATUS_BORDER[agent.status] ?? STATUS_BORDER.draft;
+  // Use the per-agent isolated URL when deployment.py has started its runtime;
+  // fall back to the shared Chainlit dev instance.
+  const chatUrl = isActive
+    ? (agent.config?.chatUiUrl || `${CHAINLIT_URL}?agent_id=${agent.id}`)
+    : null;
 
   return (
     <div
@@ -146,12 +151,13 @@ export default function AgentCard({ agent, onToggleDeploy, deployPending }: Agen
           </button>
         )}
 
-        {isActive && (
+        {chatUrl && (
           <a
-            href={`${CHAINLIT_URL}?agent_id=${agent.id}`}
+            href={chatUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors ml-auto"
+            title={agent.config?.chatUiUrl ? "Isolated agent chat" : "Shared chat (dev mode)"}
           >
             <ExternalLink size={11} /> Open Chat
           </a>

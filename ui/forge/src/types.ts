@@ -7,6 +7,11 @@ export interface AgentConfig {
   llmBaseUrl?: string;
   temperature?: number;
   chunkStrategy?: string;
+  // Populated by deployment.py once the agent runtime is running
+  chatUiUrl?: string;
+  chatApiUrl?: string;
+  sseUrl?: string;
+  ingestionUrl?: string;
 }
 
 export interface Agent {

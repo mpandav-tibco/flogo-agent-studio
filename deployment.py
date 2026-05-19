@@ -272,19 +272,45 @@ async def _fetch_all_agents() -> list[dict]:
 
 
 async def _patch_agent_urls(agent_id: str, record: dict):
-    """Best-effort: write chatUiUrl / chatApiUrl back to design-service."""
-    payload = {
-        "chatUiUrl":    record.get("chatUiUrl", ""),
-        "chatApiUrl":   record.get("chatApiUrl", ""),
-        "sseUrl":       record.get("sseUrl", ""),
-        "ingestionUrl": record.get("ingestionUrl", ""),
-    }
+    """Best-effort: merge chatUiUrl / chatApiUrl into agent config via GET-then-PUT.
+
+    design-service only exposes PUT (not PATCH) and stores everything in a JSONB
+    config column, so we must read the current record first to avoid overwriting
+    existing config fields.
+    """
     try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            await client.patch(
+        async with httpx.AsyncClient(timeout=10) as client:
+            # Step 1 — read current agent record
+            r = await client.get(
                 f"{DESIGN_URL}/api/v1/agents/{agent_id}",
-                json=payload,
                 headers={"Authorization": _AUTH_HEADER},
+            )
+            r.raise_for_status()
+            body = r.json()
+            # design-service wraps single records in {"records": [...]}
+            agent = body if isinstance(body, dict) and "id" in body else \
+                    (body.get("records") or [{}])[0]
+
+            cfg = agent.get("config", {})
+            if isinstance(cfg, str):
+                try:
+                    cfg = json.loads(cfg)
+                except Exception:
+                    cfg = {}
+
+            # Step 2 — merge runtime URL fields into config
+            cfg.update({
+                "chatUiUrl":    record.get("chatUiUrl", ""),
+                "chatApiUrl":   record.get("chatApiUrl", ""),
+                "sseUrl":       record.get("sseUrl", ""),
+                "ingestionUrl": record.get("ingestionUrl", ""),
+            })
+
+            # Step 3 — PUT back (only config; name/description/status COALESCE to existing)
+            await client.put(
+                f"{DESIGN_URL}/api/v1/agents/{agent_id}",
+                json={"config": cfg},
+                headers={"Authorization": _AUTH_HEADER, "Content-Type": "application/json"},
             )
     except Exception as exc:
         log.debug("patch_agent_urls %s: %s", agent_id[:8], exc)
