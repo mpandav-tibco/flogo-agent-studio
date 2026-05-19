@@ -19,7 +19,7 @@ data/feedback/*.jsonl
 __pycache__/
 *.pyc
 *.pyo
-ui/chainlit/.chainlit/
+ui/chainlit/.chainlit/translations/
 .env
 .env.*
 !.env.example
