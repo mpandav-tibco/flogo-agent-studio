@@ -8,9 +8,7 @@
     "github.com/tibco/flogo-files/src/app/File/activity/read",
     "github.com/tibco/flogo-general/src/app/General/trigger/rest",
     "github.com/project-flogo/contrib/function/coerce",
-    "github.com/project-flogo/contrib/function/string",
-    "act_file_write github.com/tibco/flogo-files/src/app/File/activity/write",
-    "act_default_noop github.com/project-flogo/contrib/activity/noop"
+    "github.com/project-flogo/contrib/function/string"
   ],
   "name": "feedback-service",
   "description": "Feedback collection service. Captures thumbs-up/down ratings on agent responses. Uses OOTB Write File (append mode) to persist JSON-lines log. Part of Flogo Agent Studio.",
@@ -318,29 +316,11 @@
             }
           },
           {
-            "id": "Return",
-            "name": "Return",
-            "description": "",
+            "id": "AppendAgentFeedbackLog",
+            "name": "AppendAgentFeedbackLog",
+            "description": "Append feedback record to per-agent JSONL file at FEEDBACK_DIR/{agentId}.jsonl",
             "activity": {
-              "ref": "#actreturn",
-              "settings": {
-                "mappings": {
-                  "code": 200,
-                  "data": "=$activity[AppendAgentFeedbackLog].output.fileMetadata"
-                }
-              }
-            }
-          },
-          {
-            "id": "StartActivity",
-            "name": "StartActivity",
-            "description": "NoOp Activity",
-            "activity": {
-              "ref": "#act_default_noop"
-            }
-          },
-          {
-            "activity": {
+              "ref": "#write",
               "input": {
                 "writeAs": "Text",
                 "createNonExistingDir": true,
@@ -353,7 +333,6 @@
                   }
                 }
               },
-              "ref": "#act_file_write",
               "schemas": {
                 "input": {
                   "input": {
@@ -369,14 +348,26 @@
                     "fe_metadata": "{\"properties\":{\"fileMetadata\":{\"properties\":{\"fullPath\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"size\":{\"type\":\"number\"},\"mode\":{\"type\":\"string\"},\"modTime\":{\"type\":\"string\",\"format\":\"date-time\"},\"isDir\":{\"type\":\"boolean\"}},\"type\":\"object\"}},\"type\":\"object\"}"
                   }
                 }
+              },
+              "feSchemaMap": {}
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": "=$activity[AppendAgentFeedbackLog].output.fileMetadata"
+                }
               }
-            },
-            "id": "AppendAgentFeedbackLog",
-            "name": "AppendAgentFeedbackLog",
-            "description": "Append feedback record to per-agent JSONL file at FEEDBACK_DIR/{agentId}.jsonl"
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJBcHBlbmRGZWVkYmFja0xvZyI6eyJ4Ijo0NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiQXBwZW5kRmVlZGJhY2tMb2ciOnsieCI6NDUwLCJ5IjoyNTB9LCJBcHBlbmRBZ2VudEZlZWRiYWNrTG9nIjp7IngiOjY1MCwieSI6MzUwfSwiUmV0dXJuIjp7IngiOjg1MCwieSI6NDUwfX0=",
         "metadata": {
           "input": [
             {
@@ -410,8 +401,8 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "any"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
@@ -528,11 +519,11 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
           "fe_metadata": {
@@ -653,11 +644,11 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
           "fe_metadata": {
@@ -701,9 +692,11 @@
                 "mappings": {
                   "code": 200,
                   "data": {
-                    "status": "ok",
-                    "service": "feedback-service",
-                    "version": "1.0.0"
+                    "mapping": {
+                      "status": "ok",
+                      "service": "feedback-service",
+                      "version": "1.0.0"
+                    }
                   }
                 }
               }
@@ -716,11 +709,11 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
           "fe_metadata": {
@@ -750,12 +743,11 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
-      "value": "changeme"
+      "value": "SECRET:IkbaGb/OGzu1gB0Yik1gqHo6dt8iSNRs"
     }
   ],
   "connections": {},
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLWZpbGVzL3NyYy9hcHAvRmlsZSIsImlkIjoiRmlsZSIsInZlcnNpb24iOiIxLjAuMCIsInRhZyI6IjEuMC4wLWIxNCIsIm5hbWUiOiJUSUJDTyBGbG9nbyBDb25uZWN0b3IgZm9yIEZpbGUiLCJzM2xvY2F0aW9uIjoiVGliY28vRmlsZSIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9XQ==",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1maWxlcy9zcmMvYXBwL0ZpbGUiLCJpZCI6IkZpbGUiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMC1iMTQiLCJuYW1lIjoiRmlsZSIsInMzbG9jYXRpb24iOiJUaWJjby9GaWxlIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
   "metadata": {
     "endpoints": [
       {

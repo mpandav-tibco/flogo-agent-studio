@@ -1,48 +1,52 @@
 {
   "imports": [
-    "trig_mcpserver github.com/tibco/flogo-mcp/src/app/MCP/trigger/mcpserver",
     "github.com/project-flogo/flow",
-    "act_default_noop github.com/project-flogo/contrib/activity/noop",
-    "act_general_log github.com/tibco/flogo-general/src/app/General/activity/log",
-    "act_default_actreturn github.com/project-flogo/contrib/activity/actreturn",
-    "act_general_rest github.com/tibco/flogo-general/src/app/General/activity/rest",
-    "act_mcptoolresult github.com/mpandav-tibco/flogo-extensions/mcptoolresult",
-    "string github.com/project-flogo/contrib/function/string",
-    "coerce github.com/project-flogo/contrib/function/coerce"
+    "github.com/project-flogo/contrib/activity/noop",
+    "github.com/tibco/flogo-general/src/app/General/activity/log",
+    "github.com/tibco/flogo-general/src/app/General/activity/rest",
+    "github.com/tibco/flogo-general/src/app/General/activity/mapper",
+    "github.com/project-flogo/contrib/activity/actreturn",
+    "github.com/tibco/flogo-mcp/src/app/MCP/trigger/mcpserver",
+    "github.com/project-flogo/contrib/function/array",
+    "github.com/project-flogo/contrib/function/coerce",
+    "github.com/project-flogo/contrib/function/string",
+    "fn_general_utils github.com/project-flogo/contrib/function/utils"
   ],
   "name": "mcp-server",
   "description": "Flogo Agent Studio MCP Server. Exposes all Phase 1 services as MCP tools for Claude, Cursor, and any MCP client. Registered in .mcp.json as 'flogo-dev-assist'. Part of Flogo Agent Studio Phase 2.",
   "version": "1.0.0",
   "type": "flogo:app",
   "appModel": "1.1.1",
-  "tags": [
-    "mcp",
-    "ai-agent",
-    "flogo-agent-studio",
-    "phase-2"
-  ],
+  "tags": [],
   "triggers": [
     {
-      "ref": "#trig_mcpserver",
-      "name": "flogo-dev-assist",
+      "ref": "#mcpserver",
+      "name": "flogo-mcp-mcpsever",
       "description": "MCP Server \u2014 exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:3333/mcp.",
       "settings": {
         "serverName": "flogo-dev-assist",
         "serverVersion": "1.0.0",
         "serverType": "HTTP",
         "serverPort": "3333",
-        "authType": "None"
+        "statelessServer": false,
+        "serverEndpointPath": "/mcp",
+        "enableTLS": false,
+        "authType": "None",
+        "authToken": ""
       },
       "id": "FlogoDevAssistMCP",
       "handlers": [
         {
-          "name": "analyze_flogo",
-          "description": "Analyze a Flogo app (.flogo JSON) against YAML rules. Returns structured findings with severity levels. Delegates to rule-engine-service on port 7000.",
+          "description": "MCP tool: forwards Flogo app analysis request to rule-engine-service (port 7000) and returns structured findings.",
           "settings": {
             "handlerType": "Tool",
             "resourceUri": "",
             "handlerName": "analyze_flogo",
-            "handlerDescription": "Analyze a TIBCO Flogo application file against configured YAML rules. Returns structured findings (errors, warnings, info) with rule IDs, severity, and descriptions. Useful for Flogo code review, best-practice validation, and CI quality gates."
+            "handlerDescription": "Analyze a TIBCO Flogo application file against configured YAML rules. Returns structured findings (errors, warnings, info) with rule IDs, severity, and descriptions. Useful for Flogo code review, best-practice validation, and CI quality gates.",
+            "readOnlyToolHint": false,
+            "destructiveToolHint": false,
+            "idempotentToolHint": false,
+            "openWorldToolHint": true
           },
           "action": {
             "ref": "github.com/project-flogo/flow",
@@ -57,29 +61,34 @@
             }
           },
           "schemas": {
+            "reply": {
+              "response": {
+                "type": "json",
+                "value": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}",
+                "fe_metadata": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}"
+              }
+            },
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\": \"object\", \"properties\": {\"content\": {\"type\": \"string\", \"description\": \"The raw .flogo file content (JSON string)\"}, \"fileName\": {\"type\": \"string\", \"description\": \"Logical file name for context (e.g. my-app.flogo)\"}, \"rulesPath\": {\"type\": \"string\", \"description\": \"Optional: path to YAML rules directory override\"}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"description\": \"Optional: filter rules by tag\"}}, \"required\": [\"content\"]}"
+                "value": "{\"type\": \"object\", \"properties\": {\"content\": {\"type\": \"string\", \"description\": \"The raw .flogo file content (JSON string)\"}, \"fileName\": {\"type\": \"string\", \"description\": \"Logical file name for context (e.g. my-app.flogo)\"}, \"rulesPath\": {\"type\": \"string\", \"description\": \"Optional: path to YAML rules directory override\"}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"description\": \"Optional: filter rules by tag\"}}, \"required\": [\"content\"]}",
+                "fe_metadata": "{\"type\": \"object\", \"properties\": {\"content\": {\"type\": \"string\", \"description\": \"The raw .flogo file content (JSON string)\"}, \"fileName\": {\"type\": \"string\", \"description\": \"Logical file name for context (e.g. my-app.flogo)\"}, \"rulesPath\": {\"type\": \"string\", \"description\": \"Optional: path to YAML rules directory override\"}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"description\": \"Optional: filter rules by tag\"}}, \"required\": [\"content\"]}"
               }
             }
           },
-          "reply": {
-            "response": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
-          }
+          "name": "analyze_flogo"
         },
         {
-          "name": "rag_chat",
-          "description": "Ask a question using hybrid RAG retrieval + LLM answer generation. Delegates to agent-chat-service on port 7001.",
+          "description": "MCP tool: forwards RAG chat request to agent-chat-service (port 7001) and returns answer + sources.",
           "settings": {
             "handlerType": "Tool",
             "resourceUri": "",
             "handlerName": "rag_chat",
-            "handlerDescription": "Ask a question and get an answer backed by your knowledge base using hybrid RAG (BM25 + vector search) + LLM. Returns the answer, source documents used, and performance metrics. Choose an agentId to use a specific configured agent."
+            "handlerDescription": "Ask a question and get an answer backed by your knowledge base using hybrid RAG (BM25 + vector search) + LLM. Returns the answer, source documents used, and performance metrics. Choose an agentId to use a specific configured agent.",
+            "readOnlyToolHint": false,
+            "destructiveToolHint": false,
+            "idempotentToolHint": false,
+            "openWorldToolHint": true
           },
           "action": {
             "ref": "github.com/project-flogo/flow",
@@ -94,64 +103,73 @@
             }
           },
           "schemas": {
+            "reply": {
+              "response": {
+                "type": "json",
+                "value": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}",
+                "fe_metadata": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}"
+              }
+            },
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\": \"object\", \"properties\": {\"sessionId\": {\"type\": \"string\", \"description\": \"Conversation session ID for multi-turn context\"}, \"topK\": {\"type\": \"integer\", \"description\": \"Max source documents to retrieve (default: 5)\"}, \"message\": {\"type\": \"string\", \"description\": \"The user query/message\"}, \"collectionName\": {\"type\": \"string\", \"description\": \"The vector collection name (from get_agent.collectionName)\"}}, \"required\": [\"message\"]}"
+                "value": "{\"type\": \"object\", \"properties\": {\"sessionId\": {\"type\": \"string\", \"description\": \"Conversation session ID for multi-turn context\"}, \"topK\": {\"type\": \"integer\", \"description\": \"Max source documents to retrieve (default: 5)\"}, \"message\": {\"type\": \"string\", \"description\": \"The user query/message\"}, \"collectionName\": {\"type\": \"string\", \"description\": \"The vector collection name (from get_agent.collectionName)\"}}, \"required\": [\"message\"]}",
+                "fe_metadata": "{\"type\": \"object\", \"properties\": {\"sessionId\": {\"type\": \"string\", \"description\": \"Conversation session ID for multi-turn context\"}, \"topK\": {\"type\": \"integer\", \"description\": \"Max source documents to retrieve (default: 5)\"}, \"message\": {\"type\": \"string\", \"description\": \"The user query/message\"}, \"collectionName\": {\"type\": \"string\", \"description\": \"The vector collection name (from get_agent.collectionName)\"}}, \"required\": [\"message\"]}"
               }
             }
           },
-          "reply": {
-            "response": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
-          }
+          "name": "rag_chat"
         },
         {
-          "name": "list_agents",
-          "description": "List all registered agent configurations from the multi-agent registry. Delegates to config-service on port 7004.",
+          "description": "MCP tool: GET all agents from config-service (port 7004).",
           "settings": {
             "handlerType": "Tool",
             "resourceUri": "",
             "handlerName": "list_agents",
-            "handlerDescription": "Return all registered AI agent configurations from the Flogo Agent Studio registry. Each entry includes the agent ID, name, description, model, and capabilities. Use this before rag_chat to discover available agents."
+            "handlerDescription": "Return all registered AI agent configurations from the Flogo Agent Studio registry. Each entry includes the agent ID, name, description, model, and capabilities. Use this before rag_chat to discover available agents.",
+            "readOnlyToolHint": false,
+            "destructiveToolHint": false,
+            "idempotentToolHint": false,
+            "openWorldToolHint": true
           },
           "action": {
             "ref": "github.com/project-flogo/flow",
             "settings": {
               "flowURI": "res://flow:list_agents"
             },
-            "input": {},
             "output": {
               "response": "=$.response"
             }
           },
           "schemas": {
+            "reply": {
+              "response": {
+                "type": "json",
+                "value": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}",
+                "fe_metadata": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}"
+              }
+            },
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\": \"object\", \"properties\": {}}"
+                "value": "{\"type\": \"object\", \"properties\": {}}",
+                "fe_metadata": "{\"type\": \"object\", \"properties\": {}}"
               }
             }
           },
-          "reply": {
-            "response": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
-          }
+          "name": "list_agents"
         },
         {
-          "name": "get_agent",
-          "description": "Get a specific agent configuration by ID. Delegates to config-service on port 7004.",
+          "description": "MCP tool: GET a specific agent config from config-service (port 7004).",
           "settings": {
             "handlerType": "Tool",
             "resourceUri": "",
             "handlerName": "get_agent",
-            "handlerDescription": "Retrieve the full configuration of a specific AI agent by its ID. Returns systemPrompt, model, collectionName, tools, temperature, and other settings."
+            "handlerDescription": "Retrieve the full configuration of a specific AI agent by its ID. Returns systemPrompt, model, collectionName, tools, temperature, and other settings.",
+            "readOnlyToolHint": false,
+            "destructiveToolHint": false,
+            "idempotentToolHint": false,
+            "openWorldToolHint": true
           },
           "action": {
             "ref": "github.com/project-flogo/flow",
@@ -166,29 +184,34 @@
             }
           },
           "schemas": {
+            "reply": {
+              "response": {
+                "type": "json",
+                "value": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}",
+                "fe_metadata": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}"
+              }
+            },
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\": \"object\", \"properties\": {\"agentId\": {\"type\": \"string\", \"description\": \"The agent identifier\"}}, \"required\": [\"agentId\"]}"
+                "value": "{\"type\": \"object\", \"properties\": {\"agentId\": {\"type\": \"string\", \"description\": \"The agent identifier\"}}, \"required\": [\"agentId\"]}",
+                "fe_metadata": "{\"type\": \"object\", \"properties\": {\"agentId\": {\"type\": \"string\", \"description\": \"The agent identifier\"}}, \"required\": [\"agentId\"]}"
               }
             }
           },
-          "reply": {
-            "response": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
-          }
+          "name": "get_agent"
         },
         {
-          "name": "submit_feedback",
-          "description": "Record a thumbs-up or thumbs-down rating on an agent response. Delegates to feedback-service on port 7003.",
+          "description": "MCP tool: POST feedback entry to feedback-service (port 7003).",
           "settings": {
             "handlerType": "Tool",
             "resourceUri": "",
             "handlerName": "submit_feedback",
-            "handlerDescription": "Record a thumbs-up or thumbs-down rating for an AI agent response, with an optional comment. Persisted to the feedback log for evaluation and fine-tuning."
+            "handlerDescription": "Record a thumbs-up or thumbs-down rating for an AI agent response, with an optional comment. Persisted to the feedback log for evaluation and fine-tuning.",
+            "readOnlyToolHint": false,
+            "destructiveToolHint": false,
+            "idempotentToolHint": false,
+            "openWorldToolHint": true
           },
           "action": {
             "ref": "github.com/project-flogo/flow",
@@ -203,64 +226,73 @@
             }
           },
           "schemas": {
+            "reply": {
+              "response": {
+                "type": "json",
+                "value": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}",
+                "fe_metadata": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}"
+              }
+            },
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\": \"object\", \"properties\": {\"agentId\": {\"type\": \"string\"}, \"sessionId\": {\"type\": \"string\"}, \"messageId\": {\"type\": \"string\"}, \"rating\": {\"type\": \"string\", \"enum\": [\"thumbsUp\", \"thumbsDown\"]}, \"comment\": {\"type\": \"string\"}}, \"required\": [\"agentId\", \"sessionId\", \"messageId\", \"rating\"]}"
+                "value": "{\"type\": \"object\", \"properties\": {\"agentId\": {\"type\": \"string\"}, \"sessionId\": {\"type\": \"string\"}, \"messageId\": {\"type\": \"string\"}, \"rating\": {\"type\": \"string\", \"enum\": [\"thumbsUp\", \"thumbsDown\"]}, \"comment\": {\"type\": \"string\"}}, \"required\": [\"agentId\", \"sessionId\", \"messageId\", \"rating\"]}",
+                "fe_metadata": "{\"type\": \"object\", \"properties\": {\"agentId\": {\"type\": \"string\"}, \"sessionId\": {\"type\": \"string\"}, \"messageId\": {\"type\": \"string\"}, \"rating\": {\"type\": \"string\", \"enum\": [\"thumbsUp\", \"thumbsDown\"]}, \"comment\": {\"type\": \"string\"}}, \"required\": [\"agentId\", \"sessionId\", \"messageId\", \"rating\"]}"
               }
             }
           },
-          "reply": {
-            "response": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
-          }
+          "name": "submit_feedback"
         },
         {
-          "name": "get_feedback",
-          "description": "Read the feedback log. Delegates to feedback-service on port 7003.",
+          "description": "MCP tool: GET feedback log from feedback-service (port 7003).",
           "settings": {
             "handlerType": "Tool",
             "resourceUri": "",
             "handlerName": "get_feedback",
-            "handlerDescription": "Read the full feedback log. Returns raw JSON-lines text; each line is one feedback entry. Use to evaluate agent response quality and identify areas for improvement."
+            "handlerDescription": "Read the full feedback log. Returns raw JSON-lines text; each line is one feedback entry. Use to evaluate agent response quality and identify areas for improvement.",
+            "readOnlyToolHint": false,
+            "destructiveToolHint": false,
+            "idempotentToolHint": false,
+            "openWorldToolHint": true
           },
           "action": {
             "ref": "github.com/project-flogo/flow",
             "settings": {
               "flowURI": "res://flow:get_feedback"
             },
-            "input": {},
             "output": {
               "response": "=$.response"
             }
           },
           "schemas": {
+            "reply": {
+              "response": {
+                "type": "json",
+                "value": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}",
+                "fe_metadata": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}"
+              }
+            },
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\": \"object\", \"properties\": {}}"
+                "value": "{\"type\": \"object\", \"properties\": {}}",
+                "fe_metadata": "{\"type\": \"object\", \"properties\": {}}"
               }
             }
           },
-          "reply": {
-            "response": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
-          }
+          "name": "get_feedback"
         },
         {
-          "name": "create_agent",
-          "description": "Create a new AI agent in design-service with name, description, and LLM/RAG config.",
+          "description": "MCP tool: creates a new agent in design-service and returns the created agent record.",
           "settings": {
             "handlerType": "Tool",
             "resourceUri": "",
             "handlerName": "create_agent",
-            "handlerDescription": "Create a new AI agent in Flogo Agent Studio. Provide name, description, and config (systemPrompt, collectionName, topK, llmProvider, llmModel, temperature). Returns the created agent record including its ID."
+            "handlerDescription": "Create a new AI agent in Flogo Agent Studio. Provide name, description, and config (systemPrompt, collectionName, topK, llmProvider, llmModel, temperature). Returns the created agent record including its ID.",
+            "readOnlyToolHint": false,
+            "destructiveToolHint": false,
+            "idempotentToolHint": false,
+            "openWorldToolHint": true
           },
           "action": {
             "ref": "github.com/project-flogo/flow",
@@ -275,22 +307,34 @@
             }
           },
           "schemas": {
+            "reply": {
+              "response": {
+                "type": "json",
+                "value": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}",
+                "fe_metadata": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}"
+              }
+            },
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}"
+                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}"
               }
             }
-          }
+          },
+          "name": "create_agent"
         },
         {
-          "name": "deploy_agent",
-          "description": "Activate an agent so it is ready to handle chat requests. Delegates to deploy-service on port 7030.",
+          "description": "MCP tool: activates an agent via deploy-service.",
           "settings": {
             "handlerType": "Tool",
             "resourceUri": "",
             "handlerName": "deploy_agent",
-            "handlerDescription": "Activate an AI agent by setting its status to active. Once active the agent can serve chat requests. Returns agentId, status, and chat URL."
+            "handlerDescription": "Activate an AI agent by setting its status to active. Once active the agent can serve chat requests. Returns agentId, status, and chat URL.",
+            "readOnlyToolHint": false,
+            "destructiveToolHint": false,
+            "idempotentToolHint": false,
+            "openWorldToolHint": true
           },
           "action": {
             "ref": "github.com/project-flogo/flow",
@@ -305,41 +349,61 @@
             }
           },
           "schemas": {
+            "reply": {
+              "response": {
+                "type": "json",
+                "value": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}",
+                "fe_metadata": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}"
+              }
+            },
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\",\"description\":\"The agent ID to activate\"}},\"required\":[\"agentId\"]}"
+                "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\",\"description\":\"The agent ID to activate\"}},\"required\":[\"agentId\"]}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\",\"description\":\"The agent ID to activate\"}},\"required\":[\"agentId\"]}"
               }
             }
-          }
+          },
+          "name": "deploy_agent_tool"
         },
         {
-          "name": "list_templates",
-          "description": "List available agent templates from design-service. Use before create_agent to pick a starting config.",
+          "description": "MCP tool: retrieves available agent templates from design-service.",
           "settings": {
             "handlerType": "Tool",
             "resourceUri": "",
             "handlerName": "list_templates",
-            "handlerDescription": "List all AI agent templates from the Flogo Agent Studio registry. Each template includes id, name, description, and a pre-configured config block you can pass directly to create_agent."
+            "handlerDescription": "List all AI agent templates from the Flogo Agent Studio registry. Each template includes id, name, description, and a pre-configured config block you can pass directly to create_agent.",
+            "readOnlyToolHint": false,
+            "destructiveToolHint": false,
+            "idempotentToolHint": false,
+            "openWorldToolHint": true
           },
           "action": {
             "ref": "github.com/project-flogo/flow",
             "settings": {
               "flowURI": "res://flow:list_templates_tool"
             },
-            "input": {},
             "output": {
               "response": "=$.response"
             }
           },
           "schemas": {
+            "reply": {
+              "response": {
+                "type": "json",
+                "value": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}",
+                "fe_metadata": "{\r\n    \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n }\r\n}"
+              }
+            },
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\":\"object\",\"properties\":{}}"
+                "value": "{\"type\":\"object\",\"properties\":{}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{}}"
               }
             }
-          }
+          },
+          "name": "list_templates_tool"
         }
       ]
     }
@@ -354,37 +418,47 @@
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest"
+            "to": "LogRequest",
+            "type": "label",
+            "label": "Start to LogRequest"
           },
           {
             "id": 2,
             "from": "LogRequest",
-            "to": "CallRuleEngine"
+            "to": "CallRuleEngine",
+            "type": "label",
+            "label": "LogRequest to CallRuleEngine"
           },
           {
             "id": 3,
             "from": "CallRuleEngine",
-            "to": "MapResult"
+            "to": "MapResult",
+            "type": "label",
+            "label": "CallRuleEngine to MapResult"
           },
           {
             "id": 4,
             "from": "MapResult",
-            "to": "Return"
+            "to": "Return",
+            "type": "label",
+            "label": "MapResult to Return"
           }
         ],
         "tasks": [
           {
             "id": "Start",
             "name": "Start",
+            "description": "",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
             "id": "LogRequest",
             "name": "LogRequest",
+            "description": "",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
@@ -397,58 +471,129 @@
             "id": "CallRuleEngine",
             "name": "CallRuleEngine",
             "description": "POST to rule-engine-service /api/analyze",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_general_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "POST",
                 "Uri": "=$property[\"RULE_ENGINE_URL\"]",
-                "body": "=$flow.body",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
+                },
                 "dynamicRequestHeaders": {
-                  "Header": [
-                    {
-                      "Name": "Authorization",
-                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                      "Type": "string"
-                    }
-                  ]
-                }
+                  "mapping": {
+                    "Header": [
+                      {
+                        "Name": "Authorization",
+                        "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                        "Type": "string"
+                      }
+                    ]
+                  }
+                },
+                "body": "=$flow.body"
               },
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
                 "responseType": "text/plain",
                 "responseOutput": "Raw"
-              }
-            }
-          },
-          {
-            "id": "Return",
-            "name": "Return",
-            "activity": {
-              "ref": "#act_default_actreturn",
-              "settings": {
-                "mappings": {
-                  "response": "=$activity[MapResult].result"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "responseBody": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "MapResult",
             "name": "MapResult",
-            "description": "Build MCP ToolResult structure",
+            "description": "Map to MCP response structure",
             "activity": {
-              "ref": "#act_mcptoolresult",
+              "ref": "#mapper",
               "input": {
-                "data": "=coerce.toString($activity[CallRuleEngine].responseBody.data)"
+                "input": {
+                  "mapping": {
+                    "data": "=$activity[CallRuleEngine].responseBody.data",
+                    "error": ""
+                  }
+                }
+              },
+              "schemas": {
+                "input": {
+                  "input": "schema://data,error"
+                },
+                "output": {
+                  "output": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}"
+                  }
+                }
+              },
+              "feSchemaMap": {}
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].output"
+                }
               }
             }
           }
         ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsUnVsZUVuZ2luZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
         "metadata": {
           "input": [
             {
@@ -459,9 +604,13 @@
           "output": [
             {
               "name": "response",
-              "type": "any"
+              "type": "object"
             }
-          ]
+          ],
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"object\",\"properties\":{}}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"response\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
         }
       }
     },
@@ -474,37 +623,47 @@
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest"
+            "to": "LogRequest",
+            "type": "label",
+            "label": "Start to LogRequest"
           },
           {
             "id": 2,
             "from": "LogRequest",
-            "to": "CallChatService"
+            "to": "CallChatService",
+            "type": "label",
+            "label": "LogRequest to CallChatService"
           },
           {
             "id": 3,
             "from": "CallChatService",
-            "to": "MapResult"
+            "to": "MapResult",
+            "type": "label",
+            "label": "CallChatService to MapResult"
           },
           {
             "id": 4,
             "from": "MapResult",
-            "to": "Return"
+            "to": "Return",
+            "type": "label",
+            "label": "MapResult to Return"
           }
         ],
         "tasks": [
           {
             "id": "Start",
             "name": "Start",
+            "description": "",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
             "id": "LogRequest",
             "name": "LogRequest",
+            "description": "",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
@@ -517,58 +676,129 @@
             "id": "CallChatService",
             "name": "CallChatService",
             "description": "POST to agent-chat-service /api/chat",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_general_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "POST",
                 "Uri": "=$property[\"CHAT_SERVICE_URL\"]",
-                "body": "=$flow.body",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
+                },
                 "dynamicRequestHeaders": {
-                  "Header": [
-                    {
-                      "Name": "Authorization",
-                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                      "Type": "string"
-                    }
-                  ]
-                }
+                  "mapping": {
+                    "Header": [
+                      {
+                        "Name": "Authorization",
+                        "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                        "Type": "string"
+                      }
+                    ]
+                  }
+                },
+                "body": "=$flow.body"
               },
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
                 "responseType": "text/plain",
                 "responseOutput": "Raw"
-              }
-            }
-          },
-          {
-            "id": "Return",
-            "name": "Return",
-            "activity": {
-              "ref": "#act_default_actreturn",
-              "settings": {
-                "mappings": {
-                  "response": "=$activity[MapResult].result"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "responseBody": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "MapResult",
             "name": "MapResult",
-            "description": "Build MCP ToolResult structure",
+            "description": "Map to MCP response structure",
             "activity": {
-              "ref": "#act_mcptoolresult",
+              "ref": "#mapper",
               "input": {
-                "data": "=coerce.toString($activity[CallChatService].responseBody.data)"
+                "input": {
+                  "mapping": {
+                    "data": "=$activity[CallChatService].responseBody.data",
+                    "error": ""
+                  }
+                }
+              },
+              "schemas": {
+                "input": {
+                  "input": "schema://data,error"
+                },
+                "output": {
+                  "output": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}"
+                  }
+                }
+              },
+              "feSchemaMap": {}
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].output"
+                }
               }
             }
           }
         ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsQ2hhdFNlcnZpY2UiOnsieCI6NDUwLCJ5Ijo1MH0sIk1hcFJlc3VsdCI6eyJ4Ijo2NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjg1MCwieSI6NTB9fQ==",
         "metadata": {
           "input": [
             {
@@ -579,9 +809,13 @@
           "output": [
             {
               "name": "response",
-              "type": "any"
+              "type": "object"
             }
-          ]
+          ],
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"object\",\"properties\":{}}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"response\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
         }
       }
     },
@@ -594,37 +828,47 @@
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest"
+            "to": "LogRequest",
+            "type": "label",
+            "label": "Start to LogRequest"
           },
           {
             "id": 2,
             "from": "LogRequest",
-            "to": "CallConfigService"
+            "to": "CallConfigService",
+            "type": "label",
+            "label": "LogRequest to CallConfigService"
           },
           {
             "id": 3,
             "from": "CallConfigService",
-            "to": "MapResult"
+            "to": "MapResult",
+            "type": "label",
+            "label": "CallConfigService to MapResult"
           },
           {
             "id": 4,
             "from": "MapResult",
-            "to": "Return"
+            "to": "Return",
+            "type": "label",
+            "label": "MapResult to Return"
           }
         ],
         "tasks": [
           {
             "id": "Start",
             "name": "Start",
+            "description": "",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
             "id": "LogRequest",
             "name": "LogRequest",
+            "description": "",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
@@ -637,23 +881,47 @@
             "id": "CallConfigService",
             "name": "CallConfigService",
             "description": "GET config-service /api/agents",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_general_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Accept": "application/json",
-                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/v1/agents\")",
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Accept": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
+                },
                 "dynamicRequestHeaders": {
-                  "Header": [
-                    {
-                      "Name": "Authorization",
-                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                      "Type": "string"
-                    }
-                  ]
+                  "mapping": {
+                    "Header": [
+                      {
+                        "Name": "Authorization",
+                        "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                        "Type": "string"
+                      }
+                    ]
+                  }
                 }
               },
               "output": {
@@ -661,41 +929,91 @@
                 "throwError": false,
                 "responseType": "text/plain",
                 "responseOutput": "Raw"
-              }
-            }
-          },
-          {
-            "id": "Return",
-            "name": "Return",
-            "activity": {
-              "ref": "#act_default_actreturn",
-              "settings": {
-                "mappings": {
-                  "response": "=$activity[MapResult].result"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "responseBody": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "MapResult",
             "name": "MapResult",
-            "description": "Build MCP ToolResult structure",
+            "description": "Map to MCP response structure",
             "activity": {
-              "ref": "#act_mcptoolresult",
+              "ref": "#mapper",
               "input": {
-                "data": "=coerce.toString($activity[CallConfigService].responseBody.data)"
+                "input": {
+                  "mapping": {
+                    "data": "=$activity[CallConfigService].responseBody.data",
+                    "error": ""
+                  }
+                }
+              },
+              "schemas": {
+                "input": {
+                  "input": "schema://data,error"
+                },
+                "output": {
+                  "output": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}"
+                  }
+                }
+              },
+              "feSchemaMap": {}
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].output"
+                }
               }
             }
           }
         ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsQ29uZmlnU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
         "metadata": {
           "input": [],
           "output": [
             {
               "name": "response",
-              "type": "any"
+              "type": "object"
             }
-          ]
+          ],
+          "fe_metadata": {
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"response\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
         }
       }
     },
@@ -708,37 +1026,47 @@
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest"
+            "to": "LogRequest",
+            "type": "label",
+            "label": "Start to LogRequest"
           },
           {
             "id": 2,
             "from": "LogRequest",
-            "to": "CallConfigService"
+            "to": "CallConfigService",
+            "type": "label",
+            "label": "LogRequest to CallConfigService"
           },
           {
             "id": 3,
             "from": "CallConfigService",
-            "to": "MapResult"
+            "to": "MapResult",
+            "type": "label",
+            "label": "CallConfigService to MapResult"
           },
           {
             "id": 4,
             "from": "MapResult",
-            "to": "Return"
+            "to": "Return",
+            "type": "label",
+            "label": "MapResult to Return"
           }
         ],
         "tasks": [
           {
             "id": "Start",
             "name": "Start",
+            "description": "",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
             "id": "LogRequest",
             "name": "LogRequest",
+            "description": "",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
@@ -751,23 +1079,47 @@
             "id": "CallConfigService",
             "name": "CallConfigService",
             "description": "GET config-service /api/agents/{agentId}",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_general_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Accept": "application/json",
-                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/v1/agents/\", $flow.agentId)",
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Accept": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
+                },
                 "dynamicRequestHeaders": {
-                  "Header": [
-                    {
-                      "Name": "Authorization",
-                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                      "Type": "string"
-                    }
-                  ]
+                  "mapping": {
+                    "Header": [
+                      {
+                        "Name": "Authorization",
+                        "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                        "Type": "string"
+                      }
+                    ]
+                  }
                 }
               },
               "output": {
@@ -775,33 +1127,80 @@
                 "throwError": false,
                 "responseType": "text/plain",
                 "responseOutput": "Raw"
-              }
-            }
-          },
-          {
-            "id": "Return",
-            "name": "Return",
-            "activity": {
-              "ref": "#act_default_actreturn",
-              "settings": {
-                "mappings": {
-                  "response": "=$activity[MapResult].result"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "responseBody": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "MapResult",
             "name": "MapResult",
-            "description": "Build MCP ToolResult structure",
+            "description": "Map to MCP response structure",
             "activity": {
-              "ref": "#act_mcptoolresult",
+              "ref": "#mapper",
               "input": {
-                "data": "=coerce.toString($activity[CallConfigService].responseBody.data)"
+                "input": {
+                  "mapping": {
+                    "data": "=$activity[CallConfigService].responseBody.data",
+                    "error": ""
+                  }
+                }
+              },
+              "schemas": {
+                "input": {
+                  "input": "schema://data,error"
+                },
+                "output": {
+                  "output": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}"
+                  }
+                }
+              },
+              "feSchemaMap": {}
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].output"
+                }
               }
             }
           }
         ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsQ29uZmlnU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
         "metadata": {
           "input": [
             {
@@ -812,9 +1211,13 @@
           "output": [
             {
               "name": "response",
-              "type": "any"
+              "type": "object"
             }
-          ]
+          ],
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"response\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
         }
       }
     },
@@ -827,37 +1230,47 @@
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest"
+            "to": "LogRequest",
+            "type": "label",
+            "label": "Start to LogRequest"
           },
           {
             "id": 2,
             "from": "LogRequest",
-            "to": "CallFeedbackService"
+            "to": "CallFeedbackService",
+            "type": "label",
+            "label": "LogRequest to CallFeedbackService"
           },
           {
             "id": 3,
             "from": "CallFeedbackService",
-            "to": "MapResult"
+            "to": "MapResult",
+            "type": "label",
+            "label": "CallFeedbackService to MapResult"
           },
           {
             "id": 4,
             "from": "MapResult",
-            "to": "Return"
+            "to": "Return",
+            "type": "label",
+            "label": "MapResult to Return"
           }
         ],
         "tasks": [
           {
             "id": "Start",
             "name": "Start",
+            "description": "",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
             "id": "LogRequest",
             "name": "LogRequest",
+            "description": "",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
@@ -870,58 +1283,129 @@
             "id": "CallFeedbackService",
             "name": "CallFeedbackService",
             "description": "POST to feedback-service /api/feedback",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_general_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "POST",
                 "Uri": "=$property[\"FEEDBACK_SERVICE_URL\"]",
-                "body": "=$flow.body",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
+                },
                 "dynamicRequestHeaders": {
-                  "Header": [
-                    {
-                      "Name": "Authorization",
-                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                      "Type": "string"
-                    }
-                  ]
-                }
+                  "mapping": {
+                    "Header": [
+                      {
+                        "Name": "Authorization",
+                        "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                        "Type": "string"
+                      }
+                    ]
+                  }
+                },
+                "body": "=$flow.body"
               },
               "output": {
                 "configureResponseCodes": false,
                 "throwError": false,
                 "responseType": "text/plain",
                 "responseOutput": "Raw"
-              }
-            }
-          },
-          {
-            "id": "Return",
-            "name": "Return",
-            "activity": {
-              "ref": "#act_default_actreturn",
-              "settings": {
-                "mappings": {
-                  "response": "=$activity[MapResult].result"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "responseBody": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "MapResult",
             "name": "MapResult",
-            "description": "Build MCP ToolResult structure",
+            "description": "Map to MCP response structure",
             "activity": {
-              "ref": "#act_mcptoolresult",
+              "ref": "#mapper",
               "input": {
-                "data": "=coerce.toString($activity[CallFeedbackService].responseBody.data)"
+                "input": {
+                  "mapping": {
+                    "data": "=$activity[CallFeedbackService].responseBody.data",
+                    "error": ""
+                  }
+                }
+              },
+              "schemas": {
+                "input": {
+                  "input": "schema://data,error"
+                },
+                "output": {
+                  "output": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}"
+                  }
+                }
+              },
+              "feSchemaMap": {}
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].output"
+                }
               }
             }
           }
         ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsRmVlZGJhY2tTZXJ2aWNlIjp7IngiOjQ1MCwieSI6NTB9LCJNYXBSZXN1bHQiOnsieCI6NjUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo4NTAsInkiOjUwfX0=",
         "metadata": {
           "input": [
             {
@@ -932,9 +1416,13 @@
           "output": [
             {
               "name": "response",
-              "type": "any"
+              "type": "object"
             }
-          ]
+          ],
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"object\",\"properties\":{}}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"response\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
         }
       }
     },
@@ -947,37 +1435,47 @@
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest"
+            "to": "LogRequest",
+            "type": "label",
+            "label": "Start to LogRequest"
           },
           {
             "id": 2,
             "from": "LogRequest",
-            "to": "CallFeedbackService"
+            "to": "CallFeedbackService",
+            "type": "label",
+            "label": "LogRequest to CallFeedbackService"
           },
           {
             "id": 3,
             "from": "CallFeedbackService",
-            "to": "MapResult"
+            "to": "MapResult",
+            "type": "label",
+            "label": "CallFeedbackService to MapResult"
           },
           {
             "id": 4,
             "from": "MapResult",
-            "to": "Return"
+            "to": "Return",
+            "type": "label",
+            "label": "MapResult to Return"
           }
         ],
         "tasks": [
           {
             "id": "Start",
             "name": "Start",
+            "description": "",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
             "id": "LogRequest",
             "name": "LogRequest",
+            "description": "",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
@@ -990,23 +1488,47 @@
             "id": "CallFeedbackService",
             "name": "CallFeedbackService",
             "description": "GET feedback-service /api/feedback",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_general_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Accept": "application/json",
-                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"FEEDBACK_SERVICE_BASE_URL\"], \"/api/feedback\")",
+                "Uri": "=$property[\"FEEDBACK_SERVICE_URL\"]",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Accept": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
+                },
                 "dynamicRequestHeaders": {
-                  "Header": [
-                    {
-                      "Name": "Authorization",
-                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                      "Type": "string"
-                    }
-                  ]
+                  "mapping": {
+                    "Header": [
+                      {
+                        "Name": "Authorization",
+                        "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                        "Type": "string"
+                      }
+                    ]
+                  }
                 }
               },
               "output": {
@@ -1014,41 +1536,91 @@
                 "throwError": false,
                 "responseType": "text/plain",
                 "responseOutput": "Raw"
-              }
-            }
-          },
-          {
-            "id": "Return",
-            "name": "Return",
-            "activity": {
-              "ref": "#act_default_actreturn",
-              "settings": {
-                "mappings": {
-                  "response": "=$activity[MapResult].result"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "responseBody": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "MapResult",
             "name": "MapResult",
-            "description": "Build MCP ToolResult structure",
+            "description": "Map to MCP response structure",
             "activity": {
-              "ref": "#act_mcptoolresult",
+              "ref": "#mapper",
               "input": {
-                "data": "=coerce.toString($activity[CallFeedbackService].responseBody.data)"
+                "input": {
+                  "mapping": {
+                    "data": "=$activity[CallFeedbackService].responseBody.data",
+                    "error": ""
+                  }
+                }
+              },
+              "schemas": {
+                "input": {
+                  "input": "schema://data,error"
+                },
+                "output": {
+                  "output": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}"
+                  }
+                }
+              },
+              "feSchemaMap": {}
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].output"
+                }
               }
             }
           }
         ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsRmVlZGJhY2tTZXJ2aWNlIjp7IngiOjQ1MCwieSI6NTB9LCJNYXBSZXN1bHQiOnsieCI6NjUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo4NTAsInkiOjUwfX0=",
         "metadata": {
           "input": [],
           "output": [
             {
               "name": "response",
-              "type": "any"
+              "type": "object"
             }
-          ]
+          ],
+          "fe_metadata": {
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"response\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
         }
       }
     },
@@ -1061,37 +1633,47 @@
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest"
+            "to": "LogRequest",
+            "type": "label",
+            "label": "Start to LogRequest"
           },
           {
             "id": 2,
             "from": "LogRequest",
-            "to": "CallService"
+            "to": "CallService",
+            "type": "label",
+            "label": "LogRequest to CallService"
           },
           {
             "id": 3,
             "from": "CallService",
-            "to": "MapResult"
+            "to": "MapResult",
+            "type": "label",
+            "label": "CallService to MapResult"
           },
           {
             "id": 4,
             "from": "MapResult",
-            "to": "Return"
+            "to": "Return",
+            "type": "label",
+            "label": "MapResult to Return"
           }
         ],
         "tasks": [
           {
             "id": "Start",
             "name": "Start",
+            "description": "",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
             "id": "LogRequest",
             "name": "LogRequest",
+            "description": "",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
@@ -1104,36 +1686,62 @@
             "id": "CallService",
             "name": "CallService",
             "description": "POST to design-service /api/v1/agents",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_general_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "POST",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents\")",
-                "body": {
-                  "name": "=$flow.body.name",
-                  "description": "=$flow.body.description",
-                  "config": {
-                    "systemPrompt": "=$flow.body.systemPrompt",
-                    "collectionName": "=$flow.body.collectionName",
-                    "topK": "=$flow.body.topK",
-                    "llmProvider": "=$flow.body.llmProvider",
-                    "llmModel": "=$flow.body.llmModel",
-                    "llmBaseUrl": "=$flow.body.llmBaseUrl",
-                    "temperature": "=$flow.body.temperature"
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
+                    "X-Request-ID": "=utils.uuid()"
                   }
                 },
                 "dynamicRequestHeaders": {
-                  "Header": [
-                    {
-                      "Name": "Authorization",
-                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                      "Type": "string"
+                  "mapping": {
+                    "Header": [
+                      {
+                        "Name": "Authorization",
+                        "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                        "Type": "string"
+                      }
+                    ]
+                  }
+                },
+                "body": {
+                  "mapping": {
+                    "name": "=$flow.body.name",
+                    "description": "=$flow.body.description",
+                    "config": {
+                      "systemPrompt": "=$flow.body.systemPrompt",
+                      "collectionName": "=$flow.body.collectionName",
+                      "topK": "=$flow.body.topK",
+                      "llmProvider": "=$flow.body.llmProvider",
+                      "llmModel": "=$flow.body.llmModel",
+                      "llmBaseUrl": "=$flow.body.llmBaseUrl",
+                      "temperature": "=$flow.body.temperature"
                     }
-                  ]
+                  }
                 }
               },
               "output": {
@@ -1141,33 +1749,80 @@
                 "throwError": false,
                 "responseType": "text/plain",
                 "responseOutput": "Raw"
-              }
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "responseBody": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
+                }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "MapResult",
             "name": "MapResult",
+            "description": "Map to MCP response structure",
             "activity": {
-              "ref": "#act_mcptoolresult",
+              "ref": "#mapper",
               "input": {
-                "data": "=coerce.toString($activity[CallService].responseBody.data)"
-              }
+                "input": {
+                  "mapping": {
+                    "data": "=$activity[CallService].responseBody.data",
+                    "error": ""
+                  }
+                }
+              },
+              "schemas": {
+                "input": {
+                  "input": "schema://data,error"
+                },
+                "output": {
+                  "output": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}"
+                  }
+                }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "Return",
             "name": "Return",
+            "description": "",
             "activity": {
-              "ref": "#act_default_actreturn",
+              "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "response": "=$activity[MapResult].result"
+                  "response": "=$activity[MapResult].output"
                 }
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4IjoxMDAsInkiOjEwMH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
         "metadata": {
           "input": [
             {
@@ -1178,10 +1833,13 @@
           "output": [
             {
               "name": "response",
-              "type": "any"
+              "type": "object"
             }
           ],
-          "fe_metadata": {}
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"object\",\"properties\":{}}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"response\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
         }
       }
     },
@@ -1194,37 +1852,47 @@
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest"
+            "to": "LogRequest",
+            "type": "label",
+            "label": "Start to LogRequest"
           },
           {
             "id": 2,
             "from": "LogRequest",
-            "to": "CallService"
+            "to": "CallService",
+            "type": "label",
+            "label": "LogRequest to CallService"
           },
           {
             "id": 3,
             "from": "CallService",
-            "to": "MapResult"
+            "to": "MapResult",
+            "type": "label",
+            "label": "CallService to MapResult"
           },
           {
             "id": 4,
             "from": "MapResult",
-            "to": "Return"
+            "to": "Return",
+            "type": "label",
+            "label": "MapResult to Return"
           }
         ],
         "tasks": [
           {
             "id": "Start",
             "name": "Start",
+            "description": "",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
             "id": "LogRequest",
             "name": "LogRequest",
+            "description": "",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
@@ -1237,23 +1905,47 @@
             "id": "CallService",
             "name": "CallService",
             "description": "POST to deploy-service /api/v1/agents/{agentId}/deploy",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_general_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "POST",
-                "Uri": "=string.concat($property[\"DEPLOY_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId), \"/deploy\")",
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
+                },
                 "dynamicRequestHeaders": {
-                  "Header": [
-                    {
-                      "Name": "Authorization",
-                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                      "Type": "string"
-                    }
-                  ]
+                  "mapping": {
+                    "Header": [
+                      {
+                        "Name": "Authorization",
+                        "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                        "Type": "string"
+                      }
+                    ]
+                  }
                 }
               },
               "output": {
@@ -1261,33 +1953,80 @@
                 "throwError": false,
                 "responseType": "text/plain",
                 "responseOutput": "Raw"
-              }
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "responseBody": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
+                }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "MapResult",
             "name": "MapResult",
+            "description": "Map to MCP response structure",
             "activity": {
-              "ref": "#act_mcptoolresult",
+              "ref": "#mapper",
               "input": {
-                "data": "=coerce.toString($activity[CallService].responseBody.data)"
-              }
+                "input": {
+                  "mapping": {
+                    "data": "=$activity[CallService].responseBody.data",
+                    "error": ""
+                  }
+                }
+              },
+              "schemas": {
+                "input": {
+                  "input": "schema://data,error"
+                },
+                "output": {
+                  "output": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}"
+                  }
+                }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "Return",
             "name": "Return",
+            "description": "",
             "activity": {
-              "ref": "#act_default_actreturn",
+              "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "response": "=$activity[MapResult].result"
+                  "response": "=$activity[MapResult].output"
                 }
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4IjoxMDAsInkiOjEwMH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
         "metadata": {
           "input": [
             {
@@ -1298,10 +2037,13 @@
           "output": [
             {
               "name": "response",
-              "type": "any"
+              "type": "object"
             }
           ],
-          "fe_metadata": {}
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"response\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
         }
       }
     },
@@ -1314,37 +2056,47 @@
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest"
+            "to": "LogRequest",
+            "type": "label",
+            "label": "Start to LogRequest"
           },
           {
             "id": 2,
             "from": "LogRequest",
-            "to": "CallService"
+            "to": "CallService",
+            "type": "label",
+            "label": "LogRequest to CallService"
           },
           {
             "id": 3,
             "from": "CallService",
-            "to": "MapResult"
+            "to": "MapResult",
+            "type": "label",
+            "label": "CallService to MapResult"
           },
           {
             "id": 4,
             "from": "MapResult",
-            "to": "Return"
+            "to": "Return",
+            "type": "label",
+            "label": "MapResult to Return"
           }
         ],
         "tasks": [
           {
             "id": "Start",
             "name": "Start",
+            "description": "",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
             "id": "LogRequest",
             "name": "LogRequest",
+            "description": "",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
@@ -1357,23 +2109,47 @@
             "id": "CallService",
             "name": "CallService",
             "description": "GET design-service /api/v1/templates",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_general_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "=$property[\"API_AUTH_HEADER\"]"
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/templates\")",
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
+                },
                 "dynamicRequestHeaders": {
-                  "Header": [
-                    {
-                      "Name": "Authorization",
-                      "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
-                      "Type": "string"
-                    }
-                  ]
+                  "mapping": {
+                    "Header": [
+                      {
+                        "Name": "Authorization",
+                        "Value": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                        "Type": "string"
+                      }
+                    ]
+                  }
                 }
               },
               "output": {
@@ -1381,42 +2157,91 @@
                 "throwError": false,
                 "responseType": "text/plain",
                 "responseOutput": "Raw"
-              }
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "responseBody": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
+                }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "MapResult",
             "name": "MapResult",
+            "description": "Map to MCP response structure",
             "activity": {
-              "ref": "#act_mcptoolresult",
+              "ref": "#mapper",
               "input": {
-                "data": "=coerce.toString($activity[CallService].responseBody.data)"
-              }
+                "input": {
+                  "mapping": {
+                    "data": "=$activity[CallService].responseBody.data",
+                    "error": ""
+                  }
+                }
+              },
+              "schemas": {
+                "input": {
+                  "input": "schema://data,error"
+                },
+                "output": {
+                  "output": {
+                    "type": "json",
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}"
+                  }
+                }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "Return",
             "name": "Return",
+            "description": "",
             "activity": {
-              "ref": "#act_default_actreturn",
+              "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "response": "=$activity[MapResult].result"
+                  "response": "=$activity[MapResult].output"
                 }
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4IjoxMDAsInkiOjEwMH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
         "metadata": {
           "input": [],
           "output": [
             {
               "name": "response",
-              "type": "any"
+              "type": "object"
             }
           ],
-          "fe_metadata": {}
+          "fe_metadata": {
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"response\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
         }
       }
     }
@@ -1425,31 +2250,26 @@
     {
       "name": "RULE_ENGINE_URL",
       "type": "string",
-      "description": "Rule engine service analyze endpoint. Override at deployment.",
-      "value": "http://localhost:7000/api/analyze"
+      "value": "http://localhost:7097/api/analyze"
     },
     {
       "name": "CHAT_SERVICE_URL",
       "type": "string",
-      "description": "Agent chat service chat endpoint. Override at deployment.",
       "value": "http://localhost:7001/api/chat"
     },
     {
       "name": "CONFIG_SERVICE_BASE_URL",
       "type": "string",
-      "description": "Config service base URL. Override at deployment.",
       "value": "http://localhost:7020"
     },
     {
       "name": "FEEDBACK_SERVICE_URL",
       "type": "string",
-      "description": "Feedback service submit endpoint. Override at deployment.",
       "value": "http://localhost:7003/api/feedback"
     },
     {
       "name": "FEEDBACK_SERVICE_BASE_URL",
       "type": "string",
-      "description": "Feedback service base URL for GET operations. Override at deployment.",
       "value": "http://localhost:7003"
     },
     {
@@ -1460,32 +2280,42 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
-      "value": "changeme"
+      "value": "SECRET:sMg2BZ59jclKl6GnqLoPtrHh/yWS5ufo"
     },
     {
       "name": "API_AUTH_HEADER",
       "type": "string",
-      "description": "Pre-computed Authorization header for outbound calls. Matches API_KEY=changeme by default.",
       "value": "Basic ZmxvZ286Y2hhbmdlbWU="
     },
     {
       "name": "DESIGN_SERVICE_URL",
       "type": "string",
-      "description": "Design service base URL.",
       "value": "http://localhost:7020"
     },
     {
       "name": "DEPLOY_SERVICE_URL",
       "type": "string",
-      "description": "Deploy service base URL.",
       "value": "http://localhost:7030"
     }
   ],
+  "schemas": {
+    "data,error": {
+      "type": "json",
+      "value": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}",
+      "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    },\n    \"error\": {\n      \"type\": \"string\"\n    }\n  }\n}"
+    }
+  },
   "connections": {},
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLW1jcC9zcmMvYXBwL01DUCIsImlkIjoiTUNQRmxvZ28iLCJ2ZXJzaW9uIjoiMS4wLjIiLCJ0YWciOiIxLjAuMi1iMDEiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIE1vZGVsIENvbnRleHQgUHJvdG9jb2wgKE1DUCkiLCJzM2xvY2F0aW9uIjoibG9jYWwvTUNQRmxvZ28iLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tbWNwL3NyYy9hcHAvTUNQIiwiaWQiOiJNQ1AiLCJ2ZXJzaW9uIjoiMS4wLjEiLCJ0YWciOiIxLjAuMS1iMDIiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIE1vZGVsIENvbnRleHQgUHJvdG9jb2wgKE1DUCkiLCJzM2xvY2F0aW9uIjoiVGliY28vTUNQIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1tY3Avc3JjL2FwcC9NQ1AiLCJpZCI6Ik1DUCIsInZlcnNpb24iOiIxLjAuMiIsInRhZyI6IjEuMC4yLWIwMSIsIm5hbWUiOiJNb2RlbCBDb250ZXh0IFByb3RvY29sIChNQ1ApIiwiczNsb2NhdGlvbiI6IlRpYmNvL01DUCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9XQ==",
   "metadata": {
-    "endpoints": [],
+    "endpoints": [
+      {
+        "protocol": "http",
+        "port": "3333",
+        "title": "FlogoDevAssistMCP",
+        "type": "public"
+      }
+    ],
     "flogoVersion": "2.26.3"
   }
 }

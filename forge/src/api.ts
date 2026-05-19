@@ -6,7 +6,7 @@ const STORAGE_KEY = "forge_api_key";
 
 function authHeader(): string {
   const key = localStorage.getItem(STORAGE_KEY) ?? "changeme";
-  return "Basic " + btoa(":" + key);
+  return "Basic " + btoa("flogo:" + key);
 }
 
 function headers(includeBody = false): HeadersInit {
@@ -47,6 +47,21 @@ function normalizeAgent(a: unknown): Agent {
   return agent as Agent;
 }
 
+// Design-service wraps all single/list responses in {records:[...]}
+function unwrapOne<T>(data: { records: T[] } | T): T {
+  if (data && typeof data === "object" && "records" in (data as object)) {
+    return (data as { records: T[] }).records[0];
+  }
+  return data as T;
+}
+
+function unwrapMany<T>(data: { records: T[] } | T[]): T[] {
+  if (data && !Array.isArray(data) && typeof data === "object" && "records" in (data as object)) {
+    return (data as { records: T[] }).records ?? [];
+  }
+  return (data as T[]) ?? [];
+}
+
 function get(url: string): Promise<Response> {
   return fetch(url, { headers: headers() });
 }
@@ -61,17 +76,23 @@ function mutate(url: string, method: string, body?: object): Promise<Response> {
 
 export const listAgents = (status?: string): Promise<Agent[]> =>
   get(status ? `${BASE}?status=${encodeURIComponent(status)}` : BASE)
-    .then(json<Agent[]>)
-    .then((agents) => agents.map(normalizeAgent));
+    .then(json<{ records: Agent[] } | Agent[]>)
+    .then((data) => unwrapMany<Agent>(data).map(normalizeAgent));
 
 export const getAgent = (id: string): Promise<Agent> =>
-  get(`${BASE}/${id}`).then(json<Agent>).then(normalizeAgent);
+  get(`${BASE}/${id}`)
+    .then(json<{ records: Agent[] } | Agent>)
+    .then((data) => normalizeAgent(unwrapOne<Agent>(data)));
 
 export const createAgent = (body: AgentCreate): Promise<Agent> =>
-  mutate(BASE, "POST", body).then(json<Agent>).then(normalizeAgent);
+  mutate(BASE, "POST", body)
+    .then(json<{ records: Agent[] } | Agent>)
+    .then((data) => normalizeAgent(unwrapOne<Agent>(data)));
 
 export const updateAgent = (id: string, body: AgentUpdate): Promise<Agent> =>
-  mutate(`${BASE}/${id}`, "PUT", body).then(json<Agent>).then(normalizeAgent);
+  mutate(`${BASE}/${id}`, "PUT", body)
+    .then(json<{ records: Agent[] } | Agent>)
+    .then((data) => normalizeAgent(unwrapOne<Agent>(data)));
 
 export const deleteAgent = (id: string): Promise<void> =>
   mutate(`${BASE}/${id}`, "DELETE").then((r) => {
@@ -112,11 +133,15 @@ export const exportDockerCompose = (id: string): Promise<string> =>
 export const getAgentFeedback = async (agentId: string): Promise<FeedbackRecord[]> => {
   const res = await fetch(`/api/feedback/${agentId}`, { headers: headers() });
   if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
-  const text = await res.text();
-  return text
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => JSON.parse(line) as FeedbackRecord);
+  const text = await res.text().then((t) => t.trim());
+  if (!text) return [];
+  // Service returns concatenated JSON objects with no delimiter: {}{}{} or NDJSON {}\n{}\n{}
+  // Normalise both: replace any whitespace between } and { with a comma, then wrap in []
+  try {
+    return JSON.parse("[" + text.replace(/\}\s*\{/g, "},{") + "]") as FeedbackRecord[];
+  } catch {
+    return [];
+  }
 };
 
 // ── Agent Builder ─────────────────────────────────────────────────────────────
@@ -126,3 +151,60 @@ export const generateAgentConfig = (prompt: string, model?: string): Promise<Gen
 
 export const improveAgentConfig = (agentId: string, feedback: string): Promise<GeneratedConfig> =>
   mutate("/api/agent-builder/improve", "POST", { agentId, feedback }).then(json<GeneratedConfig>);
+
+// ── Ingest ────────────────────────────────────────────────────────────────────
+
+export const ingestDocuments = async (
+  collection: string,
+  documents: { text: string; source?: string }[],
+  chunkStrategy?: string,
+): Promise<string> => {
+  const res = await mutate("/api/ingest", "POST", { collection, chunkStrategy, documents });
+  const text = await res.text();
+  if (!res.ok) throw new Error(text || res.statusText);
+  return text;
+};
+
+export const ingestUrl = async (
+  collection: string,
+  url: string,
+  chunkStrategy?: string,
+): Promise<string> => {
+  const res = await mutate("/api/ingest/url", "POST", { collection, url, chunkStrategy });
+  const text = await res.text();
+  if (!res.ok) throw new Error(text || res.statusText);
+  return text;
+};
+
+export const ingestGitHub = async (
+  collection: string,
+  owner: string,
+  repo: string,
+  path: string,
+  branch: string,
+  chunkStrategy?: string,
+): Promise<string> => {
+  const res = await mutate("/api/ingest/github", "POST", {
+    collection,
+    owner,
+    repo,
+    path,
+    branch: branch || "main",
+    chunkStrategy,
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(text || res.statusText);
+  return text;
+};
+
+export const ingestConfluence = async (
+  collection: string,
+  spaceKey: string,
+  baseUrl: string,
+  chunkStrategy?: string,
+): Promise<string> => {
+  const res = await mutate("/api/ingest/confluence", "POST", { collection, spaceKey, baseUrl, chunkStrategy });
+  const text = await res.text();
+  if (!res.ok) throw new Error(text || res.statusText);
+  return text;
+};

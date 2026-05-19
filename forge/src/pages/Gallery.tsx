@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { KeyRound, LayoutTemplate, Plus } from "lucide-react";
+import { ExternalLink, KeyRound, LayoutTemplate, Plus, Search } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { deployAgent, getApiKey, listAgents, setApiKey, undeployAgent } from "../api";
 import AgentCard from "../components/AgentCard";
 import TemplateModal from "../components/TemplateModal";
+
+const CHAINLIT_URL = import.meta.env.VITE_CHAINLIT_URL ?? "http://localhost:7080";
 
 const STATUS_TABS = ["All", "active", "draft", "archived"] as const;
 type StatusTab = typeof STATUS_TABS[number];
@@ -16,12 +18,12 @@ export default function Gallery() {
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [keyDraft, setKeyDraft] = useState(getApiKey);
   const [activeTab, setActiveTab] = useState<StatusTab>("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const queryStatus = activeTab === "All" ? undefined : activeTab;
-
-  const { data: agents = [], isLoading, error } = useQuery({
-    queryKey: ["agents", queryStatus],
-    queryFn: () => listAgents(queryStatus),
+  // Backend does not filter by status — always fetch all, filter client-side
+  const { data: allAgents = [], isLoading, error } = useQuery({
+    queryKey: ["agents"],
+    queryFn: () => listAgents(),
   });
 
   const deployMutation = useMutation({
@@ -32,9 +34,19 @@ export default function Gallery() {
     },
   });
 
-  const visible = activeTab === "All"
-    ? agents.filter((a) => a.status !== "archived")
-    : agents;
+  const agentsByTab: Record<StatusTab, typeof allAgents> = {
+    All: allAgents.filter((a) => a.status !== "archived"),
+    active: allAgents.filter((a) => a.status === "active"),
+    draft: allAgents.filter((a) => a.status === "draft"),
+    archived: allAgents.filter((a) => a.status === "archived"),
+  };
+
+  const visible = searchQuery.trim()
+    ? agentsByTab[activeTab].filter((a) =>
+      a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      a.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    : agentsByTab[activeTab];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -45,6 +57,15 @@ export default function Gallery() {
             <p className="text-sm text-gray-500">Build and manage AI agents with TIBCO Flogo</p>
           </div>
           <div className="flex items-center gap-2">
+            <a
+              href={CHAINLIT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open Chainlit chat"
+              className="flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-2 rounded-lg transition-colors"
+            >
+              <ExternalLink size={14} /> Open Chat
+            </a>
             {showKeyInput ? (
               <form
                 className="flex items-center gap-2"
@@ -68,10 +89,10 @@ export default function Gallery() {
             ) : (
               <button
                 onClick={() => setShowKeyInput(true)}
-                title="Set API key"
-                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 hover:border-gray-400 px-3 py-2 rounded-lg transition-colors"
+                title="Configure API key"
+                className="text-gray-400 hover:text-gray-700 border border-gray-200 hover:border-gray-400 p-2 rounded-lg transition-colors"
               >
-                <KeyRound size={14} /> API Key
+                <KeyRound size={15} />
               </button>
             )}
             <button
@@ -91,21 +112,39 @@ export default function Gallery() {
           </div>
         </div>
 
-        {/* Status filter tabs */}
-        <div className="max-w-6xl mx-auto mt-3 flex gap-1">
-          {STATUS_TABS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`text-sm px-3 py-1 rounded-md capitalize transition-colors ${
-                activeTab === tab
-                  ? "bg-brand-500 text-white"
-                  : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+        {/* Status filter tabs + search */}
+        <div className="max-w-6xl mx-auto mt-3 flex items-center gap-2">
+          <div className="flex gap-1">
+            {STATUS_TABS.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex items-center gap-1.5 text-sm px-3 py-1 rounded-md capitalize transition-colors ${activeTab === tab
+                    ? "bg-brand-500 text-white"
+                    : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                  }`}
+              >
+                {tab}
+                {!isLoading && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full leading-none ${activeTab === tab ? "bg-white/25 text-white" : "bg-gray-200 text-gray-500"
+                    }`}>
+                    {agentsByTab[tab].length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="ml-auto relative">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search agents…"
+              className="text-sm border border-gray-200 rounded-lg pl-7 pr-3 py-1 focus:outline-none focus:ring-2 focus:ring-brand-500 w-44 bg-white"
+            />
+          </div>
         </div>
       </header>
 
@@ -116,15 +155,19 @@ export default function Gallery() {
 
         {error && (
           <div className="text-center text-red-500 py-16">
-            Could not load agents — is design-service running on port 7020?
+            <p>Could not load agents — {(error as Error).message || "is design-service running on port 7020?"}</p>
           </div>
         )}
 
         {!isLoading && !error && visible.length === 0 && (
           <div className="text-center py-24">
             <div className="text-5xl mb-4">🤖</div>
-            <h2 className="text-xl font-semibold text-gray-700 mb-2">No agents yet</h2>
-            <p className="text-gray-500 mb-6">Create your first agent or start from a template.</p>
+            <h2 className="text-xl font-semibold text-gray-700 mb-2">
+              {searchQuery ? `No results for "${searchQuery}"` : activeTab === "All" ? "No agents yet" : `No ${activeTab} agents`}
+            </h2>
+            <p className="text-gray-500 mb-6">
+              {searchQuery ? "Try a different search term." : activeTab === "All" ? "Create your first agent or start from a template." : activeTab === "active" ? "Activate an agent from the Draft tab to see it here." : activeTab === "archived" ? "Archived agents will appear here." : "Create your first agent or start from a template."}
+            </p>
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={() => setShowTemplates(true)}

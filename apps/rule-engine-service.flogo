@@ -21,7 +21,7 @@
       "name": "tibco-wi-rest",
       "description": "REST trigger — rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)",
       "settings": {
-        "port": 7000,
+        "port": 7097,
         "APISpecUpdate": false,
         "swagger": "",
         "swaggerVersion": "v2",
@@ -78,8 +78,8 @@
               },
               "body": {
                 "type": "json",
-                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"content\":{\"type\":\"string\"},\"fileName\":{\"type\":\"string\"},\"parserOverride\":{\"type\":\"string\"},\"disabledRules\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}}",
-                "fe_metadata": "{\"content\":\"abc\",\"fileName\":\"abc\",\"parserOverride\":\"abc\",\"disabledRules\":[\"abc\"],\"tags\":[\"abc\"]}"
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"content\":{\"type\":\"string\"},\"fileName\":{\"type\":\"string\"},\"parserOverride\":{\"type\":\"string\"},\"disabledRules\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"abc\":{\"type\":\"string\"}}}},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}}",
+                "fe_metadata": "{\n    \"content\": \"abc\",\n    \"fileName\": \"abc\",\n    \"parserOverride\": \"abc\",\n    \"disabledRules\":\n    [\n        {\n            \"abc\": \"\"\n        }\n    ],\n    \"tags\":\n    [\n        \"abc\"\n    ]\n}"
               }
             }
           },
@@ -146,16 +146,16 @@
           {
             "id": 2,
             "from": "LogRequest",
-            "to": "RuleEngine",
+            "to": "RuleEngine1",
             "type": "label",
-            "label": "LogRequest to RuleEngine"
+            "label": "LogRequest to RuleEngine1"
           },
           {
             "id": 3,
-            "from": "RuleEngine",
+            "from": "RuleEngine1",
             "to": "Return",
             "type": "label",
-            "label": "RuleEngine to Return"
+            "label": "RuleEngine1 to Return"
           }
         ],
         "tasks": [
@@ -170,7 +170,7 @@
           {
             "id": "LogRequest",
             "name": "LogRequest",
-            "description": "",
+            "description": "Simple Log Message Activity",
             "activity": {
               "ref": "#log",
               "input": {
@@ -181,8 +181,8 @@
             }
           },
           {
-            "id": "RuleEngine",
-            "name": "RuleEngine",
+            "id": "RuleEngine1",
+            "name": "RuleEngine1",
             "description": "Generic YAML-driven document analysis engine. Evaluates externalized rules against any structured document (JSON, XML, YAML, key-value, text lines) and returns structured findings.",
             "activity": {
               "ref": "#ruleengine",
@@ -193,6 +193,9 @@
                 "parserOverride": "=$flow.body.parserOverride",
                 "disabledRules": "=$flow.body.disabledRules",
                 "tags": "=$flow.body.tags"
+              },
+              "output": {
+                "success": false
               }
             }
           },
@@ -207,15 +210,15 @@
                   "code": 200,
                   "data": {
                     "mapping": {
-                      "success": "=$activity[RuleEngine].success",
-                      "findings": "=$activity[RuleEngine].findings",
-                      "positives": "=$activity[RuleEngine].positives",
-                      "overview": "=$activity[RuleEngine].overview",
-                      "errorCount": "=$activity[RuleEngine].errorCount",
-                      "warningCount": "=$activity[RuleEngine].warningCount",
-                      "infoCount": "=$activity[RuleEngine].infoCount",
-                      "markdown": "=$activity[RuleEngine].markdown",
-                      "error": "=$activity[RuleEngine].error"
+                      "success": "=$activity[RuleEngine1].success",
+                      "findings": "=$activity[RuleEngine1].findings",
+                      "positives": "=$activity[RuleEngine1].positives",
+                      "overview": "=$activity[RuleEngine1].overview",
+                      "errorCount": "=$activity[RuleEngine1].errorCount",
+                      "warningCount": "=$activity[RuleEngine1].warningCount",
+                      "infoCount": "=$activity[RuleEngine1].infoCount",
+                      "markdown": "=$activity[RuleEngine1].markdown",
+                      "error": "=$activity[RuleEngine1].error"
                     }
                   }
                 }
@@ -223,31 +226,47 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUnVsZUVuZ2luZSI6eyJ4Ijo0NTAsInkiOjI1MH0sIlJldHVybiI6eyJ4Ijo2NTAsInkiOjM1MH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUnVsZUVuZ2luZTEiOnsieCI6Mzg4LCJ5IjoyNzV9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9fQ==",
         "metadata": {
           "input": [
             {
-              "name": "body",
-              "type": "object"
+              "name": "headers",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}}"
+              }
             },
             {
-              "name": "headers",
-              "type": "object"
+              "name": "body",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"content\":{\"type\":\"string\"},\"fileName\":{\"type\":\"string\"},\"parserOverride\":{\"type\":\"string\"},\"disabledRules\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}"
+              }
+            },
+            {
+              "name": "requestURI",
+              "type": "string"
+            },
+            {
+              "name": "method",
+              "type": "string"
             }
           ],
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
-            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"object\",\"properties\":{}},\"headers\":{\"type\":\"object\",\"properties\":{}}}}",
-            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+            "input": "{\"type\":\"object\",\"title\":\"RuleEngineRESTTrigger\",\"properties\":{\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"body\":{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"content\":{\"type\":\"string\"},\"fileName\":{\"type\":\"string\"},\"parserOverride\":{\"type\":\"string\"},\"disabledRules\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"message\":{\"type\":\"string\"}},\"required\":[]}"
           }
         },
         "explicitReply": true
@@ -333,17 +352,16 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
-      "value": "changeme"
+      "value": "SECRET:qmm+UAmIEkuDC3NBifFMeY9Rt298fgQb"
     }
   ],
   "connections": {},
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS9tcGFuZGF2LXRpYmNvL2Zsb2dvLWN1c3RvbS1leHRlbnNpb25zL2FjdGl2aXR5L3J1bGVlbmdpbmUiLCJzM2xvY2F0aW9uIjoibG9jYWwvUnVsZUVuZ2luZSJ9XQ==",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS9tcGFuZGF2LXRpYmNvL2Zsb2dvLWN1c3RvbS1leHRlbnNpb25zL2FjdGl2aXR5L3J1bGVlbmdpbmUiLCJpZCI6IkRlZmF1bHQiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJSdWxlIEVuZ2luZSIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9ydWxlZW5naW5lIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfV0=",
   "metadata": {
     "endpoints": [
       {
         "protocol": "http",
-        "port": "7000",
+        "port": "7097",
         "spec": {
           "name": "rule-engine-service",
           "version": "1.0.0"
@@ -434,7 +452,12 @@
                 "disabledRules": {
                   "type": "array",
                   "items": {
-                    "type": "string"
+                    "type": "object",
+                    "properties": {
+                      "abc": {
+                        "type": "string"
+                      }
+                    }
                   }
                 },
                 "tags": {

@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 7025,
+    host: "127.0.0.1",
     proxy: {
       // Deploy/export endpoints must come before the /api/v1 catch-all
       "^/api/v1/agents/[^/]+/deploy": {
@@ -28,6 +29,11 @@ export default defineConfig({
       // Feedback service
       "/api/feedback": {
         target: "http://localhost:7003",
+        changeOrigin: true,
+      },
+      // Ingestion service
+      "/api/ingest": {
+        target: "http://localhost:7002",
         changeOrigin: true,
       },
     },

@@ -1,13 +1,14 @@
 {
   "imports": [
-    "tr_rest github.com/tibco/flogo-general/src/app/General/trigger/rest",
     "github.com/project-flogo/flow",
-    "act_default_noop github.com/project-flogo/contrib/activity/noop",
-    "act_general_log github.com/tibco/flogo-general/src/app/General/activity/log",
-    "act_default_actreturn github.com/project-flogo/contrib/activity/actreturn",
-    "act_rest github.com/tibco/flogo-general/src/app/General/activity/rest",
-    "coerce github.com/project-flogo/contrib/function/coerce",
-    "string github.com/project-flogo/contrib/function/string"
+    "github.com/project-flogo/contrib/activity/noop",
+    "github.com/tibco/flogo-general/src/app/General/activity/log",
+    "github.com/tibco/flogo-general/src/app/General/activity/rest",
+    "github.com/project-flogo/contrib/activity/actreturn",
+    "rest_1 github.com/tibco/flogo-general/src/app/General/trigger/rest",
+    "github.com/project-flogo/contrib/function/coerce",
+    "github.com/project-flogo/contrib/function/string",
+    "fn_general_utils github.com/project-flogo/contrib/function/utils"
   ],
   "name": "deploy-service",
   "description": "Agent deployment service. Activates/deactivates agents in design-service and generates K8s/Docker Compose manifests for export. Part of Flogo Agent Studio.",
@@ -15,40 +16,11 @@
   "type": "flogo:app",
   "appModel": "1.1.1",
   "tags": [],
-  "properties": [
-    {
-      "name": "DESIGN_SERVICE_URL",
-      "type": "string",
-      "description": "Base URL of the design-service for fetching and updating agent records.",
-      "value": "http://localhost:7020"
-    },
-    {
-      "name": "CHAT_SERVICE_URL",
-      "type": "string",
-      "description": "Base URL of the agent-chat-service used to construct chat URLs.",
-      "value": "http://localhost:7001"
-    },
-    {
-      "name": "SERVICE_VERSION",
-      "type": "string",
-      "description": "Deploy service version tag.",
-      "value": "1.0.0"
-    },
-    {
-      "name": "API_KEY",
-      "type": "string",
-      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
-      "value": "changeme"
-    },
-    {
-      "name": "API_AUTH_HEADER",
-      "type": "string",
-      "description": "Pre-computed Authorization header for outbound calls. Matches API_KEY=changeme by default.",
-      "value": "Basic ZmxvZ286Y2hhbmdlbWU="
-    }
-  ],
   "triggers": [
     {
+      "ref": "#rest_1",
+      "name": "tibco-wi-rest",
+      "description": "REST trigger \u2014 deploy service on port 7030",
       "settings": {
         "port": 7030,
         "APISpecUpdate": false,
@@ -63,11 +35,9 @@
         "caCertificate": ""
       },
       "id": "DeployRESTTrigger",
-      "name": "DeployRESTTrigger",
-      "description": "REST trigger \u2014 deploy service on port 7030",
-      "ref": "#tr_rest",
       "handlers": [
         {
+          "description": "Activates an agent by setting status to active in design-service and returns the chat URL.",
           "settings": {
             "APISpecPath": "",
             "Method": "POST",
@@ -76,29 +46,31 @@
             "OutputValidation": false
           },
           "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:deploy_agent"
+            },
             "input": {
               "agentId": "=$.pathParams.agentId"
             },
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            },
-            "ref": "github.com/project-flogo/flow",
-            "settings": {
-              "flowURI": "res://flow:deploy_agent"
             }
           },
           "reply": {
             "code": 200,
             "configureResponseCodes": false,
-            "data": {},
-            "responseBody": {},
-            "responseCodesSchema": {},
             "message": ""
           },
-          "name": "deploy_agent",
-          "description": "Activate an agent \u2014 set status to active and return chat URL",
           "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
             "output": {
               "pathParams": {
                 "type": "json",
@@ -111,9 +83,11 @@
                 "fe_metadata": "[{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
               }
             }
-          }
+          },
+          "name": "deploy_agent"
         },
         {
+          "description": "Deactivates an agent by setting status back to draft in design-service.",
           "settings": {
             "APISpecPath": "",
             "Method": "DELETE",
@@ -122,29 +96,31 @@
             "OutputValidation": false
           },
           "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:undeploy_agent"
+            },
             "input": {
               "agentId": "=$.pathParams.agentId"
             },
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            },
-            "ref": "github.com/project-flogo/flow",
-            "settings": {
-              "flowURI": "res://flow:undeploy_agent"
             }
           },
           "reply": {
             "code": 200,
             "configureResponseCodes": false,
-            "data": {},
-            "responseBody": {},
-            "responseCodesSchema": {},
             "message": ""
           },
-          "name": "undeploy_agent",
-          "description": "Deactivate an agent \u2014 set status back to draft",
           "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
             "output": {
               "pathParams": {
                 "type": "json",
@@ -157,9 +133,11 @@
                 "fe_metadata": "[{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
               }
             }
-          }
+          },
+          "name": "undeploy_agent"
         },
         {
+          "description": "Returns the current deployment status of an agent from design-service.",
           "settings": {
             "APISpecPath": "",
             "Method": "GET",
@@ -168,29 +146,31 @@
             "OutputValidation": false
           },
           "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:get_deploy_status"
+            },
             "input": {
               "agentId": "=$.pathParams.agentId"
             },
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            },
-            "ref": "github.com/project-flogo/flow",
-            "settings": {
-              "flowURI": "res://flow:get_deploy_status"
             }
           },
           "reply": {
             "code": 200,
             "configureResponseCodes": false,
-            "data": {},
-            "responseBody": {},
-            "responseCodesSchema": {},
             "message": ""
           },
-          "name": "get_deploy_status",
-          "description": "Get current deployment status for an agent",
           "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
             "output": {
               "pathParams": {
                 "type": "json",
@@ -203,9 +183,11 @@
                 "fe_metadata": "[{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
               }
             }
-          }
+          },
+          "name": "get_deploy_status"
         },
         {
+          "description": "Generates Kubernetes deployment, service, and configmap manifests for the agent.",
           "settings": {
             "APISpecPath": "",
             "Method": "GET",
@@ -214,29 +196,31 @@
             "OutputValidation": false
           },
           "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:export_kubernetes"
+            },
             "input": {
               "agentId": "=$.pathParams.agentId"
             },
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            },
-            "ref": "github.com/project-flogo/flow",
-            "settings": {
-              "flowURI": "res://flow:export_kubernetes"
             }
           },
           "reply": {
             "code": 200,
             "configureResponseCodes": false,
-            "data": {},
-            "responseBody": {},
-            "responseCodesSchema": {},
             "message": ""
           },
-          "name": "export_kubernetes",
-          "description": "Generate Kubernetes deployment manifests for an agent",
           "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
             "output": {
               "pathParams": {
                 "type": "json",
@@ -249,9 +233,11 @@
                 "fe_metadata": "[{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
               }
             }
-          }
+          },
+          "name": "export_kubernetes"
         },
         {
+          "description": "Generates a docker-compose manifest for the agent.",
           "settings": {
             "APISpecPath": "",
             "Method": "GET",
@@ -260,29 +246,31 @@
             "OutputValidation": false
           },
           "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:export_compose"
+            },
             "input": {
               "agentId": "=$.pathParams.agentId"
             },
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            },
-            "ref": "github.com/project-flogo/flow",
-            "settings": {
-              "flowURI": "res://flow:export_compose"
             }
           },
           "reply": {
             "code": 200,
             "configureResponseCodes": false,
-            "data": {},
-            "responseBody": {},
-            "responseCodesSchema": {},
             "message": ""
           },
-          "name": "export_compose",
-          "description": "Generate docker-compose manifest for an agent",
           "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
             "output": {
               "pathParams": {
                 "type": "json",
@@ -295,9 +283,11 @@
                 "fe_metadata": "[{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
               }
             }
-          }
+          },
+          "name": "export_compose"
         },
         {
+          "description": "Returns service health status.",
           "settings": {
             "APISpecPath": "",
             "Method": "GET",
@@ -306,29 +296,37 @@
             "OutputValidation": false
           },
           "action": {
-            "input": {},
-            "output": {
-              "code": "=$.code",
-              "data": "=$.data"
-            },
             "ref": "github.com/project-flogo/flow",
             "settings": {
               "flowURI": "res://flow:health_check"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
             }
           },
           "reply": {
             "code": 200,
             "configureResponseCodes": false,
-            "data": {},
-            "responseBody": {},
-            "responseCodesSchema": {},
             "message": ""
           },
-          "name": "health_check",
-          "description": "Service health check",
           "schemas": {
-            "output": {}
-          }
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
+            "output": {
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              }
+            }
+          },
+          "name": "health_check"
         }
       ]
     }
@@ -345,28 +343,28 @@
             "from": "StartActivity",
             "to": "LogRequest",
             "type": "label",
-            "label": ""
+            "label": "StartActivity to LogRequest"
           },
           {
             "id": 2,
             "from": "LogRequest",
             "to": "GetAgentConfig",
             "type": "label",
-            "label": ""
+            "label": "LogRequest to GetAgentConfig"
           },
           {
             "id": 3,
             "from": "GetAgentConfig",
             "to": "ActivateAgent",
             "type": "label",
-            "label": ""
+            "label": "GetAgentConfig to ActivateAgent"
           },
           {
             "id": 4,
             "from": "ActivateAgent",
             "to": "Return",
             "type": "label",
-            "label": ""
+            "label": "ActivateAgent to Return"
           }
         ],
         "tasks": [
@@ -375,7 +373,7 @@
             "name": "StartActivity",
             "description": "NoOp",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
@@ -383,7 +381,7 @@
             "name": "LogRequest",
             "description": "Log deploy request",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
@@ -396,51 +394,137 @@
             "id": "GetAgentConfig",
             "name": "GetAgentConfig",
             "description": "Fetch current agent record from design-service",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
+                }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
                   "headers": {
                     "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\": \"Authorization\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}, {\"parameterName\": \"Content-Type\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
                   }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "ActivateAgent",
             "name": "ActivateAgent",
             "description": "Update agent status to active in design-service",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_rest",
+              "ref": "#rest",
               "input": {
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
+                "Method": "PUT",
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
                 "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
                 },
                 "body": {
-                  "status": "active"
-                },
-                "Method": "PUT",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+                  "mapping": {
+                    "status": "active"
+                  }
+                }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
                   "headers": {
                     "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\": \"Authorization\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}, {\"parameterName\": \"Content-Type\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
                   }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
@@ -448,7 +532,7 @@
             "name": "Return",
             "description": "Return deployment info",
             "activity": {
-              "ref": "#act_default_actreturn",
+              "ref": "#actreturn",
               "settings": {
                 "mappings": {
                   "code": 200,
@@ -458,7 +542,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJHZXRBZ2VudENvbmZpZyI6eyJ4Ijo0NTAsInkiOjI1MH0sIkFjdGl2YXRlQWdlbnQiOnsieCI6NjUwLCJ5IjozNTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo0NTB9fQ==",
         "metadata": {
           "input": [
             {
@@ -469,15 +553,19 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
-          "fe_metadata": {}
-        }
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
       }
     },
     {
@@ -491,28 +579,28 @@
             "from": "StartActivity",
             "to": "LogRequest",
             "type": "label",
-            "label": ""
+            "label": "StartActivity to LogRequest"
           },
           {
             "id": 2,
             "from": "LogRequest",
             "to": "GetAgentConfig",
             "type": "label",
-            "label": ""
+            "label": "LogRequest to GetAgentConfig"
           },
           {
             "id": 3,
             "from": "GetAgentConfig",
             "to": "DeactivateAgent",
             "type": "label",
-            "label": ""
+            "label": "GetAgentConfig to DeactivateAgent"
           },
           {
             "id": 4,
             "from": "DeactivateAgent",
             "to": "Return",
             "type": "label",
-            "label": ""
+            "label": "DeactivateAgent to Return"
           }
         ],
         "tasks": [
@@ -521,7 +609,7 @@
             "name": "StartActivity",
             "description": "NoOp",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
@@ -529,7 +617,7 @@
             "name": "LogRequest",
             "description": "Log undeploy request",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
@@ -542,51 +630,137 @@
             "id": "GetAgentConfig",
             "name": "GetAgentConfig",
             "description": "Fetch current agent record from design-service",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
+                }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
                   "headers": {
                     "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\": \"Authorization\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}, {\"parameterName\": \"Content-Type\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
                   }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
             "id": "DeactivateAgent",
             "name": "DeactivateAgent",
             "description": "Update agent status to draft in design-service",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_rest",
+              "ref": "#rest",
               "input": {
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
+                "Method": "PUT",
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
                 "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
                 },
                 "body": {
-                  "status": "draft"
-                },
-                "Method": "PUT",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+                  "mapping": {
+                    "status": "draft"
+                  }
+                }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
                   "headers": {
                     "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\": \"Authorization\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}, {\"parameterName\": \"Content-Type\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
                   }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
@@ -594,7 +768,7 @@
             "name": "Return",
             "description": "Return deactivation result",
             "activity": {
-              "ref": "#act_default_actreturn",
+              "ref": "#actreturn",
               "settings": {
                 "mappings": {
                   "code": 200,
@@ -604,7 +778,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJHZXRBZ2VudENvbmZpZyI6eyJ4Ijo0NTAsInkiOjI1MH0sIkRlYWN0aXZhdGVBZ2VudCI6eyJ4Ijo2NTAsInkiOjM1MH0sIlJldHVybiI6eyJ4Ijo4NTAsInkiOjQ1MH19",
         "metadata": {
           "input": [
             {
@@ -615,15 +789,19 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
-          "fe_metadata": {}
-        }
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
       }
     },
     {
@@ -637,14 +815,14 @@
             "from": "StartActivity",
             "to": "GetAgentConfig",
             "type": "label",
-            "label": ""
+            "label": "StartActivity to GetAgentConfig"
           },
           {
             "id": 2,
             "from": "GetAgentConfig",
             "to": "Return",
             "type": "label",
-            "label": ""
+            "label": "GetAgentConfig to Return"
           }
         ],
         "tasks": [
@@ -653,31 +831,73 @@
             "name": "StartActivity",
             "description": "NoOp",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
             "id": "GetAgentConfig",
             "name": "GetAgentConfig",
             "description": "Fetch agent record from design-service",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
+                }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
                   "headers": {
                     "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\": \"Authorization\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}, {\"parameterName\": \"Content-Type\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
                   }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
@@ -685,7 +905,7 @@
             "name": "Return",
             "description": "Return deploy status",
             "activity": {
-              "ref": "#act_default_actreturn",
+              "ref": "#actreturn",
               "settings": {
                 "mappings": {
                   "code": 200,
@@ -695,7 +915,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkdldEFnZW50Q29uZmlnIjp7IngiOjI1MCwieSI6MTUwfSwiUmV0dXJuIjp7IngiOjQ1MCwieSI6MjUwfX0=",
         "metadata": {
           "input": [
             {
@@ -706,15 +926,19 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
-          "fe_metadata": {}
-        }
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
       }
     },
     {
@@ -728,28 +952,28 @@
             "from": "StartActivity",
             "to": "GetAgentConfig",
             "type": "label",
-            "label": ""
+            "label": "StartActivity to GetAgentConfig"
           },
           {
             "id": 2,
             "from": "GetAgentConfig",
             "to": "BuildDeploymentYAML",
             "type": "label",
-            "label": ""
+            "label": "GetAgentConfig to BuildDeploymentYAML"
           },
           {
             "id": 3,
             "from": "BuildDeploymentYAML",
             "to": "BuildServiceYAML",
             "type": "label",
-            "label": ""
+            "label": "BuildDeploymentYAML to BuildServiceYAML"
           },
           {
             "id": 4,
             "from": "BuildServiceYAML",
             "to": "Return",
             "type": "label",
-            "label": ""
+            "label": "BuildServiceYAML to Return"
           }
         ],
         "tasks": [
@@ -758,31 +982,73 @@
             "name": "StartActivity",
             "description": "NoOp",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
             "id": "GetAgentConfig",
             "name": "GetAgentConfig",
             "description": "Fetch agent record from design-service",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
+                }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
                   "headers": {
                     "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\": \"Authorization\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}, {\"parameterName\": \"Content-Type\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
                   }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
@@ -790,7 +1056,7 @@
             "name": "BuildDeploymentYAML",
             "description": "Build Kubernetes Deployment manifest",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "DEBUG",
                 "flowInfo": false,
@@ -804,7 +1070,7 @@
             "name": "BuildServiceYAML",
             "description": "Build Kubernetes Service manifest",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "DEBUG",
                 "flowInfo": false,
@@ -818,7 +1084,7 @@
             "name": "Return",
             "description": "Return K8s manifests as YAML string",
             "activity": {
-              "ref": "#act_default_actreturn",
+              "ref": "#actreturn",
               "settings": {
                 "mappings": {
                   "code": 200,
@@ -828,7 +1094,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkdldEFnZW50Q29uZmlnIjp7IngiOjI1MCwieSI6MTUwfSwiQnVpbGREZXBsb3ltZW50WUFNTCI6eyJ4Ijo0NTAsInkiOjI1MH0sIkJ1aWxkU2VydmljZVlBTUwiOnsieCI6NjUwLCJ5IjozNTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo0NTB9fQ==",
         "metadata": {
           "input": [
             {
@@ -839,15 +1105,19 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
-          "fe_metadata": {}
-        }
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
       }
     },
     {
@@ -861,14 +1131,14 @@
             "from": "StartActivity",
             "to": "GetAgentConfig",
             "type": "label",
-            "label": ""
+            "label": "StartActivity to GetAgentConfig"
           },
           {
             "id": 2,
             "from": "GetAgentConfig",
             "to": "Return",
             "type": "label",
-            "label": ""
+            "label": "GetAgentConfig to Return"
           }
         ],
         "tasks": [
@@ -877,31 +1147,73 @@
             "name": "StartActivity",
             "description": "NoOp",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
             "id": "GetAgentConfig",
             "name": "GetAgentConfig",
             "description": "Fetch agent record from design-service",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
-              "ref": "#act_rest",
+              "ref": "#rest",
               "input": {
-                "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
-                },
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.agentId))"
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU=",
+                    "X-Request-ID": "=utils.uuid()"
+                  }
+                }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
                   "headers": {
                     "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
+                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\": \"Authorization\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}, {\"parameterName\": \"Content-Type\", \"type\": \"string\", \"repeating\": \"false\", \"required\": \"false\"}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
                   }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
@@ -909,7 +1221,7 @@
             "name": "Return",
             "description": "Return docker-compose manifest as YAML string",
             "activity": {
-              "ref": "#act_default_actreturn",
+              "ref": "#actreturn",
               "settings": {
                 "mappings": {
                   "code": 200,
@@ -919,7 +1231,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkdldEFnZW50Q29uZmlnIjp7IngiOjI1MCwieSI6MTUwfSwiUmV0dXJuIjp7IngiOjQ1MCwieSI6MjUwfX0=",
         "metadata": {
           "input": [
             {
@@ -930,15 +1242,19 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
-          "fe_metadata": {}
-        }
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
       }
     },
     {
@@ -952,7 +1268,7 @@
             "from": "StartActivity",
             "to": "Return",
             "type": "label",
-            "label": ""
+            "label": "StartActivity to Return"
           }
         ],
         "tasks": [
@@ -961,7 +1277,7 @@
             "name": "StartActivity",
             "description": "NoOp",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
@@ -969,42 +1285,70 @@
             "name": "Return",
             "description": "Return health status",
             "activity": {
-              "ref": "#act_default_actreturn",
+              "ref": "#actreturn",
               "settings": {
                 "mappings": {
                   "code": 200,
                   "data": {
-                    "status": "ok",
-                    "service": "deploy-service",
-                    "version": "1.0.0"
+                    "mapping": {
+                      "status": "ok",
+                      "service": "deploy-service",
+                      "version": "1.0.0"
+                    }
                   }
                 }
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4IjoyNTAsInkiOjE1MH19",
         "metadata": {
           "input": [],
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
-              "type": "any"
+              "type": "object"
             }
           ],
-          "fe_metadata": {}
-        }
+          "fe_metadata": {
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
       }
     }
   ],
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
-  "metadata": {
-    "flogoVersion": "2.26.3"
-  },
+  "properties": [
+    {
+      "name": "DESIGN_SERVICE_URL",
+      "type": "string",
+      "value": "http://localhost:7020"
+    },
+    {
+      "name": "CHAT_SERVICE_URL",
+      "type": "string",
+      "value": "http://localhost:7001"
+    },
+    {
+      "name": "SERVICE_VERSION",
+      "type": "string",
+      "value": "1.0.0"
+    },
+    {
+      "name": "API_KEY",
+      "type": "string",
+      "value": "SECRET:7SVd2CKEtLI7S8fjAQ/HgkwfMFHf4PKb"
+    },
+    {
+      "name": "API_AUTH_HEADER",
+      "type": "string",
+      "value": "Basic ZmxvZ286Y2hhbmdlbWU="
+    }
+  ],
   "specs": {
     "7a1a31b8-d805-42dd-89d0-3a2ea74f58e9": {
       "id": "7a1a31b8-d805-42dd-89d0-3a2ea74f58e9",
@@ -1013,5 +1357,213 @@
       "version": "1.0.0",
       "content": "eyJvcGVuYXBpIjoiMy4wLjAiLCJpbmZvIjp7InRpdGxlIjoiRGVwbG95IFNlcnZpY2UgQVBJIiwidmVyc2lvbiI6IjEuMC4wIiwiZGVzY3JpcHRpb24iOiJBZ2VudCBkZXBsb3ltZW50IGxpZmVjeWNsZSBtYW5hZ2VtZW50IOKAlCBhY3RpdmF0ZSwgZGVhY3RpdmF0ZSwgYW5kIGV4cG9ydCBhZ2VudHMifSwic2VydmVycyI6W3sidXJsIjoiaHR0cDovL2xvY2FsaG9zdDo3MDMwIn1dLCJzZWN1cml0eSI6W3siYmFzaWNBdXRoIjpbXX1dLCJjb21wb25lbnRzIjp7InNlY3VyaXR5U2NoZW1lcyI6eyJiYXNpY0F1dGgiOnsidHlwZSI6Imh0dHAiLCJzY2hlbWUiOiJiYXNpYyJ9fSwicGFyYW1ldGVycyI6eyJhZ2VudElkIjp7Im5hbWUiOiJhZ2VudElkIiwiaW4iOiJwYXRoIiwicmVxdWlyZWQiOnRydWUsInNjaGVtYSI6eyJ0eXBlIjoic3RyaW5nIiwiZm9ybWF0IjoidXVpZCJ9LCJkZXNjcmlwdGlvbiI6IkFnZW50IFVVSUQgZnJvbSBkZXNpZ24tc2VydmljZSJ9fX0sInBhdGhzIjp7Ii9hcGkvaGVhbHRoIjp7ImdldCI6eyJzdW1tYXJ5IjoiSGVhbHRoIGNoZWNrIiwib3BlcmF0aW9uSWQiOiJoZWFsdGhfY2hlY2siLCJyZXNwb25zZXMiOnsiMjAwIjp7ImRlc2NyaXB0aW9uIjoiU2VydmljZSBoZWFsdGggc3RhdHVzIiwiY29udGVudCI6eyJhcHBsaWNhdGlvbi9qc29uIjp7InNjaGVtYSI6eyJ0eXBlIjoib2JqZWN0IiwicHJvcGVydGllcyI6eyJzZXJ2aWNlIjp7InR5cGUiOiJzdHJpbmcifSwic3RhdHVzIjp7InR5cGUiOiJzdHJpbmcifSwidmVyc2lvbiI6eyJ0eXBlIjoic3RyaW5nIn19fX19fX19fSwiL2FwaS92MS9hZ2VudHMve2FnZW50SWR9L2RlcGxveSI6eyJwb3N0Ijp7InN1bW1hcnkiOiJEZXBsb3kgKGFjdGl2YXRlKSBhbiBhZ2VudCIsIm9wZXJhdGlvbklkIjoiZGVwbG95X2FnZW50IiwicGFyYW1ldGVycyI6W3sibmFtZSI6ImFnZW50SWQiLCJpbiI6InBhdGgiLCJyZXF1aXJlZCI6dHJ1ZSwic2NoZW1hIjp7InR5cGUiOiJzdHJpbmciLCJmb3JtYXQiOiJ1dWlkIn0sImRlc2NyaXB0aW9uIjoiQWdlbnQgVVVJRCBmcm9tIGRlc2lnbi1zZXJ2aWNlIn1dLCJyZXF1ZXN0Qm9keSI6eyJyZXF1aXJlZCI6ZmFsc2UsImNvbnRlbnQiOnsiYXBwbGljYXRpb24vanNvbiI6eyJzY2hlbWEiOnsidHlwZSI6Im9iamVjdCJ9fX19LCJyZXNwb25zZXMiOnsiMjAwIjp7ImRlc2NyaXB0aW9uIjoiRGVwbG95IHJlc3VsdCIsImNvbnRlbnQiOnsiYXBwbGljYXRpb24vanNvbiI6eyJzY2hlbWEiOnsidHlwZSI6Im9iamVjdCIsInByb3BlcnRpZXMiOnsicmVjb3JkcyI6eyJ0eXBlIjoiYXJyYXkiLCJpdGVtcyI6eyJ0eXBlIjoib2JqZWN0In19fX19fX19fSwiZ2V0Ijp7InN1bW1hcnkiOiJHZXQgZGVwbG95bWVudCBzdGF0dXMgb2YgYW4gYWdlbnQiLCJvcGVyYXRpb25JZCI6ImdldF9kZXBsb3lfc3RhdHVzIiwicGFyYW1ldGVycyI6W3sibmFtZSI6ImFnZW50SWQiLCJpbiI6InBhdGgiLCJyZXF1aXJlZCI6dHJ1ZSwic2NoZW1hIjp7InR5cGUiOiJzdHJpbmciLCJmb3JtYXQiOiJ1dWlkIn0sImRlc2NyaXB0aW9uIjoiQWdlbnQgVVVJRCBmcm9tIGRlc2lnbi1zZXJ2aWNlIn1dLCJyZXNwb25zZXMiOnsiMjAwIjp7ImRlc2NyaXB0aW9uIjoiRGVwbG95bWVudCBzdGF0dXMiLCJjb250ZW50Ijp7ImFwcGxpY2F0aW9uL2pzb24iOnsic2NoZW1hIjp7InR5cGUiOiJvYmplY3QiLCJwcm9wZXJ0aWVzIjp7InJlY29yZHMiOnsidHlwZSI6ImFycmF5IiwiaXRlbXMiOnsidHlwZSI6Im9iamVjdCJ9fX19fX19fX0sImRlbGV0ZSI6eyJzdW1tYXJ5IjoiVW5kZXBsb3kgKGRlYWN0aXZhdGUpIGFuIGFnZW50Iiwib3BlcmF0aW9uSWQiOiJ1bmRlcGxveV9hZ2VudCIsInBhcmFtZXRlcnMiOlt7Im5hbWUiOiJhZ2VudElkIiwiaW4iOiJwYXRoIiwicmVxdWlyZWQiOnRydWUsInNjaGVtYSI6eyJ0eXBlIjoic3RyaW5nIiwiZm9ybWF0IjoidXVpZCJ9LCJkZXNjcmlwdGlvbiI6IkFnZW50IFVVSUQgZnJvbSBkZXNpZ24tc2VydmljZSJ9XSwicmVzcG9uc2VzIjp7IjIwMCI6eyJkZXNjcmlwdGlvbiI6IlVuZGVwbG95IHJlc3VsdCIsImNvbnRlbnQiOnsiYXBwbGljYXRpb24vanNvbiI6eyJzY2hlbWEiOnsidHlwZSI6Im9iamVjdCIsInByb3BlcnRpZXMiOnsicmVjb3JkcyI6eyJ0eXBlIjoiYXJyYXkiLCJpdGVtcyI6eyJ0eXBlIjoib2JqZWN0In19fX19fX19fX0sIi9hcGkvdjEvYWdlbnRzL3thZ2VudElkfS9leHBvcnQva3ViZXJuZXRlcyI6eyJnZXQiOnsic3VtbWFyeSI6IkV4cG9ydCBhZ2VudCBhcyBLdWJlcm5ldGVzIG1hbmlmZXN0Iiwib3BlcmF0aW9uSWQiOiJleHBvcnRfa3ViZXJuZXRlcyIsInBhcmFtZXRlcnMiOlt7Im5hbWUiOiJhZ2VudElkIiwiaW4iOiJwYXRoIiwicmVxdWlyZWQiOnRydWUsInNjaGVtYSI6eyJ0eXBlIjoic3RyaW5nIiwiZm9ybWF0IjoidXVpZCJ9LCJkZXNjcmlwdGlvbiI6IkFnZW50IFVVSUQgZnJvbSBkZXNpZ24tc2VydmljZSJ9XSwicmVzcG9uc2VzIjp7IjIwMCI6eyJkZXNjcmlwdGlvbiI6Ikt1YmVybmV0ZXMgbWFuaWZlc3QgZGF0YSIsImNvbnRlbnQiOnsiYXBwbGljYXRpb24vanNvbiI6eyJzY2hlbWEiOnsidHlwZSI6Im9iamVjdCJ9fX19fX19LCIvYXBpL3YxL2FnZW50cy97YWdlbnRJZH0vZXhwb3J0L2RvY2tlci1jb21wb3NlIjp7ImdldCI6eyJzdW1tYXJ5IjoiRXhwb3J0IGFnZW50IGFzIERvY2tlciBDb21wb3NlIG1hbmlmZXN0Iiwib3BlcmF0aW9uSWQiOiJleHBvcnRfY29tcG9zZSIsInBhcmFtZXRlcnMiOlt7Im5hbWUiOiJhZ2VudElkIiwiaW4iOiJwYXRoIiwicmVxdWlyZWQiOnRydWUsInNjaGVtYSI6eyJ0eXBlIjoic3RyaW5nIiwiZm9ybWF0IjoidXVpZCJ9LCJkZXNjcmlwdGlvbiI6IkFnZW50IFVVSUQgZnJvbSBkZXNpZ24tc2VydmljZSJ9XSwicmVzcG9uc2VzIjp7IjIwMCI6eyJkZXNjcmlwdGlvbiI6IkRvY2tlciBDb21wb3NlIG1hbmlmZXN0IGRhdGEiLCJjb250ZW50Ijp7ImFwcGxpY2F0aW9uL2pzb24iOnsic2NoZW1hIjp7InR5cGUiOiJvYmplY3QifX19fX19fX19"
     }
+  },
+  "connections": {},
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9XQ==",
+  "metadata": {
+    "endpoints": [
+      {
+        "protocol": "http",
+        "port": "7030",
+        "spec": {
+          "name": "deploy-service",
+          "version": "1.0.0"
+        },
+        "title": "DeployRESTTrigger",
+        "swagger": {
+          "swagger": "2.0",
+          "info": {
+            "title": "deploy-service",
+            "version": "1.0.0",
+            "description": "REST trigger \u2014 deploy service on port 7030"
+          },
+          "paths": {
+            "/api/v1/agents/{agentId}/deploy": {
+              "post": {
+                "summary": "deploy_agent",
+                "operationId": "post_api_v1_agents_agentId_deploy",
+                "parameters": [
+                  {
+                    "name": "agentId",
+                    "in": "path",
+                    "description": "Request parameter",
+                    "required": true,
+                    "type": "string"
+                  },
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Activates an agent by setting status to active in design-service and returns the chat URL.",
+                "consumes": [
+                  "application/json"
+                ]
+              },
+              "delete": {
+                "summary": "undeploy_agent",
+                "operationId": "delete_api_v1_agents_agentId_deploy",
+                "parameters": [
+                  {
+                    "name": "agentId",
+                    "in": "path",
+                    "description": "Request parameter",
+                    "required": true,
+                    "type": "string"
+                  },
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Deactivates an agent by setting status back to draft in design-service.",
+                "consumes": [
+                  "application/json"
+                ]
+              },
+              "get": {
+                "summary": "get_deploy_status",
+                "operationId": "get_api_v1_agents_agentId_deploy",
+                "parameters": [
+                  {
+                    "name": "agentId",
+                    "in": "path",
+                    "description": "Request parameter",
+                    "required": true,
+                    "type": "string"
+                  },
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Returns the current deployment status of an agent from design-service."
+              }
+            },
+            "/api/v1/agents/{agentId}/export/kubernetes": {
+              "get": {
+                "summary": "export_kubernetes",
+                "operationId": "get_api_v1_agents_agentId_export_kubernetes",
+                "parameters": [
+                  {
+                    "name": "agentId",
+                    "in": "path",
+                    "description": "Request parameter",
+                    "required": true,
+                    "type": "string"
+                  },
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Generates Kubernetes deployment, service, and configmap manifests for the agent."
+              }
+            },
+            "/api/v1/agents/{agentId}/export/docker-compose": {
+              "get": {
+                "summary": "export_compose",
+                "operationId": "get_api_v1_agents_agentId_export_docker-compose",
+                "parameters": [
+                  {
+                    "name": "agentId",
+                    "in": "path",
+                    "description": "Request parameter",
+                    "required": true,
+                    "type": "string"
+                  },
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Generates a docker-compose manifest for the agent."
+              }
+            },
+            "/api/health": {
+              "get": {
+                "summary": "health_check",
+                "operationId": "get_api_health",
+                "parameters": [
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Returns service health status."
+              }
+            }
+          },
+          "definitions": {}
+        }
+      }
+    ],
+    "flogoVersion": "2.26.3"
   }
 }

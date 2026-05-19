@@ -35,14 +35,14 @@ INGEST_URL  = "http://localhost:7002"          # ingestion-service
 CHAT_URL    = "http://localhost:7001"          # agent-chat-service
 FEEDBACK_URL= "http://localhost:7003"          # feedback-service
 SSE_URL     = "http://localhost:7005"          # sse-stream-service
-RULE_URL    = "http://localhost:7000"          # rule-engine-service
+RULE_URL    = "http://localhost:7097"          # rule-engine-service (port 7097; 7000 taken by macOS AirPlay)
 MCP_URL     = "http://localhost:3333/mcp"      # mcp-server
 
 AGENT_NAME    = f"E2E-Functional-Agent-{datetime.date.today()}"
 COLLECTION    = "FunctionalTestKB"
 SESSION_ID    = f"e2e-functional-{uuid.uuid4().hex[:8]}"
 LLM_MODEL     = "llama3.2:3b"
-LOG_DIR       = "logs"
+LOG_DIR       = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
 
 os.makedirs(LOG_DIR, exist_ok=True)
 STARTED_AT = datetime.datetime.now()
@@ -477,6 +477,7 @@ sc, body, ms, err = http(f"{BUILDER_URL}/api/agent-builder/improve", method="POS
                          body=improve_payload, timeout=120)
 row("HTTP status", sc)
 improved_config = None
+changes = []
 if isinstance(body, dict):
     row("Agent ID", body.get("agentId","?"))
     current = body.get("current",{})

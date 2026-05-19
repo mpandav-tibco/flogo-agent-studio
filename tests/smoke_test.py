@@ -8,11 +8,10 @@ import sys, time, json, urllib.request, urllib.error
 AUTH = "Basic ZmxvZ286Y2hhbmdlbWU="
 
 SERVICES = [
-    ("rule-engine-service",    7000, "/api/health",  True),
+    ("rule-engine-service",    7097, "/api/health",  True),   # 7000 taken by macOS AirPlay
     ("agent-chat-service",     7001, "/api/health",  True),
     ("ingestion-service",      7002, "/api/health",  True),
     ("feedback-service",       7003, "/api/health",  True),
-    ("config-service",         7004, "/api/health",  True),
     ("sse-stream-service",     7005, "/api/health",  True),
     ("agent-builder-service",  7010, "/api/health",  True),
     ("design-service",         7020, "/api/health",  True),

@@ -1,13 +1,22 @@
-import { Copy, Pencil, Play, Square, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ExternalLink, MoreHorizontal, Play, Square } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { cloneAgent, deleteAgent } from "../api";
 import type { Agent } from "../types";
 
+const CHAINLIT_URL = import.meta.env.VITE_CHAINLIT_URL ?? "http://localhost:7080";
+
 const STATUS_STYLES: Record<string, string> = {
-  active:   "bg-green-100 text-green-800",
-  draft:    "bg-gray-100 text-gray-600",
-  archived: "bg-red-100 text-red-600",
+  active: "bg-green-100 text-green-800",
+  draft: "bg-slate-100 text-slate-600",
+  archived: "bg-red-50 text-red-600",
+};
+
+const STATUS_BORDER: Record<string, string> = {
+  active: "border-l-green-400",
+  draft: "border-l-slate-300",
+  archived: "border-l-red-300",
 };
 
 interface AgentCardProps {
@@ -19,6 +28,19 @@ interface AgentCardProps {
 export default function AgentCard({ agent, onToggleDeploy, deployPending }: AgentCardProps) {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpen]);
 
   const removeMutation = useMutation({
     mutationFn: () => deleteAgent(agent.id),
@@ -36,76 +58,104 @@ export default function AgentCard({ agent, onToggleDeploy, deployPending }: Agen
   const provider = agent.config?.llmProvider ?? "—";
   const model = agent.config?.llmModel ?? "default model";
   const isActive = agent.status === "active";
+  const borderClass = STATUS_BORDER[agent.status] ?? STATUS_BORDER.draft;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 truncate">{agent.name}</h3>
+    <div
+      className={`bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 ${borderClass} flex flex-col hover:shadow-md transition-shadow cursor-pointer`}
+      onClick={() => navigate(`/agents/${agent.id}`)}
+    >
+      {/* Card body */}
+      <div className="p-5 flex flex-col gap-2 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold text-gray-900 truncate flex-1">{agent.name}</h3>
+
+          {/* Status badge + overflow menu — stop propagation so click doesn't open editor */}
+          <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[agent.status] ?? STATUS_STYLES.draft}`}>
+              {agent.status}
+            </span>
+
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o); }}
+                className="text-gray-400 hover:text-gray-700 p-0.5 rounded hover:bg-gray-100 transition-colors"
+                title="More options"
+              >
+                <MoreHorizontal size={15} />
+              </button>
+
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[128px] py-1">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setMenuOpen(false); navigate(`/agents/${agent.id}`); }}
+                    className="w-full text-left text-sm px-3 py-1.5 hover:bg-gray-50 text-gray-700"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setMenuOpen(false); cloneMutation.mutate(); }}
+                    disabled={cloneMutation.isPending}
+                    className="w-full text-left text-sm px-3 py-1.5 hover:bg-gray-50 text-gray-600 disabled:opacity-40"
+                  >
+                    {cloneMutation.isPending ? "Cloning…" : "Clone"}
+                  </button>
+                  <div className="border-t border-gray-100 my-1" />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuOpen(false);
+                      if (confirm(`Archive agent "${agent.name}"?`)) removeMutation.mutate();
+                    }}
+                    disabled={removeMutation.isPending}
+                    className="w-full text-left text-sm px-3 py-1.5 hover:bg-red-50 text-red-500 disabled:opacity-40"
+                  >
+                    Archive
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-        <span
-          className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[agent.status] ?? STATUS_STYLES.draft}`}
-        >
-          {agent.status}
-        </span>
+
+        {agent.description && (
+          <p className="text-sm text-gray-500 line-clamp-2">{agent.description}</p>
+        )}
+
+        <div className="mt-auto pt-1 space-y-0.5">
+          <div className="text-xs text-gray-400">{provider} · {model}</div>
+          <div className="text-xs text-gray-300">v{agent.version} · {new Date(agent.updated_at).toLocaleDateString()}</div>
+        </div>
       </div>
 
-      {agent.description && (
-        <p className="text-sm text-gray-600 line-clamp-2">{agent.description}</p>
-      )}
-
-      <div className="text-xs text-gray-400">
-        {provider} · {model}
-      </div>
-
-      <div className="text-xs text-gray-300">
-        v{agent.version} · updated {new Date(agent.updated_at).toLocaleDateString()}
-      </div>
-
-      <div className="flex gap-2 mt-auto pt-2 border-t border-gray-100">
-        <button
-          onClick={() => navigate(`/agents/${agent.id}`)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
-        >
-          <Pencil size={14} /> Edit
-        </button>
-
-        <button
-          onClick={() => cloneMutation.mutate()}
-          disabled={cloneMutation.isPending}
-          title="Duplicate this agent"
-          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-100 transition-colors disabled:opacity-40"
-        >
-          <Copy size={14} /> {cloneMutation.isPending ? "…" : "Clone"}
-        </button>
-
+      {/* Footer actions — stop propagation so clicks don't open editor */}
+      <div
+        className="border-t border-gray-100 px-4 py-2.5 flex items-center gap-2"
+        onClick={(e) => e.stopPropagation()}
+      >
         {onToggleDeploy && (
           <button
             onClick={onToggleDeploy}
             disabled={deployPending}
-            title={isActive ? "Deactivate agent" : "Activate agent"}
-            className={`flex items-center gap-1 text-sm px-2 py-1 rounded transition-colors disabled:opacity-40 ${
-              isActive
-                ? "text-amber-600 hover:text-amber-800 hover:bg-amber-50"
-                : "text-green-600 hover:text-green-800 hover:bg-green-50"
-            }`}
+            className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full transition-colors disabled:opacity-40 ${isActive
+              ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+              : "bg-green-50 text-green-700 hover:bg-green-100"
+              }`}
           >
-            {isActive ? <Square size={14} /> : <Play size={14} />}
-            {isActive ? "Deactivate" : "Activate"}
+            {isActive ? <><Square size={11} /> Deactivate</> : <><Play size={11} /> Activate</>}
           </button>
         )}
 
-        <button
-          onClick={() => {
-            if (confirm(`Archive agent "${agent.name}"?`)) {
-              removeMutation.mutate();
-            }
-          }}
-          disabled={removeMutation.isPending}
-          className="flex items-center gap-1 text-sm text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 transition-colors ml-auto disabled:opacity-40"
-        >
-          <Trash2 size={14} />
-        </button>
+        {isActive && (
+          <a
+            href={`${CHAINLIT_URL}?agent_id=${agent.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors ml-auto"
+          >
+            <ExternalLink size={11} /> Open Chat
+          </a>
+        )}
       </div>
     </div>
   );

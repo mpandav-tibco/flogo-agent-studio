@@ -35,9 +35,9 @@ flogo_services:
 
   config:
     port: 7004
-    description: "Multi-agent registry — GET /api/agents, GET /api/agents/{agentId}, POST /api/agents, PUT /api/agents/{agentId}, DELETE /api/agents/{agentId}, GET /api/health"
+    description: "Multi-agent registry — superseded by design-service (7020) which owns all agent CRUD. config-service.flogo kept for reference only."
     app: "apps/config-service.flogo"
-    status: active  # Phase 1
+    status: retired  # Retired: agent registry moved to design-service (7020) with PostgreSQL backing
 
   sse-stream:
     port: 7005

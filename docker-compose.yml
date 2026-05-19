@@ -18,7 +18,6 @@ version: "3.9"
 #   7001  agent-chat-service
 #   7002  ingestion-service
 #   7003  feedback-service
-#   7004  config-service
 #   7005  sse-stream-service (REST)
 #   7010  agent-builder-service
 #   7020  design-service
@@ -38,12 +37,11 @@ networks:
 
 volumes:
   weaviate_data:
-  agents_data:
   feedback_data:
   rules_data:
   postgres_data:
 
-# ── Shared Flogo environment ───────────────────────────────────────────────────
+    # ── Shared Flogo environment ───────────────────────────────────────────────────
 x-flogo-env: &flogo-env
   FLOGO_LOG_LEVEL: INFO
 
@@ -71,7 +69,7 @@ services:
     networks:
       - agent-studio
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/v1/.well-known/ready"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:8080/v1/.well-known/ready" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -86,7 +84,7 @@ services:
     networks:
       - agent-studio
     healthcheck:
-      test: ["CMD", "ollama", "list"]
+      test: [ "CMD", "ollama", "list" ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -108,7 +106,7 @@ services:
     networks:
       - agent-studio
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:7000/api/health"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:7000/api/health" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -130,7 +128,7 @@ services:
       weaviate:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:7001/api/health"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:7001/api/health" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -152,7 +150,7 @@ services:
       weaviate:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:7002/api/health"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:7002/api/health" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -172,27 +170,7 @@ services:
     networks:
       - agent-studio
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:7003/api/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
-  config:
-    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:config-${VERSION:-latest}
-    restart: unless-stopped
-    ports:
-      - "7004:7004"
-    environment:
-      <<: *flogo-env
-      FLOGO_APP_PROPS_ENV: auto
-      AGENTS_DIR: /app/agents
-    volumes:
-      - agents_data:/app/agents
-      - ./agents:/app/agents:ro
-    networks:
-      - agent-studio
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:7004/api/health"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:7003/api/health" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -217,7 +195,7 @@ services:
       agent-chat:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:7005/api/health"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:7005/api/health" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -231,15 +209,15 @@ services:
       <<: *flogo-env
       FLOGO_APP_PROPS_ENV: auto
       LLM_MODEL: ${LLM_MODEL:-llama3.2:3b}
-      CONFIG_SERVICE_BASE_URL: http://config:7004
+      DESIGN_SERVICE_URL: http://design-service:7020
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     networks:
       - agent-studio
     depends_on:
-      config:
+      design-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:7010/api/health"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:7010/api/health" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -254,7 +232,7 @@ services:
       FLOGO_APP_PROPS_ENV: auto
       RULE_ENGINE_URL: http://rule-engine:7000/api/analyze
       CHAT_SERVICE_URL: http://agent-chat:7001/api/chat
-      CONFIG_SERVICE_BASE_URL: http://config:7004
+      DESIGN_SERVICE_URL: http://design-service:7020
       FEEDBACK_SERVICE_URL: http://feedback:7003/api/feedback
       FEEDBACK_SERVICE_BASE_URL: http://feedback:7003
     networks:
@@ -264,7 +242,7 @@ services:
         condition: service_healthy
       agent-chat:
         condition: service_healthy
-      config:
+      design-service:
         condition: service_healthy
       feedback:
         condition: service_healthy
@@ -285,7 +263,7 @@ services:
     networks:
       - agent-studio
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U flogo -d agentforge"]
+      test: [ "CMD-SHELL", "pg_isready -U flogo -d agentforge" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -309,7 +287,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:7020/api/health"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:7020/api/health" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -329,7 +307,7 @@ services:
       design-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:7030/api/health"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:7030/api/health" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -365,23 +343,27 @@ services:
     ports:
       - "7080:7080"
     environment:
-      CONFIG_SERVICE_URL: http://config:7004
+      DESIGN_SERVICE_URL: http://design-service:7020
       CHAT_SERVICE_URL: http://agent-chat:7001
       FEEDBACK_SERVICE_URL: http://feedback:7003
+      SSE_SERVICE_URL: http://sse-stream:7005
+      SSE_EVENTS_URL: http://sse-stream:7099
       REQUEST_TIMEOUT: "60"
       CHAINLIT_HOST: 0.0.0.0
       CHAINLIT_PORT: "7080"
     networks:
       - agent-studio
     depends_on:
-      config:
+      design-service:
         condition: service_healthy
       agent-chat:
+        condition: service_healthy
+      sse-stream:
         condition: service_healthy
       feedback:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:7080/healthz"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:7080/healthz" ]
       interval: 15s
       timeout: 5s
       retries: 5

@@ -2,13 +2,13 @@
 
 | | |
 |---|---|
-| **Date** | 2026-05-13 23:07:52 |
-| **Duration** | 275.1s |
-| **Agent** | `E2E-Functional-Agent-2026-05-13` |
-| **Agent ID** | `4c481313-2ab7-45fe-8637-4472a3fc4bfc` |
+| **Date** | 2026-05-18 18:57:47 |
+| **Duration** | 45.7s |
+| **Agent** | `E2E-Functional-Agent-2026-05-18` |
+| **Agent ID** | `60550bb8-0a74-4805-9227-7834d80354b6` |
 | **Collection** | `FunctionalTestKB` |
 | **LLM Model** | `llama3.2:3b` |
-| **Session** | `e2e-functional-56dd8f08` |
+| **Session** | `e2e-functional-2dbe5982` |
 | **Result** | ✅ **PASSED** — 37/37 steps (100%) |
 
 ---
@@ -35,127 +35,127 @@ Forge UI  →  Undeploy  →  Archive
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| GET /api/v1/templates — list all templates | ✅ | 42ms | 3 template(s) |
+| GET /api/v1/templates — list all templates | ✅ | 15ms | 3 template(s) |
 
 ### ✅ Create Agent (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| POST /api/v1/agents — create new agent (Forge UI) | ✅ | 8ms | id=4c481313-2ab7-45fe-8637-4472a3fc4bfc |
+| POST /api/v1/agents — create new agent (Forge UI) | ✅ | 15ms | id=60550bb8-0a74-4805-9227-7834d80354b6 |
 
 ### ✅ Get Agent (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| GET /api/v1/agents/{id} — verify agent exists | ✅ | 4ms | status=draft |
+| GET /api/v1/agents/{id} — verify agent exists | ✅ | 6ms | status=draft |
 
 ### ✅ Generate Config (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| POST /api/agent-builder/generate — LLM config generation | ✅ | 4481ms | model=llama3.2:3b |
+| POST /api/agent-builder/generate — LLM config generation | ✅ | 3999ms | model=llama3.2:3b |
 
 ### ✅ Update Config (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| PUT /api/v1/agents/{id} — apply AI-generated config | ✅ | 25ms | version=2 |
+| PUT /api/v1/agents/{id} — apply AI-generated config | ✅ | 6ms | version=2 |
 
 ### ✅ Ingest Knowledge (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| POST /api/ingest — embed & store in Weaviate | ✅ | 606ms | chunks=1 |
+| POST /api/ingest — embed & store in Weaviate | ✅ | 2652ms | chunks=1 |
 
 ### ✅ Rule Analysis (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| POST /api/analyze — app quality gate | ✅ | 24ms | rules_run=? |
+| POST /api/analyze — app quality gate | ✅ | 30ms | rules_run=? |
 
 ### ✅ Deploy Agent (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| POST /api/v1/agents/{id}/deploy — activate (Forge Deploy button) | ✅ | 40ms | status=active |
+| POST /api/v1/agents/{id}/deploy — activate (Forge Deploy button) | ✅ | 11ms | status=active |
 
 ### ✅ Verify Deploy (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| GET /api/v1/agents/{id}/deploy — confirm active status | ✅ | 5ms | records=1, status=active |
+| GET /api/v1/agents/{id}/deploy — confirm active status | ✅ | 3ms | records=1, status=active |
 
 ### ✅ List Active Agents (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| GET /api/v1/agents — find deployed agent in Forge sidebar | ✅ | 27ms | found=True |
+| GET /api/v1/agents — find deployed agent in Forge sidebar | ✅ | 2ms | found=True |
 
 ### ✅ Chainlit Agent Discovery (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| GET /api/v1/agents — Chainlit finds active agent on startup | ✅ | 15ms | found=True |
+| GET /api/v1/agents — Chainlit finds active agent on startup | ✅ | 2ms | found=True |
 
 ### ✅ Chainlit Chat #1 (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| POST /api/chat — RAG query via Chainlit (AgenticAI question) | ✅ | 40769ms | answer_len=0 |
+| POST /api/chat — RAG query via Chainlit (AgenticAI question) | ✅ | 10520ms | answer_len=0 |
 
 ### ✅ Chainlit Chat #2 (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| POST /api/chat — follow-up RAG query (Weaviate integration) | ✅ | 21202ms | answer_len=1061 |
+| POST /api/chat — follow-up RAG query (Weaviate integration) | ✅ | 5359ms | answer_len=614 |
 
 ### ✅ Submit Feedback #1 (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| POST /api/feedback — thumbs-up (Chainlit button) | ✅ | 9ms | rating=thumbsUp |
+| POST /api/feedback — thumbs-up (Chainlit button) | ✅ | 4ms | rating=thumbsUp |
 
 ### ✅ Submit Feedback #2 (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| POST /api/feedback — thumbs-down (Chainlit button) | ✅ | 7ms | rating=thumbsDown |
+| POST /api/feedback — thumbs-down (Chainlit button) | ✅ | 2ms | rating=thumbsDown |
 
 ### ✅ Retrieve Feedback (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| GET /api/feedback/{agentId} — Forge feedback panel | ✅ | 25ms | records=1 |
+| GET /api/feedback/{agentId} — Forge feedback panel | ✅ | 0ms | records=1 |
 
 ### ✅ Improve Agent (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| POST /api/agent-builder/improve — AI improvement from feedback | ✅ | 6782ms | changes=3 |
+| POST /api/agent-builder/improve — AI improvement from feedback | ✅ | 14121ms | changes=5 |
 
 ### ✅ Apply Improvements (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| PUT /api/v1/agents/{id} — save improved config | ✅ | 33ms | version=4 |
+| PUT /api/v1/agents/{id} — save improved config | ✅ | 7ms | version=4 |
 
 ### ✅ SSE Broadcast (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| POST /api/stream/broadcast — session.start event | ✅ | 20ms |  |
+| POST /api/stream/broadcast — session.start event | ✅ | 4ms |  |
 
 ### ✅ SSE Stream Chat (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| POST /api/stream/chat — full RAG+LLM via SSE pipeline | ✅ | 104029ms | streaming=True |
+| POST /api/stream/chat — full RAG+LLM via SSE pipeline | ✅ | 7224ms | streaming=True |
 
 ### ✅ MCP Initialize (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| POST /mcp — initialize JSON-RPC session | ✅ | 1ms | session=7TGI67LNY4F3OYG4JWLM3LNQHZ |
+| POST /mcp — initialize JSON-RPC session | ✅ | 3ms | session=YCU4FQZ64XPHRRNMYWMUQWK4TU |
 
 ### ✅ MCP tools/list (1/1)
 
@@ -167,37 +167,37 @@ Forge UI  →  Undeploy  →  Archive
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| tools/call 'list_agents' — list all agents from design-service | ✅ | 22ms | len=19972 |
+| tools/call 'list_agents' — list all agents from design-service | ✅ | 17ms | len=6186 |
 
 ### ✅ MCP tool: get_agent (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| tools/call 'get_agent' — get specific agent config from design-service | ✅ | 7ms | len=1124 |
+| tools/call 'get_agent' — get specific agent config from design-service | ✅ | 6ms | len=1358 |
 
 ### ✅ MCP tool: create_agent (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| tools/call 'create_agent' — create agent via MCP tool | ✅ | 22ms | len=551 |
+| tools/call 'create_agent' — create agent via MCP tool | ✅ | 7ms | len=394 |
 
 ### ✅ MCP tool: list_templates (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| tools/call 'list_templates' — list all agent templates | ✅ | 24ms | len=1066 |
+| tools/call 'list_templates' — list all agent templates | ✅ | 2ms | len=1066 |
 
 ### ✅ MCP tool: submit_feedback (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| tools/call 'submit_feedback' — submit feedback via MCP tool | ✅ | 8ms | len=285 |
+| tools/call 'submit_feedback' — submit feedback via MCP tool | ✅ | 6ms | len=260 |
 
 ### ✅ MCP tool: get_feedback (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| tools/call 'get_feedback' — retrieve feedback via MCP tool | ✅ | 31ms | len=7042 |
+| tools/call 'get_feedback' — retrieve feedback via MCP tool | ✅ | 4ms | len=1723 |
 
 ### ✅ MCP tool: analyze_flogo (1/1)
 
@@ -209,49 +209,49 @@ Forge UI  →  Undeploy  →  Archive
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| tools/call 'rag_chat' — RAG chat via MCP tool (full pipeline) | ✅ | 96648ms | len=0 |
+| tools/call 'rag_chat' — RAG chat via MCP tool (full pipeline) | ✅ | 1561ms | len=9785 |
 
 ### ✅ MCP tool: deploy_agent (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| tools/call 'deploy_agent' — activate MCP-created agent | ✅ | 24ms | len=521 |
+| tools/call 'deploy_agent' — activate MCP-created agent | ✅ | 12ms | len=364 |
 
 ### ✅ Export kubernetes (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| GET /api/v1/agents/{id}/export/kubernetes — K8s YAML | ✅ | 27ms | chars=741 |
+| GET /api/v1/agents/{id}/export/kubernetes — K8s YAML | ✅ | 4ms | chars=741 |
 
 ### ✅ Export docker-compose (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| GET /api/v1/agents/{id}/export/docker-compose — Docker Compose YAML | ✅ | 5ms | chars=361 |
+| GET /api/v1/agents/{id}/export/docker-compose — Docker Compose YAML | ✅ | 4ms | chars=361 |
 
 ### ✅ Undeploy Agent (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| DELETE /api/v1/agents/{id}/deploy — deactivate (Forge button) | ✅ | 18ms | status=draft |
+| DELETE /api/v1/agents/{id}/deploy — deactivate (Forge button) | ✅ | 6ms | status=draft |
 
 ### ✅ Verify Undeploy (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| GET /api/v1/agents/{id}/deploy — confirm deactivated | ✅ | 9ms | status=draft |
+| GET /api/v1/agents/{id}/deploy — confirm deactivated | ✅ | 3ms | status=draft |
 
 ### ✅ Archive Agent (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| DELETE /api/v1/agents/{id} — archive/delete (Forge Delete button) | ✅ | 10ms | status=200 |
+| DELETE /api/v1/agents/{id} — archive/delete (Forge Delete button) | ✅ | 8ms | status=200 |
 
 ### ✅ Verify Archive (1/1)
 
 | Step | Result | Time | Detail |
 |------|--------|------|--------|
-| GET /api/v1/agents — confirm agent no longer active | ✅ | 7ms | not in active list |
+| GET /api/v1/agents — confirm agent no longer active | ✅ | 2ms | not in active list |
 
 ---
 
@@ -286,7 +286,7 @@ Forge UI  →  Undeploy  →  Archive
 | Passed | 37 |
 | Failed | 0 |
 | Pass rate | 100% |
-| Duration | 275.1s |
+| Duration | 45.7s |
 | Agent lifecycle | Create → Configure → Deploy → Chat → Feedback → Improve → Export → Decommission |
 
-_Generated by `e2e_functional.py` on 2026-05-13 23:07:52_
+_Generated by `e2e_functional.py` on 2026-05-18 18:57:47_

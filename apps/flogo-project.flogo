@@ -1,0 +1,18 @@
+{
+  "imports": [],
+  "name": "Flogo_project",
+  "description": "Flogo Project created with Flogo Design",
+  "version": "1.0.0",
+  "type": "flogo:app",
+  "appModel": "1.1.1",
+  "tags": [],
+  "triggers": [],
+  "resources": [],
+  "properties": [],
+  "connections": {},
+  "contrib": "",
+  "metadata": {
+    "endpoints": [],
+    "flogoVersion": "2.26.2"
+  }
+}

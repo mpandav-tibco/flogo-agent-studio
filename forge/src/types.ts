@@ -46,9 +46,9 @@ export interface DeployStatus {
 export interface FeedbackRecord {
   agentId: string;
   sessionId: string;
+  messageId?: string;
   rating: number | string;
   comment: string;
-  timestamp?: string;
 }
 
 export interface FeedbackSummary {

@@ -7,7 +7,6 @@
     "github.com/project-flogo/contrib/activity/actreturn",
     "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/activity/agentactivity",
     "github.com/tibco/flogo-general/src/app/General/trigger/rest",
-    "act_rest github.com/tibco/flogo-general/src/app/General/activity/rest",
     "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/string",
     "github.com/mpandav-tibco/flogo-extensions/vectordb/connector",
@@ -23,7 +22,7 @@
     {
       "ref": "#rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger \u2014 agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7001,
         "APISpecUpdate": false,
@@ -82,7 +81,7 @@
               },
               "body": {
                 "type": "json",
-                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"},\"message\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"topK\":{\"type\":\"number\"},\"sessionId\":{\"type\":\"string\"},\"systemPrompt\":{\"type\":\"string\"}}}",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"message\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"topK\":{\"type\":\"number\"},\"sessionId\":{\"type\":\"string\"},\"systemPrompt\":{\"type\":\"string\"}}}",
                 "fe_metadata": "{\"message\":\"abc\",\"collectionName\":\"abc\",\"topK\":134,\"sessionId\":\"abc\",\"systemPrompt\":\"abc\"}"
               }
             }
@@ -243,22 +242,16 @@
           {
             "id": 1,
             "from": "Start",
-            "to": "LogRequest"
+            "to": "LogRequest",
+            "type": "label",
+            "label": "Start to LogRequest"
           },
           {
             "id": 2,
             "from": "LogRequest",
-            "to": "GetAgentConfig"
-          },
-          {
-            "id": 3,
-            "from": "GetAgentConfig",
-            "to": "RAGQuery"
-          },
-          {
-            "id": 4,
-            "from": "RAGQuery",
-            "to": "Return"
+            "to": "RAGQuery",
+            "type": "label",
+            "label": "LogRequest to RAGQuery"
           }
         ],
         "tasks": [
@@ -280,30 +273,6 @@
                 "Log Level": "INFO",
                 "flowInfo": false,
                 "message": "=string.concat(\"[AgentChat] Chat request: session=\", coerce.toString($flow.body.sessionId), \" collection=\", coerce.toString($flow.body.collectionName))"
-              }
-            }
-          },
-          {
-            "id": "GetAgentConfig",
-            "name": "GetAgentConfig",
-            "description": "Fetch per-agent config from config-service using the agentId in the request. Falls back gracefully if agentId is absent.",
-            "activity": {
-              "ref": "#act_rest",
-              "input": {
-                "Method": "GET",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", coerce.toString($flow.body.agentId), \"/config\")",
-                "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
-                }
-              },
-              "schemas": {
-                "input": {
-                  "headers": {
-                    "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"Authorization\":{\"type\":\"string\"},\"Content-Type\":{\"type\":\"string\"}}}"
-                  }
-                }
               }
             }
           },
@@ -338,28 +307,14 @@
               },
               "input": {
                 "queryText": "=$flow.body.message",
-                "collectionName": "=$activity[GetAgentConfig].responseBody.collectionName",
-                "topK": "=coerce.toInt($activity[GetAgentConfig].responseBody.topK)",
-                "systemPrompt": "=$activity[GetAgentConfig].responseBody.systemPrompt"
-              }
-            }
-          },
-          {
-            "id": "Return",
-            "name": "Return",
-            "description": "",
-            "activity": {
-              "ref": "#actreturn",
-              "settings": {
-                "mappings": {
-                  "code": 200,
-                  "data": "=$activity[RAGQuery]"
-                }
+                "collectionName": "=$flow.body.collectionName",
+                "topK": "=coerce.toInt($flow.body.topK)",
+                "systemPrompt": "=$flow.body.systemPrompt"
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdRdWVyeSI6eyJ4Ijo0NDksInkiOjQ5fSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdRdWVyeSI6eyJ4Ijo2NTAsInkiOjUwfX0=",
         "metadata": {
           "input": [
             {
@@ -716,10 +671,12 @@
                 "mappings": {
                   "code": 200,
                   "data": {
-                    "status": "ok",
-                    "service": "agent-chat-service",
-                    "port": 7001,
-                    "version": "1.0.0"
+                    "mapping": {
+                      "status": "ok",
+                      "service": "agent-chat-service",
+                      "port": 7001,
+                      "version": "1.0.0"
+                    }
                   }
                 }
               }
@@ -751,12 +708,17 @@
     {
       "name": "AgenticAI.llm-provider.LLM_Provider",
       "type": "string",
-      "value": "Ollama"
+      "value": "OpenAI"
+    },
+    {
+      "name": "AgenticAI.llm-provider.API_Key",
+      "type": "string",
+      "value": "SECRET:8m6pNqAh7gfHufN4GAwvmeKojnzZYGkMewAFm3WWyzp8Bf5ZJ3PBA0CeObFdby2+14BGcrVpK5MHnaDWEkN/A84DC2Dn8yCiMA=="
     },
     {
       "name": "AgenticAI.llm-provider.LLM_Base_URL",
       "type": "string",
-      "value": "http://localhost:11434"
+      "value": "http://localhost:11434/v1"
     },
     {
       "name": "EMBEDDING_MODEL",
@@ -771,7 +733,7 @@
     {
       "name": "LLM_MODEL",
       "type": "string",
-      "value": "llama3.2:3b"
+      "value": "llama3.1:8b"
     },
     {
       "name": "SYSTEM_PROMPT",
@@ -786,7 +748,6 @@
     {
       "name": "CONFIG_SERVICE_URL",
       "type": "string",
-      "description": "Base URL of the config-service for fetching per-agent configuration.",
       "value": "http://localhost:7004"
     },
     {
@@ -805,64 +766,116 @@
       "value": "954bd5d476ee456583f9a4079d24ac16.EP8HhAPYJyC4LELg-PfqTa6z"
     },
     {
-      "name": "VECTORDB_HOST",
-      "type": "string",
-      "value": "localhost"
-    },
-    {
-      "name": "VECTORDB_PORT",
-      "type": "integer",
-      "value": 8080
-    },
-    {
-      "name": "OPENAI_API_KEY",
-      "type": "string",
-      "value": "ollama"
-    },
-    {
       "name": "API_KEY",
       "type": "string",
-      "description": "Shared API key for Basic auth. Clients send Authorization: Basic base64(:<API_KEY>).",
-      "value": "changeme"
+      "value": "SECRET:3ccO8oQyCPcTHicvAa1QBC8hyyAno6s2"
     },
     {
       "name": "API_AUTH_HEADER",
       "type": "string",
-      "description": "Pre-computed Authorization header for outbound calls. Matches API_KEY=changeme by default.",
       "value": "Basic ZmxvZ286Y2hhbmdlbWU="
     },
     {
       "name": "DESIGN_SERVICE_URL",
       "type": "string",
       "value": "http://localhost:7020"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Connection_Name",
+      "type": "string",
+      "value": "vectordb-weaviate"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].DB_Provider",
+      "type": "string",
+      "value": "weaviate"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Host",
+      "type": "string",
+      "value": "localhost"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Port",
+      "type": "float64",
+      "value": 18080
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].API_Key",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Secure_Connection",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Timeout_(seconds)",
+      "type": "float64",
+      "value": 30
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Max_Retries",
+      "type": "float64",
+      "value": 3
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Retry_Backoff_(ms)",
+      "type": "float64",
+      "value": 500
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].HTTP_Scheme",
+      "type": "string",
+      "value": "http"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Configure_Embedding_Provider",
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_Provider",
+      "type": "string",
+      "value": "OpenAI"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_API_Key",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_Base_URL",
+      "type": "string",
+      "value": "http://localhost:11434/v1"
     }
   ],
   "connections": {
     "vectordb-weaviate": {
       "id": "vectordb-weaviate",
-      "name": "$property[\"VectorDB.vectordb-weaviate.Connection_Name\"]",
+      "name": "vectordb-weaviate",
       "ref": "#connector",
       "isGlobal": false,
       "settings": {
-        "name": "vectordb-weaviate",
-        "dbType": "weaviate",
-        "host": "=$property[\"VECTORDB_HOST\"]",
-        "port": "=$property[\"VECTORDB_PORT\"]",
-        "apiKey": "",
-        "useTLS": false,
+        "name": "=$property[\"VectorDB.vectordb-weaviate.Connection_Name\"]",
+        "dbType": "=$property[\"VectorDB.vectordb-weaviate.DB_Provider\"]",
+        "host": "=$property[\"VectorDB.vectordb-weaviate.Host\"]",
+        "port": "=$property[\"VectorDB.vectordb-weaviate.Port\"]",
+        "apiKey": "=$property[\"VectorDB.vectordb-weaviate.API_Key\"]",
+        "useTLS": "=$property[\"VectorDB.vectordb-weaviate.Secure_Connection\"]",
         "tlsInsecureSkipVerify": false,
-        "timeoutSeconds": 30,
-        "maxRetries": 3,
-        "retryBackoffMs": 100,
+        "timeoutSeconds": "=$property[\"VectorDB.vectordb-weaviate.Timeout_(seconds)\"]",
+        "maxRetries": "=$property[\"VectorDB.vectordb-weaviate.Max_Retries\"]",
+        "retryBackoffMs": "=$property[\"VectorDB.vectordb-weaviate.Retry_Backoff_(ms)\"]",
         "grpcPort": 50051,
-        "scheme": "http",
+        "scheme": "=$property[\"VectorDB.vectordb-weaviate.HTTP_Scheme\"]",
         "dbName": "default",
         "defaultMetricType": "cosine",
-        "enableEmbedding": true,
-        "embeddingProvider": "OpenAI",
-        "embeddingAPIKey": "=$property[\"OPENAI_API_KEY\"]",
-        "embeddingBaseURL": "http://localhost:11434/v1",
-        "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]"
+        "enableEmbedding": "=$property[\"VectorDB.vectordb-weaviate.Configure_Embedding_Provider\"]",
+        "embeddingProvider": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Provider\"]",
+        "embeddingAPIKey": "=$property[\"VectorDB.vectordb-weaviate.Embedding_API_Key\"]",
+        "embeddingBaseURL": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Base_URL\"]"
       }
     },
     "llm-provider": {
@@ -872,14 +885,14 @@
       "isGlobal": false,
       "settings": {
         "name": "llm-provider",
-        "llmProvider": "OpenAI",
+        "llmProvider": "=$property[\"AgenticAI.llm-provider.LLM_Provider\"]",
         "anthropicProvider": "Default",
-        "apiKey": "954bd5d476ee456583f9a4079d24ac16.EP8HhAPYJyC4LELg-PfqTa6z",
-        "llmProviderUrl": "http://localhost:11434/v1"
+        "apiKey": "=$property[\"AgenticAI.llm-provider.API_Key\"]",
+        "llmProviderUrl": "=$property[\"AgenticAI.llm-provider.LLM_Base_URL\"]"
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuYyIsImlkIjoiVmVjdG9yREIiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJWZWN0b3JEQiBSQUcgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tYWktYWdlbnQvc3JjL2FwcC9BZ2VudGljQUkiLCJpZCI6IkFnZW50aWNBSSIsInZlcnNpb24iOiIwLjkuMCIsInRhZyI6IjAuOS4wLWIwMyIsIm5hbWUiOiJUSUJDTyBGbG9nb8KuIENvbm5lY3RvciBmb3IgQWdlbnRpYyBBSSAoVGVjaCBQcmV2aWV3KSIsInMzbG9jYXRpb24iOiJUaWJjby9BZ2VudGljQUkiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfV0=",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmMiLCJpZCI6IlZlY3RvckRCIiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiVmVjdG9yREIgUkFHIENvbm5lY3RvciIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9WZWN0b3JEQiIsImlzVXNlckV4dGVuc2lvbiI6dHJ1ZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLWFpLWFnZW50L3NyYy9hcHAvQWdlbnRpY0FJIiwiaWQiOiJBZ2VudGljQUkiLCJ2ZXJzaW9uIjoiMC45LjEiLCJ0YWciOiIwLjkuMS1iMDIiLCJuYW1lIjoiQWdlbnRpYyBBSSAoVGVjaCBQcmV2aWV3KSIsInMzbG9jYXRpb24iOiJUaWJjby9BZ2VudGljQUkiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfV0=",
   "metadata": {
     "endpoints": [
       {
@@ -895,7 +908,7 @@
           "info": {
             "title": "agent-chat-service",
             "version": "1.0.0",
-            "description": "REST trigger \u2014 agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/chat": {

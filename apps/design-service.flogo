@@ -8,8 +8,7 @@
     "github.com/tibco/flogo-general/src/app/General/trigger/rest",
     "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/string",
-    "github.com/tibco/wi-postgres/src/app/PostgreSQL/connector/connection",
-    "act_default_noop github.com/project-flogo/contrib/activity/noop"
+    "github.com/tibco/wi-postgres/src/app/PostgreSQL/connector/connection"
   ],
   "name": "design-service",
   "description": "Agent Studio design-time service on port 7020. PostgreSQL-backed CRUD for agent definitions.",
@@ -21,7 +20,7 @@
     {
       "ref": "#rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger \u2014 design-service on port 7020",
+      "description": "REST trigger — design-service on port 7020",
       "settings": {
         "port": 7020,
         "APISpecUpdate": false,
@@ -356,6 +355,7 @@
           "name": "health_check"
         },
         {
+          "description": "Flogo Flow created with Flogo Design",
           "settings": {
             "APISpecPath": "",
             "Method": "GET",
@@ -364,32 +364,23 @@
             "OutputValidation": false
           },
           "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:get_agent_config"
+            },
             "input": {
               "agentId": "=$.pathParams.agentId"
             },
             "output": {
               "data": "=$.data",
               "code": "=$.code"
-            },
-            "ref": "github.com/project-flogo/flow",
-            "settings": {
-              "flowURI": "res://flow:get_agent_config"
             }
           },
           "reply": {
-            "code": 0,
+            "code": 200,
             "configureResponseCodes": false,
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
-            "responseBody": {},
-            "responseCodesSchema": {},
             "message": ""
           },
-          "name": "get_agent_config",
-          "description": "Get flat agent config for runtime use",
           "schemas": {
             "reply": {
               "responseBody": {
@@ -410,7 +401,8 @@
                 "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
               }
             }
-          }
+          },
+          "name": "get_agent_config"
         }
       ]
     }
@@ -484,7 +476,7 @@
                 "Schema": "public",
                 "Query": "INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
                 "manualmode": false,
-                "State": "252bcb93-5235-46bf-9308-f68e4e72f928INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', ?config::jsonb, NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
+                "State": "d7c86ee2-7d9d-4075-bbd0-d8e2eb7b99ccINSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -535,7 +527,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -544,7 +536,7 @@
           ],
           "fe_metadata": {
             "input": "{\"type\":\"object\",\"title\":\"DesignRESTTrigger\",\"properties\":{\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
-            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"message\":{\"type\":\"string\"}},\"required\":[]}"
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"data\":{\"type\":\"object\",\"properties\":{}}},\"required\":[]}"
           }
         },
         "explicitReply": true
@@ -597,7 +589,7 @@
                 "Schema": "public",
                 "Query": "SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
                 "manualmode": false,
-                "State": "08b2ee28-918b-4127-a95c-de11c2717832SELECT id, name, description, status, config::text as config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
+                "State": "6e466828-8bc5-42e8-a812-b1104ac8590bSELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -695,7 +687,8 @@
                 "Connection": "conn://design-db",
                 "Schema": "public",
                 "Query": "SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC",
-                "manualmode": false
+                "manualmode": false,
+                "State": "446b728a-0a0d-4d0a-9f91-910160d10397SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC"
               }
             }
           },
@@ -787,7 +780,7 @@
                 "Schema": "public",
                 "Query": "UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
                 "manualmode": false,
-                "State": "65e5e38e-29c0-4cb1-a016-8b5f8fbb25a2UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(?config::jsonb, config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
+                "State": "ac00da47-ea01-4df4-9a31-7e5557fdd680UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -894,7 +887,7 @@
                 "Schema": "public",
                 "Query": "UPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
                 "manualmode": false,
-                "State": "9f39b740-36ab-4e88-a7c4-2084e96d84bbUPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
+                "State": "418f4ca3-231a-4ccf-8396-c186dd4ed309UPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -1095,7 +1088,7 @@
                 "Schema": "public",
                 "Query": "SELECT 1 AS alive",
                 "manualmode": false,
-                "State": "a83aa72b-8f64-4a19-abf7-3653c2e3c312SELECT 1 AS alive",
+                "State": "89bb56ee-c333-4fb9-8b6a-5343b177f020SELECT 1 AS alive",
                 "input": {
                   "mapping": {
                     "parameters": {}
@@ -1174,11 +1167,21 @@
             "name": "StartActivity",
             "description": "NoOp Activity",
             "activity": {
-              "ref": "#act_default_noop"
+              "ref": "#noop"
             }
           },
           {
+            "id": "SelectAgentConfig",
+            "name": "SelectAgentConfig",
+            "description": "PostgreSQL postgresql-query Activity",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
             "activity": {
+              "ref": "#query",
               "input": {
                 "Connection": "conn://design-db",
                 "QueryName": "",
@@ -1186,30 +1189,40 @@
                 "Query": "SELECT config->>'collectionName' as \"collectionName\", config->>'topK' as \"topK\", config->>'systemPrompt' as \"systemPrompt\", config->>'llmProvider' as \"llmProvider\", config->>'llmModel' as \"llmModel\", config->>'llmBaseUrl' as \"llmBaseUrl\", config->>'temperature' as \"temperature\", config->>'chunkStrategy' as \"chunkStrategy\" FROM agents WHERE id = ?agentId",
                 "manualmode": false,
                 "fetchMetadata": "",
+                "Fields": [],
+                "RuntimeQuery": "",
+                "State": "3cc055dc-01eb-40ac-91da-98c7a002d38eSELECT config->>'collectionName' as \"collectionName\", config->>'topK' as \"topK\", config->>'systemPrompt' as \"systemPrompt\", config->>'llmProvider' as \"llmProvider\", config->>'llmModel' as \"llmModel\", config->>'llmBaseUrl' as \"llmBaseUrl\", config->>'temperature' as \"temperature\", config->>'chunkStrategy' as \"chunkStrategy\" FROM agents WHERE id = ?agentId",
                 "input": {
                   "mapping": {
                     "parameters": {
                       "agentId": "=$flow.agentId"
                     }
                   }
-                },
-                "Fields": [],
-                "RuntimeQuery": "",
-                "State": ""
+                }
               },
-              "ref": "#query"
-            },
-            "settings": {
-              "retryOnError": {
-                "count": 0,
-                "interval": 0
-              }
-            },
-            "id": "SelectAgentConfig",
-            "name": "SelectAgentConfig",
-            "description": "PostgreSQL postgresql-query Activity"
+              "schemas": {
+                "input": {
+                  "input": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"definitions\":{},\"properties\":{\"parameters\":{\"type\":\"object\",\"properties\":{}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"definitions\":{},\"properties\":{\"parameters\":{\"type\":\"object\",\"properties\":{}}}}"
+                  }
+                },
+                "output": {
+                  "Output": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"definitions\":{},\"properties\":{\"records\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{}}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"definitions\":{},\"properties\":{\"records\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{}}}}}"
+                  }
+                }
+              },
+              "feSchemaMap": {}
+            }
           },
           {
+            "id": "Return",
+            "name": "Return",
+            "description": "Simple Return Activity",
             "activity": {
               "ref": "#actreturn",
               "settings": {
@@ -1218,13 +1231,10 @@
                   "data": "=$activity[SelectAgentConfig].Output.records[0]"
                 }
               }
-            },
-            "id": "Return",
-            "name": "Return",
-            "description": "Simple Return Activity"
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfX0=",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIlNlbGVjdEFnZW50Q29uZmlnIjp7IngiOjI1MCwieSI6MTUwfSwiUmV0dXJuIjp7IngiOjQ1MCwieSI6MjUwfX0=",
         "metadata": {
           "input": [
             {
@@ -1242,27 +1252,16 @@
               "type": "object"
             }
           ],
-          "fe_metadata": {}
-        }
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
       }
     }
   ],
   "properties": [
-    {
-      "name": "DB_PORT",
-      "type": "string",
-      "value": "5432"
-    },
-    {
-      "name": "SERVICE_VERSION",
-      "type": "string",
-      "value": "1.0.0"
-    },
-    {
-      "name": "API_KEY",
-      "type": "string",
-      "value": "changeme"
-    },
     {
       "name": "PostgreSQL.Design_Service_DB.Host",
       "type": "string",
@@ -1286,7 +1285,7 @@
     {
       "name": "PostgreSQL.Design_Service_DB.Password",
       "type": "string",
-      "value": "changeme"
+      "value": "SECRET:YqxoCaUk0AbPvNj661rs5WwhQA9v4Rpp"
     },
     {
       "name": "PostgreSQL.Design_Service_DB.Maximum_Open_Connections",
@@ -1317,6 +1316,21 @@
       "name": "PostgreSQL.Design_Service_DB.Connection_Timeout",
       "type": "float64",
       "value": 30
+    },
+    {
+      "name": "DB_PORT",
+      "type": "string",
+      "value": "5432"
+    },
+    {
+      "name": "SERVICE_VERSION",
+      "type": "string",
+      "value": "1.0.0"
+    },
+    {
+      "name": "API_KEY",
+      "type": "string",
+      "value": "SECRET:4RQytssyG1UoQ1bTV3rCVe7mDveo6BUY"
     }
   ],
   "connections": {
@@ -1345,7 +1359,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL3dpLXBvc3RncmVzL3NyYy9hcHAvUG9zdGdyZVNRTCIsImlkIjoiUG9zdGdyZVNRTCIsInZlcnNpb24iOiIyLjcuMSIsInRhZyI6IjIuNy4xLWIwMSIsIm5hbWUiOiJUSUJDTyBGbG9nbyBjb25uZWN0b3IgZm9yIFBvc3RncmVTUUwiLCJzM2xvY2F0aW9uIjoiVGliY28vUG9zdGdyZVNRTCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9XQ==",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby93aS1wb3N0Z3Jlcy9zcmMvYXBwL1Bvc3RncmVTUUwiLCJpZCI6IlBvc3RncmVTUUwiLCJ2ZXJzaW9uIjoiMi43LjEiLCJ0YWciOiIyLjcuMS1iMDEiLCJuYW1lIjoiUG9zdGdyZVNRTCIsInMzbG9jYXRpb24iOiJUaWJjby9Qb3N0Z3JlU1FMIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
   "metadata": {
     "endpoints": [
       {
@@ -1361,7 +1375,7 @@
           "info": {
             "title": "design-service",
             "version": "1.0.0",
-            "description": "REST trigger \u2014 design-service on port 7020"
+            "description": "REST trigger — design-service on port 7020"
           },
           "paths": {
             "/api/v1/agents": {
@@ -1554,6 +1568,37 @@
                   }
                 },
                 "description": "Returns service health and DB connectivity status."
+              }
+            },
+            "/api/v1/agents/{agentId}/config": {
+              "get": {
+                "summary": "get_agent_config",
+                "operationId": "get_api_v1_agents_agentId_config",
+                "parameters": [
+                  {
+                    "name": "agentId",
+                    "in": "path",
+                    "description": "Request parameter",
+                    "required": true,
+                    "type": "string"
+                  },
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Flogo Flow created with Flogo Design"
               }
             }
           },
