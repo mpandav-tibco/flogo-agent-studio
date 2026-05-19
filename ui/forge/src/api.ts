@@ -146,8 +146,26 @@ export const getAgentFeedback = async (agentId: string): Promise<FeedbackRecord[
 
 // ── Agent Builder ─────────────────────────────────────────────────────────────
 
-export const generateAgentConfig = (prompt: string, model?: string): Promise<GeneratedConfig> =>
-  mutate("/api/agent-builder/generate", "POST", { prompt, model }).then(json<GeneratedConfig>);
+export const generateAgentConfig = async (prompt: string, model?: string): Promise<GeneratedConfig> => {
+  // Flow reads $flow.body.description (not prompt) — send both for safety.
+  const raw = await mutate("/api/agent-builder/generate", "POST", { description: prompt, prompt, model })
+    .then(json<GeneratedConfig>);
+
+  // Flow returns { config: <flat LLM JSON>, description: "$flow.body.description" }.
+  // The LLM schema uses "model" but the UI form uses "llmModel"; fix that here so
+  // applyGenerated can populate the form without touching the Flogo service.
+  if (raw?.config) {
+    const cfg = raw.config as Record<string, unknown>;
+    if (cfg["model"] && !cfg["llmModel"]) {
+      cfg["llmModel"] = cfg["model"];
+      delete cfg["model"];
+    }
+    // Hoist name / description up to the top level if absent there
+    if (!raw.name && cfg["name"])        raw.name        = cfg["name"]        as string;
+    if (!raw.description && cfg["description"]) raw.description = cfg["description"] as string;
+  }
+  return raw;
+};
 
 export const improveAgentConfig = (agentId: string, feedback: string): Promise<GeneratedConfig> =>
   mutate("/api/agent-builder/improve", "POST", { agentId, feedback }).then(json<GeneratedConfig>);
