@@ -99,6 +99,11 @@ export const deleteAgent = (id: string): Promise<void> =>
     if (!r.ok && r.status !== 204) throw new Error(`${r.status}: ${r.statusText}`);
   });
 
+export const purgeAgent = (id: string): Promise<void> =>
+  mutate(`${BASE}/${id}/purge`, "DELETE").then((r) => {
+    if (!r.ok && r.status !== 204) throw new Error(`${r.status}: ${r.statusText}`);
+  });
+
 export const cloneAgent = async (id: string): Promise<Agent> => {
   const source = await getAgent(id);
   return createAgent({

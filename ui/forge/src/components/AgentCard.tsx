@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ExternalLink, MoreHorizontal, Play, Square } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { cloneAgent, deleteAgent } from "../api";
+import { cloneAgent, deleteAgent, purgeAgent } from "../api";
 import type { Agent } from "../types";
 
 const CHAINLIT_URL = import.meta.env.VITE_CHAINLIT_URL ?? "http://localhost:7080";
@@ -44,6 +44,11 @@ export default function AgentCard({ agent, onToggleDeploy, deployPending }: Agen
 
   const removeMutation = useMutation({
     mutationFn: () => deleteAgent(agent.id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["agents"] }),
+  });
+
+  const purgeMutation = useMutation({
+    mutationFn: () => purgeAgent(agent.id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["agents"] }),
   });
 
@@ -112,11 +117,24 @@ export default function AgentCard({ agent, onToggleDeploy, deployPending }: Agen
                       setMenuOpen(false);
                       if (confirm(`Archive agent "${agent.name}"?`)) removeMutation.mutate();
                     }}
-                    disabled={removeMutation.isPending}
+                    disabled={removeMutation.isPending || agent.status === "archived"}
                     className="w-full text-left text-sm px-3 py-1.5 hover:bg-red-50 text-red-500 disabled:opacity-40"
                   >
                     Archive
                   </button>
+                  {agent.status === "archived" && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuOpen(false);
+                        if (confirm(`Permanently delete "${agent.name}"? This cannot be undone.`)) purgeMutation.mutate();
+                      }}
+                      disabled={purgeMutation.isPending}
+                      className="w-full text-left text-sm px-3 py-1.5 hover:bg-red-100 text-red-700 font-medium disabled:opacity-40"
+                    >
+                      {purgeMutation.isPending ? "Deleting…" : "Delete Permanently"}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

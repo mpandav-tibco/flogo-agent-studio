@@ -273,6 +273,50 @@
           "name": "delete_agent"
         },
         {
+          "description": "Hard-delete agent permanently from DB. Only call on already-archived agents.",
+          "settings": {
+            "Method": "DELETE",
+            "reqType": "application/json",
+            "Path": "/api/v1/agents/{agentId}/purge",
+            "OutputValidation": false
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:purge_agent"
+            },
+            "input": {
+              "agentId": "=$.pathParams.agentId"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "message": ""
+          },
+          "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
+            "output": {
+              "pathParams": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"agentId\",\"type\":\"string\"}]"
+              }
+            }
+          },
+          "name": "purge_agent"
+        },
+        {
           "description": "Return built-in agent template catalogue.",
           "settings": {
             "Method": "GET",
@@ -936,6 +980,61 @@
               "type": "object"
             }
           ],
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
+      }
+    },
+    {
+      "id": "flow:purge_agent",
+      "data": {
+        "name": "purge_agent",
+        "description": "Hard-delete agent — permanently removes row from agents table.",
+        "links": [
+          { "id": 1, "from": "Start", "to": "DeleteAgent", "type": "label", "label": "Start to DeleteAgent" },
+          { "id": 2, "from": "DeleteAgent", "to": "Return", "type": "label", "label": "DeleteAgent to Return" }
+        ],
+        "tasks": [
+          { "id": "Start", "name": "Start", "description": "", "activity": { "ref": "#noop" } },
+          {
+            "id": "DeleteAgent",
+            "name": "DeleteAgent",
+            "description": "",
+            "settings": { "retryOnError": { "count": 0, "interval": 0 } },
+            "activity": {
+              "ref": "#query",
+              "input": {
+                "Connection": "conn://design-db",
+                "Schema": "public",
+                "Query": "DELETE FROM agents WHERE id=?agentId RETURNING id",
+                "manualmode": false,
+                "State": "DELETE FROM agents WHERE id=?agentId RETURNING id",
+                "input": { "mapping": { "parameters": { "agentId": "=$flow.agentId" } } }
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": { "mapping": { "purged": true, "agentId": "=$flow.agentId" } }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJEZWxldGVBZ2VudCI6eyJ4IjoyNTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjQ1MCwieSI6NTB9fQ==",
+        "metadata": {
+          "input": [ { "name": "agentId", "type": "string" } ],
+          "output": [ { "name": "code", "type": "float64" }, { "name": "data", "type": "object" } ],
           "fe_metadata": {
             "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
             "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
