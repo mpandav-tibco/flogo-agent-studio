@@ -7,6 +7,11 @@ export default defineConfig({
     port: 7025,
     host: "127.0.0.1",
     proxy: {
+      // Runtime manager (deployment.py) — docker-deploy and agent runtime status
+      "/api/runtime": {
+        target: "http://localhost:7050",
+        changeOrigin: true,
+      },
       // Deploy/export endpoints must come before the /api/v1 catch-all
       "^/api/v1/agents/[^/]+/deploy": {
         target: "http://localhost:7030",

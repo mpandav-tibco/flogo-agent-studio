@@ -25,10 +25,13 @@ Reconciliation loop (RECONCILE_INTERVAL, default 15 s):
 
 REST API  (all JSON):
   GET    /api/health
-  GET    /api/agents                    — list managed agents + their URLs
-  GET    /api/agents/{agentId}          — single agent runtime status
-  POST   /api/agents/{agentId}/start    — force-start (bypass reconciler)
-  DELETE /api/agents/{agentId}/stop     — force-stop
+  GET    /api/agents                           — list managed agents + their URLs
+  GET    /api/agents/{agentId}                 — single agent runtime status
+  POST   /api/agents/{agentId}/start           — force-start (bypass reconciler)
+  DELETE /api/agents/{agentId}/stop            — force-stop
+  POST   /api/agents/{agentId}/docker-deploy   — generate compose + docker compose up -d
+  GET    /api/agents/{agentId}/docker-deploy   — docker compose ps (container status)
+  DELETE /api/agents/{agentId}/docker-deploy   — docker compose down
 
 State persistence: data/agent-runtime.json
   Survives restarts — existing processes are re-adopted if their PID is
@@ -585,6 +588,402 @@ async def _reconcile_once():
         await _restart_dead_processes(agent_id)
 
 
+# ── Docker Compose deployment ────────────────────────────────────────────────
+
+DOCKER_DEPLOY_DIR = DATA_DIR / "docker-deployments"   # per-agent compose files + state
+
+
+def _docker_available() -> bool:
+    return shutil.which("docker") is not None
+
+
+def _compose_safe_name(name: str) -> str:
+    """Produce a docker-compose-safe project name from an agent name."""
+    import re
+    safe = re.sub(r"[^a-z0-9_-]", "-", name.lower()).strip("-")
+    return safe[:40] or "agent"
+
+
+def _pick_docker_slot(agent_id: str) -> int:
+    """Deterministic slot 0-9 from agent_id hash, in range 7400-7490."""
+    import hashlib
+    return int(hashlib.md5(agent_id.encode()).hexdigest()[:2], 16) % 10
+
+
+def _docker_slot_ports(agent_id: str) -> dict[str, int]:
+    """Docker host port assignments for an agent (7400-7490 range)."""
+    base = 7400 + _pick_docker_slot(agent_id) * 10
+    return {
+        "chat":       base + 1,   # internal only (not exposed to host)
+        "sse_rest":   base + 2,   # SSE REST — mapped to host for streaming
+        "sse_events": base + 3,   # SSE event bus
+        "ingestion":  base + 4,   # ingestion API — mapped to host for doc upload
+        "chainlit":   base + 5,   # chat UI — mapped to host
+    }
+
+
+def _generate_compose_yaml(agent: dict) -> str:
+    """
+    Generate a complete per-agent docker-compose.yml.
+
+    Services included:
+      weaviate      — dedicated vector DB for this agent
+      ollama        — LLM backend (shared model cache via ~/.ollama volume)
+      agent-chat    — RAG chat service
+      sse-stream    — SSE REST gateway + event bus
+      ingestion     — document ingestion
+      chainlit      — web chat UI  (built from ui/chainlit/Dockerfile)
+
+    Host ports: 7400-7490 range, deterministically assigned per agentId.
+    Internal ports match the standard Flogo service defaults (7001/7002/7005/7099).
+    Images default to  ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:*-${VERSION:-latest}
+    with build: fallback using deployment/Dockerfile.flogo-service for when
+    pre-built images are not available.
+    """
+    agent_id    = agent["id"]
+    agent_name  = agent.get("name", agent_id)
+    cfg         = agent.get("_cfg") or agent.get("config") or {}
+    if isinstance(cfg, str):
+        try:
+            cfg = json.loads(cfg)
+        except Exception:
+            cfg = {}
+
+    collection  = cfg.get("collectionName") or f"Agent_{agent_id.replace('-','')[:16]}"
+    prompt      = cfg.get("systemPrompt", "You are a helpful assistant.")
+    llm_model   = cfg.get("llmModel", "llama3.2:3b")
+    llm_provider = cfg.get("llmProvider", "Ollama")
+
+    safe_name   = _compose_safe_name(agent_name)
+    short       = agent_id[:8]
+    ports       = _docker_slot_ports(agent_id)
+    project_root = str(PROJECT_ROOT)
+
+    import textwrap, datetime
+    # Escape special YAML characters in the system prompt
+    prompt_escaped = prompt.replace("'", "''")
+
+    generated_at = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+
+    yaml = textwrap.dedent(f"""\
+        # AgentForge — {agent_name} ({short})
+        # Generated : {generated_at}
+        # Agent ID  : {agent_id}
+        #
+        # Quick start:
+        #   docker compose up -d
+        #   docker compose logs -f chainlit      # tail chat UI logs
+        #   docker compose ps                    # check status
+        #   docker compose down                  # stop all
+        #
+        # If Flogo images are not available, build them first:
+        #   bash {project_root}/deployment/build-images.sh
+        #
+        # Chat UI: http://localhost:{ports['chainlit']}
+        # Ingest : http://localhost:{ports['ingestion']}/api/ingest
+
+        name: agent-{safe_name}
+
+        networks:
+          agent-net:
+            driver: bridge
+
+        volumes:
+          weaviate-data:
+
+        services:
+
+          # ── Vector database ──────────────────────────────────────────────────
+          weaviate:
+            image: semitechnologies/weaviate:1.24.6
+            restart: unless-stopped
+            environment:
+              AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+              PERSISTENCE_DATA_PATH: /var/lib/weaviate
+              DEFAULT_VECTORIZER_MODULE: none
+              ENABLE_MODULES: ""
+              CLUSTER_HOSTNAME: node1
+            volumes:
+              - weaviate-data:/var/lib/weaviate
+            networks:
+              - agent-net
+            healthcheck:
+              test: ["CMD", "wget", "-qO-", "http://localhost:8080/v1/.well-known/ready"]
+              interval: 10s
+              timeout: 5s
+              retries: 12
+
+          # ── LLM provider ─────────────────────────────────────────────────────
+          ollama:
+            image: ollama/ollama:latest
+            restart: unless-stopped
+            volumes:
+              - ~/.ollama:/root/.ollama
+            networks:
+              - agent-net
+            healthcheck:
+              test: ["CMD", "ollama", "list"]
+              interval: 15s
+              timeout: 10s
+              retries: 5
+
+          # ── Agent chat service ────────────────────────────────────────────────
+          agent-chat:
+            image: ${{FLOGO_IMAGE:-tibco/flogo-agent-studio}}:agent-chat-${{VERSION:-latest}}
+            build:
+              context: {project_root}
+              dockerfile: deployment/Dockerfile.flogo-service
+              args:
+                SERVICE_BINARY: deployment/linux-bin/agent-chat-service
+                FLOGO_APP: services/apps/agent-chat-service.flogo
+            restart: unless-stopped
+            environment:
+              FLOGO_APP_PROPS_ENV: auto
+              FLOGO_LOG_LEVEL: INFO
+              COLLECTION_NAME: {collection}
+              SYSTEM_PROMPT: '{prompt_escaped}'
+              LLM_MODEL: {llm_model}
+              LLM_PROVIDER: {llm_provider}
+              LLM_BASE_URL: http://ollama:11434/v1
+              WEAVIATE_HOST: weaviate
+              WEAVIATE_PORT: "8080"
+            networks:
+              - agent-net
+            depends_on:
+              weaviate:
+                condition: service_healthy
+              ollama:
+                condition: service_started
+            healthcheck:
+              test: ["CMD", "wget", "-qO-", "http://localhost:7001/api/health"]
+              interval: 15s
+              timeout: 5s
+              retries: 5
+
+          # ── SSE stream service ────────────────────────────────────────────────
+          sse-stream:
+            image: ${{FLOGO_IMAGE:-tibco/flogo-agent-studio}}:sse-stream-${{VERSION:-latest}}
+            build:
+              context: {project_root}
+              dockerfile: deployment/Dockerfile.flogo-service
+              args:
+                SERVICE_BINARY: deployment/linux-bin/sse-stream-service
+                FLOGO_APP: services/apps/sse-stream-service.flogo
+            restart: unless-stopped
+            ports:
+              - "{ports['sse_rest']}:7005"
+              - "{ports['sse_events']}:7099"
+            environment:
+              FLOGO_APP_PROPS_ENV: auto
+              FLOGO_LOG_LEVEL: INFO
+              CHAT_SERVICE_URL: http://agent-chat:7001
+              LLM_MODEL: {llm_model}
+            networks:
+              - agent-net
+            depends_on:
+              agent-chat:
+                condition: service_healthy
+            healthcheck:
+              test: ["CMD", "wget", "-qO-", "http://localhost:7005/api/health"]
+              interval: 15s
+              timeout: 5s
+              retries: 5
+
+          # ── Ingestion service ─────────────────────────────────────────────────
+          ingestion:
+            image: ${{FLOGO_IMAGE:-tibco/flogo-agent-studio}}:ingestion-${{VERSION:-latest}}
+            build:
+              context: {project_root}
+              dockerfile: deployment/Dockerfile.flogo-service
+              args:
+                SERVICE_BINARY: deployment/linux-bin/ingestion-service
+                FLOGO_APP: services/apps/ingestion-service.flogo
+            restart: unless-stopped
+            ports:
+              - "{ports['ingestion']}:7002"
+            environment:
+              FLOGO_APP_PROPS_ENV: auto
+              FLOGO_LOG_LEVEL: INFO
+              COLLECTION_NAME: {collection}
+              WEAVIATE_HOST: weaviate
+              WEAVIATE_PORT: "8080"
+            networks:
+              - agent-net
+            depends_on:
+              weaviate:
+                condition: service_healthy
+            healthcheck:
+              test: ["CMD", "wget", "-qO-", "http://localhost:7002/api/health"]
+              interval: 15s
+              timeout: 5s
+              retries: 5
+
+          # ── Chainlit chat UI ──────────────────────────────────────────────────
+          chainlit:
+            build:
+              context: {project_root}/ui/chainlit
+              dockerfile: Dockerfile
+            image: ${{FLOGO_IMAGE:-tibco/flogo-agent-studio}}:chainlit-{short}
+            restart: unless-stopped
+            ports:
+              - "{ports['chainlit']}:7080"
+            environment:
+              AGENT_ID: {agent_id}
+              DESIGN_SERVICE_URL: {DESIGN_URL}
+              CHAT_SERVICE_URL: http://agent-chat:7001
+              SSE_SERVICE_URL: http://sse-stream:7005
+              SSE_EVENTS_URL: http://sse-stream:7099
+              FEEDBACK_SERVICE_URL: {FEEDBACK_URL}
+            networks:
+              - agent-net
+            depends_on:
+              - agent-chat
+              - sse-stream
+        """)
+    return yaml
+
+
+async def _handle_docker_deploy(request: web.Request) -> web.Response:
+    """
+    POST /api/agents/{agentId}/docker-deploy
+    Generates a complete docker-compose.yml for the agent and runs
+    `docker compose up -d`.  Idempotent — safe to call multiple times.
+    """
+    agent_id = request.match_info["agentId"]
+
+    if not _docker_available():
+        return web.json_response(
+            {"error": "docker not found on PATH — install Docker Desktop or Docker Engine"},
+            status=503,
+        )
+
+    # Fetch current agent config from design-service
+    agents = await _fetch_all_agents()
+    agent = next((a for a in agents if a["id"] == agent_id), None)
+    if not agent:
+        return web.json_response({"error": f"agent {agent_id} not found"}, status=404)
+
+    # Generate compose YAML locally (no dependency on deploy-service stub)
+    try:
+        compose_yaml = _generate_compose_yaml(agent)
+    except Exception as exc:
+        return web.json_response({"error": f"Could not generate compose YAML: {exc}"}, status=500)
+
+    # Write to a stable location so `docker compose` can reference it later
+    agent_dir = DOCKER_DEPLOY_DIR / agent_id
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    compose_file = agent_dir / "docker-compose.yml"
+    compose_file.write_text(compose_yaml)
+
+    # docker compose up -d
+    try:
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: subprocess.run(
+                ["docker", "compose", "-f", str(compose_file), "up", "-d", "--pull", "missing"],
+                capture_output=True, text=True, timeout=120,
+            ),
+        )
+    except subprocess.TimeoutExpired:
+        return web.json_response({"error": "docker compose up timed out (120s)"}, status=504)
+    except Exception as exc:
+        return web.json_response({"error": f"docker compose failed: {exc}"}, status=500)
+
+    log.info("docker compose up for [%s] exit=%s", agent_id[:8], result.returncode)
+
+    if result.returncode != 0:
+        return web.json_response({
+            "success": False,
+            "exitCode": result.returncode,
+            "stdout": result.stdout[-2000:],
+            "stderr": result.stderr[-2000:],
+            "composeFile": str(compose_file),
+        }, status=500)
+
+    return web.json_response({
+        "success":     True,
+        "agentId":     agent_id,
+        "composeFile": str(compose_file),
+        "stdout":      result.stdout[-2000:],
+        "stderr":      result.stderr[-2000:],
+    }, status=200)
+
+
+async def _handle_docker_status(request: web.Request) -> web.Response:
+    """
+    GET /api/agents/{agentId}/docker-deploy
+    Returns `docker compose ps` output for the agent.
+    """
+    agent_id = request.match_info["agentId"]
+    compose_file = DOCKER_DEPLOY_DIR / agent_id / "docker-compose.yml"
+
+    if not compose_file.exists():
+        return web.json_response({"status": "not_deployed", "containers": []}, status=200)
+
+    if not _docker_available():
+        return web.json_response({"error": "docker not found on PATH"}, status=503)
+
+    try:
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: subprocess.run(
+                ["docker", "compose", "-f", str(compose_file), "ps", "--format", "json"],
+                capture_output=True, text=True, timeout=15,
+            ),
+        )
+    except Exception as exc:
+        return web.json_response({"error": str(exc)}, status=500)
+
+    containers: list = []
+    for line in result.stdout.strip().splitlines():
+        try:
+            containers.append(json.loads(line))
+        except Exception:
+            pass
+
+    running = any(c.get("State") == "running" for c in containers)
+    return web.json_response({
+        "status":     "running" if running else "stopped",
+        "agentId":    agent_id,
+        "containers": containers,
+        "composeFile": str(compose_file),
+    })
+
+
+async def _handle_docker_stop(request: web.Request) -> web.Response:
+    """
+    DELETE /api/agents/{agentId}/docker-deploy
+    Runs `docker compose down` to stop and remove containers.
+    """
+    agent_id = request.match_info["agentId"]
+    compose_file = DOCKER_DEPLOY_DIR / agent_id / "docker-compose.yml"
+
+    if not compose_file.exists():
+        return web.json_response({"error": "no compose file found — agent was not docker-deployed"}, status=404)
+
+    if not _docker_available():
+        return web.json_response({"error": "docker not found on PATH"}, status=503)
+
+    try:
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: subprocess.run(
+                ["docker", "compose", "-f", str(compose_file), "down"],
+                capture_output=True, text=True, timeout=60,
+            ),
+        )
+    except Exception as exc:
+        return web.json_response({"error": str(exc)}, status=500)
+
+    log.info("docker compose down for [%s] exit=%s", agent_id[:8], result.returncode)
+    return web.json_response({
+        "success":  result.returncode == 0,
+        "exitCode": result.returncode,
+        "stdout":   result.stdout[-2000:],
+        "stderr":   result.stderr[-2000:],
+    })
+
+
 # ── REST API handlers ─────────────────────────────────────────────────────────
 
 async def _handle_health(request: web.Request) -> web.Response:
@@ -652,11 +1051,22 @@ async def _handle_stop_agent(request: web.Request) -> web.Response:
 
 def _build_app() -> web.Application:
     app = web.Application()
-    app.router.add_get("/api/health",                    _handle_health)
-    app.router.add_get("/api/agents",                    _handle_list_agents)
-    app.router.add_get("/api/agents/{agentId}",          _handle_get_agent)
-    app.router.add_post("/api/agents/{agentId}/start",   _handle_start_agent)
-    app.router.add_delete("/api/agents/{agentId}/stop",  _handle_stop_agent)
+    app.router.add_get("/api/health",                           _handle_health)
+    app.router.add_get("/api/agents",                           _handle_list_agents)
+    app.router.add_get("/api/agents/{agentId}",                 _handle_get_agent)
+    app.router.add_post("/api/agents/{agentId}/start",          _handle_start_agent)
+    app.router.add_delete("/api/agents/{agentId}/stop",         _handle_stop_agent)
+    # Docker Compose deployment
+    app.router.add_post("/api/agents/{agentId}/docker-deploy",  _handle_docker_deploy)
+    app.router.add_get("/api/agents/{agentId}/docker-deploy",   _handle_docker_status)
+    app.router.add_delete("/api/agents/{agentId}/docker-deploy",_handle_docker_stop)
+    # /api/runtime prefix aliases (used by forge UI proxy)
+    app.router.add_get("/api/runtime/health",                              _handle_health)
+    app.router.add_get("/api/runtime/agents",                              _handle_list_agents)
+    app.router.add_get("/api/runtime/agents/{agentId}",                    _handle_get_agent)
+    app.router.add_post("/api/runtime/agents/{agentId}/docker-deploy",     _handle_docker_deploy)
+    app.router.add_get("/api/runtime/agents/{agentId}/docker-deploy",      _handle_docker_status)
+    app.router.add_delete("/api/runtime/agents/{agentId}/docker-deploy",   _handle_docker_stop)
     return app
 
 
@@ -693,6 +1103,7 @@ def main():
     RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
     LOGS_AGENT_DIR.mkdir(parents=True, exist_ok=True)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    DOCKER_DEPLOY_DIR.mkdir(parents=True, exist_ok=True)
 
     app = _build_app()
     app.on_startup.append(_startup)

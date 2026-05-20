@@ -1,0 +1,37 @@
+# Flogo Agent Studio — Generic Flogo Service Image
+# ====================================================
+# This Dockerfile packages a pre-compiled Linux binary + .flogo app file.
+#
+# IMPORTANT: The binaries in services/bin/ are macOS Mach-O executables.
+# Before building, produce Linux binaries with:
+#
+#   bash deployment/build-images.sh
+#
+# That script places linux/amd64 binaries in deployment/linux-bin/.
+#
+# Build example (agent-chat):
+#   docker build \
+#     -f deployment/Dockerfile.flogo-service \
+#     --build-arg SERVICE_BINARY=deployment/linux-bin/agent-chat-service \
+#     --build-arg FLOGO_APP=services/apps/agent-chat-service.flogo \
+#     -t tibco/flogo-agent-studio:agent-chat-latest \
+#     .
+#
+# Or let deployment.py do it for you via "Deploy with Docker" in the UI.
+
+FROM alpine:3.21
+
+RUN apk add --no-cache ca-certificates tzdata wget
+
+WORKDIR /app
+
+# Build arguments — override per service
+ARG SERVICE_BINARY=deployment/linux-bin/service
+ARG FLOGO_APP=services/apps/app.flogo
+
+COPY ${SERVICE_BINARY} /app/service
+COPY ${FLOGO_APP}      /app/app.flogo
+
+RUN chmod +x /app/service
+
+ENTRYPOINT ["/app/service", "-app", "/app/app.flogo"]

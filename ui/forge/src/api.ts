@@ -1,4 +1,4 @@
-import type { Agent, AgentCreate, AgentUpdate, DeployStatus, FeedbackRecord, GeneratedConfig, Template } from "./types";
+import type { Agent, AgentCreate, AgentUpdate, DeployStatus, DockerDeployResult, DockerDeployStatus, FeedbackRecord, GeneratedConfig, Template } from "./types";
 
 const BASE = "/api/v1/agents";
 const TEMPLATES_URL = "/api/v1/templates";
@@ -132,6 +132,22 @@ export const exportKubernetes = (id: string): Promise<string> =>
 
 export const exportDockerCompose = (id: string): Promise<string> =>
   get(`${BASE}/${id}/export/docker-compose`).then((r) => r.text());
+
+// ── Docker Compose live deployment (via runtime manager :7050) ───────────────
+
+const RUNTIME_BASE = "/api/runtime/agents";
+
+export const dockerDeploy = (id: string): Promise<DockerDeployResult> =>
+  fetch(`${RUNTIME_BASE}/${id}/docker-deploy`, { method: "POST", headers: headers(true) })
+    .then(json<DockerDeployResult>);
+
+export const dockerDeployStatus = (id: string): Promise<DockerDeployStatus> =>
+  fetch(`${RUNTIME_BASE}/${id}/docker-deploy`, { method: "GET", headers: headers() })
+    .then(json<DockerDeployStatus>);
+
+export const dockerDeployStop = (id: string): Promise<DockerDeployResult> =>
+  fetch(`${RUNTIME_BASE}/${id}/docker-deploy`, { method: "DELETE", headers: headers() })
+    .then(json<DockerDeployResult>);
 
 // ── Feedback ──────────────────────────────────────────────────────────────────
 

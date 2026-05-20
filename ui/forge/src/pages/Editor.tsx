@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Play, Square, Download, Sparkles, MessageSquare } from "lucide-react";
+import { ArrowLeft, Save, Play, Square, Download, Sparkles, MessageSquare, Container, CircleStop, RefreshCw } from "lucide-react";
 import {
   createAgent,
   deployAgent,
+  dockerDeploy,
+  dockerDeployStatus,
+  dockerDeployStop,
   exportDockerCompose,
   exportKubernetes,
   generateAgentConfig,
@@ -18,7 +21,7 @@ import {
   undeployAgent,
   updateAgent,
 } from "../api";
-import type { Agent, AgentConfig, FeedbackRecord, GeneratedConfig } from "../types";
+import type { Agent, AgentConfig, DockerDeployResult, DockerDeployStatus, FeedbackRecord, GeneratedConfig } from "../types";
 
 const PROVIDER_OPTIONS = ["Ollama", "OpenAI", "Anthropic", "Groq", "Custom"];
 
@@ -561,6 +564,22 @@ export default function Editor() {
     },
   });
 
+  const dockerDeployMutation = useMutation<DockerDeployResult, Error>({
+    mutationFn: () => dockerDeploy(id!),
+  });
+
+  const dockerStopMutation = useMutation<DockerDeployResult, Error>({
+    mutationFn: () => dockerDeployStop(id!),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["docker-status", id] }),
+  });
+
+  const dockerStatusQuery = useQuery<DockerDeployStatus>({
+    queryKey: ["docker-status", id],
+    queryFn: () => dockerDeployStatus(id!),
+    refetchInterval: dockerDeployMutation.isPending ? 3000 : 10000,
+    enabled: !isNew,
+  });
+
   const deployRecord = deployData?.records?.[0];
   const currentStatus = deployRecord?.status ?? agent?.status ?? "draft";
 
@@ -1044,6 +1063,101 @@ export default function Editor() {
                 </div>
                 {exportMutation.isError && (
                   <p className="text-xs text-red-500">{String(exportMutation.error)}</p>
+                )}
+              </section>
+
+              {/* Docker Compose Deploy */}
+              <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">Docker Deployment</h3>
+                    <p className="text-xs text-gray-500 mt-1">Run this agent locally with Docker Compose (requires Docker).</p>
+                  </div>
+                  {/* status badge */}
+                  {dockerStatusQuery.data && (
+                    <span className={[
+                      "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",
+                      dockerStatusQuery.data.status === "running"
+                        ? "bg-green-100 text-green-700"
+                        : dockerStatusQuery.data.status === "stopped"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-gray-100 text-gray-500",
+                    ].join(" ")}>
+                      {dockerStatusQuery.data.status}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => dockerDeployMutation.mutate()}
+                    disabled={dockerDeployMutation.isPending}
+                    className="flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {dockerDeployMutation.isPending
+                      ? <RefreshCw size={14} className="animate-spin" />
+                      : <Container size={14} />}
+                    {dockerDeployMutation.isPending ? "Deploying…" : "Deploy with Docker"}
+                  </button>
+
+                  {dockerStatusQuery.data?.status === "running" && (
+                    <button
+                      onClick={() => dockerStopMutation.mutate()}
+                      disabled={dockerStopMutation.isPending}
+                      className="flex items-center gap-1.5 text-sm font-medium text-red-600 border border-red-200 hover:border-red-400 px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      <CircleStop size={14} />
+                      {dockerStopMutation.isPending ? "Stopping…" : "Stop"}
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ["docker-status", id] })}
+                    className="ml-auto text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Refresh status"
+                  >
+                    <RefreshCw size={14} />
+                  </button>
+                </div>
+
+                {/* containers table */}
+                {dockerStatusQuery.data?.containers && dockerStatusQuery.data.containers.length > 0 && (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-left text-gray-500 border-b border-gray-100">
+                          <th className="pb-1 pr-4 font-medium">Container</th>
+                          <th className="pb-1 pr-4 font-medium">State</th>
+                          <th className="pb-1 font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dockerStatusQuery.data.containers.map((c, i) => (
+                          <tr key={i} className="border-b border-gray-50">
+                            <td className="py-1 pr-4 font-mono text-gray-700 truncate max-w-[140px]">{c.Name}</td>
+                            <td className="py-1 pr-4">
+                              <span className={c.State === "running" ? "text-green-600" : "text-yellow-600"}>{c.State}</span>
+                            </td>
+                            <td className="py-1 text-gray-500">{c.Status}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* output log on deploy */}
+                {(dockerDeployMutation.data || dockerDeployMutation.isError) && (
+                  <div className="bg-gray-900 rounded-lg p-3 text-xs font-mono text-gray-100 max-h-40 overflow-y-auto whitespace-pre-wrap break-all">
+                    {dockerDeployMutation.isError
+                      ? String(dockerDeployMutation.error)
+                      : [dockerDeployMutation.data?.stdout, dockerDeployMutation.data?.stderr]
+                          .filter(Boolean).join("\n").trim() || (dockerDeployMutation.data?.success ? "✓ Started" : dockerDeployMutation.data?.error)}
+                  </div>
+                )}
+
+                {dockerStopMutation.isError && (
+                  <p className="text-xs text-red-500">{String(dockerStopMutation.error)}</p>
                 )}
               </section>
             </div>

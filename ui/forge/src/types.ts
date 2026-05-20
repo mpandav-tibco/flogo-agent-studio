@@ -70,3 +70,20 @@ export interface GeneratedConfig {
     active?: boolean;
   };
 }
+
+export interface DockerDeployResult {
+  success: boolean;
+  agentId?: string;
+  composeFile?: string;
+  stdout?: string;
+  stderr?: string;
+  exitCode?: number;
+  error?: string;
+}
+
+export interface DockerDeployStatus {
+  status: "running" | "stopped" | "not_deployed";
+  agentId?: string;
+  composeFile?: string;
+  containers: Array<{ Name: string; State: string; Status: string }>;
+}
