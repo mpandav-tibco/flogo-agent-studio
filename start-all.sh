@@ -45,6 +45,90 @@ check_port() {
   return 1
 }
 
+# ── Stop any process currently holding one of our ports ──────────────────────
+# Targets only the ports this script owns. Infrastructure ports (Weaviate,
+# Postgres, Elasticsearch, Docker) are never touched.
+#
+# Static ports  : Flogo services + UIs + runtime manager
+# Dynamic ports : per-agent runtime pool 7200-7299 (managed by deployment.py)
+MANAGED_PORTS=(
+  7025   # forge-ui
+  7080   # chainlit-ui
+  7050   # runtime-manager (deployment.py)
+  7097   # rule-engine
+  7001   # agent-chat
+  7002   # ingestion
+  7003   # feedback
+  7005   # sse-stream (REST)
+  7099   # sse-stream (event bus)
+  7010   # agent-builder
+  7020   # design
+  7030   # deploy
+  7333   # mcp-server
+)
+# Append the full per-agent runtime pool
+for _p in $(seq 7200 7299); do MANAGED_PORTS+=($_p); done
+unset _p
+
+_kill_port() {
+  local port=$1
+  local pids
+  pids=$(lsof -ti "tcp:${port}" 2>/dev/null || true)
+  [[ -z "$pids" ]] && return 0
+  local pid_list; pid_list=$(echo "$pids" | tr '\n' ' ')
+  echo "  port ${port}: stopping PID(s) ${pid_list% }"
+  echo "$pids" | xargs kill -TERM 2>/dev/null || true
+  return 0
+}
+
+stop_existing_services() {
+  echo ""
+  echo "── Stopping existing services ──────────────────────────────────────────"
+  local found=0
+  for port in "${MANAGED_PORTS[@]}"; do
+    local pids
+    pids=$(lsof -ti "tcp:${port}" 2>/dev/null || true)
+    if [[ -n "$pids" ]]; then
+      _kill_port "$port"
+      (( found++ )) || true
+    fi
+  done
+
+  if (( found > 0 )); then
+    printf 'Waiting for %d port(s) to release' "$found"
+    local wait=0
+    while (( wait < 8 )); do
+      local still=0
+      for port in "${MANAGED_PORTS[@]}"; do
+        pids=$(lsof -ti "tcp:${port}" 2>/dev/null || true)
+        if [[ -n "$pids" ]]; then
+          (( still++ )) || true
+        fi
+      done
+      (( still == 0 )) && break
+      printf '.'
+      sleep 1
+      (( wait++ )) || true
+    done
+    echo ""
+
+    # Force-kill anything still alive
+    for port in "${MANAGED_PORTS[@]}"; do
+      local pids
+      pids=$(lsof -ti "tcp:${port}" 2>/dev/null || true)
+      if [[ -n "$pids" ]]; then
+        echo "  port ${port}: force-killing PID(s) $(echo "$pids" | tr '\n' ' ')"
+        echo "$pids" | xargs kill -9 2>/dev/null || true
+      fi
+    done
+    sleep 0.5
+    echo "  Done — cleared ${found} port(s)."
+  else
+    echo "  No existing services found on managed ports."
+  fi
+  echo ""
+}
+
 # ── Elasticsearch index cleanup ───────────────────────────────────────────────
 # Indexes are cleared on each startup for fresh logs.
 # Gracefully skipped if Elasticsearch is unavailable or curl is missing.
@@ -100,6 +184,9 @@ cleanup_elastic_indexes() {
 # Clean Elasticsearch indexes so each startup begins with fresh logs.
 # Safe to call even if Elastic is not running.
 cleanup_elastic_indexes
+
+# Stop any services already occupying our ports — prevents "address already in use".
+stop_existing_services
 
 # ── Service-specific env vars (read by Flogo via FLOGO_APP_PROPS_ENV=auto) ───
 export FLOGO_APP_PROPS_ENV=auto
