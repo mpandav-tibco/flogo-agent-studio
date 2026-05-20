@@ -1,0 +1,32 @@
+rule:
+  id: SEC-002
+  enabled: true
+  severity: ERROR
+  category: encryption
+  title: Weak TLS Version Explicitly Configured (TLS 1.0 / TLS 1.1)
+  description: >
+    TLS 1.0 or TLS 1.1 is explicitly configured. Both versions are deprecated
+    by RFC 8996 (2021) and are vulnerable to BEAST, POODLE, and LUCKY13 attacks.
+    PCI DSS 3.2+ and most compliance frameworks (SOC2, ISO 27001, NIST 800-52)
+    require a minimum of TLS 1.2, with TLS 1.3 strongly preferred.
+  tags: [security, tls, encryption, pci-dss, soc2, iso27001-a14]
+
+  applies_to: [.yaml, .yml, .json, .properties, .conf, .cfg, .ini, .xml]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(tls.{0,15}(1\\.0|1\\.1|SSLv3|TLSv1[^.]|TLSv1\\.[01])|min.{0,20}tls.{0,10}(\"1\\.0\"|\"1\\.1\"|v1\\.0|v1\\.1|TLSv1\\b|TLSv1\\.1))"
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Set minimum TLS version to 1.2; prefer TLS 1.3:
+    - nginx: ssl_protocols TLSv1.2 TLSv1.3;
+    - Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3
+    - Java: -Djdk.tls.client.protocols=TLSv1.2,TLSv1.3
+    - Go: tls.Config{MinVersion: tls.VersionTLS12}
+    - Node.js: https.createServer({minVersion: 'TLSv1.2'})
+    Also configure strong cipher suites: disable RC4, DES, 3DES, and NULL ciphers.

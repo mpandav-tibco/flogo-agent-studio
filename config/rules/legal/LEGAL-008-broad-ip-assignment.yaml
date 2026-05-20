@@ -1,0 +1,38 @@
+rule:
+  id: LEGAL-008
+  enabled: true
+  severity: WARNING
+  category: intellectual-property
+  title: Broad or Unrestricted IP Assignment Language
+  description: >
+    The contract contains intellectual property assignment language that may
+    assign all IP created during the engagement without limiting scope to
+    deliverables or work product. Broad IP assignments can inadvertently
+    transfer rights to pre-existing IP, background IP, or general know-how.
+  tags: [ip, intellectual-property, assignment, work-product]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  when:
+    type: regex_match
+    path: content
+    pattern: "(?i)(assign.{0,50}(intellectual property|ip|invention|copyright|all right))"
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(work.{0,20}product|deliverable|background.{0,20}ip|pre.{0,20}existing|foreground.{0,20}ip|except.{0,30}(prior|existing|background))"
+
+  location: "contract:ip-clause"
+  recommendation: >
+    Narrow IP assignment to clearly scoped work product:
+    (1) Define "Work Product" explicitly — only what is created specifically for this engagement
+    (2) Retain a license to background IP / pre-existing materials embedded in deliverables
+    (3) Exclude general methodologies, tools, and know-how from assignment
+    (4) For software: specify whether open-source components are included and under what license
+    Example: "Customer shall own all rights in the Work Product. Vendor retains all rights
+    to its pre-existing IP and grants Customer a non-exclusive license to use any pre-existing
+    IP embedded in the Work Product solely for Customer's internal business purposes."

@@ -1,0 +1,36 @@
+rule:
+  id: AUTH-001
+  enabled: true
+  severity: WARNING
+  category: security
+  title: Authentication Failure Detected in Log
+  description: >
+    Authentication failure messages were found in the log. Individual failures
+    are expected; however, patterns of repeated failures indicate brute-force
+    attacks, credential stuffing, misconfigured services, or expired credentials.
+    Authentication failures on service-to-service calls cause cascading outages.
+  tags: [security, authentication, brute-force, access-control, incident-response]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(authentication.{0,20}fail|login.{0,20}fail|invalid.{0,20}(credential|password|token|api.?key)|unauthorized.{0,20}access|401.{0,30}unauthorized|password.{0,20}(mismatch|incorrect|wrong)|auth.{0,20}error|basic auth.{0,20}fail)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Investigate authentication failures:
+    (1) Service-to-service auth failure: check that credentials are current and correctly configured
+        - Rotate API keys / tokens if they may be expired or compromised
+        - Verify the Authorization header format matches what the target service expects
+    (2) User login failures: check for:
+        - Brute force: >5 failures from the same IP in 1 minute → rate limit / block
+        - Credential stuffing: distributed failures across many IPs → enable CAPTCHA
+        - Account lockout: has the target account been locked by previous failures?
+    (3) For Flogo: verify the API_KEY / AUTH_TOKEN app properties match the target service's credentials
+    (4) Check if the authentication system (LDAP, OAuth provider, DB) is reachable and healthy
+    (5) Alert if: failure rate >10% of auth attempts over any 5-minute window

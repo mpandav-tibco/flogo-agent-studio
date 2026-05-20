@@ -1,0 +1,34 @@
+rule:
+  id: PROC-002
+  enabled: true
+  severity: WARNING
+  category: security
+  title: No Security Certification or Audit Evidence Referenced
+  description: >
+    The vendor proposal does not reference any security certification (SOC 2,
+    ISO 27001, PCI DSS, HIPAA attestation) or independent audit evidence.
+    Without third-party validation, security claims in marketing materials
+    cannot be relied upon for your own compliance obligations.
+  tags: [procurement, security, soc2, iso27001, certification, compliance]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(soc.?2|iso.?27001|pci.{0,10}dss|hipaa.{0,20}(attest|compliant|certif)|penetration.?test|pen.?test|security.{0,20}audit|csa.{0,10}star|fedramp)"
+
+  location: "proposal:document"
+  recommendation: >
+    Request the following security evidence from the vendor:
+    (1) SOC 2 Type II report (not Type I — Type II covers operational effectiveness)
+        from the past 12 months — review the exceptions section, not just the opinion
+    (2) ISO 27001 certificate with scope boundary — verify the scope covers your use case
+    (3) Most recent penetration test executive summary (methodology, scope, critical findings)
+    (4) Vulnerability management policy and mean-time-to-remediate for critical CVEs
+    (5) Subprocessor list and their respective security certifications
+    (6) Right-to-audit clause in the contract for regulated data
+    Do not accept verbal assurances. All evidence should be current (within 12 months).

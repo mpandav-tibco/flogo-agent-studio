@@ -1,0 +1,32 @@
+rule:
+  id: CODE-002
+  enabled: true
+  severity: ERROR
+  category: security
+  title: Potential SQL Injection via String Concatenation
+  description: >
+    A SQL query appears to be constructed using string concatenation or
+    string formatting with a variable. This pattern is a direct path to
+    SQL injection (OWASP A03:2021 Injection) — the top cause of database
+    compromise, data exfiltration, and authentication bypass.
+  tags: [security, sql-injection, owasp, database]
+
+  applies_to: [.py, .js, .ts, .java, .go, .cs, .rb, .php]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE).{0,80}(\\+\\s*[a-z_$][a-z0-9_$]*|%[sd]|f\"|\\{[a-z_][a-z0-9_]*\\}|\\.format\\(|string\\.concat)"
+
+  location: "code:{{.Scope.name}}"
+  recommendation: >
+    Use parameterized queries (prepared statements) in all cases:
+    - Python (sqlite3/psycopg2): cursor.execute("SELECT * FROM t WHERE id = ?", (user_id,))
+    - Java (JDBC): PreparedStatement ps = conn.prepareStatement("SELECT * FROM t WHERE id = ?"); ps.setInt(1, id);
+    - Node.js (pg): client.query('SELECT * FROM t WHERE id = $1', [userId])
+    - Go (database/sql): db.Query("SELECT * FROM t WHERE id = ?", id)
+    ORM frameworks (SQLAlchemy, Hibernate, GORM) use parameterization by default —
+    avoid raw() / native() queries unless strictly necessary, and validate inputs there.

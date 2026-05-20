@@ -1,0 +1,37 @@
+rule:
+  id: DISK-001
+  enabled: true
+  severity: WARNING
+  category: infrastructure
+  title: Low Disk Space Warning
+  description: >
+    A low disk space warning was detected in the log. Services running on
+    full or near-full disks fail unpredictably: databases cannot write WAL logs
+    (causing transactions to fail or the database to go into read-only mode),
+    log rotation fails (causing services to crash when they cannot write logs),
+    and container overlays fail. This condition degrades from warning to outage quickly.
+  tags: [infrastructure, disk, storage, capacity]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(disk.{0,30}(full|space|usage|capacity)|no.{0,20}space.{0,20}left|filesystem.{0,30}(full|100%|9[5-9]%)|low.{0,20}disk|storage.{0,20}(full|critical|warning)|inode.{0,20}(full|exhausted))"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Respond to low disk space:
+    (1) Immediate: identify largest consumers (du -sh /* | sort -rh | head -20)
+    (2) Quick wins:
+        - Clear old logs: logrotate, journalctl --vacuum-size=500M
+        - Clean Docker: docker system prune -af --volumes
+        - Remove old build artifacts: npm prune, pip cache purge, go clean -cache
+        - Truncate large temp files: > /tmp/large-file.tmp
+    (3) If database WAL is filling disk: investigate long-running or abandoned transactions
+    (4) Resize the volume or add storage (cloud: extend EBS/persistent disk, no restart needed)
+    (5) Set up alerting at 75% and 85% so you have time to act before hitting 100%
+    (6) Implement log rotation with maximum size limits (logrotate maxsize 100M)

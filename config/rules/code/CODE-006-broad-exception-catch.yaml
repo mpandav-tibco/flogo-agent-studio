@@ -1,0 +1,33 @@
+rule:
+  id: CODE-006
+  enabled: true
+  severity: WARNING
+  category: error-handling
+  title: Broad Exception Catch (Silent Error Swallowing)
+  description: >
+    A broad catch-all exception handler was detected that may swallow errors
+    silently. Catching all exceptions without logging or re-raising means
+    failures are invisible — the program continues in an undefined state,
+    data may be corrupted, and debugging becomes extremely difficult.
+  tags: [error-handling, exception, resilience, code-quality]
+
+  applies_to: [.py, .js, .ts, .java, .go, .cs, .rb]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(except\\s*:|except\\s+Exception\\s*:|catch\\s*\\(\\s*(Exception|Error|Throwable|\\*)\\s*\\)|rescue\\s+=>\\s*e?\\s*$)"
+
+  location: "code:{{.Scope.name}}"
+  recommendation: >
+    Replace broad exception catches with specific, intentional handling:
+    (1) Catch only the exceptions you know how to handle at this level
+    (2) Always log the exception with context (logger.error("operation failed", exc_info=True))
+    (3) Re-raise or wrap unexpected exceptions — don't bury them
+    (4) Use a global exception handler for unexpected errors (middleware, PanicRecovery)
+    (5) If broad catch is intentional (top-level handler), document why and ensure
+        the error is logged, alerted, and the system is returned to a consistent state
+    Pattern to avoid: except: pass — this is almost always a bug.

@@ -1,0 +1,36 @@
+rule:
+  id: FLOGO-RT-003
+  enabled: true
+  severity: ERROR
+  category: runtime
+  title: Flogo Engine Panic or Fatal Error
+  description: >
+    A panic, fatal error, or engine crash was detected in the Flogo runtime log.
+    Engine panics cause the process to exit immediately with no graceful shutdown,
+    dropping in-flight requests and potentially corrupting state. Common causes:
+    nil pointer dereference in a custom activity, goroutine stack overflow, or
+    type assertion failure on unexpected input.
+  tags: [flogo, panic, fatal, runtime, crash]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(panic:|panic recovered|goroutine \\d+ \\[|runtime error:|fatal error:|FATAL|engine.*crash|process.*exit.*signal)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Investigate Flogo engine panic:
+    (1) Capture the full stack trace — the goroutine dump shows the exact panic location
+    (2) Common causes:
+        - Nil pointer: check all $activity[] references are guarded before use
+        - Type assertion: use the two-value form (v, ok := x.(Type)) to avoid panics
+        - Concurrent map write: use sync.Map or mutex protection in custom activities
+    (3) Wrap custom activity Execute() methods with recover() to convert panics to errors
+    (4) Enable Flogo's built-in panic recovery: set FLOGO_PANIC_RECOVERY=true (default in 2.x)
+    (5) Check if a recent deployment introduced a new custom activity or changed a mapping
+        — roll back if the panic is reproducible post-deployment

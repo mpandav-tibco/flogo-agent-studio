@@ -1,0 +1,37 @@
+rule:
+  id: LEGAL-005
+  enabled: true
+  severity: WARNING
+  category: liability
+  title: Potentially One-Sided Indemnification
+  description: >
+    The contract contains indemnification language but may impose obligations
+    on one party without a corresponding mutual indemnity. One-sided indemnification
+    creates asymmetric risk exposure and may not reflect negotiated intent.
+  tags: [indemnification, liability, risk, one-sided]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  when:
+    type: regex_match
+    path: content
+    pattern: "(?i)(indemnif|hold.{0,10}harmless)"
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(mutual|each.{0,20}party.{0,30}indemnif|indemnif.{0,100}each.{0,20}other|reciprocal)"
+
+  location: "contract:indemnification-clause"
+  recommendation: >
+    Review indemnification obligations carefully:
+    (1) Confirm whether mutual indemnification was intended
+    (2) Ensure the scope of indemnification is bounded (e.g., limited to third-party IP claims, negligence)
+    (3) Tie indemnification obligations to the liability cap where possible
+    (4) Add a "sole remedy" carve-out to prevent double recovery
+    Standard balanced wording: "Each party shall indemnify the other against third-party
+    claims arising from [specific scope] to the extent caused by the indemnifying party's
+    breach, negligence, or wilful misconduct."

@@ -1,0 +1,40 @@
+rule:
+  id: PROC-007
+  enabled: true
+  severity: ERROR
+  category: data-governance
+  title: Vendor May Retain Rights to Customer Data
+  description: >
+    The proposal contains language that may grant the vendor rights to use,
+    analyze, aggregate, or share customer data beyond the scope of service delivery.
+    Vendors using customer data to train ML models, build analytics products,
+    or share with third parties without explicit consent creates legal liability
+    and competitive risk.
+  tags: [procurement, data-rights, data-ownership, privacy, ip]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  when:
+    type: regex_match
+    path: content
+    pattern: "(?i)(your data|customer data|usage data|aggregated data)"
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(use.{0,50}(improve|train|analytics|aggregate|share|third.party|benchmark|anonymi)|license.{0,50}(use|process|analyz)|right.{0,50}(use|process|analyz).{0,30}data)"
+
+  location: "proposal:data-rights-clause"
+  recommendation: >
+    Negotiate clear data ownership and usage restrictions:
+    (1) Add explicit language: "All Customer Data is and remains the exclusive property of Customer"
+    (2) Restrict vendor use of customer data to: service delivery, troubleshooting, and
+        legal/regulatory obligations — nothing else
+    (3) Prohibit: training AI/ML models on customer data without explicit opt-in consent
+    (4) Prohibit: sharing or selling aggregated/anonymized data derived from customer data
+    (5) Prohibit: using customer data to benchmark against other customers
+    (6) If the vendor insists on data use rights for service improvement: require opt-out,
+        anonymization before processing, and a data use audit right

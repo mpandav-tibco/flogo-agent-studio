@@ -1,0 +1,33 @@
+rule:
+  id: CODE-004
+  enabled: true
+  severity: INFO
+  category: code-quality
+  title: TODO / FIXME / HACK Technical Debt Marker
+  description: >
+    A TODO, FIXME, HACK, or XXX marker was found in the code. These markers
+    indicate known issues, incomplete implementations, or workarounds that
+    were deferred. Accumulation of untracked markers leads to hidden technical
+    debt that degrades system reliability over time.
+  tags: [code-quality, technical-debt, todo, maintainability]
+
+  applies_to: [.py, .js, .ts, .java, .go, .cs, .rb, .php, .sh]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)#|//|/\\*.*\\b(TODO|FIXME|HACK|XXX|KLUDGE|BUG|WORKAROUND)\\b"
+
+  location: "code:{{.Scope.name}}"
+  recommendation: >
+    For each marker found:
+    (1) If the issue is real and tracked — verify a corresponding ticket exists in your issue tracker
+        and add the ticket reference: // TODO(#1234): description
+    (2) If the work is complete — remove the marker
+    (3) If this is a long-lived workaround — document WHY it exists, not just what needs to change
+    (4) If the code is a security workaround — escalate: these must not stay as TODOs
+    Consider tooling: IDE plugins (SonarLint, TODO Highlight) and CI rules to prevent
+    new untracked TODOs from being merged.

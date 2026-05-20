@@ -1,0 +1,31 @@
+rule:
+  id: LEGAL-004
+  enabled: true
+  severity: WARNING
+  category: contract-essentials
+  title: Missing Governing Law and Jurisdiction
+  description: >
+    No governing law or jurisdiction clause was detected. Without this,
+    the applicable law is uncertain and any dispute will immediately trigger
+    a preliminary argument about which court has jurisdiction — adding
+    cost and delay before the merits are even reached.
+  tags: [governing-law, jurisdiction, dispute-resolution, contract-essentials]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(govern.{0,20}law|applicable.{0,20}law|jurisdiction|governed.{0,20}by.{0,20}law)"
+
+  location: "contract:document"
+  recommendation: >
+    Add a Governing Law clause specifying:
+    (1) The state/country whose law governs interpretation of the agreement
+    (2) The courts (or arbitration body) that have exclusive jurisdiction
+    (3) Whether the UN Convention on Contracts for the International Sale of Goods (CISG) is excluded
+    Example: "This Agreement shall be governed by and construed in accordance with the
+    laws of the State of Delaware, USA, without regard to conflict of law principles."

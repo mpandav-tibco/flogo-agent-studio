@@ -1,0 +1,37 @@
+rule:
+  id: MEM-003
+  enabled: true
+  severity: WARNING
+  category: performance
+  title: Goroutine or Thread Leak Detected
+  description: >
+    An unusually high goroutine count or thread pool exhaustion was detected.
+    Goroutine leaks are a common Go service issue — goroutines started without
+    a mechanism to stop them accumulate over time, eventually exhausting memory
+    and degrading performance. Thread leaks have similar effects in Java and Python services.
+  tags: [performance, memory, goroutine, thread-leak, go, runtime]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(goroutine.{0,30}(count|leak|[0-9]{4,})|too.{0,20}many.{0,20}(goroutine|thread)|thread.{0,30}(pool|exhausted|leak)|runtime.NumGoroutine.{0,30}[0-9]{4,}|goroutines.{0,20}[0-9]{4,})"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Diagnose goroutine/thread leaks:
+    (1) Profile the running service: GET /debug/pprof/goroutine?debug=2 (Go pprof)
+        - Look for goroutines blocked on channels with no writers, or select with no cases firing
+    (2) Common leak patterns in Go:
+        - HTTP client without explicit timeout (context cancellation never fires)
+        - goroutine started in a loop without a done channel or context cancellation
+        - ticker/timer created but never stopped
+    (3) For Flogo: check for activity goroutines started without a context cancel
+    (4) Add a goroutine gauge to your metrics: expvar or prometheus gauge
+    (5) Implement leak detection in tests: goleak library for Go
+    (6) If immediate relief needed: restart the service (leaks don't recover on their own)
+        and investigate root cause from the pprof dump before restarting

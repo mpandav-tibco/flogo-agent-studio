@@ -1,0 +1,36 @@
+rule:
+  id: SEC-006
+  enabled: true
+  severity: WARNING
+  category: audit-logging
+  title: No Audit Logging Configuration Detected
+  description: >
+    No audit logging configuration was found. Audit logs are a mandatory
+    control in SOC 2 (CC7.2, CC7.3), ISO 27001 (A.12.4), PCI DSS (10.x),
+    and HIPAA. Without audit trails, security incidents cannot be investigated,
+    compliance cannot be demonstrated, and unauthorized access goes undetected.
+  tags: [audit-logging, soc2, iso27001, compliance, monitoring]
+
+  applies_to: [.yaml, .yml, .json, .properties, .conf, .cfg]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(audit.log|audit_log|access.log|access_log|security.log|event.log|log.audit|auditd|audit.trail|audit.enabled)"
+
+  location: "config:document"
+  recommendation: >
+    Implement audit logging for:
+    (1) Authentication events: login success/failure, logout, MFA challenges
+    (2) Authorization events: access denied, privilege escalation
+    (3) Data access: read/write on sensitive records (with user ID, timestamp, resource)
+    (4) Configuration changes: who changed what and when
+    (5) Administrative actions: user creation/deletion, role changes
+    Audit log requirements:
+    - Tamper-proof (write-once, signed, or shipped to SIEM immediately)
+    - Include: timestamp (UTC), user identity, action, resource, source IP, outcome
+    - Retained for minimum 1 year (SOC2) / 2 years (PCI DSS)
+    - Monitored for suspicious patterns (failed login spikes, off-hours access)

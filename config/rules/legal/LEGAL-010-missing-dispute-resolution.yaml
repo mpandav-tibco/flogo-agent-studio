@@ -1,0 +1,32 @@
+rule:
+  id: LEGAL-010
+  enabled: true
+  severity: INFO
+  category: dispute-resolution
+  title: No Dispute Resolution Process Defined
+  description: >
+    The contract does not specify a dispute resolution mechanism beyond
+    litigation. Without a structured escalation and resolution process,
+    minor disputes are forced directly into litigation, which is expensive,
+    slow, and damaging to the commercial relationship.
+  tags: [dispute-resolution, arbitration, mediation, escalation]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(arbitrat|mediat|dispute.{0,30}(resolution|escalation|process)|good.{0,20}faith.{0,20}negotiat)"
+
+  location: "contract:document"
+  recommendation: >
+    Add a tiered dispute resolution clause:
+    (1) Tier 1 — Good faith negotiation between designated representatives (30 days)
+    (2) Tier 2 — Mediation with a mutually agreed mediator (30 days)
+    (3) Tier 3 — Binding arbitration (e.g. AAA, JAMS, ICC) or litigation
+    Specify: seat of arbitration, number of arbitrators, language, confidentiality of proceedings.
+    Carve out injunctive relief — parties should always retain the right to seek
+    emergency relief in court to prevent irreparable harm.

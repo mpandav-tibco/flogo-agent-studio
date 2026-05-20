@@ -1,0 +1,40 @@
+rule:
+  id: PROC-008
+  enabled: true
+  severity: INFO
+  category: service-levels
+  title: SLA Referenced But No Service Credit Structure Defined
+  description: >
+    The proposal mentions service levels or uptime targets but does not define
+    a service credit structure. Without financial consequences for SLA breaches,
+    the commitment is aspirational rather than contractual. Vendors have little
+    incentive to prioritize your incidents without credit exposure.
+  tags: [procurement, sla, service-credits, remedies, contract]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  when:
+    type: regex_match
+    path: content
+    pattern: "(?i)(service.{0,20}level|sla|uptime|availability)"
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(service.?credit|credit.{0,20}(percent|amount|\\.\\d+%)|sla.{0,30}credit|remedy|compensation.{0,20}downtime|rebate.{0,20}downtime)"
+
+  location: "proposal:sla-section"
+  recommendation: >
+    Negotiate a meaningful service credit structure:
+    (1) Credit trigger: breach of monthly uptime commitment (e.g., <99.9%)
+    (2) Credit amount: proportional to breach severity
+        - 99.0%–99.9%: 10% of monthly fee credit
+        - 95%–99.0%: 25% of monthly fee credit
+        - <95%: 50% of monthly fee credit
+    (3) Credit claiming: automatic or simple claims process (not requiring litigation)
+    (4) Credit cap: typically 30–50% of monthly fees (credits are not a penalty substitute)
+    (5) Sole remedy: credits are often the "sole remedy" — negotiate that repeated breaches
+        (e.g., 3 months in 12) trigger termination for cause with refund rights

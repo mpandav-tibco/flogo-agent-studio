@@ -1,0 +1,33 @@
+rule:
+  id: SEC-005
+  enabled: true
+  severity: WARNING
+  category: configuration
+  title: Debug Mode Enabled in Configuration
+  description: >
+    Debug mode is explicitly enabled in the configuration. Debug mode typically
+    exposes stack traces, internal configuration details, and verbose error messages
+    to HTTP responses — information that assists attackers in exploiting the application.
+    It also commonly disables security features like CSRF protection and authentication.
+  tags: [security, debug, configuration, information-disclosure]
+
+  applies_to: [.yaml, .yml, .json, .properties, .conf, .cfg, .ini, .env, .toml]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(debug\\s*[=:]+\\s*(true|1|yes|on|enabled)|DEBUG\\s*=\\s*(True|1|true|yes)|flask.{0,20}debug.{0,10}true|DJANGO_DEBUG\\s*=\\s*True|spring\\.debug\\s*=\\s*true)"
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Ensure debug mode is disabled in all non-development environments:
+    (1) Set DEBUG=false / debug=false in production and staging configs
+    (2) Use environment-specific config files (application-prod.yml, .env.production)
+    (3) Make debug mode opt-in from environment variable only — never default to true
+    (4) Add a startup check that prevents running with DEBUG=true in production:
+        assert not (DEBUG and ENVIRONMENT == "production")
+    (5) Use proper error handling that returns safe, generic error messages to clients
+        while logging full details internally

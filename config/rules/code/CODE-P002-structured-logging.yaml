@@ -1,0 +1,29 @@
+rule:
+  id: CODE-P002
+  enabled: true
+  severity: GOOD
+  category: observability
+  title: Structured Logging Framework in Use
+  description: >
+    A structured logging library was detected. Structured logs (JSON output
+    with named fields) are machine-parseable, enabling effective log aggregation,
+    alerting, and correlation in tools like Elasticsearch, Splunk, and CloudWatch.
+  tags: [logging, observability, structured-logs, code-quality]
+
+  applies_to: [.py, .js, .ts, .java, .go, .cs]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(import logging|getLogger|winston|pino|bunyan|log4j|logback|slog\\.New|zap\\.New|zerolog|structlog|logging\\.getLogger)"
+
+  location: "code:{{.Scope.name}}"
+  recommendation: >
+    Structured logging detected. Ensure best practices:
+    (1) Always include a correlation/trace ID in log entries for request tracing
+    (2) Use consistent log level conventions (DEBUG, INFO, WARN, ERROR)
+    (3) Log at the service boundary on entry/exit for key operations
+    (4) Never log secrets or PII — use masking or omit sensitive fields

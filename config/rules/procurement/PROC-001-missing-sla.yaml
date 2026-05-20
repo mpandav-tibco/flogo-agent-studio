@@ -1,0 +1,33 @@
+rule:
+  id: PROC-001
+  enabled: true
+  severity: ERROR
+  category: service-levels
+  title: No SLA or Uptime Commitment in Vendor Proposal
+  description: >
+    The vendor proposal or contract does not include a Service Level Agreement
+    or uptime commitment. Without defined service levels, there is no contractual
+    basis for demanding remediation or claiming credits when service quality falls
+    short. This is a critical gap in any technology services procurement.
+  tags: [procurement, sla, uptime, service-levels, vendor]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(service.{0,20}level|sla|uptime|availability.{0,20}(commitment|guarantee|target|sla)|[0-9]{2}\\.[0-9]+%.{0,20}(uptime|availability|available))"
+
+  location: "proposal:document"
+  recommendation: >
+    Require the vendor to provide a formal SLA covering:
+    (1) Uptime target (minimum 99.5% for non-critical; 99.9%+ for business-critical)
+    (2) Measurement window (monthly is standard) and calculation methodology
+    (3) Planned maintenance exclusions with advance notice requirements (typically 72h)
+    (4) Service credit structure: what credits are paid for SLA breaches and how claimed
+    (5) Maximum consecutive downtime threshold that triggers termination rights
+    (6) Escalation path and incident response time commitments (P1: 1h, P2: 4h, P3: 8h)
+    Reject proposals that only offer "best efforts" availability without measurable targets.

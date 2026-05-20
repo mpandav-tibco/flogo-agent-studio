@@ -1,0 +1,33 @@
+rule:
+  id: CODE-007
+  enabled: true
+  severity: WARNING
+  category: security
+  title: HTTP URL Without TLS (Plaintext Communication)
+  description: >
+    A hardcoded http:// URL was detected. Communication over plain HTTP is
+    unencrypted — credentials, tokens, and data are visible to anyone on
+    the network path (man-in-the-middle). Modern APIs and services require HTTPS.
+    Sending authentication headers over HTTP is a critical security failure.
+  tags: [security, tls, https, encryption-in-transit]
+
+  applies_to: [.py, .js, .ts, .java, .go, .cs, .rb, .php, .yaml, .yml, .json]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "http://(?!localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0|10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|192\\.168\\.|\\{)"
+
+  location: "code:{{.Scope.name}}"
+  recommendation: >
+    Replace http:// with https:// for all external and production URLs.
+    Exceptions for localhost/127.0.0.1 during development are acceptable.
+    Additional steps:
+    (1) Add HTTP Strict Transport Security (HSTS) headers on your server
+    (2) Enable TLS certificate verification in HTTP clients — never disable it
+    (3) For services using self-signed certs in dev: trust the CA properly
+        rather than disabling verification
+    (4) Review all configuration files for http:// URLs that might be used in production
