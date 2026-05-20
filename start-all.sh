@@ -2,7 +2,7 @@
 # Start all Flogo Agent Studio services (macOS / Linux)
 # Equivalent to start-all.ps1 for Windows
 
-set -euo pipefail
+set -uo pipefail   # -e removed: non-critical steps use explicit error handling
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -26,6 +26,80 @@ wait_for_port() {
   echo " TIMEOUT (${timeout}s) — continuing anyway"
   return 0
 }
+
+check_port() {
+  # Returns 0 (success) if port is up within timeout, 1 if not.
+  local label=$1 port=$2 timeout=${3:-30}
+  local i=0
+  printf 'Checking %-20s (port %s)' "$label" "$port"
+  while (( i < timeout )); do
+    if nc -z -w1 127.0.0.1 "$port" 2>/dev/null; then
+      echo " ✓"
+      return 0
+    fi
+    printf '.'
+    sleep 1
+    (( i++ )) || true
+  done
+  echo " ✗ NOT READY (${timeout}s)"
+  return 1
+}
+
+# ── Elasticsearch index cleanup ───────────────────────────────────────────────
+# Indexes are cleared on each startup for fresh logs.
+# Gracefully skipped if Elasticsearch is unavailable or curl is missing.
+ELASTICSEARCH_URL="${ELASTICSEARCH_URL:-http://localhost:9200}"
+ELASTICSEARCH_INDEX_PATTERN="${ELASTICSEARCH_INDEX_PATTERN:-flogo-agent-studio*}"
+
+cleanup_elastic_indexes() {
+  echo ""
+  echo "── Elasticsearch index cleanup ────────────────────────────────────────"
+
+  if ! command -v curl &>/dev/null; then
+    echo "SKIP  elastic cleanup (curl not available)"
+    return 0
+  fi
+
+  # Quick reachability check — 2s timeout so it doesn't block startup
+  if ! curl -sf --connect-timeout 2 "${ELASTICSEARCH_URL}/_cluster/health" -o /dev/null 2>/dev/null; then
+    echo "SKIP  elastic cleanup (Elasticsearch not reachable at ${ELASTICSEARCH_URL})"
+    return 0
+  fi
+
+  echo "Clearing indexes matching: ${ELASTICSEARCH_INDEX_PATTERN}"
+
+  local indexes
+  indexes=$(curl -sf --connect-timeout 2 \
+    "${ELASTICSEARCH_URL}/_cat/indices/${ELASTICSEARCH_INDEX_PATTERN}?h=index" \
+    2>/dev/null || true)
+
+  if [[ -z "$indexes" ]]; then
+    echo "  No matching indexes found — nothing to clean."
+    echo ""
+    return 0
+  fi
+
+  local count=0
+  while IFS= read -r idx; do
+    [[ -z "$idx" ]] && continue
+    local http_code
+    http_code=$(curl -sf -o /dev/null -w "%{http_code}" -X DELETE \
+      --connect-timeout 2 "${ELASTICSEARCH_URL}/${idx}" 2>/dev/null || echo "000")
+    if [[ "$http_code" == "200" ]]; then
+      echo "  Deleted: ${idx}"
+      (( count++ )) || true
+    else
+      echo "  WARN: could not delete ${idx} (HTTP ${http_code}) — skipping"
+    fi
+  done <<< "$indexes"
+
+  echo "  Done — cleared ${count} index(es)."
+  echo ""
+}
+
+# Clean Elasticsearch indexes so each startup begins with fresh logs.
+# Safe to call even if Elastic is not running.
+cleanup_elastic_indexes
 
 # ── Service-specific env vars (read by Flogo via FLOGO_APP_PROPS_ENV=auto) ───
 export FLOGO_APP_PROPS_ENV=auto
@@ -167,6 +241,43 @@ else
 fi
 
 echo ""
-echo "Waiting 5s for readiness..."
+echo "Waiting 5s for services to initialise..."
 sleep 5
+
+# ── Flogo service health check (mandatory — script fails here if any are down) ─
+if (( started > 0 )); then
+  echo ""
+  echo "── Checking Flogo service health ──────────────────────────────────────"
+  FLOGO_FAILED=()
+  for entry in "${SERVICES[@]}"; do
+    IFS=: read -r exe svc_name svc_port <<< "$entry"
+    # Skip services whose binary wasn't present (already skipped at start)
+    [[ ! -f "$exe" ]] && continue
+    if ! check_port "$svc_name" "$svc_port" 25; then
+      FLOGO_FAILED+=("$svc_name:$svc_port")
+    fi
+  done
+
+  if (( ${#FLOGO_FAILED[@]} > 0 )); then
+    echo ""
+    echo "ERROR ─ The following Flogo services did not become ready:"
+    for entry in "${FLOGO_FAILED[@]}"; do
+      IFS=: read -r svc_name svc_port <<< "$entry"
+      echo "  ✗  ${svc_name} (port ${svc_port})"
+      local_log="logs/${svc_name}.log"
+      if [[ -f "$local_log" ]]; then
+        echo "     ── Last 5 lines of logs/${svc_name}.log ──"
+        tail -5 "$local_log" | sed 's/^/     /'
+      fi
+    done
+    echo ""
+    echo "Fix the errors above and re-run start-all.sh."
+    exit 1
+  fi
+
+  echo ""
+  echo "All Flogo services are healthy."
+fi
+
+echo ""
 echo "Ready."
