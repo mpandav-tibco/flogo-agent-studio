@@ -1,0 +1,41 @@
+{
+    "name": "Flogo Agent Studio – Linux Builder",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "."
+    },
+
+    // Bind-mount host resources into the container.
+    // Paths use ${localEnv:HOME} so they work for any user on macOS.
+    "mounts": [
+        // Docker daemon socket — lets us run 'docker build / push' inside the container
+        "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+
+        // flogobuild linux/amd64 binary
+        "source=${localEnv:HOME}/Downloads/tools/tibco/flogo/cli/TIB_flogo-app-build-cli_1.0.3/linux_amd64/flogobuild,target=/usr/local/bin/flogobuild,type=bind,readonly",
+
+        // Linux x64 Flogo VSCode extension VSIX (used by flogobuild create-context)
+        "source=${localEnv:HOME}/Downloads/tools/tibco/flogo/flogo-vscode-linux-x64-2.26.3-2498.vsix,target=/opt/flogo/flogo.vsix,type=bind,readonly",
+
+        // Custom Flogo extensions (activities, connectors, etc.)
+        "source=${localEnv:HOME}/git/flogo-custom-extensions,target=/opt/flogo-custom-extensions,type=bind,readonly"
+    ],
+
+    // On first container start: initialise the flogobuild context pointing at
+    // the mounted Linux VSIX and custom extensions, then set it as default.
+    "postCreateCommand": "flogobuild create-context -n flogo-linux -v /opt/flogo/flogo.vsix -u /opt/flogo-custom-extensions --set-default && echo '--- flogobuild context ---' && flogobuild list-context && echo '--- Go version ---' && go version && echo '--- Docker CLI ---' && docker version --format 'client {{.Client.Version}}'",
+
+    // Run as root inside the container (simplifies permissions with Docker socket)
+    "remoteUser": "root",
+
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash"
+            },
+            "extensions": [
+                "golang.go"
+            ]
+        }
+    }
+}

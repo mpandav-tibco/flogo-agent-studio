@@ -3,25 +3,33 @@
 # ============================================================
 # Build Docker images for all Flogo Agent Studio services.
 #
+# IMPORTANT: Run this script inside the Linux devcontainer (.devcontainer/).
+# flogobuild does not support cross-compilation; binaries are built natively
+# on linux/amd64 and packaged into Docker images.
+#
+# Workflow (two-step):
+#   1. flogobuild build-exe  — compiles each .flogo to a Linux binary
+#   2. docker build          — packages binary + .flogo file into an image
+#
 # Usage:
-#   bash deployment/build-images.sh [--push] [--platform linux/amd64|linux/arm64]
+#   bash deployment/build-images.sh [options]
 #
 # Options:
-#   --push      Push images to the registry defined by FLOGO_IMAGE
-#   --platform  Target platform (default: linux/arm64 on Apple Silicon,
-#               linux/amd64 elsewhere)
-#   --version   Image tag suffix (default: latest)
+#   --service <name>   Build only one service (e.g. agent-chat-service)
+#   --push             Push images after building
+#   --platform <plat>  Docker image platform tag (default: linux/amd64)
+#   --version  <tag>   Image tag suffix (default: latest)
+#   --skip-compile     Skip flogobuild step; reuse binaries in deployment/linux-bin/
 #
 # Environment:
-#   FLOGO_IMAGE   Image name prefix  (default: tibco/flogo-agent-studio)
-#   VERSION       Tag suffix         (default: latest)
+#   FLOGO_IMAGE     Image prefix     (default: tibco/flogo-agent-studio)
+#   BUILD_CONTEXT   flogobuild ctx   (default: flogo-linux)
+#   VERSION         Tag suffix       (default: latest)
 #
 # Prerequisites:
-#   - Docker Desktop (or Docker Engine) installed and running
-#   - flogobuild CLI available in PATH  OR  a Flogo build container
-#     configured in your local extension (tibco.flogo-2.26.3)
-#   - On macOS: the binaries in services/bin/ are Mach-O arm64.
-#     This script cross-compiles them to Linux inside a Docker build container.
+#   - flogobuild in PATH  (mounted by devcontainer at /usr/local/bin/flogobuild)
+#   - Docker CLI in PATH  (mounted Docker socket)
+#   - flogobuild context 'flogo-linux' initialised (done by postCreateCommand)
 # ============================================================
 
 set -euo pipefail
@@ -31,101 +39,54 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 LINUX_BIN_DIR="$SCRIPT_DIR/linux-bin"
 
 FLOGO_IMAGE="${FLOGO_IMAGE:-tibco/flogo-agent-studio}"
+BUILD_CONTEXT="${BUILD_CONTEXT:-flogo-linux}"
 VERSION="${VERSION:-latest}"
 PUSH=false
-PLATFORM=""
+SKIP_COMPILE=false
+ONLY_SERVICE=""
 
-# Detect default platform
-ARCH=$(uname -m)
-if [[ "$ARCH" == "arm64" ]]; then
-    PLATFORM="linux/arm64"
-else
-    PLATFORM="linux/amd64"
-fi
+# linux/amd64 — matches the Linux VSIX and the devcontainer architecture
+PLATFORM="linux/amd64"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --push)     PUSH=true; shift ;;
-        --platform) PLATFORM="$2"; shift 2 ;;
-        --version)  VERSION="$2"; shift 2 ;;
+        --push)          PUSH=true; shift ;;
+        --skip-compile)  SKIP_COMPILE=true; shift ;;
+        --platform)      PLATFORM="$2"; shift 2 ;;
+        --version)       VERSION="$2"; shift 2 ;;
+        --service)       ONLY_SERVICE="$2"; shift 2 ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
 
 echo "=================================================="
 echo "  Flogo Agent Studio — Docker image build"
-echo "  Image prefix : $FLOGO_IMAGE"
-echo "  Version tag  : $VERSION"
-echo "  Platform     : $PLATFORM"
-echo "  Push         : $PUSH"
+echo "  Image prefix  : $FLOGO_IMAGE"
+echo "  Version tag   : $VERSION"
+echo "  Platform      : $PLATFORM"
+  echo "  Build context : $BUILD_CONTEXT"
+echo "  Skip compile  : $SKIP_COMPILE"
+echo "  Push          : $PUSH"
+[[ -n "$ONLY_SERVICE" ]] && echo "  Only service  : $ONLY_SERVICE"
 echo "=================================================="
 
-mkdir -p "$LINUX_BIN_DIR"
-
-# ── Step 1: Cross-compile Flogo services to Linux ────────────────────────────
-#
-# The Flogo extension uses flogobuild (wrapper around go build with cgo disabled).
-# We replicate that here using a Go builder container so we don't need a local
-# Go toolchain.
-#
-# The .flogo files are the source of truth; flogobuild generates Go code and
-# compiles it.  Since we can't easily run flogobuild cross-platform outside the
-# extension, we fall back to:
-#   a) If linux binaries already exist in deployment/linux-bin/ → use them
-#   b) If flogobuild supports --goos flag → cross-compile
-#   c) Manual: document that users must supply linux binaries
-#
-# For now, check for pre-existing linux binaries and error if missing.
-
-SERVICES=(
-    "agent-chat-service"
-    "sse-stream-service"
-    "ingestion-service"
-    "feedback-service"
-    "design-service"
-    "deploy-service"
-    "rule-engine-service"
-    "agent-builder-service"
-    "mcp-server"
-)
-
-echo ""
-echo "── Step 1: Checking for Linux binaries ──────────────────────────────────"
-MISSING=()
-for svc in "${SERVICES[@]}"; do
-    bin="$LINUX_BIN_DIR/$svc"
-    if [[ -f "$bin" ]]; then
-        echo "  ✓ $svc"
-    else
-        MISSING+=("$svc")
-        echo "  ✗ $svc  (not found in deployment/linux-bin/)"
-    fi
-done
-
-if [[ ${#MISSING[@]} -gt 0 ]]; then
-    echo ""
-    echo "ERROR: Linux binaries missing for: ${MISSING[*]}"
-    echo ""
-    echo "To produce Linux binaries, run flogobuild targeting linux/$PLATFORM:"
-    echo ""
-    echo "  For each service in services/apps/*.flogo:"
-    echo "    GOOS=linux GOARCH=\$(echo $PLATFORM | cut -d/ -f2) \\"
-    echo "      flogobuild build-exe \\"
-    echo "        -f services/apps/\${SERVICE}.flogo \\"
-    echo "        -c flogo-v2263-2442 \\"
-    echo "        -o deployment/linux-bin/\${SERVICE}"
-    echo ""
-    echo "Or copy pre-built Linux binaries to deployment/linux-bin/ manually."
+# ── Validate prerequisites ────────────────────────────────────────────────────
+if ! command -v flogobuild &>/dev/null; then
+    echo "ERROR: flogobuild not found in PATH."
+    echo "Run this script inside the devcontainer — flogobuild is mounted at /usr/local/bin/flogobuild."
+    exit 1
+fi
+if ! docker info &>/dev/null; then
+    echo "ERROR: Docker is not running. Start Docker Desktop and retry."
     exit 1
 fi
 
-# ── Step 2: Build per-service Docker images ───────────────────────────────────
+mkdir -p "$LINUX_BIN_DIR"
 
-echo ""
-echo "── Step 2: Building Docker images ──────────────────────────────────────"
-
-declare -A SERVICE_APPS=(
+# ── Service catalogue ─────────────────────────────────────────────────────────
+# Maps service binary name → (flogo source file, docker image tag)
+declare -A FLOGO_SRC=(
     ["agent-chat-service"]="agent-chat-service.flogo"
     ["sse-stream-service"]="sse-stream-service.flogo"
     ["ingestion-service"]="ingestion-service.flogo"
@@ -137,7 +98,7 @@ declare -A SERVICE_APPS=(
     ["mcp-server"]="mcp-server.flogo"
 )
 
-declare -A IMAGE_TAGS=(
+declare -A IMAGE_TAG=(
     ["agent-chat-service"]="agent-chat"
     ["sse-stream-service"]="sse-stream"
     ["ingestion-service"]="ingestion"
@@ -149,13 +110,77 @@ declare -A IMAGE_TAGS=(
     ["mcp-server"]="mcp-server"
 )
 
-for svc in "${SERVICES[@]}"; do
-    tag="${IMAGE_TAGS[$svc]}"
-    flogo_app="services/apps/${SERVICE_APPS[$svc]}"
-    image="${FLOGO_IMAGE}:${tag}-${VERSION}"
+# Filter to requested service if --service passed
+SERVICES=("${!FLOGO_SRC[@]}")
+if [[ -n "$ONLY_SERVICE" ]]; then
+    if [[ -z "${FLOGO_SRC[$ONLY_SERVICE]:-}" ]]; then
+        echo "ERROR: Unknown service '$ONLY_SERVICE'."
+        echo "Valid services: ${SERVICES[*]}"
+        exit 1
+    fi
+    SERVICES=("$ONLY_SERVICE")
+fi
 
-    if [[ ! -f "$PROJECT_ROOT/$flogo_app" ]]; then
-        echo "  SKIP $svc — $flogo_app not found"
+# ── Step 1: Compile with flogobuild build-exe (native linux/amd64) ────────────
+echo ""
+echo "── Step 1: Compiling Flogo services (native linux/amd64) ────────────────"
+
+if [[ "$SKIP_COMPILE" == "true" ]]; then
+    echo "  Skipping compilation (--skip-compile set)."
+else
+    for svc in "${SERVICES[@]}"; do
+        flogo_file="$PROJECT_ROOT/services/apps/${FLOGO_SRC[$svc]}"
+
+        if [[ ! -f "$flogo_file" ]]; then
+            echo "  SKIP $svc — source not found: services/apps/${FLOGO_SRC[$svc]}"
+            continue
+        fi
+
+        echo ""
+        echo "  Compiling $svc ..."
+        flogobuild build-exe \
+            -f  "$flogo_file" \
+            -c  "$BUILD_CONTEXT" \
+            -n  "$svc" \
+            -o  "$LINUX_BIN_DIR"
+        echo "  ✓ deployment/linux-bin/$svc"
+    done
+fi
+
+# ── Step 2: Verify binaries exist ────────────────────────────────────────────
+echo ""
+echo "── Step 2: Verifying Linux binaries ────────────────────────────────────"
+MISSING=()
+for svc in "${SERVICES[@]}"; do
+    bin="$LINUX_BIN_DIR/$svc"
+    if [[ -f "$bin" ]]; then
+        echo "  ✓ deployment/linux-bin/$svc  ($(du -sh "$bin" | cut -f1))"
+    else
+        MISSING+=("$svc")
+        echo "  ✗ deployment/linux-bin/$svc  MISSING"
+    fi
+done
+
+if [[ ${#MISSING[@]} -gt 0 ]]; then
+    echo ""
+    echo "ERROR: Missing Linux binaries: ${MISSING[*]}"
+    echo "Re-run without --skip-compile or place binaries manually in deployment/linux-bin/"
+    exit 1
+fi
+
+# ── Step 3: Build Docker images with docker build ─────────────────────────────
+# We use docker build (not flogobuild package-docker-image) because we need to
+# include BOTH the compiled binary AND the .flogo app file in the image.
+# The ENTRYPOINT is: /app/service -app /app/app.flogo
+echo ""
+echo "── Step 3: Building Docker images ──────────────────────────────────────"
+
+for svc in "${SERVICES[@]}"; do
+    flogo_file="services/apps/${FLOGO_SRC[$svc]}"
+    image="${FLOGO_IMAGE}:${IMAGE_TAG[$svc]}-${VERSION}"
+
+    if [[ ! -f "$PROJECT_ROOT/$flogo_file" ]]; then
+        echo "  SKIP $svc — $flogo_file not found"
         continue
     fi
 
@@ -163,40 +188,46 @@ for svc in "${SERVICES[@]}"; do
     echo "  Building $image ..."
     docker build \
         --platform "$PLATFORM" \
-        -f "$SCRIPT_DIR/Dockerfile.flogo-service" \
+        -f  "$SCRIPT_DIR/Dockerfile.flogo-service" \
         --build-arg "SERVICE_BINARY=deployment/linux-bin/$svc" \
-        --build-arg "FLOGO_APP=$flogo_app" \
-        -t "$image" \
+        --build-arg "FLOGO_APP=$flogo_file" \
+        -t  "$image" \
         "$PROJECT_ROOT"
     echo "  ✓ $image"
 done
 
-# ── Step 3: Build Chainlit image ──────────────────────────────────────────────
+# ── Step 4: Build Chainlit image (Python — no flogobuild needed) ────────────
 echo ""
-echo "── Step 3: Building chainlit image ─────────────────────────────────────"
+echo "── Step 4: Building chainlit image ─────────────────────────────────────"
 CHAINLIT_IMAGE="${FLOGO_IMAGE}:chainlit-${VERSION}"
 docker build \
     --platform "$PLATFORM" \
-    -f "$PROJECT_ROOT/ui/chainlit/Dockerfile" \
-    -t "$CHAINLIT_IMAGE" \
+    -f  "$PROJECT_ROOT/ui/chainlit/Dockerfile" \
+    -t  "$CHAINLIT_IMAGE" \
     "$PROJECT_ROOT/ui/chainlit"
 echo "  ✓ $CHAINLIT_IMAGE"
 
-# ── Step 4: Push (optional) ───────────────────────────────────────────────────
+# ── Step 5: Push (optional) ───────────────────────────────────────────────────
 if [[ "$PUSH" == "true" ]]; then
     echo ""
-    echo "── Step 4: Pushing images to registry ───────────────────────────────────"
+    echo "── Step 5: Pushing to registry ─────────────────────────────────────────"
     for svc in "${SERVICES[@]}"; do
-        tag="${IMAGE_TAGS[$svc]}"
-        docker push "${FLOGO_IMAGE}:${tag}-${VERSION}"
+        docker push "${FLOGO_IMAGE}:${IMAGE_TAG[$svc]}-${VERSION}"
     done
     docker push "$CHAINLIT_IMAGE"
-    echo "  ✓ All images pushed"
+    echo "  ✓ All images pushed to $FLOGO_IMAGE"
 fi
 
 echo ""
 echo "=================================================="
 echo "  Build complete!"
-echo "  Run a full stack:  docker compose up -d"
-echo "  Deploy one agent:  Use 'Deploy with Docker' in the Forge UI"
+echo ""
+echo "  Images built:"
+for svc in "${SERVICES[@]}"; do
+    echo "    ${FLOGO_IMAGE}:${IMAGE_TAG[$svc]}-${VERSION}"
+done
+echo "    $CHAINLIT_IMAGE"
+echo ""
+echo "  Deploy a full stack : docker compose up -d"
+echo "  Deploy one agent    : 'Deploy with Docker' button in Forge UI"
 echo "=================================================="
