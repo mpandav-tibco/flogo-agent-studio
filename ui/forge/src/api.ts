@@ -161,7 +161,7 @@ export const generateAgentConfig = async (prompt: string, model?: string): Promi
       delete cfg["model"];
     }
     // Hoist name / description up to the top level if absent there
-    if (!raw.name && cfg["name"])        raw.name        = cfg["name"]        as string;
+    if (!raw.name && cfg["name"]) raw.name = cfg["name"] as string;
     if (!raw.description && cfg["description"]) raw.description = cfg["description"] as string;
   }
   return raw;

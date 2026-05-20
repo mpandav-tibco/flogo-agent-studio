@@ -128,7 +128,7 @@ function ExportModal({ title, content, onClose }: { title: string; content: stri
 
 // ── Ingest Panel ─────────────────────────────────────────────────────────────
 
-type IngestSubTab = "text" | "url" | "github" | "api";
+type IngestSubTab = "text" | "file" | "url" | "github" | "api";
 
 function IngestPanel({ collection, chunkStrategy }: { collection: string; chunkStrategy: string }) {
   const [tab, setTab] = useState<IngestSubTab>("text");
@@ -139,6 +139,25 @@ function IngestPanel({ collection, chunkStrategy }: { collection: string; chunkS
   const [ghRepo, setGhRepo] = useState("");
   const [ghPath, setGhPath] = useState("");
   const [ghBranch, setGhBranch] = useState("main");
+  const [fileList, setFileList] = useState<File[]>([]);
+
+  const readFileAsText = (f: File): Promise<string> =>
+    new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result as string);
+      r.onerror = () => rej(r.error);
+      r.readAsText(f);
+    });
+
+  const fileMut = useMutation({
+    mutationFn: async () => {
+      const docs = await Promise.all(
+        fileList.map(async (f) => ({ text: await readFileAsText(f), source: f.name }))
+      );
+      return ingestDocuments(collection, docs, chunkStrategy || undefined);
+    },
+    onSuccess: () => setFileList([]),
+  });
 
   const textMut = useMutation({
     mutationFn: () =>
@@ -165,9 +184,9 @@ function IngestPanel({ collection, chunkStrategy }: { collection: string; chunkS
       ),
   });
 
-  const isPending = textMut.isPending || urlMut.isPending || githubMut.isPending;
-  const result = textMut.data ?? urlMut.data ?? githubMut.data ?? null;
-  const mutError = textMut.error ?? urlMut.error ?? githubMut.error ?? null;
+  const isPending = textMut.isPending || urlMut.isPending || githubMut.isPending || fileMut.isPending;
+  const result = textMut.data ?? urlMut.data ?? githubMut.data ?? fileMut.data ?? null;
+  const mutError = textMut.error ?? urlMut.error ?? githubMut.error ?? fileMut.error ?? null;
 
   const INGEST_HOST = "http://localhost:7002";
   const AUTH_HEADER = "Basic ZmxvZ286Y2hhbmdlbWU=";
@@ -176,6 +195,7 @@ function IngestPanel({ collection, chunkStrategy }: { collection: string; chunkS
 
   const TABS: { id: IngestSubTab; label: string }[] = [
     { id: "text", label: "Paste Text" },
+    { id: "file", label: "Upload File" },
     { id: "url", label: "URL" },
     { id: "github", label: "GitHub" },
     { id: "api", label: "API Reference" },
@@ -286,6 +306,62 @@ function IngestPanel({ collection, chunkStrategy }: { collection: string; chunkS
             className="flex items-center gap-1.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
           >
             {textMut.isPending ? "Ingesting…" : "Ingest Document"}
+          </button>
+        </div>
+      )}
+
+      {/* File Upload */}
+      {tab === "file" && (
+        <div className="space-y-3">
+          <div
+            className="relative flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-brand-400 transition-colors cursor-pointer"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const dropped = Array.from(e.dataTransfer.files);
+              setFileList((prev) => [...prev, ...dropped]);
+            }}
+            onClick={() => document.getElementById("forge-file-input")?.click()}
+          >
+            <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+            <p className="text-sm text-gray-500">Drag & drop files here, or <span className="text-brand-600 font-medium">browse</span></p>
+            <p className="text-xs text-gray-400">.txt · .md · .json · .yaml · .csv · .html · .xml · .log · .flogo</p>
+            <input
+              id="forge-file-input"
+              type="file"
+              multiple
+              accept=".txt,.md,.json,.yaml,.yml,.csv,.html,.htm,.xml,.log,.flogo"
+              className="sr-only"
+              onChange={(e) => {
+                const selected = Array.from(e.target.files ?? []);
+                setFileList((prev) => [...prev, ...selected]);
+                e.target.value = "";
+              }}
+            />
+          </div>
+          {fileList.length > 0 && (
+            <ul className="space-y-1">
+              {fileList.map((f, i) => (
+                <li key={i} className="flex items-center justify-between text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5">
+                  <span className="font-mono text-gray-700 truncate">{f.name}</span>
+                  <span className="text-gray-400 ml-3 shrink-0">{(f.size / 1024).toFixed(1)} KB</span>
+                  <button
+                    onClick={() => setFileList((prev) => prev.filter((_, j) => j !== i))}
+                    className="ml-3 text-gray-400 hover:text-red-500 shrink-0"
+                  >✕</button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <button
+            onClick={() => fileMut.mutate()}
+            disabled={fileList.length === 0 || !collection || isPending}
+            className="flex items-center gap-1.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
+          >
+            {fileMut.isPending ? `Ingesting ${fileList.length} file${fileList.length > 1 ? "s" : ""}…` : `Ingest ${fileList.length || ""} File${fileList.length !== 1 ? "s" : ""}`}
           </button>
         </div>
       )}

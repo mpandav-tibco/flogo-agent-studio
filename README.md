@@ -6,43 +6,116 @@
 
 ## Architecture
 
+```mermaid
+graph LR
+    User(["👤 User"])
+    IDE(["🤖 AI IDE\nClaude / Cursor / Copilot"])
+
+    subgraph UI ["User Interfaces"]
+        FORGE["AgentForge UI\n:7025 React+Vite"]
+        CHAINLIT["Chainlit Chat\n:7080"]
+    end
+
+    subgraph SVC ["Flogo Service Layer"]
+        direction TB
+        DESIGN["design-service\n:7020"]
+        DEPLOY["deploy-service\n:7030"]
+        BUILDER["agent-builder\n:7010"]
+        CHAT["agent-chat\n:7001"]
+        INGEST["ingestion\n:7002"]
+        FEEDBACK["feedback\n:7003"]
+        RULE["rule-engine\n:7097"]
+        SSE["sse-stream\n:7005"]
+        MCP["mcp-server\n:7333"]
+    end
+
+    subgraph OPS ["Ops"]
+        DEPPY["deployment.py\n:7050"]
+    end
+
+    subgraph INFRA ["Infrastructure"]
+        direction TB
+        WV[("Weaviate\nVectorDB :18080")]
+        PG[("PostgreSQL\n:5432")]
+        OL["Ollama LLM\n:11434"]
+    end
+
+    User --> FORGE & CHAINLIT
+    IDE -->|"MCP / JSON-RPC"| MCP
+    FORGE -->|REST| DESIGN & DEPLOY & BUILDER & INGEST & FEEDBACK & RULE
+    CHAINLIT -->|REST| CHAT
+    CHAINLIT -->|SSE| SSE
+    MCP -->|REST| DESIGN & DEPLOY & CHAT & INGEST & FEEDBACK & RULE
+    DEPLOY --> DEPPY
+    DEPPY -->|"spawn + manage"| CHAINLIT & CHAT & SSE & INGEST
+    BUILDER --> OL
+    CHAT & SSE --> WV & OL
+    INGEST --> WV & OL
+    DESIGN & DEPLOY & FEEDBACK --> PG
+
+    style UI fill:#e8f8f7,stroke:#3bbfbb
+    style SVC fill:#f5f7f7,stroke:#aaa
+    style OPS fill:#fffde6,stroke:#e8c800
+    style INFRA fill:#f0f0f0,stroke:#999
 ```
- ┌─────────────────────┐   ┌────────────────────────────────┐
- │  AgentForge UI      │   │  Claude / Cursor / IDE         │
- │ (React · port 7025) │   │  (MCP client)                  │
- └──────────┬──────────┘   └──────────────┬─────────────────┘
-            │ REST                        │ JSON-RPC 2.0 (Streamable HTTP)
- ┌──────────┴──────────┐                  │
- │  Chainlit Chat UI   │                  │
- │ (Python · port 7080)│                  │
- └──────────┬──────────┘                  │
-            │                             ▼
-            │           ┌─────────────────────────────────┐
-            │           │  mcp-server          port 7333  │
-            │           │  (Flogo · MCP gateway)          │
-            │           └────────────┬────────────────────┘
-            │                        │ proxies to internal REST
-            ▼                        ▼
- ┌──────────────────────────────────────────────────────────┐
- │                  Flogo Service Mesh                      │
- │                                                          │
- │  design-service        7020   agent-chat-service   7001  │
- │  deploy-service        7030   ingestion-service    7002  │
- │  agent-builder-service 7010   feedback-service     7003  │
- │  rule-engine-service   7097   sse-stream-service   7005  │
- └───────────────────────┬──────────────────────────────────┘
-                         │
-          ┌──────────────┴──────────────┐────────────────────────────┐
-          ▼                             ▼                            ▼
- ┌─────────────────-┐        ┌─────────────────────-┐       ┌────────┴────────┐
- │  Weaviate        │        │  Ollama              │       │  PostgreSQL     │
- │  VectorDB :8080  │        │  LLM runtime :11434  │       │  :5432          │ 
- └─────────────────-┘        └─────────────────────-┘       └─────────────────┘
- 
- 
- 
- 
-         
+
+---
+
+## Service Interaction Flows
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Forge as AgentForge UI
+    participant AB as agent-builder :7010
+    participant DS as design-service :7020
+    participant IN as ingestion :7002
+    participant AC as agent-chat :7001
+    participant RE as rule-engine :7097
+    participant WV as Weaviate VectorDB
+    participant OL as Ollama LLM
+
+    Note over User,OL: Flow 1 — Create & AI-Generate Agent Config
+    User->>Forge: Describe agent in plain English
+    Forge->>AB: POST /api/generate {description}
+    AB->>OL: LLM config generation
+    OL-->>AB: Generated JSON config
+    AB-->>Forge: {systemPrompt, model, collection}
+    Forge->>DS: PUT /api/v1/agents/{id}
+    DS-->>Forge: Agent saved ✓
+
+    Note over User,OL: Flow 2 — Ingest Knowledge & Deploy
+    User->>Forge: Paste URL / upload document
+    Forge->>IN: POST /api/ingest {url, agentId}
+    IN->>OL: Embed chunks (nomic-embed-text)
+    OL-->>IN: 768-dim vectors
+    IN->>WV: Store vectors in agent collection ✓
+    User->>Forge: Deploy agent
+    Forge->>DS: POST /api/v1/agents/{id}/activate
+    DS-->>Forge: chatUiUrl + sseUrl assigned ✓
+
+    Note over User,OL: Flow 3 — RAG Chat
+    User->>AC: Ask question (via Chainlit)
+    AC->>OL: Embed question
+    OL-->>AC: Question vector
+    AC->>WV: Hybrid search BM25 + vector Top-K
+    WV-->>AC: Relevant doc chunks
+    AC->>OL: Chat completion (system prompt + context)
+    OL-->>AC: Grounded answer (streaming)
+    AC-->>User: Streaming response ✓
+
+    Note over User,OL: Flow 4 — Rule Engine Analysis
+    User->>Forge: Upload .flogo / K8s YAML / config file
+    Forge->>RE: POST /api/analyze {content, fileName}
+    RE->>RE: Auto-detect parser · evaluate YAML rules
+    RE-->>Forge: {findings[], errorCount, warningCount, markdown} ✓
+
+    Note over User,OL: Flow 5 — MCP Tool Call (from AI IDE)
+    User->>AC: tools/call {name: "rag_chat", question}
+    AC->>WV: Hybrid search
+    AC->>OL: LLM completion
+    AC-->>User: Grounded answer ✓
 ```
 
 ---

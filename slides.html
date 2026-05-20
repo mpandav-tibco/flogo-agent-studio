@@ -181,6 +181,14 @@
 
   /* ── Divider ─────────────────────────────────────── */
   .divider { height: 3px; width: 48px; background: var(--teal); border-radius: 2px; margin: 16px 0; }
+
+  /* ── Mermaid diagram slides ─────────────────────────────────────────────── */
+  .mermaid-wrap {
+    flex: 1; display: flex; align-items: flex-start; justify-content: center;
+    overflow: hidden; margin-top: 8px;
+  }
+  .mermaid-wrap .mermaid { display: flex; justify-content: center; width: 100%; }
+  .mermaid-wrap .mermaid svg { max-height: 400px; width: auto; }
 </style>
 </head>
 <body>
@@ -256,9 +264,8 @@
 <div class="slide teal-slide">
   <div class="slide-label" style="color:rgba(255,255,255,0.6)">The Solution</div>
   <h2>AgentForge Studio</h2>
-  <p style="font-size:16px; opacity:0.9; max-width:620px; margin-bottom:28px;">
-    A complete, integrated AI agent platform where <strong>every microservice is a compiled Flogo flow</strong> — no runtime dependencies, 
-    native Go speed, built-in OTel tracing.
+  <p style="font-size:16px; opacity:0.9; max-width:680px; margin-bottom:28px;">
+    A complete AI agent platform built on two powerful pillars: <strong>RAG-grounded conversational AI</strong> and <strong>declarative rule-based document analysis</strong> — every microservice a compiled Flogo flow, no runtime dependencies, native Go speed.
   </p>
   <div class="cols">
     <div class="col">
@@ -272,7 +279,7 @@
     <div class="col">
       <ul>
         <li>Full agent lifecycle: create → deploy → export</li>
-        <li>Static quality analysis for Flogo apps</li>
+        <li>YAML rule engine: compliance &amp; quality analysis for any document — Flogo, K8s, configs, logs</li>
         <li>MCP gateway for Claude, Cursor, VS Code Copilot</li>
         <li>OpenTelemetry distributed tracing across all services</li>
       </ul>
@@ -370,7 +377,7 @@
     <div class="svc-card">
       <div class="name">rule-engine-service</div>
       <div class="port">:7097</div>
-      <div class="desc">Static analysis of Flogo apps against YAML rules</div>
+      <div class="desc">Declarative YAML rule evaluation on any document (Flogo, K8s, configs, logs) — structured findings &lt;200ms</div>
     </div>
     <div class="svc-card">
       <div class="name">sse-stream-service</div>
@@ -421,7 +428,56 @@
   <span class="slide-num">6</span>
 </div>
 
-<!-- ═══════════════════ SLIDE 7 — AGENTFORGE UI ═══════════════════ -->
+<!-- ═══════════════════ SLIDE 7 — RULE ENGINE ═══════════════════ -->
+<div class="slide light-slide">
+  <div class="slide-label">Intelligent Analysis</div>
+  <h2>Rule Engine: <span style="color:var(--teal)">Deterministic Analysis, Zero Code</span></h2>
+  <div class="cols" style="flex:none; margin-top:8px; margin-bottom:12px;">
+    <div class="col">
+      <div class="flow" style="margin: 0 0 8px; gap:4px; flex-wrap:nowrap;">
+        <div class="flow-box" style="font-size:11px; text-align:center; padding:6px 10px">Document<br/><span style="font-weight:400;font-size:10px">any format</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="font-size:11px; text-align:center; padding:6px 10px">Auto Parser<br/><span style="font-weight:400;font-size:10px">5 built-in</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="font-size:11px; text-align:center; padding:6px 10px">YAML Rules<br/><span style="font-weight:400;font-size:10px">externalized</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="font-size:11px; text-align:center; padding:6px 10px">Findings<br/><span style="font-weight:400;font-size:10px">ERROR/WARN/INFO</span></div>
+      </div>
+      <p style="font-size:12px; color:var(--gray); line-height:1.5;">Domain experts write YAML rules — no Go or Python required. Auto-detects file format, returns structured findings with location, recommendation, and severity in &lt;200ms.</p>
+    </div>
+    <div class="col">
+      <div class="hbox" style="margin-bottom:8px; padding:10px 14px">
+        <h3 style="margin-bottom:3px">5 Parsers — auto-detected by extension</h3>
+        <p style="font-size:12px">JSON/Flogo · XML/BWP · YAML/Helm · Key-Value (.env) · Plain-text logs</p>
+      </div>
+      <div class="hbox" style="padding:10px 14px">
+        <h3 style="margin-bottom:3px">13 Match Types + Composite Logic</h3>
+        <p style="font-size:12px">Existence, equality, regex, numeric, string · composite <code>any_of / all_of / none_of</code></p>
+      </div>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
+    <div class="hbox yellow" style="margin-bottom:0; padding:10px 12px">
+      <h3 style="font-size:13px; margin-bottom:4px">Flogo Quality Gate</h3>
+      <p style="font-size:11px">Catch missing error handlers &amp; bad credentials before deploy. Callable via MCP <code>analyze_flogo</code>.</p>
+    </div>
+    <div class="hbox yellow" style="margin-bottom:0; padding:10px 12px">
+      <h3 style="font-size:13px; margin-bottom:4px">Config &amp; Manifest Compliance</h3>
+      <p style="font-size:11px">Validate K8s YAMLs, Helm charts, .env files. Swap rule sets per environment or team.</p>
+    </div>
+    <div class="hbox yellow" style="margin-bottom:0; padding:10px 12px">
+      <h3 style="font-size:13px; margin-bottom:4px">Log Pattern Detection</h3>
+      <p style="font-size:11px">Scan structured or plain-text logs for error signatures and SLA violations via regex rules.</p>
+    </div>
+    <div class="hbox yellow" style="margin-bottom:0; padding:10px 12px">
+      <h3 style="font-size:13px; margin-bottom:4px">Any Custom Domain</h3>
+      <p style="font-size:11px">Write YAML rules once — no redeploy. Analysts define what "valid" looks like for any doc type.</p>
+    </div>
+  </div>
+  <span class="slide-num">7</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 8 — AGENTFORGE UI ═══════════════════ -->
 <div class="slide light-slide">
   <div class="slide-label">Design Portal</div>
   <h2>AgentForge UI <span style="color:var(--teal); font-size:18px; font-weight:400">localhost:7025</span></h2>
@@ -455,10 +511,10 @@
       </div>
     </div>
   </div>
-  <span class="slide-num">7</span>
+  <span class="slide-num">8</span>
 </div>
 
-<!-- ═══════════════════ SLIDE 8 — MCP INTEGRATION ═══════════════════ -->
+<!-- ═══════════════════ SLIDE 9 — MCP INTEGRATION ═══════════════════ -->
 <div class="slide dark-slide">
   <div class="slide-label" style="color:rgba(255,255,255,0.4)">MCP Integration</div>
   <div class="cols">
@@ -489,10 +545,10 @@
       </ul>
     </div>
   </div>
-  <span class="slide-num" style="color:rgba(255,255,255,0.15)">8</span>
+  <span class="slide-num" style="color:rgba(255,255,255,0.15)">9</span>
 </div>
 
-<!-- ═══════════════════ SLIDE 9 — FLOGO ADVANTAGE ═══════════════════ -->
+<!-- ═══════════════════ SLIDE 10 — FLOGO ADVANTAGE ═══════════════════ -->
 <div class="slide">
   <div class="slide-label">Why Flogo</div>
   <h2>Native Go · No Runtime · <span style="color:var(--teal)">Production Ready</span></h2>
@@ -518,10 +574,10 @@
       </div>
     </div>
   </div>
-  <span class="slide-num">9</span>
+  <span class="slide-num">10</span>
 </div>
 
-<!-- ═══════════════════ SLIDE 10 — DEMO FLOW ═══════════════════ -->
+<!-- ═══════════════════ SLIDE 11 — DEMO FLOW ═══════════════════ -->
 <div class="slide teal-slide">
   <div class="slide-label" style="color:rgba(255,255,255,0.6)">Demo Walkthrough</div>
   <h2>End-to-End Journey</h2>
@@ -539,16 +595,16 @@
       <ul style="font-size:14px;">
         <li style="margin-bottom:10px"><strong>6. Submit feedback</strong> → rate the response from the chat UI</li>
         <li style="margin-bottom:10px"><strong>7. Improve agent</strong> → Forge reads feedback · LLM refines config</li>
-        <li style="margin-bottom:10px"><strong>8. Analyze Flogo app</strong> → upload a .flogo file · get rule report in &lt;200ms</li>
+        <li style="margin-bottom:10px"><strong>8. Rule Engine analysis</strong> → upload a .flogo, K8s YAML, or config file · get structured findings report in &lt;200ms</li>
         <li style="margin-bottom:10px"><strong>9. Call via MCP</strong> → in Claude Code, call <code>rag_chat</code> with your question</li>
         <li style="margin-bottom:10px"><strong>10. Export</strong> → download K8s YAML · agent is production-ready</li>
       </ul>
     </div>
   </div>
-  <span class="slide-num" style="color:rgba(255,255,255,0.25)">10</span>
+  <span class="slide-num" style="color:rgba(255,255,255,0.25)">11</span>
 </div>
 
-<!-- ═══════════════════ SLIDE 11 — GETTING STARTED ═══════════════════ -->
+<!-- ═══════════════════ SLIDE 12 — GETTING STARTED ═══════════════════ -->
 <div class="slide dark-slide">
   <div class="slide-label" style="color:rgba(255,255,255,0.4)">Getting Started</div>
   <div class="cols">
@@ -575,10 +631,117 @@ ollama pull llama3.2:3b
       </div>
     </div>
   </div>
-  <span class="slide-num" style="color:rgba(255,255,255,0.15)">11</span>
+  <span class="slide-num" style="color:rgba(255,255,255,0.15)">12</span>
 </div>
 
-<!-- ═══════════════════ SLIDE 12 — CLOSING ═══════════════════ -->
+<!-- ═══════════════════ SLIDE 14 — ARCHITECTURE DIAGRAM ═══════════════════ -->
+<div class="slide light-slide">
+  <div class="slide-label">Solution Architecture</div>
+  <h2>Component Map — <span style="color:var(--teal)">4 Layers, All Connected</span></h2>
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+graph LR
+    User(["👤 User"])
+    IDE(["🤖 AI IDE\nClaude / Cursor / Copilot"])
+
+    subgraph UI ["User Interfaces"]
+        FORGE["AgentForge UI\n:7025"]
+        CHAINLIT["Chainlit Chat\n:7080"]
+    end
+
+    subgraph SVC ["Flogo Service Layer  —  9 Go Binaries"]
+        direction TB
+        DESIGN["design-service\n:7020"]
+        DEPLOY["deploy-service\n:7030"]
+        BUILDER["agent-builder\n:7010"]
+        CHAT["agent-chat\n:7001"]
+        INGEST["ingestion\n:7002"]
+        FEEDBACK["feedback\n:7003"]
+        RULE["rule-engine\n:7097"]
+        SSE["sse-stream\n:7005"]
+        MCP["mcp-server\n:7333"]
+    end
+
+    subgraph OPS ["Ops"]
+        DEPPY["deployment.py\n:7050"]
+    end
+
+    subgraph INFRA ["Infrastructure"]
+        direction TB
+        WV[("Weaviate\nVectorDB")]
+        PG[("PostgreSQL")]
+        OL["Ollama LLM"]
+    end
+
+    User --> FORGE & CHAINLIT
+    IDE -->|"MCP / JSON-RPC"| MCP
+    FORGE -->|REST| DESIGN & DEPLOY & BUILDER & INGEST & FEEDBACK & RULE
+    CHAINLIT -->|REST| CHAT
+    CHAINLIT -->|SSE| SSE
+    MCP -->|REST| DESIGN & DEPLOY & CHAT & INGEST & FEEDBACK & RULE
+    DEPLOY --> DEPPY
+    DEPPY -->|spawn| CHAINLIT & CHAT & SSE & INGEST
+    BUILDER --> OL
+    CHAT & SSE --> WV & OL
+    INGEST --> WV & OL
+    DESIGN & DEPLOY & FEEDBACK --> PG
+
+    style UI fill:#e8f8f7,stroke:#3bbfbb
+    style SVC fill:#f5f7f7,stroke:#aaa
+    style OPS fill:#fffde6,stroke:#f9ea35
+    style INFRA fill:#f0f0f0,stroke:#999
+    </pre>
+  </div>
+  <span class="slide-num">14</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 15 — INTERACTION FLOWS ═══════════════════ -->
+<div class="slide dark-slide">
+  <div class="slide-label" style="color:rgba(255,255,255,0.4)">Service Interactions</div>
+  <h2>End-to-End Interaction Flows</h2>
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor User
+    participant Forge as AgentForge UI
+    participant AB as agent-builder :7010
+    participant DS as design-service :7020
+    participant IN as ingestion :7002
+    participant AC as agent-chat :7001
+    participant RE as rule-engine :7097
+    participant WV as Weaviate
+    participant OL as Ollama LLM
+
+    Note over User,OL: Flow 1 — Create &amp; AI-Generate Agent Config
+    User->>Forge: Describe agent in plain English
+    Forge->>AB: POST /api/generate {description}
+    AB->>OL: LLM config generation
+    OL-->>AB: Generated JSON config
+    AB-->>Forge: {systemPrompt, model, collection}
+    Forge->>DS: Save agent → PostgreSQL ✓
+
+    Note over User,OL: Flow 2 — Ingest Knowledge &amp; RAG Chat
+    User->>Forge: Upload URL / document
+    Forge->>IN: POST /api/ingest {url, agentId}
+    IN->>OL: Embed chunks (nomic-embed-text)
+    IN->>WV: Store vectors in agent collection ✓
+    User->>AC: Ask question (via Chainlit)
+    AC->>WV: Hybrid search BM25+vector Top-K
+    AC->>OL: Chat completion (prompt + context)
+    OL-->>AC: Grounded streaming answer ✓
+
+    Note over User,OL: Flow 3 — Rule Engine Analysis
+    User->>Forge: Upload .flogo / K8s YAML / config
+    Forge->>RE: POST /api/analyze {content, fileName}
+    RE->>RE: Auto-detect parser · evaluate YAML rules
+    RE-->>Forge: {findings[], errorCount, markdown} ✓
+    </pre>
+  </div>
+  <span class="slide-num" style="color:rgba(255,255,255,0.15)">15</span>
+</div>
+
+<!-- ═══════════════════ SLIDE 16 — CLOSING ═══════════════════ -->
 <div class="slide title-slide">
   <div class="logo-inline">
     <svg class="logo-hex" viewBox="0 0 52 57" xmlns="http://www.w3.org/2000/svg">
@@ -598,12 +761,13 @@ ollama pull llama3.2:3b
   <div class="chips" style="margin-top:8px;">
     <div class="chip" style="background:rgba(59,191,187,0.2); border-color:rgba(59,191,187,0.5); color:#a8e8e6">9 Flogo services</div>
     <div class="chip" style="background:rgba(59,191,187,0.2); border-color:rgba(59,191,187,0.5); color:#a8e8e6">RAG + streaming</div>
+    <div class="chip" style="background:rgba(59,191,187,0.2); border-color:rgba(59,191,187,0.5); color:#a8e8e6">Rule Engine Analysis</div>
     <div class="chip" style="background:rgba(59,191,187,0.2); border-color:rgba(59,191,187,0.5); color:#a8e8e6">MCP integration</div>
     <div class="chip" style="background:rgba(59,191,187,0.2); border-color:rgba(59,191,187,0.5); color:#a8e8e6">OTel tracing</div>
     <div class="chip" style="background:rgba(59,191,187,0.2); border-color:rgba(59,191,187,0.5); color:#a8e8e6">32/32 E2E passing</div>
   </div>
   <p class="tagline" style="margin-top:32px;">github.com/mpandav-tibco/flogo-agent-studio</p>
-  <span class="slide-num" style="color:rgba(255,255,255,0.2)">12</span>
+  <span class="slide-num" style="color:rgba(255,255,255,0.2)">16</span>
 </div>
 
 </div><!-- /deck -->
@@ -611,7 +775,7 @@ ollama pull llama3.2:3b
 <!-- Navigation -->
 <div class="nav">
   <button onclick="prev()">← Prev</button>
-  <span id="counter">1 / 12</span>
+  <span id="counter">1 / 16</span>
   <button onclick="next()">Next →</button>
   <span style="margin-left:16px; font-size:11px; opacity:0.4">← → arrow keys</span>
 </div>
@@ -633,6 +797,25 @@ ollama pull llama3.2:3b
   document.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  next();
     if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    prev();
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#dcf2f0',
+      primaryTextColor: '#2d2a26',
+      primaryBorderColor: '#3bbfbb',
+      lineColor: '#3bbfbb',
+      secondaryColor: '#f5f7f7',
+      tertiaryColor: '#fffde6',
+      edgeLabelBackground: '#ffffff'
+    },
+    sequence: { actorMargin: 40, width: 130, height: 40, boxMargin: 8, noteMargin: 8, messageMargin: 30 },
+    flowchart: { htmlLabels: true, curve: 'basis' }
   });
 </script>
 </body>
