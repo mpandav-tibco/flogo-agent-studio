@@ -632,13 +632,13 @@ def _generate_compose_yaml(agent: dict) -> str:
       agent-chat    — RAG chat service
       sse-stream    — SSE REST gateway + event bus
       ingestion     — document ingestion
-      chainlit      — web chat UI  (built from ui/chainlit/Dockerfile)
+      chainlit      — web chat UI
 
     Host ports: 7400-7490 range, deterministically assigned per agentId.
     Internal ports match the standard Flogo service defaults (7001/7002/7005/7099).
-    Images default to  ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:*-${VERSION:-latest}
-    with build: fallback using deployment/Dockerfile.flogo-service for when
-    pre-built images are not available.
+    Images: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:*-${VERSION:-latest}
+    All per-agent configuration is passed via environment variables — no
+    image rebuild needed per agent.
     """
     agent_id    = agent["id"]
     agent_name  = agent.get("name", agent_id)
@@ -657,7 +657,6 @@ def _generate_compose_yaml(agent: dict) -> str:
     safe_name   = _compose_safe_name(agent_name)
     short       = agent_id[:8]
     ports       = _docker_slot_ports(agent_id)
-    project_root = str(PROJECT_ROOT)
 
     import textwrap, datetime
     # Escape special YAML characters in the system prompt
@@ -676,8 +675,8 @@ def _generate_compose_yaml(agent: dict) -> str:
         #   docker compose ps                    # check status
         #   docker compose down                  # stop all
         #
-        # If Flogo images are not available, build them first:
-        #   bash {project_root}/deployment/build-images.sh
+        # Images are pulled from the registry. To override:
+        #   FLOGO_IMAGE=myregistry/flogo-agent-studio VERSION=v1.2 docker compose up -d
         #
         # Chat UI: http://localhost:{ports['chainlit']}
         # Ingest : http://localhost:{ports['ingestion']}/api/ingest
@@ -730,12 +729,6 @@ def _generate_compose_yaml(agent: dict) -> str:
           # ── Agent chat service ────────────────────────────────────────────────
           agent-chat:
             image: ${{FLOGO_IMAGE:-tibco/flogo-agent-studio}}:agent-chat-${{VERSION:-latest}}
-            build:
-              context: {project_root}
-              dockerfile: deployment/Dockerfile.flogo-service
-              args:
-                SERVICE_BINARY: deployment/linux-bin/agent-chat-service
-                FLOGO_APP: services/apps/agent-chat-service.flogo
             restart: unless-stopped
             environment:
               FLOGO_APP_PROPS_ENV: auto
@@ -763,12 +756,6 @@ def _generate_compose_yaml(agent: dict) -> str:
           # ── SSE stream service ────────────────────────────────────────────────
           sse-stream:
             image: ${{FLOGO_IMAGE:-tibco/flogo-agent-studio}}:sse-stream-${{VERSION:-latest}}
-            build:
-              context: {project_root}
-              dockerfile: deployment/Dockerfile.flogo-service
-              args:
-                SERVICE_BINARY: deployment/linux-bin/sse-stream-service
-                FLOGO_APP: services/apps/sse-stream-service.flogo
             restart: unless-stopped
             ports:
               - "{ports['sse_rest']}:7005"
@@ -792,12 +779,6 @@ def _generate_compose_yaml(agent: dict) -> str:
           # ── Ingestion service ─────────────────────────────────────────────────
           ingestion:
             image: ${{FLOGO_IMAGE:-tibco/flogo-agent-studio}}:ingestion-${{VERSION:-latest}}
-            build:
-              context: {project_root}
-              dockerfile: deployment/Dockerfile.flogo-service
-              args:
-                SERVICE_BINARY: deployment/linux-bin/ingestion-service
-                FLOGO_APP: services/apps/ingestion-service.flogo
             restart: unless-stopped
             ports:
               - "{ports['ingestion']}:7002"
@@ -820,10 +801,7 @@ def _generate_compose_yaml(agent: dict) -> str:
 
           # ── Chainlit chat UI ──────────────────────────────────────────────────
           chainlit:
-            build:
-              context: {project_root}/ui/chainlit
-              dockerfile: Dockerfile
-            image: ${{FLOGO_IMAGE:-tibco/flogo-agent-studio}}:chainlit-{short}
+            image: ${{FLOGO_IMAGE:-tibco/flogo-agent-studio}}:chainlit-${{VERSION:-latest}}
             restart: unless-stopped
             ports:
               - "{ports['chainlit']}:7080"
