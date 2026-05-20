@@ -1,0 +1,48 @@
+rule:
+  id: DOCKER-004
+  enabled: true
+  severity: WARNING
+  category: reliability
+  title: No HEALTHCHECK Instruction Defined
+  description: >
+    The Dockerfile does not define a HEALTHCHECK. Without a health check,
+    Docker and orchestrators (Kubernetes, ECS, Swarm) cannot determine if
+    the container is actually serving traffic or is in a failed state.
+    Containers with failed applications continue receiving traffic until
+    manually restarted, causing silent degradation.
+  tags: [docker, reliability, healthcheck, kubernetes, orchestration]
+
+  applies_to: [Dockerfile, .dockerfile]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)^HEALTHCHECK"
+
+  location: "dockerfile:document"
+  recommendation: >
+    Add a HEALTHCHECK that tests the application's actual health:
+
+    # HTTP service
+    HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+      CMD curl -f http://localhost:8080/health || exit 1
+
+    # TCP port check (simpler, less specific)
+    HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+      CMD nc -z localhost 8080 || exit 1
+
+    # Custom script
+    HEALTHCHECK --interval=60s --timeout=15s --start-period=30s --retries=3 \
+      CMD ["/app/healthcheck.sh"]
+
+    Parameters:
+    --interval: How often to run the check (default: 30s)
+    --timeout: Max time for the check to complete
+    --start-period: Grace period for startup (don't count failures during init)
+    --retries: Consecutive failures before marking unhealthy
+
+    In Kubernetes: define readinessProbe and livenessProbe in the pod spec
+    in addition to the Dockerfile HEALTHCHECK.

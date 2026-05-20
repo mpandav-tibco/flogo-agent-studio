@@ -1,0 +1,48 @@
+rule:
+  id: HR-005
+  enabled: true
+  severity: WARNING
+  category: employee-rights
+  title: No Grievance Procedure Defined
+  description: >
+    The HR documentation does not include or reference a grievance procedure.
+    A grievance procedure is a legal requirement in many jurisdictions and an
+    ACAS Code of Practice expectation in the UK. Without a formal procedure,
+    employees have no clear escalation path for workplace complaints, increasing
+    the risk of tribunal claims and reputational damage.
+  tags: [hr, grievance, legal, employee-rights, procedure]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(grievance.{0,30}(procedure|process|policy)|raise.{0,20}grievance|formal.{0,20}complaint|employee.{0,20}complaint.{0,20}(process|procedure))"
+
+  location: "policy:document"
+  recommendation: >
+    Define or reference a formal grievance procedure covering:
+
+    Stage 1 — Informal Resolution
+    - Employee raises concern directly with their manager or HR
+    - Target resolution within 5 working days
+    - Document informally but no formal record created
+
+    Stage 2 — Formal Grievance
+    - Employee submits written grievance to HR
+    - Formal meeting within 5 working days
+    - Written outcome within 5 working days of meeting
+    - Right to be accompanied by colleague or trade union rep
+
+    Stage 3 — Appeal
+    - Employee appeals to senior manager or HR director
+    - Conducted by someone not involved in Stage 2
+    - Final decision within 10 working days
+
+    Key principles:
+    - Confidentiality: grievance details shared only on need-to-know basis
+    - No retaliation: raising a grievance must not affect employment status
+    - Whistleblowing: serious misconduct follows separate protected disclosure policy

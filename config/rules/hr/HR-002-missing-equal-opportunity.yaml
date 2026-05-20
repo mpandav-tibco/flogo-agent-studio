@@ -1,0 +1,42 @@
+rule:
+  id: HR-002
+  enabled: true
+  severity: WARNING
+  category: compliance
+  title: Equal Opportunity Statement Not Found
+  description: >
+    No equal opportunity employment (EOE) or non-discrimination statement was
+    detected in this HR policy. Equal opportunity statements are legally required
+    in employment policies in most jurisdictions (US EEOC, UK Equality Act 2010,
+    EU Equal Treatment Directive). Their absence creates legal risk and signals
+    cultural values that may affect talent acquisition and retention.
+  tags: [hr, compliance, equal-opportunity, diversity, legal]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(equal.{0,20}opportunit|non.?discriminat|diversity.{0,20}inclusion|eeoc|equality.{0,20}act|protected.{0,20}(class|characteristic))"
+
+  location: "policy:document"
+  recommendation: >
+    Add an Equal Opportunity Employment statement to all HR policies and
+    job postings:
+
+    Standard EOE statement:
+    "[Company Name] is an equal opportunity employer. We do not discriminate
+    on the basis of race, color, religion, sex, sexual orientation, gender
+    identity, national origin, age, disability, veteran status, or any other
+    characteristic protected by applicable law."
+
+    Best practice additions:
+    - List all protected characteristics under your jurisdiction's law
+    - Include your accommodation process: "We provide reasonable accommodations
+      for qualified individuals with disabilities upon request"
+    - Reference your grievance procedure for discrimination complaints
+    - In job postings: include a brief EOE statement at the bottom
+    - Post prominently in the workplace (required in many jurisdictions)

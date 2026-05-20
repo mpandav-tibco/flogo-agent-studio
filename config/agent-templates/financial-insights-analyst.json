@@ -11,14 +11,16 @@
     "maxTokens": 3000,
     "topK": 8,
     "tools": [
-        "ragQuery"
+        "ragQuery",
+        "ruleAnalysis"
     ],
     "chunkStrategy": "paragraph",
     "tags": [
         "finance",
         "reporting",
         "analysis",
-        "kpi"
+        "kpi",
+        "data-quality"
     ],
     "version": "1.0.0",
     "active": false

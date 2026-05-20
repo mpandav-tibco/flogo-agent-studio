@@ -1,0 +1,60 @@
+rule:
+  id: API-007
+  enabled: true
+  severity: WARNING
+  category: design
+  title: List Endpoint Missing Pagination Parameters
+  description: >
+    A GET endpoint that returns a list does not define pagination parameters
+    (page, limit, offset, cursor, next_cursor). Without pagination, list
+    endpoints return unbounded result sets — a single request can return
+    millions of records, causing timeouts, OOM errors, and poor performance
+    for both client and server.
+  tags: [api, pagination, design, performance, openapi]
+
+  applies_to: [.yaml, .yml, .json]
+  parser: yaml
+
+  scope: $.paths[*].get
+
+  when:
+    type: regex_match
+    path: summary
+    pattern: "(?i)(list|get all|fetch all|search|query)"
+
+  match:
+    type: all_missing
+    patterns:
+      - "page"
+      - "limit"
+      - "offset"
+      - "cursor"
+      - "pageSize"
+      - "page_size"
+      - "per_page"
+
+  location: "api:{{.Parent.name}}.get"
+  recommendation: >
+    Add pagination parameters to list endpoints. Choose one strategy:
+
+    Offset-based (simple, supports random access):
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1, minimum: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+
+    Cursor-based (scalable for large datasets, consistent under mutations):
+      parameters:
+        - name: cursor
+          in: query
+          schema: { type: string }
+          description: Opaque cursor from previous response's next_cursor field
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+
+    Include total count and next page indicator in responses.
+    Default page size should be 20-50; maximum 100-1000 depending on payload size.

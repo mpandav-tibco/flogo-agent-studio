@@ -1,0 +1,45 @@
+rule:
+  id: DATA-007
+  enabled: true
+  severity: INFO
+  category: governance
+  title: Data Schema Missing Version Field
+  description: >
+    The data structure does not include a schema version field. Without versioning,
+    schema changes are invisible to consumers — a field rename or type change silently
+    breaks downstream systems. This is especially critical for event-driven architectures,
+    data lake ingestion, and long-lived data contracts.
+  tags: [data-quality, schema, versioning, governance, events]
+
+  applies_to: [.json, .jsonl, .avro]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(\"schema_version\"|\"schemaVersion\"|\"_version\"|\"version\"|\"spec_version\")"
+
+  location: "data:{{.Scope.name}}"
+  recommendation: >
+    Add a schema version field to all data contracts:
+
+    {
+      "schema_version": "1.2.0",   # or integer: 2
+      "event_type": "order.created",
+      "timestamp": "2024-01-15T14:30:00Z",
+      "data": { ... }
+    }
+
+    Versioning strategies:
+    - Semantic versioning (1.2.0): major = breaking change, minor = additive, patch = fix
+    - Integer versioning (v1, v2): simpler for consumers, less granular
+    - Schema Registry (Confluent, AWS Glue): centralized schema storage with compatibility checks
+
+    Compatibility rules (never break consumers):
+    - BACKWARD: new schema can read old data (add optional fields, never remove required)
+    - FORWARD: old schema can read new data (only remove optional fields)
+    - FULL: both directions — safest for long-lived schemas
+
+    Use Avro, Protobuf, or JSON Schema with a registry for automatic compatibility enforcement.

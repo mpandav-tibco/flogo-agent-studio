@@ -11,14 +11,16 @@
     "maxTokens": 1500,
     "topK": 6,
     "tools": [
-        "ragQuery"
+        "ragQuery",
+        "ruleAnalysis"
     ],
     "chunkStrategy": "sentence",
     "tags": [
         "hr",
         "policy",
         "employee",
-        "self-service"
+        "self-service",
+        "compliance"
     ],
     "version": "1.0.0",
     "active": false

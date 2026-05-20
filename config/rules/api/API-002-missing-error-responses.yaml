@@ -1,0 +1,47 @@
+rule:
+  id: API-002
+  enabled: true
+  severity: WARNING
+  category: design
+  title: Operation Missing Standard Error Response Definitions
+  description: >
+    An API operation does not define responses for common error status codes
+    (400, 401, 404, 500). Without documented error shapes, clients cannot
+    handle failures gracefully and API consumers must guess the error format.
+    This degrades developer experience and increases support burden.
+  tags: [api, error-handling, openapi, design, developer-experience]
+
+  applies_to: [.yaml, .yml, .json]
+  parser: yaml
+
+  scope: $.paths[*][*].responses
+
+  match:
+    type: all_missing
+    patterns:
+      - "'400'"
+      - "'401'"
+      - "'500'"
+      - default
+
+  location: "api:{{.Parent.name}}"
+  recommendation: >
+    Define standard error responses for each operation. Use a shared schema
+    to keep them consistent:
+
+    components:
+      schemas:
+        Error:
+          type: object
+          required: [code, message]
+          properties:
+            code:    { type: integer }
+            message: { type: string }
+            details: { type: string }
+
+    Then reference in each operation:
+      responses:
+        '400': { description: Bad Request,           $ref: '#/components/responses/BadRequest' }
+        '401': { description: Unauthorized,          $ref: '#/components/responses/Unauthorized' }
+        '404': { description: Not Found,             $ref: '#/components/responses/NotFound' }
+        '500': { description: Internal Server Error, $ref: '#/components/responses/InternalError' }

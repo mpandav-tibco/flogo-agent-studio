@@ -1,0 +1,40 @@
+rule:
+  id: API-005
+  enabled: true
+  severity: INFO
+  category: design
+  title: Operation Missing operationId
+  description: >
+    One or more API operations are missing an operationId. OperationIds are
+    used by code generators (OpenAPI Generator, Speakeasy, Kiota) to name
+    SDK methods, by documentation tools to create anchor links, and by API
+    gateways for routing and analytics. Without them, generated code uses
+    ugly auto-generated names and API analytics lack meaningful labels.
+  tags: [api, openapi, design, sdk, documentation]
+
+  applies_to: [.yaml, .yml, .json]
+  parser: yaml
+
+  scope: $.paths[*][*]
+
+  match:
+    type: missing
+    path: operationId
+
+  location: "api:{{.Parent.name}}.{{.Scope.name}}"
+  recommendation: >
+    Add a unique, descriptive operationId to every operation:
+
+    Convention: {verb}{Resource} in camelCase
+      GET /agents        → listAgents
+      POST /agents       → createAgent
+      GET /agents/{id}   → getAgent
+      PUT /agents/{id}   → updateAgent
+      DELETE /agents/{id}→ deleteAgent
+
+    Rules for good operationIds:
+    - Must be unique across the entire spec
+    - Use camelCase or snake_case consistently
+    - Be descriptive of what the operation does
+    - Avoid generic names like 'operation1' or 'doSomething'
+    - Match the function names you want SDK consumers to use

@@ -1,0 +1,44 @@
+rule:
+  id: DOCKER-001
+  enabled: true
+  severity: ERROR
+  category: security
+  title: Container Running as Root User
+  description: >
+    The Dockerfile does not set a non-root USER. Containers running as root
+    pose a critical security risk — if a container is compromised, the attacker
+    gains root-equivalent access to the host via container escape vulnerabilities.
+    Running as root also violates CIS Docker Benchmark 4.1 and is rejected by
+    many Kubernetes admission controllers (PodSecurity restricted profile).
+  tags: [docker, security, root, container, cis-benchmark]
+
+  applies_to: [Dockerfile, .dockerfile]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)^USER\\s+(?!root|0\\b)[a-zA-Z0-9_-]+"
+
+  location: "dockerfile:{{.Scope.name}}"
+  recommendation: >
+    Add a USER instruction before the ENTRYPOINT/CMD:
+
+    # Create a non-root user
+    RUN groupadd --gid 1001 appgroup && \
+        useradd --uid 1001 --gid appgroup --shell /bin/sh --create-home appuser
+
+    # Switch to non-root user
+    USER appuser
+
+    For distroless images (no shell/useradd):
+    USER nonroot:nonroot
+
+    Fix file permissions before switching user:
+    COPY --chown=appuser:appgroup . /app
+    RUN chown -R appuser:appgroup /app
+
+    In Kubernetes: reinforce with SecurityContext.runAsNonRoot: true
+    and runAsUser: 1001 in the pod spec.

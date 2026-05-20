@@ -1,0 +1,43 @@
+rule:
+  id: DATA-004
+  enabled: true
+  severity: ERROR
+  category: integrity
+  title: Potential Duplicate Record IDs in Dataset
+  description: >
+    The dataset may contain duplicate values in ID or primary key fields.
+    Duplicate IDs violate referential integrity assumptions, cause double-counting
+    in aggregations, and can produce incorrect JOIN results — leading to
+    financial reporting errors, duplicate order processing, or incorrect user records.
+  tags: [data-quality, duplicates, integrity, primary-key, deduplication]
+
+  applies_to: [.json, .csv, .jsonl]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "\"(id|record_id|user_id|order_id|transaction_id|row_id)\"\\s*:\\s*\"?([0-9a-fA-F\\-]{4,})\"?"
+
+  location: "data:{{.Scope.name}}"
+  recommendation: >
+    Identify and resolve duplicate records:
+
+    Detection:
+    SQL:    SELECT id, COUNT(*) FROM table GROUP BY id HAVING COUNT(*) > 1
+    Python: df[df.duplicated('id', keep=False)]
+    Spark:  df.groupBy('id').count().filter('count > 1')
+
+    Resolution strategies:
+    (1) Keep latest: ORDER BY updated_at DESC, take first per ID
+    (2) Keep most complete: score records by non-null field count, keep highest
+    (3) Merge fields: combine non-null values from duplicates into one canonical record
+    (4) Flag for manual review: if records genuinely conflict, surface to data steward
+
+    Prevention:
+    - Add UNIQUE constraint on ID columns at database level
+    - Validate uniqueness at ingestion before committing records
+    - Use idempotent upsert patterns (INSERT ... ON CONFLICT DO NOTHING/UPDATE)
+    - Implement deduplication keys in streaming pipelines (Kafka dedup window)

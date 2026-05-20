@@ -1,0 +1,30 @@
+rule:
+  id: DOCKER-P001
+  enabled: true
+  severity: GOOD
+  category: best-practices
+  title: Multi-Stage Build Detected
+  description: >
+    The Dockerfile uses multi-stage builds. This separates build-time
+    dependencies from the runtime image, producing smaller, more secure
+    images with a reduced attack surface.
+  tags: [docker, multi-stage, best-practices, security]
+
+  applies_to: [Dockerfile, .dockerfile]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)^FROM.+AS\\s+\\w+"
+
+  location: "dockerfile:FROM"
+  recommendation: >
+    Multi-stage build detected. Verify the final stage is minimal:
+    (1) Final FROM should use a minimal base (distroless, alpine, slim)
+    (2) Only the runtime binary and required libraries are COPY'd from builder stage
+    (3) No build tools, compilers, or test frameworks in the final image
+    (4) Final stage sets a non-root USER before ENTRYPOINT
+    Run 'docker history myimage' to verify layer sizes are reasonable.

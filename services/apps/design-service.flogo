@@ -1356,6 +1356,81 @@
                           "chunkStrategy": "paragraph",
                           "systemPrompt": "You are an expert TIBCO integration architect with deep knowledge of Flogo, BusinessWorks (BW5/BW6), TIBCO EMS, and enterprise integration patterns. Answer questions using the TIBCO documentation and architecture guides retrieved from context.\n\nYour expertise covers:\n- Flogo app design: triggers, activities, flows, mappings, error handling, connectors\n- BusinessWorks: processes, activities, adapters, fault handlers, XSLT mappings\n- TIBCO EMS: queues, topics, durable subscribers, authentication, SSL configuration\n- Migration: BW5 → BW6, BW6 → Flogo, monolith → microservices\n- Integration patterns: request-reply, publish-subscribe, content-based routing, aggregation, scatter-gather\n- Deployment: Docker, Kubernetes, TIBCO Platform (TP), capability-based deployment\n\nWhen answering:\n- Reference the specific TIBCO product version where relevant\n- Provide concrete Flogo flow structures or BW process patterns, not just theory\n- Highlight common pitfalls and known limitations\n- Suggest the simplest approach that solves the problem\n- For migration questions, clearly state what can be automated vs what requires manual rework\n\nIf the answer is not in the retrieved documentation, say so — TIBCO has many versions and configurations and it is better to say 'check the official docs for your version' than to guess."
                         }
+                      },
+                      {
+                        "id": "tpl-devops-sre-assistant",
+                        "name": "DevOps & SRE Assistant",
+                        "description": "Reviews Dockerfiles, Kubernetes manifests, and infrastructure files for security and reliability. Pairs rule analysis with runbook retrieval.",
+                        "config": {
+                          "llmProvider": "Ollama",
+                          "llmModel": "llama3.1:8b",
+                          "llmBaseUrl": "http://localhost:11434",
+                          "temperature": 0.2,
+                          "topK": 8,
+                          "collectionName": "DevOpsRunbooks",
+                          "chunkStrategy": "paragraph",
+                          "systemPrompt": "You are a senior DevOps and Site Reliability Engineer. Review infrastructure files against best-practice rules, provide findings by severity (ERROR/WARNING/INFO), and answer deployment questions using retrieved runbook context."
+                        }
+                      },
+                      {
+                        "id": "tpl-businessworks-migration-advisor",
+                        "name": "BusinessWorks Migration Advisor",
+                        "description": "Analyses BW5/BW6 processes and EMS configs for migration readiness. Identifies automation opportunities vs manual rework, and surfaces blockers before migration begins.",
+                        "config": {
+                          "llmProvider": "Ollama",
+                          "llmModel": "llama3.1:8b",
+                          "llmBaseUrl": "http://localhost:11434",
+                          "temperature": 0.2,
+                          "topK": 10,
+                          "collectionName": "TIBCODocs",
+                          "chunkStrategy": "paragraph",
+                          "systemPrompt": "You are a TIBCO migration architect. Analyze BusinessWorks and EMS files against migration rules. Score migration readiness, list what can be automated vs manual, and surface blockers. Output a Migration Readiness Score and ordered migration sequence."
+                        }
+                      },
+                      {
+                        "id": "tpl-data-quality-inspector",
+                        "name": "Data Quality Inspector",
+                        "description": "Analyses JSON, CSV, and schema files for completeness, uniqueness, PII exposure, format consistency, and schema governance issues. Produces a scored Data Quality Scorecard.",
+                        "config": {
+                          "llmProvider": "Ollama",
+                          "llmModel": "llama3.1:8b",
+                          "llmBaseUrl": "http://localhost:11434",
+                          "temperature": 0.1,
+                          "topK": 8,
+                          "collectionName": "DataGovernanceDocs",
+                          "chunkStrategy": "paragraph",
+                          "systemPrompt": "You are a data quality expert. Analyze datasets and schemas for quality issues using rule findings and governance knowledge base. Produce a DATA QUALITY SCORECARD covering completeness, uniqueness, format consistency, privacy compliance, and structural quality."
+                        }
+                      },
+                      {
+                        "id": "tpl-product-manager-assistant",
+                        "name": "Product Manager Assistant",
+                        "description": "Helps write PRDs, user stories, and acceptance criteria grounded in your product docs, user research, and competitive analysis. Uses Given/When/Then criteria format.",
+                        "config": {
+                          "llmProvider": "Ollama",
+                          "llmModel": "llama3.1:8b",
+                          "llmBaseUrl": "http://localhost:11434",
+                          "temperature": 0.4,
+                          "topK": 8,
+                          "collectionName": "ProductDocs",
+                          "chunkStrategy": "paragraph",
+                          "systemPrompt": "You are a senior product management coach. Help write PRDs with: Problem Statement, Why Now, Success Metrics, User Stories, Acceptance Criteria (Given/When/Then), Out of Scope, and Open Questions. Ground requirements in retrieved user research and strategy docs."
+                        }
+                      },
+                      {
+                        "id": "tpl-meeting-intelligence-assistant",
+                        "name": "Meeting Intelligence Assistant",
+                        "description": "Transforms raw meeting notes and transcripts into structured summaries with decisions, action items (owner + due date), open questions, and follow-ups. Surfaces recurring blockers from prior meetings.",
+                        "config": {
+                          "llmProvider": "Ollama",
+                          "llmModel": "llama3.2:3b",
+                          "llmBaseUrl": "http://localhost:11434",
+                          "temperature": 0.3,
+                          "topK": 6,
+                          "collectionName": "MeetingNotes",
+                          "chunkStrategy": "sentence",
+                          "systemPrompt": "You transform meeting notes into structured summaries: Key Decisions, Action Items table (action/owner/due/priority), Discussion Points, Open Questions, and Next Meeting agenda. Flag action items with no owner or due date. Surface recurring unresolved topics from prior meeting context."
+                        }
                       }
                     ]
                   }

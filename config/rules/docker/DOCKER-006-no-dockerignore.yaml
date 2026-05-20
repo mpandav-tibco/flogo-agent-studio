@@ -1,0 +1,56 @@
+rule:
+  id: DOCKER-006
+  enabled: true
+  severity: WARNING
+  category: security
+  title: No .dockerignore File Referenced or COPY . Pattern Used
+  description: >
+    The Dockerfile uses 'COPY . .' or 'ADD . .' without evidence of a
+    .dockerignore file. Without .dockerignore, the entire build context
+    (including .git, .env, node_modules, credentials, and local configs)
+    is sent to the Docker daemon and potentially included in the image.
+    This leaks sensitive data and produces bloated, insecure images.
+  tags: [docker, security, dockerignore, secrets, best-practices]
+
+  applies_to: [Dockerfile, .dockerfile]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "^(COPY|ADD)\\s+\\.\\s+"
+
+  location: "dockerfile:COPY"
+  recommendation: >
+    Create a .dockerignore file in the same directory as the Dockerfile:
+
+    # .dockerignore
+    .git
+    .gitignore
+    .env
+    .env.*
+    *.env
+    node_modules
+    __pycache__
+    *.pyc
+    .pytest_cache
+    .coverage
+    dist
+    build
+    *.log
+    *.tmp
+    .DS_Store
+    Dockerfile*
+    docker-compose*.yml
+    README.md
+    docs/
+    tests/
+    .github/
+    .vscode/
+
+    .dockerignore uses the same syntax as .gitignore.
+    Verify the build context is minimal: docker build --progress=plain .
+    and watch what files are sent (shown in the "sending build context" step).
+    Better still: use multi-stage builds and COPY specific paths, not '.'.

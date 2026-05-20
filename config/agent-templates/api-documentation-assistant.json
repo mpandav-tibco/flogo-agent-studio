@@ -11,14 +11,16 @@
     "maxTokens": 3000,
     "topK": 6,
     "tools": [
-        "ragQuery"
+        "ragQuery",
+        "ruleAnalysis"
     ],
     "chunkStrategy": "paragraph",
     "tags": [
         "developer",
         "api",
         "documentation",
-        "developer-experience"
+        "developer-experience",
+        "openapi"
     ],
     "version": "1.0.0",
     "active": false
