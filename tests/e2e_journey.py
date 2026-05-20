@@ -891,21 +891,20 @@ print(f"""
   +-----------------------------+------+----------------------------------------------------+
   | Service                     | Port | Role in this journey                               |
   +-----------------------------+------+----------------------------------------------------+
-  | config-service              | 7004 | List agents, fetch default agent config            |
   | ingestion-service           | 7002 | Ingest text/url/github/confluence into Weaviate    |
-  | rule-engine-service         | 7000 | Run quality rules against flogo app                |
+  | rule-engine-service         | 7097 | Run quality rules against flogo app                |
   | agent-chat-service          | 7001 | RAG query: embed->search Weaviate->answer          |
   | feedback-service            | 7003 | Write/read user ratings and comments (JSONL)       |
   | agent-builder-service       | 7010 | LLM generate + improve agent config (llama3.2:3b)  |
   | sse-stream-service          | 7005 | Broadcast SSE event + RAG+LLM streaming pipeline   |
-  | mcp-server                  | 3333 | MCP gateway - all 6 tools via JSON-RPC             |
+  | mcp-server                  | 7333 | MCP gateway - all 6 tools via JSON-RPC             |
   | design-service              | 7020 | Create/read/update/delete agents (PostgreSQL)      |
   | deploy-service              | 7030 | Activate/deactivate/export k8s+docker-compose      |
   +-----------------------------+------+----------------------------------------------------+
 
   MCP TOOLS EXERCISED:
-    list_agents     -> config-service    GET  /api/agents
-    get_agent       -> config-service    GET  /api/agents/default
+    list_agents     -> design-service    GET  /api/v1/agents
+    get_agent       -> design-service    GET  /api/v1/agents/{id}
     submit_feedback -> feedback-service  POST /api/feedback
     get_feedback    -> feedback-service  GET  /api/feedback/default
     rag_chat        -> agent-chat        POST /api/chat (Weaviate RAG)
