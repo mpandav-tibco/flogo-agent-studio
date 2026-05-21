@@ -21,7 +21,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger \u00e2\u20ac\u201d agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger â€” agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7010,
         "APISpecUpdate": false,
@@ -59,18 +59,9 @@
             }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": {},
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": {}
           },
           "schemas": {
             "reply": {
@@ -117,18 +108,9 @@
             }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": {},
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": {}
           },
           "schemas": {
             "reply": {
@@ -154,7 +136,7 @@
           "name": "improve_agent"
         },
         {
-          "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
+          "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
           "settings": {
             "Method": "POST",
             "reqType": "application/json",
@@ -175,18 +157,9 @@
             }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": {},
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": {}
           },
           "schemas": {
             "reply": {
@@ -227,22 +200,12 @@
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            },
-            "input": {}
+            }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": {},
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": {}
           },
           "schemas": {
             "reply": {
@@ -377,11 +340,10 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
-                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
-                "Uri": "http://localhost:7004/api/agents",
+                "Uri": "=$property[\"CONFIG_AGENTS_URL\"]",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -487,7 +449,11 @@
             },
             {
               "name": "body",
-              "type": "object"
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"description\":{\"type\":\"string\"},\"register\":{\"type\":\"boolean\"},\"overrides\":{\"type\":\"object\",\"properties\":{}}}"
+              }
             },
             {
               "name": "requestURI",
@@ -597,11 +563,10 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
-                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents/\", $flow.body.agentId)",
+                "Uri": "=$property[\"AGENT_BY_ID_BASE_URL\"]",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -612,7 +577,12 @@
                 "headers": {
                   "mapping": {
                     "Accept": "application/json",
-                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
+                  }
+                },
+                "pathParams": {
+                  "mapping": {
+                    "agentId": "=$flow.body.agentId"
                   }
                 }
               },
@@ -662,11 +632,10 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
-                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"FEEDBACK_SERVICE_URL\"], \"/api/feedback/\", $flow.body.agentId)",
+                "Uri": "=$property[\"FEEDBACK_BY_AGENT_URL\"]",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -677,7 +646,12 @@
                 "headers": {
                   "mapping": {
                     "Accept": "application/json",
-                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
+                  }
+                },
+                "pathParams": {
+                  "mapping": {
+                    "agentId": "=$flow.body.agentId"
                   }
                 }
               },
@@ -776,7 +750,11 @@
             },
             {
               "name": "body",
-              "type": "object"
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"agentId\":{\"type\":\"string\"},\"feedback\":{\"type\":\"string\"}}"
+              }
             },
             {
               "name": "requestURI",
@@ -793,8 +771,8 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
@@ -809,7 +787,7 @@
       "id": "flow:validate_agent",
       "data": {
         "name": "validate_agent",
-        "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
+        "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
         "links": [
           {
             "id": 1,
@@ -912,7 +890,11 @@
             },
             {
               "name": "body",
-              "type": "object"
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"config\":{\"type\":\"object\",\"properties\":{}}}"
+              }
             },
             {
               "name": "requestURI",
@@ -929,8 +911,8 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
@@ -993,7 +975,7 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
@@ -1017,7 +999,7 @@
     {
       "name": "AgenticAI.LLM_Provider.API_Key",
       "type": "string",
-      "value": "SECRET:CcbRB65ULaXIDYHi2t31EjOIlV/nOEFrpOZEs3Ex3sYkC7F2FUQYitvRlRHv5RhmTCq6mvGd1Di6KQpnoP8TNIv3lVGTkLTXKA=="
+      "value": "SECRET:v3orjAH+Dih2LEBM9Njh9KMzTTkcSe7IhL55geuQsbb/zmW3spjfihjJJnu31+Fu2+O5fC+GLwbg/maF/wVt8v5EHuZDPxiqqQ=="
     },
     {
       "name": "AgenticAI.LLM_Provider.LLM_Base_URL",
@@ -1042,7 +1024,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:OIOlTWMAJhjLY6Wsvaivkfe1dXqEQ5v1"
+      "value": "SECRET:zbEUrGvx8aJesut63Bf+MSjMsLlBdbTl"
     },
     {
       "name": "API_AUTH_HEADER",
@@ -1058,6 +1040,21 @@
       "name": "FEEDBACK_SERVICE_URL",
       "type": "string",
       "value": "http://localhost:7003"
+    },
+    {
+      "name": "CONFIG_AGENTS_URL",
+      "type": "string",
+      "value": "http://localhost:7020/api/v1/agents"
+    },
+    {
+      "name": "AGENT_BY_ID_BASE_URL",
+      "type": "string",
+      "value": "http://localhost:7020/api/v1/agents/{agentId}"
+    },
+    {
+      "name": "FEEDBACK_BY_AGENT_URL",
+      "type": "string",
+      "value": "http://localhost:7020/api/feedback/{agentId}"
     }
   ],
   "connections": {
@@ -1076,7 +1073,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLWFpLWFnZW50L3NyYy9hcHAvQWdlbnRpY0FJIiwiaWQiOiJBZ2VudGljQUkiLCJ2ZXJzaW9uIjoiMC45LjAiLCJ0YWciOiIwLjkuMC1iMDMiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIEFnZW50aWMgQUkgKFRlY2ggUHJldmlldykiLCJzM2xvY2F0aW9uIjoiVGliY28vQWdlbnRpY0FJIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1haS1hZ2VudC9zcmMvYXBwL0FnZW50aWNBSSIsImlkIjoiQWdlbnRpY0FJIiwidmVyc2lvbiI6IjAuOS4xIiwidGFnIjoiMC45LjEtYjAyIiwibmFtZSI6IkFnZW50aWMgQUkgKFRlY2ggUHJldmlldykiLCJzM2xvY2F0aW9uIjoiVGliY28vQWdlbnRpY0FJIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
   "metadata": {
     "endpoints": [
       {
@@ -1092,7 +1089,7 @@
           "info": {
             "title": "agent-builder-service",
             "version": "1.0.0",
-            "description": "REST trigger \u00e2\u20ac\u201d agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger â€” agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/agent-builder/generate": {
@@ -1197,7 +1194,7 @@
                     }
                   }
                 },
-                "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
+                "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
                 "consumes": [
                   "application/json"
                 ]
