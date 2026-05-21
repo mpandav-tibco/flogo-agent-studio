@@ -20,7 +20,7 @@
     {
       "ref": "#rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger — feedback service on port 7003 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger \u2014 feedback service on port 7003 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7003,
         "APISpecUpdate": false,
@@ -281,7 +281,7 @@
           {
             "id": "AppendFeedbackLog",
             "name": "AppendFeedbackLog",
-            "description": "Write File with overwrite=false → append mode. Each call appends the body to FEEDBACK_LOG_PATH.",
+            "description": "Write File with overwrite=false \u2192 append mode. Each call appends the body to FEEDBACK_LOG_PATH.",
             "activity": {
               "ref": "#write",
               "input": {
@@ -401,8 +401,8 @@
               "type": "integer"
             },
             {
-              "name": "message",
-              "type": "string"
+              "name": "data",
+              "type": "object"
             }
           ],
           "fe_metadata": {
@@ -763,7 +763,7 @@
           "info": {
             "title": "feedback-service",
             "version": "1.0.0",
-            "description": "REST trigger — feedback service on port 7003 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger \u2014 feedback service on port 7003 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/feedback": {

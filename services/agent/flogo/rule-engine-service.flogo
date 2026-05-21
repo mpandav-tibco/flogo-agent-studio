@@ -19,7 +19,7 @@
     {
       "ref": "#rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger — rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger \u2014 rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7097,
         "APISpecUpdate": false,
@@ -271,10 +271,6 @@
               "type": "integer"
             },
             {
-              "name": "message",
-              "type": "string"
-            },
-            {
               "name": "data",
               "type": "object"
             }
@@ -387,7 +383,7 @@
           "info": {
             "title": "rule-engine-service",
             "version": "1.0.0",
-            "description": "REST trigger — rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger \u2014 rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/analyze": {

@@ -21,7 +21,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger â€” agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger \u00e2\u20ac\u201d agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7010,
         "APISpecUpdate": false,
@@ -154,7 +154,7 @@
           "name": "improve_agent"
         },
         {
-          "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
+          "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
           "settings": {
             "Method": "POST",
             "reqType": "application/json",
@@ -793,10 +793,6 @@
               "type": "integer"
             },
             {
-              "name": "message",
-              "type": "string"
-            },
-            {
               "name": "data",
               "type": "object"
             }
@@ -813,7 +809,7 @@
       "id": "flow:validate_agent",
       "data": {
         "name": "validate_agent",
-        "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
+        "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
         "links": [
           {
             "id": 1,
@@ -931,10 +927,6 @@
             {
               "name": "code",
               "type": "integer"
-            },
-            {
-              "name": "message",
-              "type": "string"
             },
             {
               "name": "data",
@@ -1100,7 +1092,7 @@
           "info": {
             "title": "agent-builder-service",
             "version": "1.0.0",
-            "description": "REST trigger â€” agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger \u00e2\u20ac\u201d agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/agent-builder/generate": {
@@ -1205,7 +1197,7 @@
                     }
                   }
                 },
-                "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
+                "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
                 "consumes": [
                   "application/json"
                 ]
