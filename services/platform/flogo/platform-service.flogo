@@ -751,6 +751,13 @@
             "to": "Return",
             "type": "label",
             "label": "InsertAgent to Return"
+          },
+          {
+            "id": 4,
+            "from": "InsertAgent",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "InsertAgent error"
           }
         ],
         "tasks": [
@@ -819,9 +826,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJJbnNlcnRBZ2VudCI6eyJ4Ijo0NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJJbnNlcnRBZ2VudCI6eyJ4Ijo0NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9LCJFcnJvclJldHVybiI6eyJ4IjozNTAsInkiOjIwMH19",
         "metadata": {
           "input": [
             {
@@ -889,6 +912,13 @@
             "to": "Return",
             "type": "label",
             "label": "SelectAgent to Return"
+          },
+          {
+            "id": 4,
+            "from": "SelectAgent",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "SelectAgent error"
           }
         ],
         "tasks": [
@@ -955,9 +985,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjIwMCwieSI6NTB9LCJTZWxlY3RBZ2VudCI6eyJ4IjozNTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjUwMCwieSI6NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjIwMCwieSI6NTB9LCJTZWxlY3RBZ2VudCI6eyJ4IjozNTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjUwMCwieSI6NTB9LCJFcnJvclJldHVybiI6eyJ4IjoyNzUsInkiOjIwMH19",
         "metadata": {
           "input": [
             {
@@ -1009,6 +1055,13 @@
             "to": "Return",
             "type": "label",
             "label": "SelectAgents to Return"
+          },
+          {
+            "id": 4,
+            "from": "SelectAgents",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "SelectAgents error"
           }
         ],
         "tasks": [
@@ -1068,9 +1121,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjIwMCwieSI6NTB9LCJTZWxlY3RBZ2VudHMiOnsieCI6MzUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo1MDAsInkiOjUwfX0=",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjIwMCwieSI6NTB9LCJTZWxlY3RBZ2VudHMiOnsieCI6MzUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo1MDAsInkiOjUwfSwiRXJyb3JSZXR1cm4iOnsieCI6Mjc1LCJ5IjoyMDB9fQ==",
         "metadata": {
           "input": [
             {
@@ -1122,6 +1191,13 @@
             "to": "Return",
             "type": "label",
             "label": "UpdateAgent to Return"
+          },
+          {
+            "id": 4,
+            "from": "UpdateAgent",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "UpdateAgent error"
           }
         ],
         "tasks": [
@@ -1192,9 +1268,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjIwMCwieSI6NTB9LCJVcGRhdGVBZ2VudCI6eyJ4IjozNTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjUwMCwieSI6NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjIwMCwieSI6NTB9LCJVcGRhdGVBZ2VudCI6eyJ4IjozNTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjUwMCwieSI6NTB9LCJFcnJvclJldHVybiI6eyJ4IjoyNzUsInkiOjIwMH19",
         "metadata": {
           "input": [
             {
@@ -1250,6 +1342,13 @@
             "to": "Return",
             "type": "label",
             "label": "ArchiveAgent to Return"
+          },
+          {
+            "id": 4,
+            "from": "ArchiveAgent",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "ArchiveAgent error"
           }
         ],
         "tasks": [
@@ -1321,9 +1420,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjIwMCwieSI6NTB9LCJBcmNoaXZlQWdlbnQiOnsieCI6MzUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo1MDAsInkiOjUwfX0=",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjIwMCwieSI6NTB9LCJBcmNoaXZlQWdlbnQiOnsieCI6MzUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo1MDAsInkiOjUwfSwiRXJyb3JSZXR1cm4iOnsieCI6Mjc1LCJ5IjoyMDB9fQ==",
         "metadata": {
           "input": [
             {
@@ -1375,6 +1490,13 @@
             "to": "Return",
             "type": "label",
             "label": "DeleteAgent to Return"
+          },
+          {
+            "id": 4,
+            "from": "DeleteAgent",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "DeleteAgent error"
           }
         ],
         "tasks": [
@@ -1446,9 +1568,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjIwMCwieSI6NTB9LCJEZWxldGVBZ2VudCI6eyJ4IjozNTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjUwMCwieSI6NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjIwMCwieSI6NTB9LCJEZWxldGVBZ2VudCI6eyJ4IjozNTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjUwMCwieSI6NTB9LCJFcnJvclJldHVybiI6eyJ4IjoyNzUsInkiOjIwMH19",
         "metadata": {
           "input": [
             {
@@ -1987,6 +2125,13 @@
             "to": "Return",
             "type": "label",
             "label": "SelectAgentConfig to Return"
+          },
+          {
+            "id": 4,
+            "from": "SelectAgentConfig",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "SelectAgentConfig error"
           }
         ],
         "tasks": [
@@ -2074,9 +2219,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjAwLCJ5Ijo1MH0sIlNlbGVjdEFnZW50Q29uZmlnIjp7IngiOjM1MCwieSI6MTUwfSwiUmV0dXJuIjp7IngiOjUwMCwieSI6MjUwfX0=",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjAwLCJ5Ijo1MH0sIlNlbGVjdEFnZW50Q29uZmlnIjp7IngiOjM1MCwieSI6MTUwfSwiUmV0dXJuIjp7IngiOjUwMCwieSI6MjUwfSwiRXJyb3JSZXR1cm4iOnsieCI6Mjc1LCJ5IjoyMDB9fQ==",
         "metadata": {
           "input": [
             {
@@ -2135,6 +2296,20 @@
             "to": "Return",
             "type": "label",
             "label": "AppendAgentFeedbackLog to Return"
+          },
+          {
+            "id": 5,
+            "from": "AppendFeedbackLog",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "AppendFeedbackLog error"
+          },
+          {
+            "id": 6,
+            "from": "AppendAgentFeedbackLog",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "AppendAgentFeedbackLog error"
           }
         ],
         "tasks": [
@@ -2247,9 +2422,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiQXBwZW5kRmVlZGJhY2tMb2ciOnsieCI6NDUwLCJ5IjoyNTB9LCJBcHBlbmRBZ2VudEZlZWRiYWNrTG9nIjp7IngiOjY1MCwieSI6MzUwfSwiUmV0dXJuIjp7IngiOjg1MCwieSI6NDUwfX0=",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiQXBwZW5kRmVlZGJhY2tMb2ciOnsieCI6NDUwLCJ5IjoyNTB9LCJBcHBlbmRBZ2VudEZlZWRiYWNrTG9nIjp7IngiOjY1MCwieSI6MzUwfSwiUmV0dXJuIjp7IngiOjg1MCwieSI6NDUwfSwiRXJyb3JSZXR1cm4iOnsieCI6NDUwLCJ5IjoyMDB9fQ==",
         "metadata": {
           "input": [
             {
@@ -2317,6 +2508,13 @@
             "to": "Return",
             "type": "label",
             "label": "ReadFeedbackLog to Return"
+          },
+          {
+            "id": 4,
+            "from": "ReadFeedbackLog",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "ReadFeedbackLog error"
           }
         ],
         "tasks": [
@@ -2389,9 +2587,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSZWFkRmVlZGJhY2tMb2ciOnsieCI6NDUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo2NTAsInkiOjUwfX0=",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSZWFkRmVlZGJhY2tMb2ciOnsieCI6NDUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo2NTAsInkiOjUwfSwiRXJyb3JSZXR1cm4iOnsieCI6MzUwLCJ5IjoyMDB9fQ==",
         "metadata": {
           "input": [],
           "output": [
@@ -2437,6 +2651,13 @@
             "to": "Return",
             "type": "label",
             "label": "ReadAgentFeedback to Return"
+          },
+          {
+            "id": 4,
+            "from": "ReadAgentFeedback",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "ReadAgentFeedback error"
           }
         ],
         "tasks": [
@@ -2509,9 +2730,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSZWFkQWdlbnRGZWVkYmFjayI6eyJ4Ijo0NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSZWFkQWdlbnRGZWVkYmFjayI6eyJ4Ijo0NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9LCJFcnJvclJldHVybiI6eyJ4IjozNTAsInkiOjIwMH19",
         "metadata": {
           "input": [
             {

@@ -25,7 +25,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger \u2014 agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7001,
         "APISpecUpdate": false,
@@ -296,7 +296,7 @@
           "name": "health_check"
         },
         {
-          "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
+          "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately \u2014 SSE clients receive tokens in real time.",
           "settings": {
             "APISpecPath": "",
             "Method": "POST",
@@ -400,7 +400,7 @@
     {
       "ref": "#trigger",
       "name": "sse",
-      "description": "SSE event bus — clients connect to /events on port 7099 and receive streamed token events.",
+      "description": "SSE event bus \u2014 clients connect to /events on port 7099 and receive streamed token events.",
       "settings": {
         "port": 7099,
         "path": "/events",
@@ -460,6 +460,13 @@
             "to": "Return",
             "type": "label",
             "label": "RAGQuery to Return"
+          },
+          {
+            "id": 4,
+            "from": "RAGQuery",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "RAGQuery error"
           }
         ],
         "tasks": [
@@ -534,9 +541,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUkFHUXVlcnkiOnsieCI6NDUwLCJ5IjoyNTB9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUkFHUXVlcnkiOnsieCI6NDUwLCJ5IjoyNTB9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9LCJFcnJvclJldHVybiI6eyJ4IjozNTAsInkiOjIwMH19",
         "metadata": {
           "input": [
             {
@@ -592,6 +615,13 @@
             "to": "Return",
             "type": "label",
             "label": "RAGQuery to Return"
+          },
+          {
+            "id": 4,
+            "from": "RAGQuery",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "RAGQuery error"
           }
         ],
         "tasks": [
@@ -664,9 +694,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdRdWVyeSI6eyJ4Ijo0NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdRdWVyeSI6eyJ4Ijo0NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6NTB9LCJFcnJvclJldHVybiI6eyJ4IjozNTAsInkiOjIwMH19",
         "metadata": {
           "input": [
             {
@@ -729,6 +775,20 @@
             "to": "Return",
             "type": "label",
             "label": "AgentChat to Return"
+          },
+          {
+            "id": 5,
+            "from": "RAGRetrieve",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "RAGRetrieve error"
+          },
+          {
+            "id": 6,
+            "from": "AgentChat",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "AgentChat error"
           }
         ],
         "tasks": [
@@ -828,9 +888,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdSZXRyaWV2ZSI6eyJ4Ijo0NTAsInkiOjUwfSwiQWdlbnRDaGF0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdSZXRyaWV2ZSI6eyJ4Ijo0NTAsInkiOjUwfSwiQWdlbnRDaGF0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH0sIkVycm9yUmV0dXJuIjp7IngiOjQ1MCwieSI6MjAwfX0=",
         "metadata": {
           "input": [
             {
@@ -929,7 +1005,7 @@
       "id": "flow:stream_chat",
       "data": {
         "name": "stream_chat",
-        "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
+        "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately \u2014 SSE clients receive tokens in real time.",
         "links": [
           {
             "id": 1,
@@ -1267,6 +1343,13 @@
             "to": "Return",
             "type": "label",
             "label": "BroadcastEvent to Return"
+          },
+          {
+            "id": 4,
+            "from": "BroadcastEvent",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "BroadcastEvent error"
           }
         ],
         "tasks": [
@@ -1329,9 +1412,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJCcm9hZGNhc3RFdmVudCI6eyJ4Ijo0NTAsInkiOjI1MH0sIlJldHVybiI6eyJ4Ijo2NTAsInkiOjM1MH19",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJCcm9hZGNhc3RFdmVudCI6eyJ4Ijo0NTAsInkiOjI1MH0sIlJldHVybiI6eyJ4Ijo2NTAsInkiOjM1MH0sIkVycm9yUmV0dXJuIjp7IngiOjM1MCwieSI6MjAwfX0=",
         "metadata": {
           "input": [
             {
@@ -1689,7 +1788,7 @@
           "info": {
             "title": "agent-chat-service-AgentChatRESTTrigger",
             "version": "1.0.0",
-            "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger \u2014 agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/chat": {
@@ -1950,7 +2049,7 @@
                     }
                   }
                 },
-                "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
+                "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately \u2014 SSE clients receive tokens in real time.",
                 "consumes": [
                   "application/json"
                 ]

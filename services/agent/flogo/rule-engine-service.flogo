@@ -175,6 +175,13 @@
             "to": "Return",
             "type": "label",
             "label": "RuleEngine1 to Return"
+          },
+          {
+            "id": 4,
+            "from": "RuleEngine1",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "RuleEngine1 error"
           }
         ],
         "tasks": [
@@ -243,9 +250,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUnVsZUVuZ2luZTEiOnsieCI6Mzg4LCJ5IjoyNzV9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUnVsZUVuZ2luZTEiOnsieCI6Mzg4LCJ5IjoyNzV9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9LCJFcnJvclJldHVybiI6eyJ4IjozNTAsInkiOjIwMH19",
         "metadata": {
           "input": [
             {

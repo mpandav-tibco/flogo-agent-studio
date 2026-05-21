@@ -19,12 +19,15 @@ Events MUST be filtered by sessionId to avoid receiving another session's answer
 """
 
 import asyncio
+import logging
 import os
 import uuid
 import json
 import urllib.parse
 import httpx
 import chainlit as cl
+
+log = logging.getLogger("chainlit-ui")
 
 # ── Service endpoints ──────────────────────────────────────────────────────────
 
@@ -175,7 +178,9 @@ async def stream_chat_sse(
                                 return
                 await asyncio.wait_for(_consume(), timeout=REQUEST_TIMEOUT)
     except asyncio.TimeoutError:
-        pass  # Return whatever was collected before timeout
+        log.warning("stream_chat_sse: SSE stream timed out after %ss (session=%s)", REQUEST_TIMEOUT, session_id)
+        if not answer:
+            answer = "⚠️ The request timed out before a response was received. Please try again."
 
     # Format sources into a readable string (mirrors agent-chat formattedContext)
     formatted_ctx = ""

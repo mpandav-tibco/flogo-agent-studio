@@ -22,7 +22,7 @@
     {
       "ref": "#mcpserver",
       "name": "flogo-mcp-mcpsever",
-      "description": "MCP Server — exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:7333/mcp.",
+      "description": "MCP Server \u2014 exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:7333/mcp.",
       "settings": {
         "serverName": "flogo-agent-studio-assist",
         "serverVersion": "1.0.0",
@@ -319,8 +319,8 @@
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}",
-                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}"
+                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}"
               }
             }
           },
@@ -451,6 +451,13 @@
             "to": "Return",
             "type": "label",
             "label": "LogResult to Return"
+          },
+          {
+            "id": 6,
+            "from": "CallRuleEngine",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "CallRuleEngine error"
           }
         ],
         "tasks": [
@@ -617,9 +624,24 @@
                 "useExtLogger": false
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return error on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsUnVsZUVuZ2luZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsUnVsZUVuZ2luZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH0sIkVycm9yUmV0dXJuIjp7IngiOjQ1MCwieSI6MjAwfX0=",
         "metadata": {
           "input": [
             {
@@ -684,6 +706,13 @@
             "to": "Return",
             "type": "label",
             "label": "LogResult to Return"
+          },
+          {
+            "id": 6,
+            "from": "CallChatService",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "CallChatService error"
           }
         ],
         "tasks": [
@@ -844,9 +873,24 @@
                 "useExtLogger": false
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return error on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsQ2hhdFNlcnZpY2UiOnsieCI6NDUwLCJ5Ijo1MH0sIk1hcFJlc3VsdCI6eyJ4Ijo2NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjg1MCwieSI6NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsQ2hhdFNlcnZpY2UiOnsieCI6NDUwLCJ5Ijo1MH0sIk1hcFJlc3VsdCI6eyJ4Ijo2NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjg1MCwieSI6NTB9LCJFcnJvclJldHVybiI6eyJ4Ijo0NTAsInkiOjIwMH19",
         "metadata": {
           "input": [
             {
@@ -907,6 +951,13 @@
             "to": "Return",
             "type": "label",
             "label": "LogResult to Return"
+          },
+          {
+            "id": 6,
+            "from": "CallConfigService",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "CallConfigService error"
           }
         ],
         "tasks": [
@@ -1066,9 +1117,24 @@
                 "useExtLogger": false
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return error on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsQ29uZmlnU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsQ29uZmlnU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH0sIkVycm9yUmV0dXJuIjp7IngiOjQ1MCwieSI6MjAwfX0=",
         "metadata": {
           "input": [],
           "output": [
@@ -1123,6 +1189,13 @@
             "to": "Return",
             "type": "label",
             "label": "LogResult to Return"
+          },
+          {
+            "id": 6,
+            "from": "CallConfigService",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "CallConfigService error"
           }
         ],
         "tasks": [
@@ -1298,9 +1371,24 @@
                 "useExtLogger": false
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return error on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsQ29uZmlnU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsQ29uZmlnU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH0sIkVycm9yUmV0dXJuIjp7IngiOjQ1MCwieSI6MjAwfX0=",
         "metadata": {
           "input": [
             {
@@ -1361,6 +1449,13 @@
             "to": "Return",
             "type": "label",
             "label": "LogResult to Return"
+          },
+          {
+            "id": 6,
+            "from": "CallFeedbackService",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "CallFeedbackService error"
           }
         ],
         "tasks": [
@@ -1521,9 +1616,24 @@
                 "useExtLogger": false
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return error on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsRmVlZGJhY2tTZXJ2aWNlIjp7IngiOjQ1MCwieSI6NTB9LCJNYXBSZXN1bHQiOnsieCI6NjUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo4NTAsInkiOjUwfX0=",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsRmVlZGJhY2tTZXJ2aWNlIjp7IngiOjQ1MCwieSI6NTB9LCJNYXBSZXN1bHQiOnsieCI6NjUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo4NTAsInkiOjUwfSwiRXJyb3JSZXR1cm4iOnsieCI6NDUwLCJ5IjoyMDB9fQ==",
         "metadata": {
           "input": [
             {
@@ -1584,6 +1694,13 @@
             "to": "Return",
             "type": "label",
             "label": "LogResult to Return"
+          },
+          {
+            "id": 6,
+            "from": "CallFeedbackService",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "CallFeedbackService error"
           }
         ],
         "tasks": [
@@ -1743,9 +1860,24 @@
                 "useExtLogger": false
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return error on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsRmVlZGJhY2tTZXJ2aWNlIjp7IngiOjQ1MCwieSI6NTB9LCJNYXBSZXN1bHQiOnsieCI6NjUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo4NTAsInkiOjUwfX0=",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsRmVlZGJhY2tTZXJ2aWNlIjp7IngiOjQ1MCwieSI6NTB9LCJNYXBSZXN1bHQiOnsieCI6NjUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo4NTAsInkiOjUwfSwiRXJyb3JSZXR1cm4iOnsieCI6NDUwLCJ5IjoyMDB9fQ==",
         "metadata": {
           "input": [],
           "output": [
@@ -1800,6 +1932,13 @@
             "to": "Return",
             "type": "label",
             "label": "LogResult to Return"
+          },
+          {
+            "id": 6,
+            "from": "CallService",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "CallService error"
           }
         ],
         "tasks": [
@@ -1974,9 +2113,24 @@
                 "useExtLogger": false
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return error on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH0sIkVycm9yUmV0dXJuIjp7IngiOjQ1MCwieSI6MjAwfX0=",
         "metadata": {
           "input": [
             {
@@ -2037,6 +2191,13 @@
             "to": "Return",
             "type": "label",
             "label": "LogResult to Return"
+          },
+          {
+            "id": 6,
+            "from": "CallService",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "CallService error"
           }
         ],
         "tasks": [
@@ -2212,9 +2373,24 @@
                 "useExtLogger": false
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return error on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH0sIkVycm9yUmV0dXJuIjp7IngiOjQ1MCwieSI6MjAwfX0=",
         "metadata": {
           "input": [
             {
@@ -2275,6 +2451,13 @@
             "to": "Return",
             "type": "label",
             "label": "LogResult to Return"
+          },
+          {
+            "id": 6,
+            "from": "CallService",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "CallService error"
           }
         ],
         "tasks": [
@@ -2434,9 +2617,24 @@
                 "useExtLogger": false
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return error on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH0sIkVycm9yUmV0dXJuIjp7IngiOjQ1MCwieSI6MjAwfX0=",
         "metadata": {
           "input": [],
           "output": [

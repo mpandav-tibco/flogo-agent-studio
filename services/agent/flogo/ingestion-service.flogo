@@ -483,6 +483,20 @@
             "to": "Return",
             "type": "label",
             "label": "IngestDocuments to Return"
+          },
+          {
+            "id": 5,
+            "from": "EnsureCollection",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "EnsureCollection error"
+          },
+          {
+            "id": 6,
+            "from": "IngestDocuments",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "IngestDocuments error"
           }
         ],
         "tasks": [
@@ -568,9 +582,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjQ1MCwieSI6MjUwfSwiSW5nZXN0RG9jdW1lbnRzIjp7IngiOjY1MCwieSI6MzUwfSwiUmV0dXJuIjp7IngiOjg1MCwieSI6NDUwfX0=",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjQ1MCwieSI6MjUwfSwiSW5nZXN0RG9jdW1lbnRzIjp7IngiOjY1MCwieSI6MzUwfSwiUmV0dXJuIjp7IngiOjg1MCwieSI6NDUwfSwiRXJyb3JSZXR1cm4iOnsieCI6NDUwLCJ5IjoyMDB9fQ==",
         "metadata": {
           "input": [
             {
@@ -622,6 +652,13 @@
             "to": "Return",
             "type": "label",
             "label": "EnsureCollection to Return"
+          },
+          {
+            "id": 4,
+            "from": "EnsureCollection",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "EnsureCollection error"
           }
         ],
         "tasks": [
@@ -678,9 +715,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjQ1MCwieSI6MjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6MzUwfX0=",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjQ1MCwieSI6MjUwfSwiUmV0dXJuIjp7IngiOjY1MCwieSI6MzUwfSwiRXJyb3JSZXR1cm4iOnsieCI6MzUwLCJ5IjoyMDB9fQ==",
         "metadata": {
           "input": [
             {
@@ -811,6 +864,27 @@
             "to": "Return",
             "type": "label",
             "label": "IngestContent to Return"
+          },
+          {
+            "id": 6,
+            "from": "FetchURL",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "FetchURL error"
+          },
+          {
+            "id": 7,
+            "from": "EnsureCollection",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "EnsureCollection error"
+          },
+          {
+            "id": 8,
+            "from": "IngestContent",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "IngestContent error"
           }
         ],
         "tasks": [
@@ -979,9 +1053,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJGZXRjaFVSTCI6eyJ4Ijo0NTAsInkiOjI1MH0sIkVuc3VyZUNvbGxlY3Rpb24iOnsieCI6NjUwLCJ5IjozNTB9LCJJbmdlc3RDb250ZW50Ijp7IngiOjg1MCwieSI6NDUwfSwiUmV0dXJuIjp7IngiOjEwNTAsInkiOjU1MH19",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJGZXRjaFVSTCI6eyJ4Ijo0NTAsInkiOjI1MH0sIkVuc3VyZUNvbGxlY3Rpb24iOnsieCI6NjUwLCJ5IjozNTB9LCJJbmdlc3RDb250ZW50Ijp7IngiOjg1MCwieSI6NDUwfSwiUmV0dXJuIjp7IngiOjEwNTAsInkiOjU1MH0sIkVycm9yUmV0dXJuIjp7IngiOjU1MCwieSI6MjAwfX0=",
         "metadata": {
           "input": [
             {
@@ -1047,6 +1137,27 @@
             "to": "Return",
             "type": "label",
             "label": "IngestContent to Return"
+          },
+          {
+            "id": 6,
+            "from": "FetchGitHubContent",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "FetchGitHubContent error"
+          },
+          {
+            "id": 7,
+            "from": "EnsureCollection",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "EnsureCollection error"
+          },
+          {
+            "id": 8,
+            "from": "IngestContent",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "IngestContent error"
           }
         ],
         "tasks": [
@@ -1216,9 +1327,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJGZXRjaEdpdEh1YkNvbnRlbnQiOnsieCI6NDUwLCJ5IjoyNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjY1MCwieSI6MzUwfSwiSW5nZXN0Q29udGVudCI6eyJ4Ijo4NTAsInkiOjQ1MH0sIlJldHVybiI6eyJ4IjoxMDUwLCJ5Ijo1NTB9fQ==",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJGZXRjaEdpdEh1YkNvbnRlbnQiOnsieCI6NDUwLCJ5IjoyNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjY1MCwieSI6MzUwfSwiSW5nZXN0Q29udGVudCI6eyJ4Ijo4NTAsInkiOjQ1MH0sIlJldHVybiI6eyJ4IjoxMDUwLCJ5Ijo1NTB9LCJFcnJvclJldHVybiI6eyJ4Ijo1NTAsInkiOjIwMH19",
         "metadata": {
           "input": [
             {
@@ -1284,6 +1411,27 @@
             "to": "Return",
             "type": "label",
             "label": "IngestContent to Return"
+          },
+          {
+            "id": 6,
+            "from": "FetchConfluencePages",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "FetchConfluencePages error"
+          },
+          {
+            "id": 7,
+            "from": "EnsureCollection",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "EnsureCollection error"
+          },
+          {
+            "id": 8,
+            "from": "IngestContent",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "IngestContent error"
           }
         ],
         "tasks": [
@@ -1449,9 +1597,25 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "error": "Internal server error"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJGZXRjaENvbmZsdWVuY2VQYWdlcyI6eyJ4Ijo0NTAsInkiOjI1MH0sIkVuc3VyZUNvbGxlY3Rpb24iOnsieCI6NjUwLCJ5IjozNTB9LCJJbmdlc3RDb250ZW50Ijp7IngiOjg1MCwieSI6NDUwfSwiUmV0dXJuIjp7IngiOjEwNTAsInkiOjU1MH19",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJGZXRjaENvbmZsdWVuY2VQYWdlcyI6eyJ4Ijo0NTAsInkiOjI1MH0sIkVuc3VyZUNvbGxlY3Rpb24iOnsieCI6NjUwLCJ5IjozNTB9LCJJbmdlc3RDb250ZW50Ijp7IngiOjg1MCwieSI6NDUwfSwiUmV0dXJuIjp7IngiOjEwNTAsInkiOjU1MH0sIkVycm9yUmV0dXJuIjp7IngiOjU1MCwieSI6MjAwfX0=",
         "metadata": {
           "input": [
             {
