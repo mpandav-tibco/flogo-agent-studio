@@ -33,7 +33,7 @@ BUILDER_URL = "http://localhost:7010"          # agent-builder-service
 INGEST_URL  = "http://localhost:7002"          # ingestion-service
 CHAT_URL    = "http://localhost:7001"          # agent-chat-service
 FEEDBACK_URL= "http://localhost:7003"          # feedback-service
-SSE_URL     = "http://localhost:7005"          # sse-stream-service
+SSE_URL     = "http://localhost:7005"          # agent-chat-service (SSE REST trigger, merged)
 RULE_URL    = "http://localhost:7097"          # rule-engine-service (port 7097; 7000 taken by macOS AirPlay)
 MCP_URL     = "http://localhost:7333/mcp"      # mcp-server
 
@@ -877,10 +877,9 @@ md_lines += [
     f"|---------|------|------|------------|",
     f"| design-service | 7020 | Agent registry (PostgreSQL) | Forge CRUD + MCP tools |",
     f"| ingestion-service | 7002 | Knowledge ingestion → Weaviate | Direct POST /api/ingest |",
-    f"| agent-chat-service | 7001 | RAG pipeline (embed→search→answer) | Chainlit chat + MCP rag_chat |",
+    f"| agent-chat-service | 7001 | RAG chat + SSE streaming (merged) | Chainlit chat + MCP rag_chat + SSE |",
     f"| feedback-service | 7003 | Feedback storage (JSONL) | Chainlit thumbs + MCP tools |",
     f"| agent-builder-service | 7010 | LLM config generation + improvement | Forge AI features |",
-    f"| sse-stream-service | 7005 | Async SSE streaming pipeline | Broadcast + stream/chat |",
     f"| rule-engine-service | 7097 | YAML rule quality analysis | Direct POST /api/analyze |",
     f"| mcp-server | 7333 | JSON-RPC gateway (9 tools) | All 9 tools exercised |",
     f"| config-service | 7004 | File-based agent registry (legacy) | Not tested (not in critical path) |",

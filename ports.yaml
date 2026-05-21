@@ -40,9 +40,8 @@ flogo_services:
 
   sse-stream:
     port: 7005
-    description: "SSE streaming service — POST /api/stream/chat (RAG+LLM → SSE events), POST /api/stream/broadcast, GET /events (SSE), GET /api/health"
-    app: "apps/sse-stream-service.flogo"
-    status: active  # Phase 2
+    description: "SSE streaming — merged into agent-chat-service. Port 7005 is now the SSE REST trigger of the merged binary."
+    status: merged  # Merged into agent-chat-service binary (port 7001 chat, 7005 SSE REST, 7099 SSE events)
 
   # 7006-7009 reserved for future Flogo services
 
@@ -88,9 +87,9 @@ agent_runtime_pool:
   ports_per_slot: 10
   base_port: 7200
   slot_layout:
-    chat_service:   "base + 1  (agent-chat-service)"
-    sse_rest:       "base + 2  (sse-stream-service REST)"
-    sse_events:     "base + 3  (sse-stream-service SSE event bus)"
+    chat_service:   "base + 1  (agent-chat-service — RAG chat + SSE streaming, merged)"
+    sse_rest:       "base + 2  (agent-chat-service SSE REST trigger, merged)"
+    sse_events:     "base + 3  (agent-chat-service SSE event bus trigger, merged)"
     ingestion:      "base + 4  (ingestion-service)"
     chainlit_ui:    "base + 5  (chainlit, AGENT_ID baked in)"
   examples:

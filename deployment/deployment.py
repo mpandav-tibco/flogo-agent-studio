@@ -3,12 +3,12 @@
 AgentForge Runtime Manager  (port 7050)
 ========================================
 Manages per-agent process groups.  Each *deployed* (status=active) agent gets
-its own isolated set of four processes:
+its own isolated set of three processes:
 
   ┌─────────────────────────────────────────────────────────────────────┐
-  │  agent-chat-service  :base+1  — RAG chat, COLLECTION_NAME baked in │
-  │  sse-stream-service  :base+2  — SSE REST gateway                   │
-  │  sse-event-bus       :base+3  — SSE broadcast bus                  │
+  │  agent-chat-service  :base+1  — RAG chat + SSE streaming (merged)  │
+  │                      :base+2  — SSE REST gateway (same process)    │
+  │                      :base+3  — SSE event bus   (same process)     │
   │  ingestion-service   :base+4  — doc ingestion for this agent only  │
   │  chainlit-ui         :base+5  — dedicated chat UI (AGENT_ID set)   │
   └─────────────────────────────────────────────────────────────────────┘
@@ -404,7 +404,7 @@ async def _start_runtime(agent: dict) -> dict:
     def _open_log(name: str):
         return open(LOGS_AGENT_DIR / f"{short}-{name}.log", "a")
 
-    # ── agent-chat-service ─────────────────────────────────────────────────────
+    # ── agent-chat-service (includes SSE streaming — merged) ──────────────────
     chat_src    = SERVICES_AGENT_APPS / "agent-chat-service.flogo"
     chat_flogo  = rt_dir / "agent-chat-service.flogo"
     chat_env    = rt_dir / "agent-chat-service.env"
@@ -414,16 +414,24 @@ async def _start_runtime(agent: dict) -> dict:
     if not (SERVICES_BIN / "agent-chat-service").exists():
         raise FileNotFoundError(f"Missing binary: {SERVICES_BIN / 'agent-chat-service'}")
 
-    _modify_flogo_port(chat_src, chat_flogo, {"#rest": ports["chat"]})
+    # One flogo file now carries three triggers: #rest (chat), #rest_1 (SSE REST), #trigger (SSE events)
+    _modify_flogo_port(chat_src, chat_flogo, {
+        "#rest":    ports["chat"],
+        "#rest_1":  ports["sse_rest"],
+        "#trigger": ports["sse_events"],
+        "ssestream": ports["sse_rest"],   # fallback label match
+    })
     _generate_env_file(
         SERVICES_AGENT_ENV / "agent-chat-service.env",
         chat_env,
         {
-            "COLLECTION_NAME": collection_name,
-            "SYSTEM_PROMPT":   system_prompt,
-            "LLM_MODEL":       llm_model,
-            "LLM_PROVIDER":    llm_provider,
-            "LLM_BASE_URL":    llm_base_url,
+            "COLLECTION_NAME":   collection_name,
+            "SYSTEM_PROMPT":     system_prompt,
+            "LLM_MODEL":         llm_model,
+            "LLM_PROVIDER":      llm_provider,
+            "LLM_BASE_URL":      llm_base_url,
+            # CHAT_SERVICE_URL is used by the SSE stream_chat flow (loopback within same process)
+            "CHAT_SERVICE_URL":  f"http://localhost:{ports['chat']}/api/chat",
         },
     )
     chat_proc = subprocess.Popen(
@@ -432,41 +440,11 @@ async def _start_runtime(agent: dict) -> dict:
         stdout=_open_log("chat"), stderr=subprocess.STDOUT,
         env={**base_env, "OTEL_SERVICE_NAME": f"agent-chat-{short}"},
     )
-    pids["chat"] = chat_proc.pid
-    log.info("  [%s] agent-chat  pid=%-7s port=%s", short, chat_proc.pid, ports["chat"])
-
-    # ── sse-stream-service ─────────────────────────────────────────────────────
-    sse_src    = SERVICES_AGENT_APPS / "sse-stream-service.flogo"
-    sse_flogo  = rt_dir / "sse-stream-service.flogo"
-    sse_env    = rt_dir / "sse-stream-service.env"
-
-    if not sse_src.exists():
-        raise FileNotFoundError(f"Missing source: {sse_src}")
-
-    _modify_flogo_port(sse_flogo if False else sse_src, sse_flogo, {
-        "#rest_1": ports["sse_rest"],
-        "#trigger": ports["sse_events"],
-        "ssestream": ports["sse_rest"],   # fallback label match
-    })
-    _generate_env_file(
-        SERVICES_AGENT_ENV / "sse-stream-service.env",
-        sse_env,
-        {
-            "CHAT_SERVICE_URL": f"http://localhost:{ports['chat']}/api/chat",
-            "SYSTEM_PROMPT":    system_prompt,
-            "LLM_MODEL":        llm_model,
-        },
-    )
-    sse_proc = subprocess.Popen(
-        [sys.executable, str(LAUNCH_PY), str(sse_env),
-         str(SERVICES_BIN / "sse-stream-service"), "-app", str(sse_flogo)],
-        stdout=_open_log("sse"), stderr=subprocess.STDOUT,
-        env={**base_env, "OTEL_SERVICE_NAME": f"sse-stream-{short}"},
-    )
-    pids["sse_rest"]   = sse_proc.pid
-    pids["sse_events"] = sse_proc.pid   # same process, two triggers
-    log.info("  [%s] sse-stream  pid=%-7s ports=%s/%s",
-             short, sse_proc.pid, ports["sse_rest"], ports["sse_events"])
+    pids["chat"]       = chat_proc.pid
+    pids["sse_rest"]   = chat_proc.pid   # same process — SSE REST trigger on port sse_rest
+    pids["sse_events"] = chat_proc.pid   # same process — SSE events trigger on port sse_events
+    log.info("  [%s] agent-chat+sse  pid=%-7s ports=%s/%s/%s",
+             short, chat_proc.pid, ports["chat"], ports["sse_rest"], ports["sse_events"])
 
     # ── ingestion-service ──────────────────────────────────────────────────────
     ing_src   = SERVICES_AGENT_APPS / "ingestion-service.flogo"

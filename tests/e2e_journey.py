@@ -133,10 +133,9 @@ banner("PHASE 1 - HEALTH CHECKS (all 10 services)")
 # =============================================================================
 SERVICES = [
     ("rule-engine-service",    7097),
-    ("agent-chat-service",     7001),
+    ("agent-chat-service",     7001),   # includes SSE streaming (merged)
     ("ingestion-service",      7002),
     ("feedback-service",       7003),
-    ("sse-stream-service",     7005),  # config-service (7004) retired — superseded by design-service (7020)
     ("agent-builder-service",  7010),
     ("design-service",         7020),
 ]
@@ -836,10 +835,9 @@ print(f"""
   +-----------------------------+------+----------------------------------------------------+
   | ingestion-service           | 7002 | Ingest text/url/github/confluence into Weaviate    |
   | rule-engine-service         | 7097 | Run quality rules against flogo app                |
-  | agent-chat-service          | 7001 | RAG query: embed->search Weaviate->answer          |
+  | agent-chat-service          | 7001 | RAG chat + SSE streaming (merged, ports 7001/7005) |
   | feedback-service            | 7003 | Write/read user ratings and comments (JSONL)       |
   | agent-builder-service       | 7010 | LLM generate + improve agent config (llama3.2:3b)  |
-  | sse-stream-service          | 7005 | Broadcast SSE event + RAG+LLM streaming pipeline   |
   | mcp-server                  | 7333 | MCP gateway - all 6 tools via JSON-RPC             |
   | design-service              | 7020 | Create/read/update/delete agents (PostgreSQL)      |
   +-----------------------------+------+----------------------------------------------------+

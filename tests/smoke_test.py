@@ -9,10 +9,9 @@ AUTH = "Basic ZmxvZ286Y2hhbmdlbWU="
 
 SERVICES = [
     ("rule-engine-service",    7097, "/api/health",  True),   # 7000 taken by macOS AirPlay
-    ("agent-chat-service",     7001, "/api/health",  True),
+    ("agent-chat-service",     7001, "/api/health",  True),   # includes SSE streaming (merged)
     ("ingestion-service",      7002, "/api/health",  True),
     ("feedback-service",       7003, "/api/health",  True),
-    ("sse-stream-service",     7005, "/api/health",  True),
     ("agent-builder-service",  7010, "/api/health",  True),
     ("design-service",         7020, "/api/health",  True),
     ("mcp-server",             7333, "/mcp",         True),

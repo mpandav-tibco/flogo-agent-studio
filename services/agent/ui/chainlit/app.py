@@ -4,16 +4,17 @@ Flogo Agent Studio — Chainlit UI (port 7080)
 Thin proxy to the Flogo Agent Studio REST services:
   - design-service     (port 7020) — PostgreSQL-backed agent registry (single source of truth)
   - agent-chat-service (port 7001) — RAG chat + agentactivity  [API-direct path]
-  - sse-stream-service (port 7005) — streaming chat via SSE event bus  [SSE path, optional]
+  - agent-chat-service (port 7005) — SSE REST trigger (merged) [SSE path, optional]
   - feedback-service   (port 7003) — thumbs-up/down ratings
 
 Chat path selection (controlled by SSE_SERVICE_URL env var):
   - SSE_SERVICE_URL unset  → API-direct: POST /api/chat on agent-chat-service (synchronous, full response)
-  - SSE_SERVICE_URL set    → SSE path:   POST /api/stream/chat on sse-stream-service, then consume
-                             SSE events from SSE_EVENTS_URL/events filtered by sessionId.
+  - SSE_SERVICE_URL set    → SSE path:   POST /api/stream/chat on agent-chat-service (SSE REST trigger),
+                             then consume SSE events from SSE_EVENTS_URL/events filtered by sessionId.
                              SSE events: stream.start, stream.answer {answer, sources}, stream.done
 
-Note: sse-stream-service emits to a shared SSE bus (all clients on one channel).
+Note: SSE streaming is now part of agent-chat-service (merged). The SSE REST trigger runs on port 7005
+(per-agent dynamic port via deployment.py) as a separate trigger on the same process.
 Events MUST be filtered by sessionId to avoid receiving another session's answer.
 """
 
@@ -115,7 +116,7 @@ async def stream_chat_sse(
     top_k: int = 5,
 ) -> dict:
     """
-    Trigger the RAG+LLM pipeline via sse-stream-service, then consume the SSE
+    Trigger the RAG+LLM pipeline via agent-chat-service SSE REST trigger, then consume the SSE
     event bus and return the answer once stream.done is received.
 
     Flow:
@@ -123,7 +124,7 @@ async def stream_chat_sse(
       2. GET  SSE_EVENTS_URL/events            → SSE stream (shared bus)
          Filter by sessionId to isolate this session's events.
 
-    SSE event types (emitted by sse-stream-service):
+    SSE event types (emitted by agent-chat-service SSE trigger):
       stream.start  → {sessionId, agentId, query}
       stream.answer → {sessionId, agentId, answer, sources}
       stream.done   → {sessionId, agentId}

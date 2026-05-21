@@ -6,21 +6,24 @@
     "github.com/mpandav-tibco/flogo-extensions/vectordb/activity/ragQuery",
     "github.com/project-flogo/contrib/activity/actreturn",
     "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/activity/agentactivity",
-    "github.com/tibco/flogo-general/src/app/General/trigger/rest",
+    "github.com/mpandav-tibco/flogo-custom-extensions/sse/activity",
+    "github.com/tibco/flogo-general/src/app/General/activity/rest",
+    "rest_1 github.com/tibco/flogo-general/src/app/General/trigger/rest",
+    "github.com/mpandav-tibco/flogo-custom-extensions/sse/trigger",
     "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/string",
     "github.com/mpandav-tibco/flogo-extensions/vectordb/connector",
     "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/connector/llmprovider"
   ],
   "name": "agent-chat-service",
-  "description": "AI agent chat service. Accepts a user message, performs hybrid RAG retrieval, and generates an LLM answer. Part of Flogo Agent Studio.",
+  "description": "Agent chat + SSE streaming service (merged)",
   "version": "1.0.0",
   "type": "flogo:app",
   "appModel": "1.1.1",
   "tags": [],
   "triggers": [
     {
-      "ref": "#rest",
+      "ref": "#rest_1",
       "name": "tibco-wi-rest",
       "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
       "settings": {
@@ -228,6 +231,204 @@
             }
           },
           "name": "health_check"
+        }
+      ]
+    },
+    {
+      "ref": "#rest_1",
+      "name": "tibco-wi-rest",
+      "description": "REST trigger on port 7005. Exposes POST /api/stream/chat, POST /api/stream/broadcast, GET /api/health endpoints with Basic Auth.",
+      "settings": {
+        "port": 7005,
+        "APISpecUpdate": false,
+        "swagger": "",
+        "swaggerVersion": "v2",
+        "authenticationType": "Basic",
+        "username": "flogo",
+        "password": "=$property[\"API_KEY\"]",
+        "apiVersion": "1.0.0",
+        "secureConnection": false,
+        "serverKey": "",
+        "caCertificate": ""
+      },
+      "id": "SSEStreamRESTTrigger",
+      "handlers": [
+        {
+          "description": "Returns service health status and version.",
+          "settings": {
+            "APISpecPath": "",
+            "Method": "GET",
+            "reqType": "application/json",
+            "Path": "/api/health",
+            "OutputValidation": false
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:health_check"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "message": ""
+          },
+          "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
+            "output": {
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              }
+            }
+          },
+          "name": "health_check"
+        },
+        {
+          "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
+          "settings": {
+            "APISpecPath": "",
+            "Method": "POST",
+            "reqType": "application/json",
+            "Path": "/api/stream/chat",
+            "OutputValidation": false
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:stream_chat"
+            },
+            "input": {
+              "body": "=$.body"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "message": ""
+          },
+          "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
+            "output": {
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              },
+              "body": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"message\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"topK\":{\"type\":\"number\"},\"sessionId\":{\"type\":\"string\"},\"systemPrompt\":{\"type\":\"string\"}}}",
+                "fe_metadata": "{\"message\":\"abc\",\"collectionName\":\"abc\",\"topK\":10,\"sessionId\":\"abc\",\"systemPrompt\":\"abc\"}"
+              }
+            }
+          },
+          "name": "stream_chat"
+        },
+        {
+          "description": "Push an arbitrary event payload to all connected SSE clients. Used by other services for ingestion progress, agent status changes, and system alerts.",
+          "settings": {
+            "APISpecPath": "",
+            "Method": "POST",
+            "reqType": "application/json",
+            "Path": "/api/stream/broadcast",
+            "OutputValidation": false
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:broadcast_event"
+            },
+            "input": {
+              "body": "=$.body"
+            },
+            "output": {
+              "code": "=$.code",
+              "data": "=$.data"
+            }
+          },
+          "reply": {
+            "code": 200,
+            "configureResponseCodes": false,
+            "message": ""
+          },
+          "schemas": {
+            "reply": {
+              "responseBody": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              }
+            },
+            "output": {
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              },
+              "body": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"eventType\":{\"type\":\"string\"},\"data\":{\"type\":\"object\",\"properties\":{}},\"topic\":{\"type\":\"string\"}}}",
+                "fe_metadata": "{\"eventType\":\"abc\",\"data\":{},\"topic\":\"abc\"}"
+              }
+            }
+          },
+          "name": "broadcast_event"
+        }
+      ]
+    },
+    {
+      "ref": "#trigger",
+      "name": "sse",
+      "description": "SSE event bus — clients connect to /events on port 7099 and receive streamed token events.",
+      "settings": {
+        "port": 7099,
+        "path": "/events",
+        "corsEnabled": true,
+        "heartbeatInterval": 30
+      },
+      "id": "SSEEventBus",
+      "handlers": [
+        {
+          "description": "Handles a new SSE client connection on /events. Logs the connection event and acknowledges.",
+          "settings": {
+            "eventType": "message"
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:sse_connect"
+            },
+            "input": {
+              "connectionId": "=$.connectionId",
+              "clientIP": "=$.clientIP",
+              "userAgent": "=$.userAgent",
+              "topic": "=$.topic",
+              "lastEventId": "=$.lastEventId",
+              "timestamp": "=$.timestamp"
+            }
+          },
+          "name": "sse_connect"
         }
       ]
     }
@@ -723,6 +924,526 @@
         },
         "explicitReply": true
       }
+    },
+    {
+      "id": "flow:stream_chat",
+      "data": {
+        "name": "stream_chat",
+        "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "LogRequest",
+            "type": "label",
+            "label": "StartActivity to LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "EmitStart",
+            "type": "label",
+            "label": "LogRequest to EmitStart"
+          },
+          {
+            "id": 3,
+            "from": "EmitStart",
+            "to": "CallRAG",
+            "type": "label",
+            "label": "EmitStart to CallRAG"
+          },
+          {
+            "id": 4,
+            "from": "CallRAG",
+            "to": "RunLLM",
+            "type": "label",
+            "label": "CallRAG to RunLLM"
+          },
+          {
+            "id": 5,
+            "from": "RunLLM",
+            "to": "EmitAnswer",
+            "type": "label",
+            "label": "RunLLM to EmitAnswer"
+          },
+          {
+            "id": 6,
+            "from": "EmitAnswer",
+            "to": "EmitDone",
+            "type": "label",
+            "label": "EmitAnswer to EmitDone"
+          },
+          {
+            "id": 7,
+            "from": "EmitDone",
+            "to": "Return",
+            "type": "label",
+            "label": "EmitDone to Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp Activity",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "description": "Log the incoming stream chat request with agentId and sessionId.",
+            "activity": {
+              "ref": "#log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[SSE] stream_chat: agentId=\", coerce.toString($flow.body.agentId), \" sessionId=\", coerce.toString($flow.body.sessionId))",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "EmitStart",
+            "name": "EmitStart",
+            "description": "Send SSE stream.start event to all connected clients to notify that streaming has begun for this session.",
+            "activity": {
+              "ref": "#activity",
+              "settings": {
+                "sseServerRef": "default",
+                "eventType": "message",
+                "retry": 30000
+              },
+              "input": {
+                "target": "all",
+                "eventType": "stream.start",
+                "format": "json",
+                "enableValidation": false,
+                "data": {
+                  "mapping": {
+                    "sessionId": "=$flow.body.sessionId",
+                    "agentId": "=$flow.body.agentId",
+                    "query": "=$flow.body.query"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "CallRAG",
+            "name": "CallRAG",
+            "description": "Retrieve relevant context from agent-chat-service via RAG using HTTP POST.",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
+            "activity": {
+              "ref": "#rest",
+              "input": {
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "serviceName": "",
+                "resourcePath": "",
+                "Method": "POST",
+                "Uri": "=$property[\"CHAT_SERVICE_URL\"]",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 0,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                  }
+                },
+                "body": "=$flow.body"
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
+                }
+              },
+              "feSchemaMap": {}
+            }
+          },
+          {
+            "id": "RunLLM",
+            "name": "RunLLM",
+            "description": "Run LLM with RAG context using AgentActivity. Returns the full LLM answer for streaming to SSE clients.",
+            "activity": {
+              "ref": "#agentactivity",
+              "settings": {
+                "llmProviderConnection": "conn://llm_provider",
+                "model": "=$property[\"LLM_MODEL\"]",
+                "reasoning": "",
+                "temperature": 0.7,
+                "enableGuardrails": false,
+                "rateLimit": 0,
+                "tokenLimit": 0,
+                "redactSensitiveData": false,
+                "responseType": "Text",
+                "agentHandoffs": "",
+                "mcpServers": [],
+                "conversationStoreType": "Memory",
+                "memoryMaxSize": 10,
+                "systemPrompt": "=$property[\"SYSTEM_PROMPT\"]"
+              },
+              "input": {
+                "userPrompt": "=$flow.body.message",
+                "conversationId": "=$flow.body.sessionId"
+              }
+            }
+          },
+          {
+            "id": "EmitAnswer",
+            "name": "EmitAnswer",
+            "description": "Send SSE stream.answer event containing the full LLM answer and retrieved source documents to all connected clients.",
+            "activity": {
+              "ref": "#activity",
+              "settings": {
+                "sseServerRef": "default",
+                "topic": "",
+                "eventType": "message",
+                "retry": 30000
+              },
+              "input": {
+                "target": "all",
+                "eventType": "stream.answer",
+                "format": "json",
+                "enableValidation": false,
+                "data": {
+                  "mapping": {
+                    "sessionId": "=$flow.body.sessionId",
+                    "agentId": "=$flow.body.agentId",
+                    "answer": "=$activity[RunLLM].response"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "EmitDone",
+            "name": "EmitDone",
+            "description": "Send SSE stream.done event to signal stream completion so the UI can re-enable the input field.",
+            "activity": {
+              "ref": "#activity",
+              "settings": {
+                "sseServerRef": "default",
+                "eventType": "message",
+                "retry": 30000
+              },
+              "input": {
+                "target": "all",
+                "eventType": "stream.done",
+                "format": "json",
+                "enableValidation": false,
+                "data": {
+                  "mapping": {
+                    "sessionId": "=$flow.body.sessionId",
+                    "agentId": "=$flow.body.agentId"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return HTTP 202 with streaming=true and eventsUrl=/events indicating SSE stream has started.",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 202,
+                  "data": {
+                    "mapping": {
+                      "streaming": true,
+                      "eventsUrl": "/events"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjQ3LCJ5IjoxNTB9LCJFbWl0U3RhcnQiOnsieCI6NDUwLCJ5IjoyNTB9LCJDYWxsUkFHIjp7IngiOjY1MCwieSI6MzUwfSwiUnVuTExNIjp7IngiOjg1MCwieSI6NDUwfSwiRW1pdEFuc3dlciI6eyJ4IjoxMDUwLCJ5Ijo1NTB9LCJFbWl0RG9uZSI6eyJ4IjoxMjUwLCJ5Ijo2NTB9LCJSZXR1cm4iOnsieCI6MTQ1MCwieSI6NzUwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "headers",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}}"
+              }
+            },
+            {
+              "name": "body",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"message\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"topK\":{\"type\":\"number\"},\"sessionId\":{\"type\":\"string\"},\"systemPrompt\":{\"type\":\"string\"}}"
+              }
+            },
+            {
+              "name": "requestURI",
+              "type": "string"
+            },
+            {
+              "name": "method",
+              "type": "string"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "integer"
+            },
+            {
+              "name": "data",
+              "type": "object"
+            }
+          ],
+          "fe_metadata": {
+            "input": "{\"type\":\"object\",\"title\":\"SSEStreamRESTTrigger\",\"properties\":{\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"body\":{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"message\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"topK\":{\"type\":\"number\"},\"sessionId\":{\"type\":\"string\"},\"systemPrompt\":{\"type\":\"string\"}}},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"data\":{\"type\":\"object\",\"properties\":{}}},\"required\":[]}"
+          }
+        },
+        "explicitReply": true
+      }
+    },
+    {
+      "id": "flow:broadcast_event",
+      "data": {
+        "name": "broadcast_event",
+        "description": "Push an arbitrary event payload to all connected SSE clients. Used by other services for ingestion progress, agent status changes, and system alerts.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "LogRequest",
+            "type": "label",
+            "label": "StartActivity to LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "BroadcastEvent",
+            "type": "label",
+            "label": "LogRequest to BroadcastEvent"
+          },
+          {
+            "id": 3,
+            "from": "BroadcastEvent",
+            "to": "Return",
+            "type": "label",
+            "label": "BroadcastEvent to Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp Activity",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "description": "Log the incoming broadcast event type.",
+            "activity": {
+              "ref": "#log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[SSE] broadcast: eventType=\", coerce.toString($flow.body.eventType))",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "BroadcastEvent",
+            "name": "BroadcastEvent",
+            "description": "Push the caller-supplied event payload to all connected SSE subscribers.",
+            "activity": {
+              "ref": "#activity",
+              "settings": {
+                "sseServerRef": "default",
+                "eventType": "message",
+                "retry": 30000
+              },
+              "input": {
+                "target": "all",
+                "eventType": "=$flow.body.eventType",
+                "format": "json",
+                "enableValidation": true,
+                "data": "=$flow.body.data"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return HTTP 200 with broadcasted=true.",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": {
+                    "mapping": {
+                      "broadcasted": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJCcm9hZGNhc3RFdmVudCI6eyJ4Ijo0NTAsInkiOjI1MH0sIlJldHVybiI6eyJ4Ijo2NTAsInkiOjM1MH19",
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            }
+          ],
+          "output": [
+            {
+              "name": "code",
+              "type": "float64"
+            },
+            {
+              "name": "data",
+              "type": "object"
+            }
+          ],
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"object\",\"properties\":{}}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+          }
+        },
+        "explicitReply": true
+      }
+    },
+    {
+      "id": "flow:sse_connect",
+      "data": {
+        "name": "sse_connect",
+        "description": "Handles a new SSE client connection on /events. Logs the connection event and acknowledges.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "LogConnect",
+            "type": "label",
+            "label": "StartActivity to LogConnect"
+          },
+          {
+            "id": 2,
+            "from": "LogConnect",
+            "to": "Return",
+            "type": "label",
+            "label": "LogConnect to Return"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "NoOp Activity",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "LogConnect",
+            "name": "LogConnect",
+            "description": "Log that a new SSE client has connected to /events.",
+            "activity": {
+              "ref": "#log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "[SSE] new client connected to /events",
+                "logLevel": ""
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#noop"
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ0Nvbm5lY3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJSZXR1cm4iOnsieCI6NDUwLCJ5IjoyNTB9fQ==",
+        "metadata": {
+          "input": [
+            {
+              "name": "connectionId",
+              "type": "string"
+            },
+            {
+              "name": "clientIP",
+              "type": "string"
+            },
+            {
+              "name": "userAgent",
+              "type": "string"
+            },
+            {
+              "name": "topic",
+              "type": "string"
+            },
+            {
+              "name": "lastEventId",
+              "type": "string"
+            },
+            {
+              "name": "timestamp",
+              "type": "string"
+            }
+          ],
+          "output": [],
+          "fe_metadata": {
+            "input": "{\"type\":\"object\",\"title\":\"SSEEventBus\",\"properties\":{\"connectionId\":{\"type\":\"string\",\"required\":false},\"clientIP\":{\"type\":\"string\",\"required\":false},\"userAgent\":{\"type\":\"string\",\"required\":false},\"topic\":{\"type\":\"string\",\"required\":false},\"lastEventId\":{\"type\":\"string\",\"required\":false},\"timestamp\":{\"type\":\"string\",\"required\":false}}}"
+          }
+        }
+      }
     }
   ],
   "properties": [
@@ -734,10 +1455,25 @@
     {
       "name": "AgenticAI.llm-provider.API_Key",
       "type": "string",
-      "value": "SECRET:w88h0d4Or5PF76d1d1VyVJPV5LLQLA2caJULHKoF+FqWbS+V8aUEYA8pwitdCYaoDnx9ld8ccU94NKUQp11z4Mb0wdjVSFQ5UQ=="
+      "value": "SECRET:VcvhJHz+Pvsz0popfcTG5Hy55CoCT4uQi9b8YBMYvnn14HYx7kBH2BAVqwt3SgmlfVGr1DccC4EIklYG0jGkr30n3tHzBapR6A=="
     },
     {
       "name": "AgenticAI.llm-provider.LLM_Base_URL",
+      "type": "string",
+      "value": "http://localhost:11434/v1"
+    },
+    {
+      "name": "AgenticAI.LLM_Provider.LLM_Provider",
+      "type": "string",
+      "value": "OpenAI"
+    },
+    {
+      "name": "AgenticAI.LLM_Provider.API_Key",
+      "type": "string",
+      "value": "SECRET:gApqSLHAG/SsskofkHUN+74Q2QCJBrHi"
+    },
+    {
+      "name": "AgenticAI.LLM_Provider.LLM_Base_URL",
       "type": "string",
       "value": "http://localhost:11434/v1"
     },
@@ -789,7 +1525,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:lAa367JcuhIRd36cQtGXhLx0wBi/lB7l"
+      "value": "SECRET:DHVZFTB5VTycMS3/7F47Z29TQ9EngKO9"
     },
     {
       "name": "API_AUTH_HEADER",
@@ -807,107 +1543,92 @@
       "value": "vectordb-weaviate"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Connection_Name",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Connection_Name",
       "type": "string",
-      "value": "vectordb-weaviate"
+      "value": "$property[\"VectorDB.vectordb-weaviate.Connection_Name\"]"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.DB_Provider",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].DB_Provider",
       "type": "string",
-      "value": "weaviate"
+      "value": "$property[\"VectorDB.vectordb-weaviate.DB_Provider\"]"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Host",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Host",
       "type": "string",
-      "value": "localhost"
+      "value": "$property[\"VectorDB.vectordb-weaviate.Host\"]"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Port",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Port",
       "type": "float64",
-      "value": 18080
+      "value": "$property[\"VectorDB.vectordb-weaviate.Port\"]"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.API_Key",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].API_Key",
       "type": "string",
-      "value": ""
+      "value": "SECRET:hD6JoJB5AZ64ZJc5hKt/kGZYJkfVb+ZzwBT0WqcUgAq0SGPXxuPoDiQ+FsFZVnNxkIDY0nMt+kb2aReWUq/isYs="
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Secure_Connection",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Secure_Connection",
       "type": "boolean",
-      "value": false
+      "value": "$property[\"VectorDB.vectordb-weaviate.Secure_Connection\"]"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Timeout_(seconds)",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Timeout_(seconds)",
       "type": "float64",
-      "value": 30
+      "value": "$property[\"VectorDB.vectordb-weaviate.Timeout_(seconds)\"]"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Max_Retries",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Max_Retries",
       "type": "float64",
-      "value": 3
+      "value": "$property[\"VectorDB.vectordb-weaviate.Max_Retries\"]"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Retry_Backoff_(ms)",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Retry_Backoff_(ms)",
       "type": "float64",
-      "value": 500
+      "value": "$property[\"VectorDB.vectordb-weaviate.Retry_Backoff_(ms)\"]"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.HTTP_Scheme",
-      "type": "string",
-      "value": "http"
-    },
-    {
-      "name": "VectorDB.vectordb-weaviate.Configure_Embedding_Provider",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Configure_Embedding_Provider",
       "type": "boolean",
-      "value": true
+      "value": "$property[\"VectorDB.vectordb-weaviate.Configure_Embedding_Provider\"]"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Embedding_Provider",
+      "name": "CHAT_SERVICE_URL",
       "type": "string",
-      "value": "Ollama"
-    },
-    {
-      "name": "VectorDB.vectordb-weaviate.Embedding_API_Key",
-      "type": "string",
-      "value": ""
-    },
-    {
-      "name": "VectorDB.vectordb-weaviate.Embedding_Base_URL",
-      "type": "string",
-      "value": "http://localhost:11434/v1"
+      "value": "http://localhost:7001/api/chat"
     }
   ],
   "connections": {
     "vectordb-weaviate": {
       "id": "vectordb-weaviate",
-      "name": "vectordb-weaviate",
+      "name": "$property[\"VectorDB.vectordb-weaviate.Connection_Name\"]",
       "ref": "#connector",
       "isGlobal": false,
       "settings": {
-        "name": "=$property[\"VectorDB.vectordb-weaviate.Connection_Name\"]",
-        "dbType": "=$property[\"VectorDB.vectordb-weaviate.DB_Provider\"]",
-        "host": "=$property[\"VectorDB.vectordb-weaviate.Host\"]",
-        "port": "=$property[\"VectorDB.vectordb-weaviate.Port\"]",
-        "apiKey": "=$property[\"VectorDB.vectordb-weaviate.API_Key\"]",
-        "useTLS": "=$property[\"VectorDB.vectordb-weaviate.Secure_Connection\"]",
+        "name": "=$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Connection_Name\"]",
+        "dbType": "=$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].DB_Provider\"]",
+        "host": "=$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Host\"]",
+        "port": "=$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Port\"]",
+        "apiKey": "=$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].API_Key\"]",
+        "useTLS": "=$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Secure_Connection\"]",
         "tlsInsecureSkipVerify": false,
         "tlsServerName": "",
         "caCert": "",
         "clientCert": "",
         "clientKey": "",
-        "timeoutSeconds": "=$property[\"VectorDB.vectordb-weaviate.Timeout_(seconds)\"]",
-        "maxRetries": "=$property[\"VectorDB.vectordb-weaviate.Max_Retries\"]",
-        "retryBackoffMs": "=$property[\"VectorDB.vectordb-weaviate.Retry_Backoff_(ms)\"]",
+        "timeoutSeconds": "=$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Timeout_(seconds)\"]",
+        "maxRetries": "=$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Max_Retries\"]",
+        "retryBackoffMs": "=$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Retry_Backoff_(ms)\"]",
         "grpcPort": 50051,
-        "scheme": "=$property[\"VectorDB.vectordb-weaviate.HTTP_Scheme\"]",
+        "scheme": "$property[\"VectorDB.vectordb-weaviate.HTTP_Scheme\"]",
         "username": "",
         "password": "",
         "dbName": "default",
         "defaultMetricType": "cosine",
-        "enableEmbedding": "=$property[\"VectorDB.vectordb-weaviate.Configure_Embedding_Provider\"]",
-        "embeddingProvider": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Provider\"]",
-        "embeddingAPIKey": "=$property[\"VectorDB.vectordb-weaviate.Embedding_API_Key\"]",
-        "embeddingBaseURL": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Base_URL\"]"
+        "enableEmbedding": "=$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Configure_Embedding_Provider\"]",
+        "embeddingProvider": "$property[\"VectorDB.vectordb-weaviate.Embedding_Provider\"]",
+        "embeddingAPIKey": "SECRET:a8k8IxbZhvdApWSMSf5AY1HRRKRIWMzm0Fj4lmV0L2yV1bk8SL+XS+kXQbF+ah6jWm8eLUs3mdxVuFyowxWQb6fwdNzJtjnEuG4G",
+        "embeddingBaseURL": "$property[\"VectorDB.vectordb-weaviate.Embedding_Base_URL\"]"
       }
     },
     "llm-provider": {
@@ -922,9 +1643,22 @@
         "apiKey": "=$property[\"AgenticAI.llm-provider.API_Key\"]",
         "llmProviderUrl": "=$property[\"AgenticAI.llm-provider.LLM_Base_URL\"]"
       }
+    },
+    "llm_provider": {
+      "id": "llm_provider",
+      "name": "LLM Provider",
+      "ref": "#llmprovider",
+      "isGlobal": false,
+      "settings": {
+        "name": "LLM Provider",
+        "llmProvider": "=$property[\"AgenticAI.LLM_Provider.LLM_Provider\"]",
+        "anthropicProvider": "Default",
+        "apiKey": "=$property[\"AgenticAI.LLM_Provider.API_Key\"]",
+        "llmProviderUrl": "=$property[\"AgenticAI.LLM_Provider.LLM_Base_URL\"]"
+      }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmMiLCJpZCI6IlZlY3RvckRCIiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiVmVjdG9yREIgUkFHIENvbm5lY3RvciIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9WZWN0b3JEQiIsImlzVXNlckV4dGVuc2lvbiI6dHJ1ZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLWFpLWFnZW50L3NyYy9hcHAvQWdlbnRpY0FJIiwiaWQiOiJBZ2VudGljQUkiLCJ2ZXJzaW9uIjoiMC45LjEiLCJ0YWciOiIwLjkuMS1iMDIiLCJuYW1lIjoiQWdlbnRpYyBBSSAoVGVjaCBQcmV2aWV3KSIsInMzbG9jYXRpb24iOiJUaWJjby9BZ2VudGljQUkiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfV0=",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmMiLCJpZCI6IlZlY3RvckRCIiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiVmVjdG9yREIgUkFHIENvbm5lY3RvciIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9WZWN0b3JEQiIsImlzVXNlckV4dGVuc2lvbiI6dHJ1ZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLWFpLWFnZW50L3NyYy9hcHAvQWdlbnRpY0FJIiwiaWQiOiJBZ2VudGljQUkiLCJ2ZXJzaW9uIjoiMC45LjEiLCJ0YWciOiIwLjkuMS1iMDIiLCJuYW1lIjoiQWdlbnRpYyBBSSAoVGVjaCBQcmV2aWV3KSIsInMzbG9jYXRpb24iOiJUaWJjby9BZ2VudGljQUkiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfSx7InJlZiI6ImdpdGh1Yi5jb20vbXBhbmRhdi10aWJjby9mbG9nby1jdXN0b20tZXh0ZW5zaW9ucy9zc2UvYWN0aXZpdHkiLCJpZCI6IkRlZmF1bHQiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJSdWxlIEVuZ2luZSIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9TU0UvYWN0aXZpdHkiLCJpc1VzZXJFeHRlbnNpb24iOnRydWV9LHsicmVmIjoiZ2l0aHViLmNvbS9tcGFuZGF2LXRpYmNvL2Zsb2dvLWN1c3RvbS1leHRlbnNpb25zL3NzZS90cmlnZ2VyIiwiaWQiOiJEZWZhdWx0IiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiUnVsZSBFbmdpbmUiLCJzM2xvY2F0aW9uIjoie1VTRVJJRH0vU1NFL3RyaWdnZXIiLCJpc1VzZXJFeHRlbnNpb24iOnRydWV9XQ==",
   "metadata": {
     "endpoints": [
       {
@@ -938,7 +1672,7 @@
         "swagger": {
           "swagger": "2.0",
           "info": {
-            "title": "agent-chat-service",
+            "title": "agent-chat-service-AgentChatRESTTrigger",
             "version": "1.0.0",
             "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
           },
@@ -1124,6 +1858,158 @@
                   "type": "number"
                 },
                 "sessionId": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "protocol": "http",
+        "port": "7005",
+        "spec": {
+          "name": "agent-chat-service",
+          "version": "1.0.0"
+        },
+        "title": "SSEStreamRESTTrigger",
+        "swagger": {
+          "swagger": "2.0",
+          "info": {
+            "title": "agent-chat-service-SSEStreamRESTTrigger",
+            "version": "1.0.0",
+            "description": "REST trigger on port 7005. Exposes POST /api/stream/chat, POST /api/stream/broadcast, GET /api/health endpoints with Basic Auth."
+          },
+          "paths": {
+            "/api/health": {
+              "get": {
+                "summary": "health_check",
+                "operationId": "get_api_health",
+                "parameters": [
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Returns service health status and version."
+              }
+            },
+            "/api/stream/chat": {
+              "post": {
+                "summary": "stream_chat",
+                "operationId": "post_api_stream_chat",
+                "parameters": [
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  },
+                  {
+                    "name": "body",
+                    "in": "body",
+                    "description": "request body parameter",
+                    "required": true,
+                    "schema": {
+                      "$ref": "#/definitions/schema4"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
+                "consumes": [
+                  "application/json"
+                ]
+              }
+            },
+            "/api/stream/broadcast": {
+              "post": {
+                "summary": "broadcast_event",
+                "operationId": "post_api_stream_broadcast",
+                "parameters": [
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  },
+                  {
+                    "name": "body",
+                    "in": "body",
+                    "description": "request body parameter",
+                    "required": true,
+                    "schema": {
+                      "$ref": "#/definitions/schema5"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Push an arbitrary event payload to all connected SSE clients. Used by other services for ingestion progress, agent status changes, and system alerts.",
+                "consumes": [
+                  "application/json"
+                ]
+              }
+            }
+          },
+          "definitions": {
+            "schema4": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                },
+                "collectionName": {
+                  "type": "string"
+                },
+                "topK": {
+                  "type": "number"
+                },
+                "sessionId": {
+                  "type": "string"
+                },
+                "systemPrompt": {
+                  "type": "string"
+                }
+              }
+            },
+            "schema5": {
+              "type": "object",
+              "properties": {
+                "eventType": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "topic": {
                   "type": "string"
                 }
               }

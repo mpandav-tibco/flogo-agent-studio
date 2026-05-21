@@ -15,15 +15,15 @@ version: "3.9"
 #
 # Ports summary (see ports.yaml for canonical registry):
 #   7097  rule-engine-service
-#   7001  agent-chat-service
+#   7001  agent-chat-service (chat REST)
 #   7002  ingestion-service
 #   7003  feedback-service
-#   7005  sse-stream-service (REST)
+#   7005  agent-chat-service (SSE REST trigger, merged)
 #   7010  agent-builder-service
 #   7020  design-service
 #   7025  forge UI (nginx)
 #   7080  chainlit-ui
-#   7099  sse-stream-service (SSE event bus)
+#   7099  agent-chat-service (SSE event bus trigger, merged)
 #   7333  mcp-server
 #   8080  weaviate (http)
 #   50051 weaviate (grpc)

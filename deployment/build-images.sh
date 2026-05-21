@@ -95,8 +95,7 @@ mkdir -p "$LINUX_BIN_DIR"
 # Maps service binary name → flogo source file (platform or agent layer)
 # deploy-service is decommissioned and excluded.
 declare -A FLOGO_SRC=(
-    ["agent-chat-service"]="agent-chat-service.flogo"
-    ["sse-stream-service"]="sse-stream-service.flogo"
+    ["agent-chat-service"]="agent-chat-service.flogo"   # includes SSE streaming (merged)
     ["ingestion-service"]="ingestion-service.flogo"
     ["feedback-service"]="feedback-service.flogo"
     ["design-service"]="design-service.flogo"
@@ -107,7 +106,6 @@ declare -A FLOGO_SRC=(
 
 declare -A IMAGE_TAG=(
     ["agent-chat-service"]="agent-chat"
-    ["sse-stream-service"]="sse-stream"
     ["ingestion-service"]="ingestion"
     ["feedback-service"]="feedback"
     ["design-service"]="design-service"

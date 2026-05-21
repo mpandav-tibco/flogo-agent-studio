@@ -62,10 +62,10 @@ MANAGED_PORTS=(
   7333   # mcp-server (platform)
   # Legacy static agent ports — cleaned up on startup so orphaned processes don't block port pool
   7080   # chainlit-ui (legacy static; now per-agent via deployment.py)
-  7001   # agent-chat (legacy static; now per-agent via deployment.py)
+  7001   # agent-chat+sse (legacy static; now per-agent via deployment.py)
   7002   # ingestion  (legacy static; now per-agent via deployment.py)
-  7005   # sse-stream REST  (legacy static; now per-agent via deployment.py)
-  7099   # sse-stream events (legacy static; now per-agent via deployment.py)
+  7005   # sse-stream REST  (merged into agent-chat; legacy static)
+  7099   # sse-stream events (merged into agent-chat; legacy static)
 )
 # Append the full per-agent runtime pool
 for _p in $(seq 7200 7299); do MANAGED_PORTS+=($_p); done
@@ -322,7 +322,7 @@ wait_for_port "forge-ui" 7025 30
 echo ""
 
 # ── Platform services only ────────────────────────────────────────────────────
-# Agent services (chat, ingestion, sse-stream, chainlit) are NOT started here.
+# Agent services (chat+sse, ingestion, chainlit) are NOT started here.
 # The runtime-manager (deployment.py) starts a dedicated set per agent when
 # that agent is activated from the AgentForge UI.
 SERVICES=(
@@ -389,11 +389,12 @@ done
 
 echo ""
 echo "Started: $started platform service(s)  |  Skipped: $skipped (binary not built yet)"
-echo "Agent services (chat/ingestion/sse-stream/chainlit) will be started by runtime-manager when an agent is activated."
+echo "Agent services (chat+sse/ingestion/chainlit) will be started by runtime-manager when an agent is activated."
 
 # ── Runtime Manager (port 7050) ───────────────────────────────────────────────
 # Starts after platform Flogo services. Manages per-agent process groups:
 # each deployed (active) agent gets its own chat+sse+ingestion+chainlit stack.
+# sse-stream-service is merged into agent-chat-service (single binary, 3 ports).
 if [[ -f "$SCRIPT_DIR/deployment.py" ]]; then
   python3 "$SCRIPT_DIR/deployment.py" > logs/runtime-manager.log 2>&1 &
   echo "START runtime-manager  (port 7050, pid $!)"
