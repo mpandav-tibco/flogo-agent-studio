@@ -58,9 +58,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -94,7 +103,7 @@
               "flowURI": "res://flow:get_agent"
             },
             "input": {
-              "agentId": "=$.pathParams.agentId"
+              "agentId": "=$.agentId"
             },
             "output": {
               "code": "=$.code",
@@ -102,9 +111,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -143,7 +161,7 @@
               "flowURI": "res://flow:list_agents"
             },
             "input": {
-              "status": "=$.queryParams.status"
+              "status": "=$.status"
             },
             "output": {
               "code": "=$.code",
@@ -151,9 +169,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -187,7 +214,7 @@
               "flowURI": "res://flow:update_agent"
             },
             "input": {
-              "agentId": "=$.pathParams.agentId",
+              "agentId": "=$.agentId",
               "body": "=$.body"
             },
             "output": {
@@ -196,9 +223,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -237,7 +273,7 @@
               "flowURI": "res://flow:delete_agent"
             },
             "input": {
-              "agentId": "=$.pathParams.agentId"
+              "agentId": "=$.agentId"
             },
             "output": {
               "code": "=$.code",
@@ -245,9 +281,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -286,7 +331,7 @@
               "flowURI": "res://flow:purge_agent"
             },
             "input": {
-              "agentId": "=$.pathParams.agentId"
+              "agentId": "=$.agentId"
             },
             "output": {
               "code": "=$.code",
@@ -294,9 +339,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -332,12 +386,22 @@
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            }
+            },
+            "input": {}
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -373,12 +437,22 @@
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            }
+            },
+            "input": {}
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -413,7 +487,7 @@
               "flowURI": "res://flow:get_agent_config"
             },
             "input": {
-              "agentId": "=$.pathParams.agentId"
+              "agentId": "=$.agentId"
             },
             "output": {
               "data": "=$.data",
@@ -421,9 +495,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -566,6 +649,10 @@
             {
               "name": "method",
               "type": "string"
+            },
+            {
+              "name": "body",
+              "type": "object"
             }
           ],
           "output": [
@@ -670,7 +757,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -762,7 +849,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -869,7 +956,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -973,7 +1060,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -1077,7 +1164,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -1445,7 +1532,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -1544,7 +1631,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -1663,7 +1750,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -1781,7 +1868,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby93aS1wb3N0Z3Jlcy9zcmMvYXBwL1Bvc3RncmVTUUwiLCJpZCI6IlBvc3RncmVTUUwiLCJ2ZXJzaW9uIjoiMi43LjEiLCJ0YWciOiIyLjcuMS1iMDEiLCJuYW1lIjoiUG9zdGdyZVNRTCIsInMzbG9jYXRpb24iOiJUaWJjby9Qb3N0Z3JlU1FMIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL3dpLXBvc3RncmVzL3NyYy9hcHAvUG9zdGdyZVNRTCIsImlkIjoiUG9zdGdyZVNRTCIsInZlcnNpb24iOiIyLjcuMSIsInRhZyI6IjIuNy4xLWIwMSIsIm5hbWUiOiJUSUJDTyBGbG9nbyBjb25uZWN0b3IgZm9yIFBvc3RncmVTUUwiLCJzM2xvY2F0aW9uIjoiVGliY28vUG9zdGdyZVNRTCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9XQ==",
   "metadata": {
     "endpoints": [
       {

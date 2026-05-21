@@ -59,9 +59,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": {}
+            "message": {},
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -108,9 +117,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": {}
+            "message": {},
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -157,9 +175,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": {}
+            "message": {},
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -200,12 +227,22 @@
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            }
+            },
+            "input": {}
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": {}
+            "message": {},
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -450,11 +487,7 @@
             },
             {
               "name": "body",
-              "type": "object",
-              "schema": {
-                "type": "json",
-                "value": "{\"description\":{\"type\":\"string\"},\"register\":{\"type\":\"boolean\"},\"overrides\":{\"type\":\"object\",\"properties\":{}}}"
-              }
+              "type": "object"
             },
             {
               "name": "requestURI",
@@ -743,11 +776,7 @@
             },
             {
               "name": "body",
-              "type": "object",
-              "schema": {
-                "type": "json",
-                "value": "{\"agentId\":{\"type\":\"string\"},\"feedback\":{\"type\":\"string\"}}"
-              }
+              "type": "object"
             },
             {
               "name": "requestURI",
@@ -766,6 +795,10 @@
             {
               "name": "message",
               "type": "string"
+            },
+            {
+              "name": "data",
+              "type": "object"
             }
           ],
           "fe_metadata": {
@@ -883,11 +916,7 @@
             },
             {
               "name": "body",
-              "type": "object",
-              "schema": {
-                "type": "json",
-                "value": "{\"config\":{\"type\":\"object\",\"properties\":{}}}"
-              }
+              "type": "object"
             },
             {
               "name": "requestURI",
@@ -906,6 +935,10 @@
             {
               "name": "message",
               "type": "string"
+            },
+            {
+              "name": "data",
+              "type": "object"
             }
           ],
           "fe_metadata": {
@@ -968,7 +1001,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -1051,7 +1084,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1haS1hZ2VudC9zcmMvYXBwL0FnZW50aWNBSSIsImlkIjoiQWdlbnRpY0FJIiwidmVyc2lvbiI6IjAuOS4xIiwidGFnIjoiMC45LjEtYjAyIiwibmFtZSI6IkFnZW50aWMgQUkgKFRlY2ggUHJldmlldykiLCJzM2xvY2F0aW9uIjoiVGliY28vQWdlbnRpY0FJIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLWFpLWFnZW50L3NyYy9hcHAvQWdlbnRpY0FJIiwiaWQiOiJBZ2VudGljQUkiLCJ2ZXJzaW9uIjoiMC45LjAiLCJ0YWciOiIwLjkuMC1iMDMiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIEFnZW50aWMgQUkgKFRlY2ggUHJldmlldykiLCJzM2xvY2F0aW9uIjoiVGliY28vQWdlbnRpY0FJIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
   "metadata": {
     "endpoints": [
       {

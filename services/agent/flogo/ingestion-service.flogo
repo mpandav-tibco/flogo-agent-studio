@@ -23,7 +23,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger \u2014 ingestion service on port 7002",
+      "description": "REST trigger — ingestion service on port 7002",
       "settings": {
         "port": 7002,
         "APISpecUpdate": false,
@@ -62,9 +62,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -90,7 +99,7 @@
           "name": "ingest_documents"
         },
         {
-          "description": "Creates or verifies a VectorDB collection. Idempotent \u2014 safe to call if the collection already exists.",
+          "description": "Creates or verifies a VectorDB collection. Idempotent — safe to call if the collection already exists.",
           "settings": {
             "APISpecPath": "",
             "Method": "POST",
@@ -112,9 +121,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -151,12 +169,22 @@
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            }
+            },
+            "input": {}
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -199,9 +227,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -249,9 +286,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -299,9 +345,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -350,9 +405,18 @@
             }
           },
           "reply": {
-            "code": 200,
+            "code": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            },
             "configureResponseCodes": false,
-            "message": ""
+            "message": "",
+            "data": {
+              "type": "json",
+              "value": "{}",
+              "fe_metadata": "{}"
+            }
           },
           "schemas": {
             "reply": {
@@ -517,7 +581,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -536,7 +600,7 @@
       "id": "flow:ensure_collection",
       "data": {
         "name": "ensure_collection",
-        "description": "Creates or verifies a VectorDB collection. Idempotent \u2014 safe to call if the collection already exists.",
+        "description": "Creates or verifies a VectorDB collection. Idempotent — safe to call if the collection already exists.",
         "links": [
           {
             "id": 1,
@@ -586,7 +650,7 @@
           {
             "id": "EnsureCollection",
             "name": "EnsureCollection",
-            "description": "Create or verify VectorDB collection \u2014 idempotent",
+            "description": "Create or verify VectorDB collection — idempotent",
             "activity": {
               "ref": "#createCollection",
               "settings": {
@@ -627,7 +691,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -693,7 +757,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -928,7 +992,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -1165,7 +1229,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -1398,7 +1462,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -1705,11 +1769,7 @@
           "input": [
             {
               "name": "multipartFormData",
-              "type": "object",
-              "schema": {
-                "type": "json",
-                "value": "{\"collectionName\":{\"type\":\"string\"},\"filename\":{\"type\":\"string\"},\"file\":{\"type\":\"any\"},\"chunkStrategy\":{\"type\":\"string\"}}"
-              }
+              "type": "object"
             },
             {
               "name": "headers",
@@ -1719,7 +1779,7 @@
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
               "name": "data",
@@ -1890,7 +1950,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmMiLCJpZCI6IlZlY3RvckRCIiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiVmVjdG9yREIgUkFHIENvbm5lY3RvciIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9WZWN0b3JEQiIsImlzVXNlckV4dGVuc2lvbiI6dHJ1ZX1d",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuYyIsImlkIjoiVmVjdG9yREIiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJWZWN0b3JEQiBSQUcgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfV0=",
   "metadata": {
     "endpoints": [
       {
@@ -1906,7 +1966,7 @@
           "info": {
             "title": "ingestion-service",
             "version": "1.0.0",
-            "description": "REST trigger \u2014 ingestion service on port 7002"
+            "description": "REST trigger — ingestion service on port 7002"
           },
           "paths": {
             "/api/ingest": {
@@ -1966,7 +2026,7 @@
                     }
                   }
                 },
-                "description": "Creates or verifies a VectorDB collection. Idempotent \u2014 safe to call if the collection already exists.",
+                "description": "Creates or verifies a VectorDB collection. Idempotent — safe to call if the collection already exists.",
                 "consumes": [
                   "application/json"
                 ]
