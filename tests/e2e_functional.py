@@ -29,7 +29,6 @@ if hasattr(sys.stdout, "reconfigure"):
 # ── constants ─────────────────────────────────────────────────────────────────
 AUTH = "Basic ZmxvZ286Y2hhbmdlbWU="          # flogo:changeme
 FORGE_URL   = "http://localhost:7020"          # design-service (Forge backend)
-DEPLOY_URL  = "http://localhost:7030"          # deploy-service
 BUILDER_URL = "http://localhost:7010"          # agent-builder-service
 INGEST_URL  = "http://localhost:7002"          # ingestion-service
 CHAT_URL    = "http://localhost:7001"          # agent-chat-service
@@ -877,7 +876,6 @@ md_lines += [
     f"| Service | Port | Role | Tested Via |",
     f"|---------|------|------|------------|",
     f"| design-service | 7020 | Agent registry (PostgreSQL) | Forge CRUD + MCP tools |",
-    f"| deploy-service | 7030 | Activation lifecycle | Forge deploy/undeploy + export |",
     f"| ingestion-service | 7002 | Knowledge ingestion → Weaviate | Direct POST /api/ingest |",
     f"| agent-chat-service | 7001 | RAG pipeline (embed→search→answer) | Chainlit chat + MCP rag_chat |",
     f"| feedback-service | 7003 | Feedback storage (JSONL) | Chainlit thumbs + MCP tools |",

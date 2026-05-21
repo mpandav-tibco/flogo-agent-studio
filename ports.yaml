@@ -64,12 +64,12 @@ other_services:
     port: 7030
     description: "Deploy service — POST/DELETE/GET /api/v1/agents/{agentId}/deploy (activate/deactivate), GET /api/v1/agents/{agentId}/export/kubernetes|docker-compose (manifest generation), GET /api/health"
     app: "apps/deploy-service.flogo"
-    status: active  # Sprint 5
+    status: retired  # v1: functionality absorbed into runtime-manager (deployment.py port 7050)
 
   chainlit-ui:
     port: 7080
     description: "Chainlit chat UI — shared/dev mode (AGENT_ID not set). Multi-agent selector, RAG chat, feedback. Run: chainlit run chainlit/app.py --port 7080"
-    service: "ui/chainlit/app.py"
+    service: "services/agent/ui/chainlit/app.py"
     status: active  # Phase 2
 
   runtime-manager:

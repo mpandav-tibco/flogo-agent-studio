@@ -72,10 +72,17 @@ echo "  Push          : $PUSH"
 echo "=================================================="
 
 # ── Validate prerequisites ────────────────────────────────────────────────────
+# Look for flogobuild: tools/flogobuild/linux_amd64/ (committed) then PATH
 if ! command -v flogobuild &>/dev/null; then
-    echo "ERROR: flogobuild not found in PATH."
-    echo "Run this script inside the devcontainer — flogobuild is mounted at /usr/local/bin/flogobuild."
-    exit 1
+    _fb_tool="$PROJECT_ROOT/tools/flogobuild/linux_amd64/flogobuild"
+    if [[ -x "$_fb_tool" ]]; then
+        export PATH="$(dirname "$_fb_tool"):$PATH"
+        echo "Using flogobuild from tools/flogobuild/linux_amd64/"
+    else
+        echo "ERROR: flogobuild not found in tools/flogobuild/linux_amd64/ or PATH."
+        echo "Place flogobuild binary at tools/flogobuild/linux_amd64/flogobuild or run inside the devcontainer."
+        exit 1
+    fi
 fi
 if ! docker info &>/dev/null; then
     echo "ERROR: Docker is not running. Start Docker Desktop and retry."
@@ -85,14 +92,14 @@ fi
 mkdir -p "$LINUX_BIN_DIR"
 
 # ── Service catalogue ─────────────────────────────────────────────────────────
-# Maps service binary name → (flogo source file, docker image tag)
+# Maps service binary name → flogo source file (platform or agent layer)
+# deploy-service is decommissioned and excluded.
 declare -A FLOGO_SRC=(
     ["agent-chat-service"]="agent-chat-service.flogo"
     ["sse-stream-service"]="sse-stream-service.flogo"
     ["ingestion-service"]="ingestion-service.flogo"
     ["feedback-service"]="feedback-service.flogo"
     ["design-service"]="design-service.flogo"
-    ["deploy-service"]="deploy-service.flogo"
     ["rule-engine-service"]="rule-engine-service.flogo"
     ["agent-builder-service"]="agent-builder-service.flogo"
     ["mcp-server"]="mcp-server.flogo"
@@ -104,11 +111,19 @@ declare -A IMAGE_TAG=(
     ["ingestion-service"]="ingestion"
     ["feedback-service"]="feedback"
     ["design-service"]="design-service"
-    ["deploy-service"]="deploy-service"
     ["rule-engine-service"]="rule-engine"
     ["agent-builder-service"]="agent-builder"
     ["mcp-server"]="mcp-server"
 )
+
+# Resolve flogo source file across platform and agent layers
+_find_flogo() {
+    local fname="$1"
+    for _dir in "services/platform/flogo" "services/agent/flogo"; do
+        [[ -f "$PROJECT_ROOT/$_dir/$fname" ]] && echo "$_dir/$fname" && return 0
+    done
+    return 1
+}
 
 # Filter to requested service if --service passed
 SERVICES=("${!FLOGO_SRC[@]}")
@@ -129,12 +144,12 @@ if [[ "$SKIP_COMPILE" == "true" ]]; then
     echo "  Skipping compilation (--skip-compile set)."
 else
     for svc in "${SERVICES[@]}"; do
-        flogo_file="$PROJECT_ROOT/services/apps/${FLOGO_SRC[$svc]}"
-
-        if [[ ! -f "$flogo_file" ]]; then
-            echo "  SKIP $svc — source not found: services/apps/${FLOGO_SRC[$svc]}"
+        flogo_rel=$(_find_flogo "${FLOGO_SRC[$svc]}")
+        if [[ -z "$flogo_rel" ]]; then
+            echo "  SKIP $svc — source not found in services/platform/flogo or services/agent/flogo"
             continue
         fi
+        flogo_file="$PROJECT_ROOT/$flogo_rel"
 
         echo ""
         echo "  Compiling $svc ..."
@@ -176,7 +191,8 @@ echo ""
 echo "── Step 3: Building Docker images ──────────────────────────────────────"
 
 for svc in "${SERVICES[@]}"; do
-    flogo_file="services/apps/${FLOGO_SRC[$svc]}"
+    flogo_rel=$(_find_flogo "${FLOGO_SRC[$svc]}")
+    flogo_file="${flogo_rel:-services/agent/flogo/${FLOGO_SRC[$svc]}}"
     image="${FLOGO_IMAGE}:${IMAGE_TAG[$svc]}-${VERSION}"
 
     if [[ ! -f "$PROJECT_ROOT/$flogo_file" ]]; then
@@ -202,9 +218,9 @@ echo "── Step 4: Building chainlit image ───────────�
 CHAINLIT_IMAGE="${FLOGO_IMAGE}:chainlit-${VERSION}"
 docker build \
     --platform "$PLATFORM" \
-    -f  "$PROJECT_ROOT/ui/chainlit/Dockerfile" \
+    -f  "$PROJECT_ROOT/services/agent/ui/chainlit/Dockerfile" \
     -t  "$CHAINLIT_IMAGE" \
-    "$PROJECT_ROOT/ui/chainlit"
+    "$PROJECT_ROOT/services/agent/ui/chainlit"
 echo "  ✓ $CHAINLIT_IMAGE"
 
 # ── Step 5: Push (optional) ───────────────────────────────────────────────────

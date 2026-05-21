@@ -18,16 +18,16 @@ FROM golang:1.25-bookworm
 # Install Docker CLI (client only — daemon runs on the host via socket mount)
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        gnupg \
-        unzip \
+    ca-certificates \
+    curl \
+    gnupg \
+    unzip \
     && install -m 0755 -d /etc/apt/keyrings \
     && curl -fsSL https://download.docker.com/linux/debian/gpg \
-       | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+    | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
     && echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] \
-       https://download.docker.com/linux/debian bookworm stable" \
-       > /etc/apt/sources.list.d/docker.list \
+    https://download.docker.com/linux/debian bookworm stable" \
+    > /etc/apt/sources.list.d/docker.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends docker-ce-cli \
     && rm -rf /var/lib/apt/lists/*

@@ -22,7 +22,6 @@ version: "3.9"
 #   7010  agent-builder-service
 #   7020  design-service
 #   7025  forge UI (nginx)
-#   7030  deploy-service
 #   7080  chainlit-ui
 #   7099  sse-stream-service (SSE event bus)
 #   3333  mcp-server
@@ -292,31 +291,11 @@ services:
       timeout: 5s
       retries: 5
 
-  deploy-service:
-    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:deploy-service-${VERSION:-latest}
-    restart: unless-stopped
-    ports:
-      - "7030:7030"
-    environment:
-      <<: *flogo-env
-      FLOGO_APP_PROPS_ENV: auto
-      DESIGN_SERVICE_URL: http://design-service:7020
-    networks:
-      - agent-studio
-    depends_on:
-      design-service:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "wget", "-qO-", "http://localhost:7030/api/health" ]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
   # ── Forge UI ───────────────────────────────────────────────────────────────
 
   forge:
     build:
-      context: ./ui/forge
+      context: ./services/platform/ui/forge
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
@@ -325,8 +304,6 @@ services:
       - agent-studio
     depends_on:
       design-service:
-        condition: service_healthy
-      deploy-service:
         condition: service_healthy
       agent-builder:
         condition: service_healthy
@@ -337,7 +314,7 @@ services:
 
   chainlit-ui:
     build:
-      context: ./ui/chainlit
+      context: ./services/agent/ui/chainlit
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:

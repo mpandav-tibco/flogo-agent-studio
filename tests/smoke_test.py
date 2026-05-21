@@ -15,7 +15,6 @@ SERVICES = [
     ("sse-stream-service",     7005, "/api/health",  True),
     ("agent-builder-service",  7010, "/api/health",  True),
     ("design-service",         7020, "/api/health",  True),
-    ("deploy-service",         7030, "/api/health",  True),
     ("mcp-server",             7333, "/mcp",         True),
 ]
 

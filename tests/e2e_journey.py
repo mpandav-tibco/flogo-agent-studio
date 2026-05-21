@@ -139,7 +139,6 @@ SERVICES = [
     ("sse-stream-service",     7005),  # config-service (7004) retired — superseded by design-service (7020)
     ("agent-builder-service",  7010),
     ("design-service",         7020),
-    ("deploy-service",         7030),
 ]
 print()
 for svc, port in SERVICES:
@@ -682,64 +681,8 @@ if DS_AGENT_ID:
         print(f"       RESPONSE: {count} template(s)")
         LOG.append(f"       RESPONSE: {count} templates")
 
-# =============================================================================
-banner("PHASE 10 - DEPLOY-SERVICE (port 7030): Agent deployment lifecycle")
-# =============================================================================
-
-DEP_BASE = "http://localhost:7030/api/v1"
-
 if DS_AGENT_ID:
-    step(23, f"Deploy (activate) agent '{DS_AGENT_ID}'")
-    print(f"       REQUEST : POST {DEP_BASE}/agents/{DS_AGENT_ID}/deploy")
-    LOG.append(f"       REQUEST: POST /api/v1/agents/{DS_AGENT_ID}/deploy")
-    s, dep_body, el = req(f"{DEP_BASE}/agents/{DS_AGENT_ID}/deploy", "POST", {})
-    ok = show_result(s, el)
-    if ok and isinstance(dep_body, dict):
-        records = dep_body.get("records", [])
-        status = records[0].get("status") if records else "?"
-        print(f"       RESPONSE:")
-        print(f"         status          : {status}")
-        print(f"         records         : {len(records)}")
-        LOG.append(f"       RESPONSE: {dep_body}")
-    else:
-        print(f"       ERROR: {dep_body}"); all_ok = False
-
-    step(24, "Get deployment status")
-    print(f"       REQUEST : GET {DEP_BASE}/agents/{DS_AGENT_ID}/deploy")
-    LOG.append(f"       REQUEST: GET /api/v1/agents/{DS_AGENT_ID}/deploy")
-    s, dep_status, el = req(f"{DEP_BASE}/agents/{DS_AGENT_ID}/deploy")
-    ok = show_result(s, el)
-    if ok and isinstance(dep_status, dict):
-        records = dep_status.get("records", [])
-        status = records[0].get("status") if records else "?"
-        print(f"       RESPONSE: status={status}  records={len(records)}")
-        LOG.append(f"       RESPONSE: {dep_status}")
-
-    step(25, "Export Kubernetes YAML")
-    print(f"       REQUEST : GET {DEP_BASE}/agents/{DS_AGENT_ID}/export/kubernetes")
-    LOG.append(f"       REQUEST: GET /api/v1/agents/{DS_AGENT_ID}/export/kubernetes")
-    s, k8s_body, el = req(f"{DEP_BASE}/agents/{DS_AGENT_ID}/export/kubernetes")
-    ok = show_result(s, el)
-    if ok and isinstance(k8s_body, dict):
-        records = k8s_body.get("records", [])
-        print(f"       RESPONSE: {len(records)} record(s)")
-        if records:
-            yaml_preview = str(records[0])[:200]
-            print(f"         preview         : {yaml_preview}...")
-        LOG.append(f"       RESPONSE: {k8s_body}")
-
-    step(26, "Deactivate (undeploy) agent")
-    print(f"       REQUEST : DELETE {DEP_BASE}/agents/{DS_AGENT_ID}/deploy")
-    LOG.append(f"       REQUEST: DELETE /api/v1/agents/{DS_AGENT_ID}/deploy")
-    s, undep_body, el = req(f"{DEP_BASE}/agents/{DS_AGENT_ID}/deploy", "DELETE")
-    ok = show_result(s, el)
-    if ok:
-        records = undep_body.get("records", []) if isinstance(undep_body, dict) else []
-        status = records[0].get("status") if records else "?"
-        print(f"       RESPONSE: status={status}")
-        LOG.append(f"       RESPONSE: {undep_body}")
-
-    step(27, "Cleanup — delete test agent from design-service")
+    step(23, "Cleanup — delete test agent from design-service")
     print(f"       REQUEST : DELETE {DS_BASE}/agents/{DS_AGENT_ID}")
     LOG.append(f"       REQUEST: DELETE /api/v1/agents/{DS_AGENT_ID}")
     s, del_body, el = req(f"{DS_BASE}/agents/{DS_AGENT_ID}", "DELETE")
@@ -900,7 +843,6 @@ print(f"""
   | sse-stream-service          | 7005 | Broadcast SSE event + RAG+LLM streaming pipeline   |
   | mcp-server                  | 3333 | MCP gateway - all 6 tools via JSON-RPC             |
   | design-service              | 7020 | Create/read/update/delete agents (PostgreSQL)      |
-  | deploy-service              | 7030 | Activate/deactivate/export k8s+docker-compose      |
   +-----------------------------+------+----------------------------------------------------+
 
   MCP TOOLS EXERCISED:
@@ -911,7 +853,7 @@ print(f"""
     rag_chat        -> agent-chat        POST /api/chat (Weaviate RAG)
     analyze_flogo   -> rule-engine       POST /api/analyze
 
-  RESULT   : {"ALL 32 STEPS PASSED" if all_ok else "SOME STEPS FAILED - see above"}
+  RESULT   : {"ALL 28 STEPS PASSED" if all_ok else "SOME STEPS FAILED - see above"}
   STATUS   : {"SUCCESS" if all_ok else "FAILED"}
 """)
 LOG.append(f"\nRESULT: {'ALL STEPS PASSED' if all_ok else 'SOME STEPS FAILED'}")

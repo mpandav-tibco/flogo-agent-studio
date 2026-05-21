@@ -258,7 +258,7 @@ flogo-agent-studio/
 │   └── chainlit/      # Chainlit chat UI (Python, port 7080)
 ├── config/
 │   ├── agents/        # Runtime agent configs (UUID-named, gitignored)
-│   ├── agent-templates/ # Seed templates (analyzer, rag-assistant, support)
+│   ├── agents/          # Seed templates (analyzer, rag-assistant, support)
 │   └── rules/         # YAML rule sets for rule-engine-service
 ├── data/feedback/     # JSONL feedback storage (gitignored)
 ├── tests/             # Test suite
