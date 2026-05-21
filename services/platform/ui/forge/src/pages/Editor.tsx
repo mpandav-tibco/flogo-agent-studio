@@ -867,7 +867,7 @@ export default function Editor() {
 
                 {currentStatus === "active" && (
                   <a
-                    href={`${import.meta.env.VITE_CHAINLIT_URL ?? "http://localhost:7080"}?agent_id=${agent?.id ?? ""}`}
+                    href={`${agent?.config?.chatUiUrl || import.meta.env.VITE_CHAINLIT_URL || "http://localhost:7080"}?agent_id=${agent?.id ?? ""}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-400 px-3 py-1.5 rounded-lg transition-colors"
@@ -1135,7 +1135,7 @@ export default function Editor() {
                   <span className="font-medium">How feedback is collected:</span> After each chat response in Chainlit, users can give a thumbs up/down or a star rating. Those ratings are stored automatically and appear here.
                   {currentStatus === "active" && (
                     <a
-                      href={`${import.meta.env.VITE_CHAINLIT_URL ?? "http://localhost:7080"}?agent_id=${agent?.id ?? ""}`}
+                      href={`${agent?.config?.chatUiUrl || import.meta.env.VITE_CHAINLIT_URL || "http://localhost:7080"}?agent_id=${agent?.id ?? ""}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="ml-2 underline hover:text-blue-600"
@@ -1290,7 +1290,7 @@ export default function Editor() {
 
                 {currentStatus === "active" && (
                   <a
-                    href={import.meta.env.VITE_CHAINLIT_URL ?? "http://localhost:7080"}
+                    href={`${agent?.config?.chatUiUrl || import.meta.env.VITE_CHAINLIT_URL || "http://localhost:7080"}?agent_id=${agent?.id ?? ""}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-medium text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-400 transition-colors"
