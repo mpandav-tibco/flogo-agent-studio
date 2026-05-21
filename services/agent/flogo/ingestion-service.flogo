@@ -327,7 +327,7 @@
           "name": "ingest_confluence"
         },
         {
-          "description": "Receive a binary file via multipart, extract text using built-in PDF/DOCX/TXT parser (FileName+FileContent path), chunk and embed into VectorDB.",
+          "description": "Receive a binary file via multipart. Sends to Docling /v0/markdown for high-quality structured Markdown extraction, then ingests with heading chunking strategy. Falls back to built-in extractor on Docling error.",
           "settings": {
             "APISpecPath": "",
             "Method": "POST",
@@ -1449,17 +1449,17 @@
           },
           {
             "id": 5,
-            "from": "DoclingExtract",
-            "to": "IngestFileDirect",
-            "type": "error",
-            "label": "Docling error fallback"
-          },
-          {
-            "id": 6,
             "from": "IngestFileDocling",
             "to": "ReturnDocling",
             "type": "label",
             "label": "IngestFileDocling to Return"
+          },
+          {
+            "id": 6,
+            "from": "DoclingExtract",
+            "to": "IngestFileDirect",
+            "type": "error",
+            "label": "Docling error fallback"
           },
           {
             "id": 7,
@@ -1572,11 +1572,33 @@
                 "responseOutput": "JSON"
               },
               "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  },
+                  "multipartForm": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"},\"required\":{\"type\":\"string\"},\"schema\":{\"type\":\"string\"}}}}",
+                    "fe_metadata": "[{\"name\":\"files\",\"type\":\"file\",\"required\":\"\",\"schema\":\"\"}]"
+                  }
+                },
                 "output": {
                   "responseBody": {
                     "type": "json",
-                    "value": "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"markdown\":{\"type\":\"string\"},\"filename\":{\"type\":\"string\"}}}",
+                    "value": "{\"type\":\"object\",\"properties\":{\"markdown\":{\"type\":\"string\"},\"filename\":{\"type\":\"string\"}}}",
                     "fe_metadata": "{\"type\":\"object\",\"properties\":{\"markdown\":{\"type\":\"string\"},\"filename\":{\"type\":\"string\"}}}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
                   }
                 }
               },
@@ -1678,7 +1700,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjQ1MCwieSI6MjUwfSwiSW5nZXN0RmlsZSI6eyJ4Ijo2NTAsInkiOjM1MH0sIlJldHVybiI6eyJ4Ijo4NTAsInkiOjQ1MH19",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjQ1MCwieSI6MjUwfSwiRG9jbGluZ0V4dHJhY3QiOnsieCI6NjUwLCJ5IjozNTB9LCJJbmdlc3RGaWxlRG9jbGluZyI6eyJ4Ijo4NTAsInkiOjQ1MH0sIlJldHVybkRvY2xpbmciOnsieCI6MTA1MCwieSI6NTUwfSwiSW5nZXN0RmlsZURpcmVjdCI6eyJ4Ijo4NTAsInkiOjY1MH0sIlJldHVybiI6eyJ4IjoxMDUwLCJ5Ijo3NTB9fQ==",
         "metadata": {
           "input": [
             {
@@ -1747,7 +1769,12 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:TV0uvts9WJ+mfYHGG/BjRRC4WhmJZs8m"
+      "value": "SECRET:mp5HXPpPGSS7bdlrZLl9txo5Kp3yzWNB"
+    },
+    {
+      "name": "DOCLING_MARKDOWN_URL",
+      "type": "string",
+      "value": "http://localhost:8001/v0/markdown"
     },
     {
       "name": "VectorDB.vectordb-weaviate.Connection_Name",
@@ -1818,11 +1845,6 @@
       "name": "VectorDB.vectordb-weaviate.Embedding_Base_URL",
       "type": "string",
       "value": "http://localhost:11434/v1"
-    },
-    {
-      "name": "DOCLING_MARKDOWN_URL",
-      "type": "string",
-      "value": "http://localhost:8001/v0/markdown"
     }
   ],
   "specs": {
@@ -1841,30 +1863,30 @@
       "ref": "#connector",
       "isGlobal": false,
       "settings": {
-        "name": "=$property[\"VectorDB.vectordb-weaviate.Connection_Name\"]",
-        "dbType": "=$property[\"VectorDB.vectordb-weaviate.DB_Provider\"]",
-        "host": "=$property[\"VectorDB.vectordb-weaviate.Host\"]",
-        "port": "=$property[\"VectorDB.vectordb-weaviate.Port\"]",
-        "apiKey": "=$property[\"VectorDB.vectordb-weaviate.API_Key\"]",
-        "useTLS": "=$property[\"VectorDB.vectordb-weaviate.Secure_Connection\"]",
+        "name": "vectordb-weaviate",
+        "dbType": "weaviate",
+        "host": "localhost",
+        "port": 18080,
+        "apiKey": "",
+        "useTLS": false,
         "tlsInsecureSkipVerify": false,
         "tlsServerName": "",
         "caCert": "",
         "clientCert": "",
         "clientKey": "",
-        "timeoutSeconds": "=$property[\"VectorDB.vectordb-weaviate.Timeout_(seconds)\"]",
-        "maxRetries": "=$property[\"VectorDB.vectordb-weaviate.Max_Retries\"]",
-        "retryBackoffMs": "=$property[\"VectorDB.vectordb-weaviate.Retry_Backoff_(ms)\"]",
+        "timeoutSeconds": 30,
+        "maxRetries": 3,
+        "retryBackoffMs": 500,
         "grpcPort": 50051,
-        "scheme": "=$property[\"VectorDB.vectordb-weaviate.HTTP_Scheme\"]",
+        "scheme": "http",
         "username": "",
         "password": "",
         "dbName": "default",
         "defaultMetricType": "cosine",
-        "enableEmbedding": "=$property[\"VectorDB.vectordb-weaviate.Configure_Embedding_Provider\"]",
-        "embeddingProvider": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Provider\"]",
-        "embeddingAPIKey": "=$property[\"VectorDB.vectordb-weaviate.Embedding_API_Key\"]",
-        "embeddingBaseURL": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Base_URL\"]"
+        "enableEmbedding": true,
+        "embeddingProvider": "Ollama",
+        "embeddingAPIKey": "",
+        "embeddingBaseURL": "http://localhost:11434/v1"
       }
     }
   },
@@ -2124,7 +2146,7 @@
                     }
                   }
                 },
-                "description": "Receive a binary file via multipart, extract text using built-in PDF/DOCX/TXT parser (FileName+FileContent path), chunk and embed into VectorDB.",
+                "description": "Receive a binary file via multipart. Sends to Docling /v0/markdown for high-quality structured Markdown extraction, then ingests with heading chunking strategy. Falls back to built-in extractor on Docling error.",
                 "consumes": [
                   "multipart/form-data"
                 ]

@@ -298,9 +298,10 @@ def _modify_flogo_port(src: Path, dst: Path, port_map: dict[str, int]):
         trigger_id = trigger.get("id", "")
         if "settings" not in trigger or "port" not in trigger["settings"]:
             continue
-        # Try to match by trigger ref suffix (e.g. "#rest", "#trigger")
+        # Try to match by trigger ref suffix — sort longest key first to avoid
+        # "#rest" matching before "#rest_1" (substring collision)
         matched_port = None
-        for key, p in port_map.items():
+        for key, p in sorted(port_map.items(), key=lambda kv: -len(kv[0])):
             if key.lower() in ref.lower() or key.lower() in trigger_id.lower():
                 matched_port = p
                 break
@@ -493,12 +494,13 @@ async def _start_runtime(agent: dict) -> dict:
     if not await _ensure_binary(chat_src, "agent-chat-service"):
         raise RuntimeError("agent-chat-service binary unavailable and could not be built")
 
-    # One flogo file now carries three triggers: #rest (chat), #rest_1 (SSE REST), #trigger (SSE events)
+    # One flogo file now carries three triggers: AgentChatRESTTrigger (chat),
+    # SSEStreamRESTTrigger (SSE REST), SSEEventBus (SSE events).
+    # Both REST triggers share ref #rest_1, so we match by trigger id.
     _modify_flogo_port(chat_src, chat_flogo, {
-        "#rest":    ports["chat"],
-        "#rest_1":  ports["sse_rest"],
-        "#trigger": ports["sse_events"],
-        "ssestream": ports["sse_rest"],   # fallback label match
+        "AgentChatRESTTrigger": ports["chat"],
+        "SSEStreamRESTTrigger": ports["sse_rest"],
+        "SSEEventBus":          ports["sse_events"],
     })
     _generate_env_file(
         SERVICES_AGENT_ENV / "agent-chat-service.env",
