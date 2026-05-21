@@ -5,12 +5,12 @@
     "github.com/tibco/flogo-general/src/app/General/activity/log",
     "github.com/tibco/wi-postgres/src/app/PostgreSQL/activity/query",
     "github.com/project-flogo/contrib/activity/actreturn",
+    "github.com/tibco/flogo-files/src/app/File/activity/write",
+    "github.com/tibco/flogo-files/src/app/File/activity/read",
     "github.com/tibco/flogo-general/src/app/General/trigger/rest",
     "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/string",
-    "github.com/tibco/wi-postgres/src/app/PostgreSQL/connector/connection",
-    "github.com/tibco/flogo-files/src/app/File/activity/write",
-    "github.com/tibco/flogo-files/src/app/File/activity/read"
+    "github.com/tibco/wi-postgres/src/app/PostgreSQL/connector/connection"
   ],
   "name": "platform-service",
   "description": "Agent Studio design-time service on port 7020. PostgreSQL-backed CRUD for agent definitions.",
@@ -77,6 +77,11 @@
                 "type": "json",
                 "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
                 "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              },
+              "body": {
+                "type": "json",
+                "value": "{\"$schema\": \"http://json-schema.org/draft-04/schema#\", \"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"description\": {\"type\": \"string\"}, \"config\": {\"type\": \"object\"}, \"template\": {\"type\": \"string\"}}}",
+                "fe_metadata": "{\"name\": \"my-agent\", \"description\": \"Agent description\", \"config\": {}, \"template\": \"default\"}"
               }
             }
           },
@@ -148,8 +153,7 @@
               "status": "=$.queryParams.status"
             },
             "output": {
-              "code": "=$.code",
-              "data": "=$.data"
+              "code": "=$.code"
             }
           },
           "reply": {
@@ -166,6 +170,11 @@
               }
             },
             "output": {
+              "queryParams": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"status\":{\"type\":\"string\"}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"status\",\"type\":\"string\",\"repeating\":\"\",\"required\":\"\"}]"
+              },
               "headers": {
                 "type": "json",
                 "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
@@ -220,6 +229,11 @@
                 "type": "json",
                 "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
                 "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+              },
+              "body": {
+                "type": "json",
+                "value": "{\"$schema\": \"http://json-schema.org/draft-04/schema#\", \"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"description\": {\"type\": \"string\"}, \"config\": {\"type\": \"object\"}, \"status\": {\"type\": \"string\"}, \"template\": {\"type\": \"string\"}}}",
+                "fe_metadata": "{\"name\": \"my-agent\", \"description\": \"Agent description\", \"config\": {}, \"status\": \"active\", \"template\": \"default\"}"
               }
             }
           },
@@ -275,7 +289,7 @@
           "name": "delete_agent"
         },
         {
-          "description": "Hard-delete agent permanently from DB. Only call on already-archived agents.",
+          "description": "Hard-delete agent \u2014 permanently removes row from agents table.",
           "settings": {
             "Method": "DELETE",
             "reqType": "application/json",
@@ -313,6 +327,11 @@
                 "type": "json",
                 "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]}",
                 "fe_metadata": "[{\"parameterName\":\"agentId\",\"type\":\"string\"}]"
+              },
+              "headers": {
+                "type": "json",
+                "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
               }
             }
           },
@@ -661,7 +680,7 @@
                 "Schema": "public",
                 "Query": "INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
                 "manualmode": false,
-                "State": "6b167662-530c-4777-989b-cf15978cd388INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
+                "State": "3db282ce-27ed-457d-8959-e2e193857272INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -774,7 +793,7 @@
                 "Schema": "public",
                 "Query": "SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
                 "manualmode": false,
-                "State": "6a0567a3-746e-4b35-8f18-e4ab856619c8SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
+                "State": "64ffadb1-059c-4203-8869-a3eb1e6b076aSELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -873,7 +892,7 @@
                 "Schema": "public",
                 "Query": "SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC",
                 "manualmode": false,
-                "State": "436c4a00-9454-4ac4-babf-328f2b2d16f3SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC"
+                "State": "2366f19c-f7a2-4c03-b0b3-34d5e829b1baSELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC"
               }
             }
           },
@@ -965,7 +984,7 @@
                 "Schema": "public",
                 "Query": "UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
                 "manualmode": false,
-                "State": "81f7d73b-1baa-4632-8011-5fa9e6805783UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
+                "State": "725a2bab-961f-496c-8ff4-d155356f9224UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -1072,7 +1091,7 @@
                 "Schema": "public",
                 "Query": "UPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
                 "manualmode": false,
-                "State": "8f0627f8-edf2-46de-944c-9a83d9dba32aUPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
+                "State": "f268e5c7-331f-4eeb-8df9-93ccb36e95acUPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -1176,7 +1195,7 @@
                 "Schema": "public",
                 "Query": "DELETE FROM agents WHERE id=?agentId RETURNING id",
                 "manualmode": false,
-                "State": "DELETE FROM agents WHERE id=?agentId RETURNING id",
+                "State": "81996a19-4359-4907-a247-03810a1b15c9DELETE FROM agents WHERE id=?agentId RETURNING id",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -1647,7 +1666,7 @@
                 "Schema": "public",
                 "Query": "SELECT 1 AS alive",
                 "manualmode": false,
-                "State": "aece208b-2ef3-4310-912a-edabdabe70b7SELECT 1 AS alive",
+                "State": "67ca52e4-ab59-4a1d-8e48-7cf0b8479c71SELECT 1 AS alive",
                 "input": {
                   "mapping": {
                     "parameters": {}
@@ -1750,7 +1769,7 @@
                 "fetchMetadata": "",
                 "Fields": [],
                 "RuntimeQuery": "",
-                "State": "1fa6b1ef-6599-49bf-b66f-381ccf461668SELECT config->>'collectionName' as \"collectionName\", config->>'topK' as \"topK\", config->>'systemPrompt' as \"systemPrompt\", config->>'llmProvider' as \"llmProvider\", config->>'llmModel' as \"llmModel\", config->>'llmBaseUrl' as \"llmBaseUrl\", config->>'temperature' as \"temperature\", config->>'chunkStrategy' as \"chunkStrategy\" FROM agents WHERE id = ?agentId",
+                "State": "0f97f135-7e55-4e2d-835e-cba8fdefeb0eSELECT config->>'collectionName' as \"collectionName\", config->>'topK' as \"topK\", config->>'systemPrompt' as \"systemPrompt\", config->>'llmProvider' as \"llmProvider\", config->>'llmModel' as \"llmModel\", config->>'llmBaseUrl' as \"llmBaseUrl\", config->>'temperature' as \"temperature\", config->>'chunkStrategy' as \"chunkStrategy\" FROM agents WHERE id = ?agentId",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -2283,7 +2302,7 @@
     {
       "name": "PostgreSQL.Design_Service_DB.Password",
       "type": "string",
-      "value": "SECRET:2i3S5Wj6CDX60c96ety/fg3Bt3m7xVDw"
+      "value": "SECRET:6XQGcT26zUw6KNh9n69cBNG/jUQmCm3p"
     },
     {
       "name": "PostgreSQL.Design_Service_DB.Maximum_Open_Connections",
@@ -2328,7 +2347,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:jCP9BxTqY3nD3MJRU4GkyH1ydy7gz4BZ"
+      "value": "SECRET:a+JoenlFYoKMuQCFDRTHOWjU/knGCFLv"
     },
     {
       "name": "FEEDBACK_LOG_PATH",
@@ -2371,21 +2390,21 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby93aS1wb3N0Z3Jlcy9zcmMvYXBwL1Bvc3RncmVTUUwiLCJpZCI6IlBvc3RncmVTUUwiLCJ2ZXJzaW9uIjoiMi43LjEiLCJ0YWciOiIyLjcuMS1iMDEiLCJuYW1lIjoiUG9zdGdyZVNRTCIsInMzbG9jYXRpb24iOiJUaWJjby9Qb3N0Z3JlU1FMIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby93aS1wb3N0Z3Jlcy9zcmMvYXBwL1Bvc3RncmVTUUwiLCJpZCI6IlBvc3RncmVTUUwiLCJ2ZXJzaW9uIjoiMi43LjEiLCJ0YWciOiIyLjcuMS1iMDEiLCJuYW1lIjoiUG9zdGdyZVNRTCIsInMzbG9jYXRpb24iOiJUaWJjby9Qb3N0Z3JlU1FMIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLWZpbGVzL3NyYy9hcHAvRmlsZSIsImlkIjoiRmlsZSIsInZlcnNpb24iOiIxLjAuMCIsInRhZyI6IjEuMC4wLWIxNCIsIm5hbWUiOiJGaWxlIiwiczNsb2NhdGlvbiI6IlRpYmNvL0ZpbGUiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfV0=",
   "metadata": {
     "endpoints": [
       {
         "protocol": "http",
         "port": "7020",
         "spec": {
-          "name": "design-service",
+          "name": "platform-service",
           "version": "1.0.0"
         },
-        "title": "DesignRESTTrigger",
+        "title": "PlatformRESTTrigger",
         "swagger": {
           "swagger": "2.0",
           "info": {
-            "title": "design-service",
+            "title": "platform-service",
             "version": "1.0.0",
             "description": "REST trigger \u2014 design-service on port 7020"
           },
@@ -2420,6 +2439,13 @@
                 "summary": "list_agents",
                 "operationId": "get_api_v1_agents",
                 "parameters": [
+                  {
+                    "name": "status",
+                    "in": "query",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  },
                   {
                     "name": "Authorization",
                     "in": "header",
@@ -2534,6 +2560,40 @@
                 ]
               }
             },
+            "/api/v1/agents/{agentId}/purge": {
+              "delete": {
+                "summary": "purge_agent",
+                "operationId": "delete_api_v1_agents_agentId_purge",
+                "parameters": [
+                  {
+                    "name": "agentId",
+                    "in": "path",
+                    "description": "Request parameter",
+                    "required": true,
+                    "type": "string"
+                  },
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Hard-delete agent \u2014 permanently removes row from agents table.",
+                "consumes": [
+                  "application/json"
+                ]
+              }
+            },
             "/api/v1/templates": {
               "get": {
                 "summary": "list_templates",
@@ -2612,9 +2672,119 @@
                 },
                 "description": "Flogo Flow created with Flogo Design"
               }
+            },
+            "/api/feedback": {
+              "post": {
+                "summary": "submit_feedback",
+                "operationId": "post_api_feedback",
+                "parameters": [
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  },
+                  {
+                    "name": "body",
+                    "in": "body",
+                    "description": "request body parameter",
+                    "required": true,
+                    "schema": {
+                      "$ref": "#/definitions/schema1"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Appends one feedback record to FEEDBACK_LOG_PATH using OOTB Write File with overwrite=false (append mode). textContent is the body object; each record is followed by a newline.",
+                "consumes": [
+                  "application/json"
+                ]
+              },
+              "get": {
+                "summary": "get_feedback",
+                "operationId": "get_api_feedback",
+                "parameters": [
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Reads the full feedback log using OOTB Read File. Returns textContent (raw JSON-lines). Client splits on newline to parse individual entries."
+              }
+            },
+            "/api/feedback/{agentId}": {
+              "get": {
+                "summary": "get_feedback_by_agent",
+                "operationId": "get_api_feedback_agentId",
+                "parameters": [
+                  {
+                    "name": "agentId",
+                    "in": "path",
+                    "description": "Request parameter",
+                    "required": true,
+                    "type": "string"
+                  },
+                  {
+                    "name": "Authorization",
+                    "in": "header",
+                    "description": "Request parameter",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Rest Response",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "Reads agent-specific feedback from FEEDBACK_DIR/{agentId}.jsonl using OOTB Read File."
+              }
             }
           },
-          "definitions": {}
+          "definitions": {
+            "schema1": {
+              "type": "object",
+              "properties": {
+                "agentId": {
+                  "type": "string"
+                },
+                "sessionId": {
+                  "type": "string"
+                },
+                "messageId": {
+                  "type": "string"
+                },
+                "rating": {
+                  "type": "string"
+                },
+                "comment": {
+                  "type": "string"
+                }
+              }
+            }
+          }
         }
       }
     ],
