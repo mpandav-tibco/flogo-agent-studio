@@ -712,7 +712,7 @@
                 "systemPrompt": "IMPORTANT: Output ONLY a raw JSON object. No markdown. No code fences. No backticks. No explanation. Your response MUST start with { and end with }. Using ``` will cause a fatal parse error. You are an AI agent configuration expert. Review the provided Flogo Agent Studio agent config and suggest improvements. Return a JSON object with two fields: \"improved\" (the full improved config JSON object) and \"changes\" (array of strings describing what changed and why). Focus on: systemPrompt clarity, appropriate temperature for the use case, correct tool selection, and meaningful description. Return ONLY the raw JSON object starting with { and ending with }."
               },
               "input": {
-                "userPrompt": "=string.concat(\"Review and improve this agent config: \", coerce.toString($activity[ReadCurrentConfig].responseBody), \". Recent user feedback (JSONL): \", coerce.toString($activity[ReadFeedback].responseBody), \". Additional context: \", coerce.toString($flow.body.feedback))",
+                "userPrompt": "=string.concat(\"Review and improve this agent config: \", coerce.toString($activity[ReadCurrentConfig].output.responseBody), \". Recent user feedback (JSONL): \", coerce.toString($activity[ReadFeedback].output.responseBody), \". Additional context: \", coerce.toString($flow.body.feedback))",
                 "conversationId": ""
               }
             }
