@@ -231,6 +231,7 @@ def _is_pid_running(pid: Optional[int]) -> bool:
         os.kill(pid, 0)
         return True
     except (ProcessLookupError, PermissionError):
+        log.debug("Process %s gone or no permission", pid)
         return False
 
 
@@ -382,6 +383,7 @@ async def _fetch_all_agents() -> list[dict]:
                     try:
                         cfg = json.loads(cfg)
                     except Exception:
+                        log.debug("Invalid JSON config for agent record, using {}")
                         cfg = {}
                 a["_cfg"] = cfg
                 result.append(a)
@@ -416,6 +418,7 @@ async def _patch_agent_urls(agent_id: str, record: dict):
                 try:
                     cfg = json.loads(cfg)
                 except Exception:
+                    log.debug("Invalid JSON config for agent [%s], using {}", agent_id[:8])
                     cfg = {}
 
             # Step 2 — merge runtime URL fields into config
@@ -842,6 +845,7 @@ def _generate_compose_yaml(agent: dict) -> str:
         try:
             cfg = json.loads(cfg)
         except Exception:
+            log.debug("Invalid JSON config for [%s], using {}", agent_id[:8])
             cfg = {}
 
     collection  = cfg.get("collectionName") or f"Agent_{agent_id.replace('-','')[:16]}"
@@ -1048,6 +1052,7 @@ async def _handle_docker_deploy(request: web.Request) -> web.Response:
     try:
         compose_yaml = _generate_compose_yaml(agent)
     except Exception as exc:
+        log.error("Failed to generate compose YAML for [%s]: %s", agent_id[:8], exc)
         return web.json_response({"error": f"Could not generate compose YAML: {exc}"}, status=500)
 
     # Write to a stable location so `docker compose` can reference it later
@@ -1066,8 +1071,10 @@ async def _handle_docker_deploy(request: web.Request) -> web.Response:
             ),
         )
     except subprocess.TimeoutExpired:
+        log.error("docker compose up timed out for [%s]", agent_id[:8])
         return web.json_response({"error": "docker compose up timed out (120s)"}, status=504)
     except Exception as exc:
+        log.error("docker compose up failed for [%s]: %s", agent_id[:8], exc)
         return web.json_response({"error": f"docker compose failed: {exc}"}, status=500)
 
     log.info("docker compose up for [%s] exit=%s", agent_id[:8], result.returncode)
@@ -1113,6 +1120,7 @@ async def _handle_docker_status(request: web.Request) -> web.Response:
             ),
         )
     except Exception as exc:
+        log.error("docker compose ps failed for [%s]: %s", agent_id[:8], exc)
         return web.json_response({"error": str(exc)}, status=500)
 
     containers: list = []
@@ -1154,6 +1162,7 @@ async def _handle_docker_stop(request: web.Request) -> web.Response:
             ),
         )
     except Exception as exc:
+        log.error("docker compose down failed for [%s]: %s", agent_id[:8], exc)
         return web.json_response({"error": str(exc)}, status=500)
 
     log.info("docker compose down for [%s] exit=%s", agent_id[:8], result.returncode)
@@ -1212,6 +1221,7 @@ async def _handle_start_agent(request: web.Request) -> web.Response:
     try:
         record = await _start_runtime(agent)
     except Exception as exc:
+        log.error("Failed to start runtime for [%s]: %s", agent_id[:8], exc)
         return web.json_response({"error": str(exc)}, status=500)
 
     return web.json_response(record, status=201)
@@ -1265,6 +1275,7 @@ async def _handle_ingestion_health(request: web.Request) -> web.Response:
             r = await client.get(f"http://localhost:{ing_port}/api/health")
             healthy = r.status_code in (200, 401)  # 401 = auth required = service is up
     except Exception:
+        log.debug("Ingestion health check unreachable on port %s", ing_port)
         healthy = False
 
     return web.json_response({
