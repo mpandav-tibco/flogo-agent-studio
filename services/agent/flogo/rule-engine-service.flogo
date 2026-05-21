@@ -58,18 +58,9 @@
             }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": {},
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": {}
           },
           "schemas": {
             "reply": {
@@ -87,8 +78,8 @@
               },
               "body": {
                 "type": "json",
-                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"content\":{\"type\":\"string\"},\"fileName\":{\"type\":\"string\"},\"parserOverride\":{\"type\":\"string\"},\"disabledRules\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"abc\":{\"type\":\"string\"}}}},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}}",
-                "fe_metadata": "{\n    \"content\": \"abc\",\n    \"fileName\": \"abc\",\n    \"parserOverride\": \"abc\",\n    \"disabledRules\":\n    [\n        {\n            \"abc\": \"\"\n        }\n    ],\n    \"tags\":\n    [\n        \"abc\"\n    ]\n}"
+                "value": "{\"$schema\": \"http://json-schema.org/draft-04/schema#\", \"type\": \"object\", \"properties\": {\"content\": {\"type\": \"string\"}, \"fileName\": {\"type\": \"string\"}, \"parserOverride\": {\"type\": \"string\"}, \"disabledRules\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}}",
+                "fe_metadata": "{\n    \"content\": \"abc\",\n    \"fileName\": \"abc\",\n    \"parserOverride\": \"abc\",\n    \"disabledRules\": [\n        \"abc\"\n    ],\n    \"tags\": [\n        \"abc\"\n    ]\n}"
               }
             }
           },
@@ -110,22 +101,12 @@
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            },
-            "input": {}
+            }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": {},
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": {}
           },
           "schemas": {
             "reply": {
@@ -219,9 +200,6 @@
                 "parserOverride": "=$flow.body.parserOverride",
                 "disabledRules": "=$flow.body.disabledRules",
                 "tags": "=$flow.body.tags"
-              },
-              "output": {
-                "success": false
               }
             }
           },
@@ -261,23 +239,33 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "Internal server error"
+                    }
                   }
                 }
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUnVsZUVuZ2luZTEiOnsieCI6Mzg4LCJ5IjoyNzV9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9LCJFcnJvclJldHVybiI6eyJ4IjozNTAsInkiOjIwMH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUnVsZUVuZ2luZTEiOnsieCI6Mzg4LCJ5IjoyNzV9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9LCJFcnJvclJldHVybiI6eyJ4Ijo2MDUsInkiOjE1OX19",
         "metadata": {
           "input": [
             {
               "name": "headers",
-              "type": "object"
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}}"
+              }
             },
             {
               "name": "body",
-              "type": "object"
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"content\":{\"type\":\"string\"},\"fileName\":{\"type\":\"string\"},\"parserOverride\":{\"type\":\"string\"},\"disabledRules\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}"
+              }
             },
             {
               "name": "requestURI",
@@ -294,8 +282,8 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
@@ -357,7 +345,7 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
@@ -386,11 +374,11 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "changeme"
+      "value": "SECRET:qP4hj7ZHIv/pB0CfWJEvtuDvznaWZKT8"
     }
   ],
   "connections": {},
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL21wYW5kYXYtdGliY28vZmxvZ28tY3VzdG9tLWV4dGVuc2lvbnMvYWN0aXZpdHkvcnVsZWVuZ2luZSIsImlkIjoiRGVmYXVsdCIsInZlcnNpb24iOiIxLjAuMCIsInRhZyI6IjEuMC4wIiwibmFtZSI6IlJ1bGUgRW5naW5lIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L3J1bGVlbmdpbmUiLCJpc1VzZXJFeHRlbnNpb24iOnRydWV9XQ==",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS9tcGFuZGF2LXRpYmNvL2Zsb2dvLWN1c3RvbS1leHRlbnNpb25zL2FjdGl2aXR5L3J1bGVlbmdpbmUiLCJpZCI6IkRlZmF1bHQiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJSdWxlIEVuZ2luZSIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9ydWxlZW5naW5lIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfV0=",
   "metadata": {
     "endpoints": [
       {
@@ -486,12 +474,7 @@
                 "disabledRules": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "properties": {
-                      "abc": {
-                        "type": "string"
-                      }
-                    }
+                    "type": "string"
                   }
                 },
                 "tags": {
