@@ -56,9 +56,8 @@ MANAGED_PORTS=(
   7025   # forge-ui (platform)
   7050   # runtime-manager (deployment.py)
   7097   # rule-engine (platform)
-  7003   # feedback (platform)
+  7020   # platform-service: design + feedback (merged)
   7010   # agent-builder (platform)
-  7020   # design (platform)
   7333   # mcp-server (platform)
   # Legacy static agent ports — cleaned up on startup so orphaned processes don't block port pool
   7080   # chainlit-ui (legacy static; now per-agent via deployment.py)
@@ -327,9 +326,8 @@ echo ""
 # that agent is activated from the AgentForge UI.
 SERVICES=(
   "services/bin/rule-engine-service:rule-engine:7097"      # shared Flogo analyser
-  "services/bin/feedback-service:feedback:7003"            # shared feedback store
+  "services/bin/platform-service:platform:7020"            # design + feedback (merged)
   "services/bin/agent-builder-service:agent-builder:7010"  # LLM config generation
-  "services/bin/design-service:design:7020"                # agent registry (Postgres)
   "services/bin/mcp-server:mcp-server:7333"                # MCP gateway
 )
 

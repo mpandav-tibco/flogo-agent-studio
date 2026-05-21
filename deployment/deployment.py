@@ -60,7 +60,7 @@ from aiohttp import web
 
 PORT               = int(os.getenv("RUNTIME_MANAGER_PORT", "7050"))
 DESIGN_URL         = os.getenv("DESIGN_SERVICE_URL",   "http://localhost:7020")
-FEEDBACK_URL       = os.getenv("FEEDBACK_SERVICE_URL", "http://localhost:7003")
+FEEDBACK_URL       = os.getenv("FEEDBACK_SERVICE_URL", "http://localhost:7020")  # merged into platform-service
 RECONCILE_INTERVAL = int(os.getenv("RECONCILE_INTERVAL", "15"))
 
 _AUTH_HEADER = os.getenv("SERVICE_AUTH_HEADER", "Basic ZmxvZ286Y2hhbmdlbWU=")

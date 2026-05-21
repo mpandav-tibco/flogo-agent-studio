@@ -17,10 +17,10 @@ version: "3.9"
 #   7097  rule-engine-service
 #   7001  agent-chat-service (chat REST)
 #   7002  ingestion-service
-#   7003  feedback-service
+#   7003  feedback-service (RETIRED — merged into platform-service at 7020)
 #   7005  agent-chat-service (SSE REST trigger, merged)
 #   7010  agent-builder-service
-#   7020  design-service
+#   7020  platform-service (design + feedback merged)
 #   7025  forge UI (nginx)
 #   7080  chainlit-ui
 #   7099  agent-chat-service (SSE event bus trigger, merged)
@@ -154,22 +154,30 @@ services:
       timeout: 5s
       retries: 5
 
-  feedback:
-    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:feedback-${VERSION:-latest}
+  platform-service:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:platform-service-${VERSION:-latest}
     restart: unless-stopped
     ports:
-      - "7003:7003"
+      - "7020:7020"
     environment:
       <<: *flogo-env
       FLOGO_APP_PROPS_ENV: auto
       FEEDBACK_LOG_PATH: /app/feedback/feedback.jsonl
       FEEDBACK_DIR: /app/feedback
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: agentforge
+      DB_USER: flogo
+      DB_PASSWORD: changeme
     volumes:
       - feedback_data:/app/feedback
     networks:
       - agent-studio
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
-      test: [ "CMD", "wget", "-qO-", "http://localhost:7003/api/health" ]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:7020/api/health" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -208,12 +216,12 @@ services:
       <<: *flogo-env
       FLOGO_APP_PROPS_ENV: auto
       LLM_MODEL: ${LLM_MODEL:-llama3.2:3b}
-      DESIGN_SERVICE_URL: http://design-service:7020
+      DESIGN_SERVICE_URL: http://platform-service:7020
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     networks:
       - agent-studio
     depends_on:
-      design-service:
+      platform-service:
         condition: service_healthy
     healthcheck:
       test: [ "CMD", "wget", "-qO-", "http://localhost:7010/api/health" ]
@@ -231,9 +239,9 @@ services:
       FLOGO_APP_PROPS_ENV: auto
       RULE_ENGINE_URL: http://rule-engine:7097/api/analyze
       CHAT_SERVICE_URL: http://agent-chat:7001/api/chat
-      DESIGN_SERVICE_URL: http://design-service:7020
-      FEEDBACK_SERVICE_URL: http://feedback:7003/api/feedback
-      FEEDBACK_SERVICE_BASE_URL: http://feedback:7003
+      DESIGN_SERVICE_URL: http://platform-service:7020
+      FEEDBACK_SERVICE_URL: http://platform-service:7020/api/feedback
+      FEEDBACK_SERVICE_BASE_URL: http://platform-service:7020
     networks:
       - agent-studio
     depends_on:
@@ -269,27 +277,9 @@ services:
 
   design-service:
     image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:design-service-${VERSION:-latest}
-    restart: unless-stopped
-    ports:
-      - "7020:7020"
-    environment:
-      <<: *flogo-env
-      FLOGO_APP_PROPS_ENV: auto
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_NAME: agentforge
-      DB_USER: flogo
-      DB_PASSWORD: changeme
-    networks:
-      - agent-studio
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "wget", "-qO-", "http://localhost:7020/api/health" ]
-      interval: 15s
-      timeout: 5s
-      retries: 5
+    # RETIRED: merged into platform-service (port 7020). Kept for backwards compat but not used.
+    profiles:
+      - legacy
 
   # ── Forge UI ───────────────────────────────────────────────────────────────
 
@@ -303,11 +293,11 @@ services:
     networks:
       - agent-studio
     depends_on:
-      design-service:
+      design-service:  # now platform-service
         condition: service_healthy
       agent-builder:
         condition: service_healthy
-      feedback:
+      platform-service:
         condition: service_healthy
 
   # ── Chainlit UI ────────────────────────────────────────────────────────────
@@ -320,9 +310,9 @@ services:
     ports:
       - "7080:7080"
     environment:
-      DESIGN_SERVICE_URL: http://design-service:7020
+      DESIGN_SERVICE_URL: http://platform-service:7020
       CHAT_SERVICE_URL: http://agent-chat:7001
-      FEEDBACK_SERVICE_URL: http://feedback:7003
+      FEEDBACK_SERVICE_URL: http://platform-service:7020
       SSE_SERVICE_URL: http://sse-stream:7005
       SSE_EVENTS_URL: http://sse-stream:7099
       REQUEST_TIMEOUT: "60"
@@ -331,13 +321,11 @@ services:
     networks:
       - agent-studio
     depends_on:
-      design-service:
+      platform-service:
         condition: service_healthy
       agent-chat:
         condition: service_healthy
       sse-stream:
-        condition: service_healthy
-      feedback:
         condition: service_healthy
     healthcheck:
       test: [ "CMD", "wget", "-qO-", "http://localhost:7080/healthz" ]

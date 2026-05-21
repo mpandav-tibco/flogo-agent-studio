@@ -7,9 +7,9 @@ import type { Agent } from "../types";
 
 
 const STATUS_STYLES: Record<string, string> = {
-  active:   "bg-green-100 text-green-800",
+  active: "bg-green-100 text-green-800",
   starting: "bg-blue-100 text-blue-700",
-  draft:    "bg-slate-100 text-slate-600",
+  draft: "bg-slate-100 text-slate-600",
   archived: "bg-red-50 text-red-600",
 };
 

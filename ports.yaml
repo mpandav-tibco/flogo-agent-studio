@@ -29,9 +29,9 @@ flogo_services:
 
   feedback:
     port: 7003
-    description: "Feedback service — POST /api/feedback, GET /api/feedback, GET /api/feedback/{agentId}, GET /api/health"
+    description: "Feedback service — merged into platform-service (port 7020). Port 7003 retired."
     app: "apps/feedback-service.flogo"
-    status: active  # Phase 1
+    status: merged  # Merged into platform-service (design + feedback combined binary, port 7020)
 
   config:
     port: 7004
@@ -42,6 +42,12 @@ flogo_services:
     port: 7005
     description: "SSE streaming — merged into agent-chat-service. Port 7005 is now the SSE REST trigger of the merged binary."
     status: merged  # Merged into agent-chat-service binary (port 7001 chat, 7005 SSE REST, 7099 SSE events)
+
+  platform-service:
+    port: 7020
+    description: "Platform service (design + feedback merged) — agent CRUD /api/v1/agents/*, templates, config, feedback /api/feedback/*, GET /api/health"
+    app: "services/platform/flogo/platform-service.flogo"
+    status: active  # Merged: design-service (7020) + feedback-service (7003)
 
   # 7006-7009 reserved for future Flogo services
 

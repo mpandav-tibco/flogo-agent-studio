@@ -339,12 +339,12 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
           {/* Health badge */}
           {agentId && (
             <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${!healthData ? "bg-gray-100 text-gray-400"
-                : healthData.healthy ? "bg-green-50 text-green-700 border border-green-200"
-                  : "bg-red-50 text-red-600 border border-red-200"
+              : healthData.healthy ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-red-50 text-red-600 border border-red-200"
               }`}>
               <span className={`w-1.5 h-1.5 rounded-full ${!healthData ? "bg-gray-300 animate-pulse"
-                  : healthData.healthy ? "bg-green-500"
-                    : "bg-red-500 animate-pulse"
+                : healthData.healthy ? "bg-green-500"
+                  : "bg-red-500 animate-pulse"
                 }`} />
               {!healthData
                 ? "checking\u2026"
@@ -355,8 +355,8 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
           )}
           <span
             className={`text-xs px-2 py-0.5 rounded font-mono ${collection
-                ? "bg-green-50 text-green-700 border border-green-200"
-                : "bg-amber-50 text-amber-700 border border-amber-200"
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-amber-50 text-amber-700 border border-amber-200"
               }`}
           >
             {collection || "no collection set"}
