@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LayoutTemplate, Plus, Search } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -15,8 +15,6 @@ export default function Gallery() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [activeTab, setActiveTab] = useState<StatusTab>("All");
   const [searchQuery, setSearchQuery] = useState("");
-  // Track agents whose services are spinning up so the card shows a spinner
-  const [startingAgentIds, setStartingAgentIds] = useState<Set<string>>(new Set());
 
   // Backend does not filter by status — always fetch all, filter client-side
   const { data: allAgents = [], isLoading, error } = useQuery({
@@ -27,21 +25,21 @@ export default function Gallery() {
   const deployMutation = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
       active ? undeployAgent(id) : deployAgent(id),
-    onSuccess: (_, { id, active }) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["agents"] });
-      if (!active) {
-        // Agent just activated — track it until the runtime reports "ready"
-        setStartingAgentIds((prev) => new Set([...prev, id]));
-      }
     },
   });
 
-  // Poll runtime-manager every 2s for agents that are still spinning up
-  const { data: runtimeReadiness } = useQuery({
-    queryKey: ["runtimeReadiness", [...startingAgentIds].sort().join(",")],
+  // Derive IDs of all active agents from the server list (survives page refresh)
+  const activeAgentIds = allAgents.filter((a) => a.status === "active").map((a) => a.id);
+
+  // Persistently poll runtime-manager readiness for every active agent.
+  // Polls every 3 s while any agent is starting; 15 s otherwise.
+  const { data: runtimeStates } = useQuery({
+    queryKey: ["runtimeStates", [...activeAgentIds].sort().join(",")],
     queryFn: async () => {
       const results = await Promise.allSettled(
-        [...startingAgentIds].map(async (id) => {
+        activeAgentIds.map(async (id) => {
           const rt = await getAgentRuntime(id);
           return [id, rt?.readiness ?? "starting"] as [string, string];
         })
@@ -52,25 +50,36 @@ export default function Gallery() {
           .map((r) => r.value)
       );
     },
-    enabled: startingAgentIds.size > 0,
-    refetchInterval: 2000,
+    enabled: activeAgentIds.length > 0,
+    refetchInterval: (query) => {
+      const data = query.state.data as Record<string, string> | undefined;
+      const anyStarting = data && Object.values(data).some((s) => s === "starting");
+      return anyStarting ? 3000 : 15000;
+    },
+    staleTime: 1000,
   });
 
-  // Remove agents from startingAgentIds once the runtime says they're ready
+  // When an agent transitions from "starting" → "ready"/"degraded", re-fetch the
+  // agents list so chatUiUrl and other patched fields are picked up from design-service.
+  const runtimeRef = useRef<Record<string, string>>({});
   useEffect(() => {
-    if (!runtimeReadiness) return;
-    const readyIds = Object.entries(runtimeReadiness)
-      .filter(([, s]) => s === "ready" || s === "degraded")
-      .map(([id]) => id);
-    if (readyIds.length > 0) {
-      setStartingAgentIds((prev) => {
-        const next = new Set(prev);
-        readyIds.forEach((id) => next.delete(id));
-        return next;
-      });
+    if (!runtimeStates) return;
+    const transitions = Object.entries(runtimeStates).filter(
+      ([id, s]) =>
+        (s === "ready" || s === "degraded") && runtimeRef.current[id] === "starting"
+    );
+    runtimeRef.current = { ...runtimeStates };
+    if (transitions.length > 0) {
       qc.invalidateQueries({ queryKey: ["agents"] });
     }
-  }, [runtimeReadiness, qc]);
+  }, [runtimeStates, qc]);
+
+  // An agent is "starting" when it's active but runtime hasn't confirmed "ready"/"degraded" yet
+  const isAgentStarting = (id: string): boolean => {
+    if (!activeAgentIds.includes(id)) return false;
+    const r = runtimeStates?.[id];
+    return r !== "ready" && r !== "degraded";
+  };
 
   const agentsByTab: Record<StatusTab, typeof allAgents> = {
     All: allAgents.filter((a) => a.status !== "archived"),
@@ -194,7 +203,7 @@ export default function Gallery() {
                   deployMutation.mutate({ id: agent.id, active: agent.status === "active" })
                 }
                 deployPending={deployMutation.isPending && deployMutation.variables?.id === agent.id}
-                isStarting={startingAgentIds.has(agent.id)}
+                isStarting={isAgentStarting(agent.id)}
               />
             ))}
           </div>

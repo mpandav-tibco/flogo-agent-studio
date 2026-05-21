@@ -101,6 +101,85 @@ def slot_ports(slot: int) -> dict[str, int]:
     return {name: base + offset for name, offset in _PORT_OFFSETS.items()}
 
 
+# ── Flogo binary build helpers ─────────────────────────────────────────────────
+
+_BUILD_RETRY_INTERVAL = 300   # seconds between retries after a failed build
+_build_failures: dict[str, float] = {}  # svc_name → epoch of last failed attempt
+
+
+def _detect_flogobuild() -> Optional[str]:
+    """Find flogobuild tool: looks in tools/flogobuild/<os>_<arch>/ then PATH."""
+    import platform as _platform
+    os_name = _platform.system().lower()          # darwin / linux
+    arch    = _platform.machine().lower()          # arm64 / x86_64 / amd64
+    if arch == "x86_64":
+        arch = "amd64"
+    local = PROJECT_ROOT / "tools" / "flogobuild" / f"{os_name}_{arch}" / "flogobuild"
+    if local.is_file() and os.access(str(local), os.X_OK):
+        return str(local)
+    found = shutil.which("flogobuild")
+    return found  # None if not found anywhere
+
+
+async def _ensure_binary(flogo_src: Path, svc_name: str) -> bool:
+    """Rebuild the named service binary when flogo source is newer than the binary.
+
+    Returns True when the binary is ready to use (either up-to-date or freshly built).
+    Returns False only when the binary is missing AND flogobuild is unavailable.
+
+    A failed build is not retried for _BUILD_RETRY_INTERVAL seconds so that the
+    reconcile loop does not hammer flogobuild on every cycle.
+    """
+    binary = PROJECT_ROOT / "bin" / svc_name
+    # Fast path: binary exists and is newer than (or same age as) the source
+    if binary.exists() and flogo_src.stat().st_mtime <= binary.stat().st_mtime:
+        return True
+
+    # Cooldown: if a recent build attempt already failed, wait before retrying
+    last_failure = _build_failures.get(svc_name, 0.0)
+    if binary.exists() and time.time() - last_failure < _BUILD_RETRY_INTERVAL:
+        log.debug(
+            "Skipping rebuild of %s (last attempt failed %ds ago; retry in %ds)",
+            svc_name,
+            int(time.time() - last_failure),
+            int(_BUILD_RETRY_INTERVAL - (time.time() - last_failure)),
+        )
+        return True
+
+    fb = _detect_flogobuild()
+    if not fb:
+        if binary.exists():
+            log.warning(
+                "flogobuild not found — using existing binary for %s "
+                "(source is newer; rebuild manually to pick up import changes)",
+                svc_name,
+            )
+            return True
+        log.error("flogobuild not found and binary %s is missing — cannot start", svc_name)
+        return False
+
+    reason = "binary missing" if not binary.exists() else "source newer than binary"
+    log.info("Building %s (%s)…", svc_name, reason)
+    proc = await asyncio.create_subprocess_exec(
+        fb, "build-exe",
+        "-f", str(flogo_src),
+        "-c", "flogo-studio",
+        "-n", svc_name,
+        "-o", str(PROJECT_ROOT / "bin"),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    out, _ = await proc.communicate()
+    if proc.returncode == 0:
+        _build_failures.pop(svc_name, None)  # clear failure record on success
+        log.info("Binary %s built successfully", svc_name)
+        return True
+    _build_failures[svc_name] = time.time()
+    log.error("flogobuild failed for %s (exit %d):\n%s",
+              svc_name, proc.returncode, out.decode(errors="replace"))
+    return binary.exists()   # fall back to stale binary if it still exists
+
+
 # ── In-memory state ────────────────────────────────────────────────────────────
 # Keyed by agentId:
 # {
@@ -411,8 +490,8 @@ async def _start_runtime(agent: dict) -> dict:
 
     if not chat_src.exists():
         raise FileNotFoundError(f"Missing source: {chat_src}")
-    if not (SERVICES_BIN / "agent-chat-service").exists():
-        raise FileNotFoundError(f"Missing binary: {SERVICES_BIN / 'agent-chat-service'}")
+    if not await _ensure_binary(chat_src, "agent-chat-service"):
+        raise RuntimeError("agent-chat-service binary unavailable and could not be built")
 
     # One flogo file now carries three triggers: #rest (chat), #rest_1 (SSE REST), #trigger (SSE events)
     _modify_flogo_port(chat_src, chat_flogo, {
@@ -453,6 +532,8 @@ async def _start_runtime(agent: dict) -> dict:
 
     if not ing_src.exists():
         raise FileNotFoundError(f"Missing source: {ing_src}")
+    if not await _ensure_binary(ing_src, "ingestion-service"):
+        raise RuntimeError("ingestion-service binary unavailable and could not be built")
 
     _modify_flogo_port(ing_src, ing_flogo, {"#rest": ports["ingestion"]})
     _generate_env_file(

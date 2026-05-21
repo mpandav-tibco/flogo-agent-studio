@@ -7,8 +7,9 @@ import type { Agent } from "../types";
 
 
 const STATUS_STYLES: Record<string, string> = {
-  active: "bg-green-100 text-green-800",
-  draft: "bg-slate-100 text-slate-600",
+  active:   "bg-green-100 text-green-800",
+  starting: "bg-blue-100 text-blue-700",
+  draft:    "bg-slate-100 text-slate-600",
   archived: "bg-red-50 text-red-600",
 };
 
@@ -81,8 +82,8 @@ export default function AgentCard({ agent, onToggleDeploy, deployPending, isStar
 
           {/* Status badge + overflow menu — stop propagation so click doesn't open editor */}
           <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[agent.status] ?? STATUS_STYLES.draft}`}>
-              {agent.status}
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[isStarting ? "starting" : agent.status] ?? STATUS_STYLES.draft}`}>
+              {isStarting ? "starting" : agent.status}
             </span>
 
             <div className="relative" ref={menuRef}>
