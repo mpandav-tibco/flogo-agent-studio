@@ -1,0 +1,40 @@
+rule:
+  id: API-003
+  enabled: true
+  severity: WARNING
+  category: design
+  title: No API Version in Base Path or Server URL
+  description: >
+    The API specification does not include a version indicator in the server
+    URL or base path. Without versioning, breaking changes force all consumers
+    to update simultaneously, making incremental API evolution impossible.
+    Versioning is a foundational API design principle for long-lived APIs.
+  tags: [api, versioning, design, openapi, backward-compatibility]
+
+  applies_to: [.yaml, .yml, .json]
+  parser: yaml
+
+  scope: $.servers[*]
+
+  match:
+    type: all_missing
+    patterns:
+      - "/v[0-9]"
+      - "/api/v[0-9]"
+      - "/v[0-9]\\.[0-9]"
+
+  location: "api:servers"
+  recommendation: >
+    Embed the major version in the server URL or path prefix:
+
+    servers:
+      - url: https://api.example.com/v1
+        description: Production
+      - url: https://api-staging.example.com/v1
+        description: Staging
+
+    Versioning strategy:
+    - URL path versioning (/v1, /v2) — most discoverable, recommended for public APIs
+    - Header versioning (Accept: application/vnd.api.v1+json) — cleaner URLs, harder to test
+    - Query param (?version=1) — avoid; breaks caching
+    When releasing v2, keep v1 alive for at minimum 6-12 months with a deprecation notice.

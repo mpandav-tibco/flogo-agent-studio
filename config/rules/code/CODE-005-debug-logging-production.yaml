@@ -1,0 +1,31 @@
+rule:
+  id: CODE-005
+  enabled: true
+  severity: WARNING
+  category: code-quality
+  title: Debug Logging Left in Production Code
+  description: >
+    A debug print statement or console.log was detected. Debug output in
+    production code has two impacts: (1) performance degradation from
+    synchronous I/O on every call, and (2) accidental sensitive data
+    disclosure — request bodies, tokens, and PII regularly appear in
+    debug logs and flow to log aggregation systems.
+  tags: [logging, debug, performance, security, code-quality]
+
+  applies_to: [.py, .js, .ts, .java, .go, .cs, .rb]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)\\b(console\\.log|console\\.debug|print\\s*\\(|System\\.out\\.print|fmt\\.Print[^f]|fmt\\.Println|puts\\s|p\\s+[\"']|NSLog|log\\.debug\\s*\\()"
+
+  location: "code:{{.Scope.name}}"
+  recommendation: >
+    Replace debug prints with structured logging at the appropriate level:
+    - Use a logging framework (Python: logging, Node: winston/pino, Java: SLF4J/Logback, Go: slog/zap)
+    - Log at DEBUG level for diagnostic detail — configured off in production via LOG_LEVEL env var
+    - Never log raw request/response bodies in production; use a sampling strategy if needed
+    - Review what is being logged: remove any PII, tokens, or secrets before committing

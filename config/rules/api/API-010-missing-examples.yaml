@@ -1,0 +1,55 @@
+rule:
+  id: API-010
+  enabled: true
+  severity: INFO
+  category: documentation
+  title: API Response Missing Example Payload
+  description: >
+    One or more API responses do not include example payloads. Examples
+    are the single most important documentation element for API consumers —
+    they make Swagger UI interactive, power mock servers (Prism, WireMock),
+    and help code generators produce meaningful test fixtures. Without them,
+    developers must guess the actual response shape.
+  tags: [api, documentation, examples, openapi, developer-experience]
+
+  applies_to: [.yaml, .yml, .json]
+  parser: yaml
+
+  scope: $.paths[*][*].responses.*
+
+  match:
+    type: all_missing
+    patterns:
+      - examples
+      - example
+
+  location: "api:{{.Parent.name}}"
+  recommendation: >
+    Add examples to response schemas using the examples map (preferred) or
+    the example field:
+
+    responses:
+      '200':
+        description: Agent retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Agent'
+            examples:
+              active_agent:
+                summary: An active agent example
+                value:
+                  id: "agt-abc123"
+                  name: "Customer Support Agent"
+                  status: "active"
+                  config:
+                    llmModel: "llama3.1:8b"
+                    temperature: 0.5
+              draft_agent:
+                summary: A draft agent
+                value:
+                  id: "agt-def456"
+                  name: "My New Agent"
+                  status: "draft"
+
+    Place reusable examples in components/examples for cross-operation sharing.

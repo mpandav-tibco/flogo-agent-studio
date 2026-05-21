@@ -1,0 +1,33 @@
+rule:
+  id: LEGAL-003
+  enabled: true
+  severity: ERROR
+  category: compliance
+  title: Missing Data Protection / Privacy Clause
+  description: >
+    No data protection, privacy, or data processing agreement (DPA) clause
+    was found in this contract. When personal data is processed, a DPA is
+    legally required under GDPR (EU), UK GDPR, CCPA (California), and
+    equivalent frameworks. Absence exposes both parties to regulatory penalties.
+  tags: [gdpr, privacy, dpa, compliance, data-protection]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(data.{0,20}process|personal.{0,20}data|privacy|gdpr|ccpa|data.{0,20}protection|dpa)"
+
+  location: "contract:document"
+  recommendation: >
+    Add or attach a Data Processing Agreement (DPA) that covers:
+    (1) Nature and purpose of data processing
+    (2) Categories of personal data and data subjects
+    (3) Sub-processor restrictions and notification obligations
+    (4) Data subject rights support obligations
+    (5) Data breach notification timeline (72 hours under GDPR)
+    (6) Data deletion / return upon contract termination
+    If the agreement does not involve personal data, add an explicit statement to that effect.

@@ -1,0 +1,34 @@
+rule:
+  id: SEC-007
+  enabled: true
+  severity: ERROR
+  category: authentication
+  title: JWT "none" Algorithm or Algorithm Confusion Risk
+  description: >
+    JWT configuration referencing "none" algorithm or "HS256" with RSA key
+    material was detected. The JWT "none" algorithm completely bypasses signature
+    verification — any token with alg:none is accepted as valid regardless of
+    content. Algorithm confusion attacks allow attackers to forge tokens by
+    exploiting libraries that accept multiple algorithms.
+  tags: [security, jwt, authentication, token, owasp]
+
+  applies_to: [.yaml, .yml, .json, .py, .js, .ts, .java, .go, .cs]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(algorithm[s]?\\s*[=:]+\\s*[\"']?(none|NONE)[\"']?|alg[\"']?\\s*[=:,]+\\s*[\"']?(none|NONE)[\"']?|verify\\s*[=:]+\\s*(false|False|FALSE)|options\\s*=\\s*\\{[^}]*verify[^}]*:\\s*false)"
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Fix JWT configuration:
+    (1) Never accept "none" as a valid algorithm — explicitly reject it
+    (2) Pin the expected algorithm on the verification side (don't trust the header's alg claim)
+    (3) Use RS256/RS384/RS512 (asymmetric) for distributed systems where multiple services verify tokens
+    (4) Use HS256/HS384/HS512 only when the signing and verification are in the same trust boundary
+    (5) Always verify the signature — never set verify=False in production
+    Python (PyJWT): jwt.decode(token, key, algorithms=["RS256"])  # explicit, no alg from header
+    Node.js (jsonwebtoken): jwt.verify(token, publicKey, { algorithms: ['RS256'] })

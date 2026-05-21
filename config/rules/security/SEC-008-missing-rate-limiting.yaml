@@ -1,0 +1,35 @@
+rule:
+  id: SEC-008
+  enabled: true
+  severity: INFO
+  category: availability
+  title: No Rate Limiting Configuration Detected
+  description: >
+    No rate limiting configuration was detected. Without rate limiting, APIs
+    are vulnerable to brute-force attacks (credential stuffing on auth endpoints),
+    DoS via resource exhaustion, and scraping. Rate limiting is a recommended
+    control in OWASP API Security Top 10 (API4:2023 Unrestricted Resource Consumption).
+  tags: [security, rate-limiting, dos, api-security, availability]
+
+  applies_to: [.yaml, .yml, .json, .conf, .cfg, .properties]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(rate.?limit|throttl|ratelimit|max.?requests|request.?limit|slow.?down|leaky.?bucket|token.?bucket)"
+
+  location: "config:document"
+  recommendation: >
+    Implement rate limiting at the appropriate layer:
+    - API Gateway: AWS API Gateway, Kong, NGINX — built-in rate limiting
+    - Application middleware: express-rate-limit, slowapi (FastAPI), Bucket4j (Java)
+    - Per-endpoint limits: stricter limits on auth endpoints (5/min), looser on read APIs
+    Key controls:
+    (1) Limit by IP + user ID for authenticated endpoints
+    (2) Return 429 Too Many Requests with Retry-After header
+    (3) Apply exponential backoff for repeated failures
+    (4) Distribute state (Redis) for multi-instance deployments
+    Priority: apply strictest limits to /login, /register, /forgot-password, /api/token

@@ -1,0 +1,33 @@
+rule:
+  id: PROC-P002
+  enabled: true
+  severity: GOOD
+  category: service-levels
+  title: High Availability SLA Commitment (99.9%+) Detected
+  description: >
+    The vendor commits to 99.9% or higher availability. This represents a maximum
+    of ~8.7 hours of permitted downtime per year and is considered the standard
+    for business-critical SaaS platforms.
+  tags: [procurement, sla, uptime, high-availability, service-levels]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "99\\.(9|99|999)%\\s*(uptime|availability|available|sla)"
+
+  location: "proposal:sla-section"
+  recommendation: >
+    High availability SLA detected. Verify:
+    (1) Measurement methodology: is 99.9% measured monthly or annually? (Monthly is stricter)
+    (2) Maintenance windows: are planned maintenance periods excluded? If so, how long and
+        how often are they permitted?
+    (3) Status page: does the vendor have a public status page (status.vendor.com) so you
+        can independently verify outages?
+    (4) Historical uptime: request the last 12 months of uptime reports to validate
+        the vendor actually achieves their stated target
+    (5) Service credits: confirm what credits apply if the 99.9% SLA is missed

@@ -1,0 +1,42 @@
+rule:
+  id: HR-007
+  enabled: true
+  severity: WARNING
+  category: compliance
+  title: No Health and Safety Reference in Employee Policy
+  description: >
+    Employee policy documents do not reference health and safety obligations.
+    Employers have a statutory duty of care under health and safety law
+    (UK Health and Safety at Work Act 1974, US OSHA, EU OSH Framework Directive).
+    Failing to communicate H&S responsibilities to employees increases accident
+    risk and employer liability in the event of workplace incidents.
+  tags: [hr, health-safety, osha, compliance, employee-welfare]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(health.{0,20}safety|osha|workplace.{0,20}(safety|hazard|risk)|risk.{0,20}assessment|accident.{0,20}(report|procedure)|first.{0,20}aid)"
+
+  location: "policy:document"
+  recommendation: >
+    Include or reference health and safety obligations in HR documentation:
+
+    Key elements to cover:
+    (1) Employer responsibility: provide safe working environment, equipment, and training
+    (2) Employee responsibility: follow safety procedures, report hazards, not endanger others
+    (3) Risk assessment: how risks are identified and mitigated in the workplace
+    (4) Accident reporting: how to report near-misses and accidents (RIDDOR in UK, OSHA 300 log in US)
+    (5) First aid: location of first aid kit, identity of first aiders
+    (6) Emergency procedures: evacuation routes, fire wardens, emergency contacts
+    (7) Remote/hybrid workers: DSE (display screen equipment) assessment requirements
+    (8) Mental health: wellbeing support, EAP (Employee Assistance Programme) availability
+
+    For remote workers specifically:
+    - DSE self-assessment checklist
+    - Guidance on ergonomic home office setup
+    - Mental health and isolation awareness resources

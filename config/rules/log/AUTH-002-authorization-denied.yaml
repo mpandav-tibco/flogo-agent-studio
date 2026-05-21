@@ -1,0 +1,37 @@
+rule:
+  id: AUTH-002
+  enabled: true
+  severity: WARNING
+  category: security
+  title: Authorization / Access Denied Error in Log
+  description: >
+    Authorization denied or permission refused messages were detected. These
+    indicate a request reached the service but was rejected at the authorization
+    layer. Causes range from misconfigured service accounts to active privilege
+    escalation attempts or policy drift between environments.
+  tags: [security, authorization, access-control, rbac, incident-response]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(403.{0,30}forbidden|access.{0,20}denied|permission.{0,20}denied|not.{0,20}authorized|insufficient.{0,20}(privilege|permission)|authorization.{0,20}fail|rbac.{0,20}deny|policy.{0,20}denied|principal.{0,30}does.{0,20}not.{0,20}have)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Investigate authorization denials:
+    (1) Service account issues: verify the service account has the required role/permission
+        - Kubernetes: check RBAC ClusterRole/RoleBinding for the service account
+        - AWS: check IAM policy attached to the execution role
+        - Database: verify the DB user has SELECT/INSERT/UPDATE on the required tables
+    (2) Policy drift: compare the permissions in dev/staging vs production — they may differ
+    (3) Rotation side effect: if credentials were recently rotated, old permissions may
+        not have propagated to all services
+    (4) Security investigation: repeated 403s from an authenticated user against resources
+        they should not access may indicate privilege escalation or insider threat
+        → escalate to security team if the pattern is suspicious
+    (5) For Flogo rule-engine: verify the API_KEY property matches the target service

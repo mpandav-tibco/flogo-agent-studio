@@ -1,0 +1,32 @@
+rule:
+  id: LEGAL-009
+  enabled: true
+  severity: ERROR
+  category: confidentiality
+  title: Missing Confidentiality / NDA Clause
+  description: >
+    No confidentiality or non-disclosure obligation was found in this contract.
+    Any commercial relationship involves exchange of sensitive business information.
+    Without a confidentiality clause, shared information — pricing, product roadmaps,
+    customer data, technical architecture — has no legal protection.
+  tags: [confidentiality, nda, trade-secret, risk]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(confidential|non.?disclosure|proprietary.{0,20}information|trade.{0,20}secret)"
+
+  location: "contract:document"
+  recommendation: >
+    Add a Confidentiality clause or reference a standalone NDA that covers:
+    (1) Definition of Confidential Information (broad enough to capture all business-sensitive data)
+    (2) Obligations: reasonable care, restricted disclosure, purpose limitation
+    (3) Exclusions: information already public, independently developed, lawfully received from third parties
+    (4) Permitted disclosures: legal obligation, professional advisors (with confidentiality obligations)
+    (5) Term: confidentiality obligations should survive termination for 3–7 years (or indefinitely for trade secrets)
+    (6) Return/destruction of confidential information upon termination

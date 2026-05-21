@@ -1,0 +1,45 @@
+rule:
+  id: DATA-008
+  enabled: true
+  severity: INFO
+  category: performance
+  title: Deeply Nested or Excessively Large JSON Payload
+  description: >
+    The JSON data has deep nesting (4+ levels) or unusually large array
+    structures in a single record. Deeply nested payloads are difficult
+    to query efficiently, cause performance issues in document databases,
+    complicate schema evolution, and increase deserialization costs in
+    high-throughput systems.
+  tags: [data-quality, performance, json, schema, design]
+
+  applies_to: [.json, .jsonl]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "\\{[^{}]*\\{[^{}]*\\{[^{}]*\\{[^{}]*\\{"
+
+  location: "data:{{.Scope.name}}"
+  recommendation: >
+    Flatten deeply nested structures where query patterns require it:
+
+    Problem:
+    { "order": { "customer": { "address": { "city": { "name": "NYC" }}}}}
+
+    Better: flatten for analytics / keep nested for transport with explicit path documentation
+    { "customer_city_name": "NYC" }   # analytics/warehouse model
+    { "order.customer.address.city": "NYC" }  # dot-notation key
+
+    Guidelines:
+    - APIs: keep nesting for readability (2-3 levels is fine for request/response)
+    - Databases: flatten for relational; limit nesting to 2 levels for document DBs
+    - Events: prefer flat or single-level nesting for streaming throughput
+    - Analytics: always flatten to columnar format (Parquet, BigQuery)
+
+    For very large arrays in a single record:
+    - Paginate the relationship (separate endpoint or next_cursor)
+    - Reference by ID rather than embedding the full nested object
+    - Split into child tables/collections for independent access

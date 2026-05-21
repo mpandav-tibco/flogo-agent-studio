@@ -1,0 +1,47 @@
+rule:
+  id: HR-006
+  enabled: true
+  severity: ERROR
+  category: compliance
+  title: No Employee Data Privacy Notice Referenced
+  description: >
+    HR documentation that describes data collection or processing about employees
+    does not reference an employee privacy notice. GDPR Article 13/14 requires
+    employers to provide employees with a privacy notice explaining what personal
+    data is collected, why, how long it is retained, and their rights.
+    Failure to provide this is a direct GDPR violation subject to fines.
+  tags: [hr, gdpr, privacy, compliance, employee-data]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  when:
+    type: regex_match
+    path: content
+    pattern: "(?i)(personal.{0,20}data|employee.{0,20}data|data.{0,20}collect|record.{0,20}keep|monitor)"
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(privacy.{0,20}notice|data.{0,20}protection.{0,20}(notice|statement|policy)|gdpr|data.{0,20}subject.{0,20}right)"
+
+  location: "policy:document"
+  recommendation: >
+    Add an Employee Privacy Notice or reference one in all HR policies that
+    involve personal data. The notice must include:
+
+    (1) Identity of data controller (your company) and DPO contact if appointed
+    (2) Categories of personal data collected: name, contact details, payroll, health, performance
+    (3) Legal basis for processing each category:
+        - Contract: payroll processing, employment contract obligations
+        - Legal obligation: tax reporting, right to work checks, health & safety records
+        - Legitimate interests: performance management, security monitoring
+        - Consent: optional benefits, photos, special category data
+    (4) Retention periods for each data category
+    (5) Recipients: payroll providers, pension schemes, benefits providers (list sub-processors)
+    (6) International transfers and safeguards (SCCs, adequacy decisions)
+    (7) Employee rights: access, rectification, erasure (where applicable), portability, objection
+    (8) How to exercise rights and contact the DPO
+    (9) Right to complain to supervisory authority (ICO in UK, relevant SA in EU)

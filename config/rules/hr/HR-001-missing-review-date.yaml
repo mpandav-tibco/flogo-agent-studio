@@ -1,0 +1,43 @@
+rule:
+  id: HR-001
+  enabled: true
+  severity: WARNING
+  category: governance
+  title: HR Policy Missing Review Date
+  description: >
+    The HR policy document does not include a review date or next review schedule.
+    Outdated HR policies create legal risk — employment law changes frequently,
+    and policies not updated to reflect legal changes expose the company to
+    compliance failures, discrimination claims, and regulatory fines. Most
+    employment frameworks require policies to be reviewed at least annually.
+  tags: [hr, policy, governance, compliance, review]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(review.{0,20}date|next.{0,20}review|last.{0,20}review|review.{0,20}period|reviewed.{0,20}(annually|by|on))"
+
+  location: "policy:document"
+  recommendation: >
+    Add a policy metadata header to every HR policy document:
+
+    Policy: [Policy Name]
+    Version: 2.1
+    Effective Date: 2024-01-01
+    Last Review Date: 2024-01-01
+    Next Review Date: 2025-01-01
+    Policy Owner: Head of HR / HR Business Partner
+    Approved By: [Name, Title]
+
+    Best practices:
+    - Review all HR policies annually as a minimum
+    - Review immediately when relevant legislation changes
+    - Set calendar reminders 60 days before review date
+    - Version-control policy documents (date-stamp filenames or git)
+    - Maintain a policy register listing all active policies with review dates
+    - Communicate policy updates to all affected employees within 5 business days

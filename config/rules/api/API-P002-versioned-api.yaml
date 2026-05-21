@@ -1,0 +1,30 @@
+rule:
+  id: API-P002
+  enabled: true
+  severity: GOOD
+  category: design
+  title: API Version Present in Server URL
+  description: >
+    The API server URL includes a version segment. This is a best practice
+    that enables parallel operation of multiple API versions and gives
+    consumers a stable contract while the API evolves.
+  tags: [api, versioning, design, openapi]
+
+  applies_to: [.yaml, .yml, .json]
+  parser: yaml
+
+  scope: $.servers[*]
+
+  match:
+    type: regex_match
+    path: url
+    pattern: "/v[0-9]"
+
+  location: "api:servers"
+  recommendation: >
+    API versioning detected. Maintain it by:
+    (1) Never making breaking changes within the same version (v1 stays v1)
+    (2) Breaking changes → new major version (v1 → v2) with migration guide
+    (3) Keeping v(N-1) live for at least 6-12 months after v(N) launch
+    (4) Publishing a changelog and sending deprecation notices to API consumers
+    (5) Returning a Deprecation header in v(N-1) responses pointing to migration guide

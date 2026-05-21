@@ -1,0 +1,39 @@
+rule:
+  id: DATA-002
+  enabled: true
+  severity: WARNING
+  category: format
+  title: Non-Standard Date Format Detected
+  description: >
+    Date or timestamp values appear to use non-ISO 8601 formats (DD/MM/YYYY,
+    MM-DD-YY, epoch timestamps mixed with strings). Inconsistent date formats
+    cause silent errors in date arithmetic, sorting, and cross-system integration
+    — particularly when locale-ambiguous formats like 01/02/2024 are used
+    (is that January 2nd or February 1st?).
+  tags: [data-quality, dates, format, iso8601, validation]
+
+  applies_to: [.json, .csv, .jsonl, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?<!\")(?<!')\\b(\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{2,4}|\\d{4}[/\\-]\\d{1,2}[/\\-]\\d{1,2}T?(?![:\\d]))"
+
+  location: "data:{{.Scope.name}}"
+  recommendation: >
+    Standardize all dates to ISO 8601 format:
+    - Date only:          2024-01-15
+    - Date + time:        2024-01-15T14:30:00Z
+    - Date + time + tz:   2024-01-15T14:30:00+05:30
+
+    Conversion:
+    - Python: pd.to_datetime(df['date'], dayfirst=True).dt.strftime('%Y-%m-%d')
+    - SQL: TO_DATE(date_col, 'DD/MM/YYYY') or STR_TO_DATE(date_col, '%d/%m/%Y')
+    - JavaScript: new Date(dateStr).toISOString()
+
+    Always store and transmit dates in UTC; convert to local timezone only at display time.
+    Document the source format of ingested data in a data dictionary.
+    Add format validation in the ingestion pipeline to reject non-standard formats at entry.

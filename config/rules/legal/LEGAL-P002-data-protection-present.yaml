@@ -1,0 +1,29 @@
+rule:
+  id: LEGAL-P002
+  enabled: true
+  severity: GOOD
+  category: compliance
+  title: Data Protection / Privacy Terms Present
+  description: >
+    Data protection or privacy language was detected. This indicates the
+    parties have addressed regulatory compliance obligations for personal data.
+  tags: [gdpr, privacy, compliance, dpa]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(data.{0,20}process|personal.{0,20}data|gdpr|ccpa|data.{0,20}protection.{0,20}(act|agreement|clause|officer))"
+
+  location: "contract:data-protection-clause"
+  recommendation: >
+    Data protection terms detected. Verify they cover:
+    (1) Processor/controller designation (are roles correctly assigned?)
+    (2) Sub-processor restrictions and prior written consent requirement
+    (3) Data breach notification obligation (72-hour timeline for GDPR)
+    (4) Data subject rights (access, erasure, portability)
+    (5) Post-termination data deletion or return timeline

@@ -1,0 +1,42 @@
+rule:
+  id: DOCKER-007
+  enabled: true
+  severity: INFO
+  category: best-practices
+  title: Container May Start Multiple Processes (Violates Single-Process Principle)
+  description: >
+    The Dockerfile or entrypoint appears to start multiple services
+    (supervisord, foreman, multiple background processes). Docker containers
+    are designed around one process per container — a single main process
+    whose exit code signals container health. Multiple processes make
+    health checking unreliable and violate the separation of concerns
+    principle for containerized applications.
+  tags: [docker, best-practices, single-process, microservices]
+
+  applies_to: [Dockerfile, .dockerfile]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(supervisord|supervisor|foreman|s6-overlay|runit|openrc|/etc/init\\.d|service\\s+\\w+\\s+start|&&\\s*(nginx|redis|postgres|mysql))"
+
+  location: "dockerfile:{{.Scope.name}}"
+  recommendation: >
+    Prefer one process per container:
+
+    # Instead of running nginx + app in one container:
+    # Container 1: nginx (reverse proxy / static files)
+    # Container 2: app server
+    # Linked via docker-compose service networking
+
+    If you genuinely need multiple processes (e.g., nginx + app as a single deployable unit):
+    - Use supervisord with proper signal handling and exit codes
+    - Ensure SIGTERM propagates to all child processes
+    - The init process (PID 1) must handle zombie reaping
+      → use 'tini' as init: ENTRYPOINT ["/tini", "--", "supervisord"]
+
+    For sidecar patterns in Kubernetes: use sidecar containers in the pod spec
+    rather than bundling multiple services in one image.

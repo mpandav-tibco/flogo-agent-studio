@@ -1,0 +1,31 @@
+rule:
+  id: SEC-P001
+  enabled: true
+  severity: GOOD
+  category: authentication
+  title: Multi-Factor Authentication (MFA) Configuration Detected
+  description: >
+    MFA or two-factor authentication (2FA) configuration was detected.
+    MFA is the single most effective control against credential-based attacks —
+    it blocks 99.9% of automated account takeover attempts (Microsoft telemetry).
+    This is a mandatory control in SOC 2, ISO 27001, and PCI DSS.
+  tags: [mfa, authentication, soc2, iso27001-a9, security]
+
+  applies_to: [.yaml, .yml, .json, .properties, .conf, .cfg]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(mfa|2fa|two.factor|multi.factor|totp|otp|authenticator|yubikey|webauthn|fido)"
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    MFA detected. Verify:
+    (1) MFA is enforced (not just enabled) for all privileged accounts
+    (2) SMS OTP is not the sole MFA method (SIM-swap vulnerable) — prefer TOTP or hardware keys
+    (3) MFA recovery codes are generated and stored securely
+    (4) MFA bypass mechanisms (recovery flows) are also protected
+    (5) MFA is applied to CI/CD pipelines, cloud console access, and VPN — not just application login

@@ -1,0 +1,33 @@
+rule:
+  id: LEGAL-006
+  enabled: true
+  severity: WARNING
+  category: contract-terms
+  title: Missing Termination for Convenience Right
+  description: >
+    No termination for convenience clause was detected. Without this right,
+    a party can only exit the agreement for material breach (which requires
+    proving default), leaving them locked in even when business needs change.
+    This is particularly important for multi-year agreements and SaaS subscriptions.
+  tags: [termination, exit-rights, contract-terms]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(terminat.{0,30}convenience|terminat.{0,30}without.{0,20}cause|terminat.{0,30}any.{0,20}reason)"
+
+  location: "contract:termination-clause"
+  recommendation: >
+    Add a termination for convenience right that specifies:
+    (1) Which party (or both) holds the right to terminate without cause
+    (2) The required notice period (30–90 days is typical)
+    (3) What happens upon termination: data return/deletion, outstanding payment obligations,
+        survival of key clauses (confidentiality, liability limits, IP)
+    (4) Whether a pro-rated refund applies for prepaid fees
+    Example: "Either party may terminate this Agreement for any reason upon sixty (60) days'
+    prior written notice to the other party."

@@ -1,0 +1,43 @@
+rule:
+  id: DATA-005
+  enabled: true
+  severity: WARNING
+  category: consistency
+  title: Inconsistent Field Naming Convention Detected
+  description: >
+    The dataset contains a mix of naming conventions for fields —
+    camelCase, snake_case, and PascalCase appear in the same structure.
+    Inconsistent naming forces consumers to handle multiple conventions,
+    increases serialization errors, and makes schema evolution harder
+    to manage. It typically indicates data merged from multiple sources
+    without normalization.
+  tags: [data-quality, schema, naming-convention, consistency]
+
+  applies_to: [.json, .jsonl]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "\"([a-z][A-Z][a-zA-Z]*)\"\\s*:.*\"([a-z_]+_[a-z_]+)\"\\s*:"
+
+  location: "data:{{.Scope.name}}"
+  recommendation: >
+    Standardize on one naming convention across the entire schema:
+
+    Recommendations by context:
+    - JSON APIs / JavaScript consumers: camelCase (userId, createdAt, orderTotal)
+    - Python / database / data engineering: snake_case (user_id, created_at, order_total)
+    - Choose one and enforce it via schema validation (JSON Schema, Pydantic, dbt tests)
+
+    Migration approach:
+    (1) Define the target convention in a data dictionary
+    (2) Add field aliases / mappings at the API/ETL boundary, not in the database
+    (3) Use dbt or Great Expectations to validate naming consistency in pipelines
+    (4) Generate schemas from code (Pydantic, Marshmallow) to ensure consistency
+
+    When merging sources:
+    - Normalize all fields to the target convention in the ETL transform layer
+    - Document original field names in the data lineage metadata

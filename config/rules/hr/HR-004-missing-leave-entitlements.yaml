@@ -1,0 +1,49 @@
+rule:
+  id: HR-004
+  enabled: true
+  severity: WARNING
+  category: employee-rights
+  title: Leave Policy Missing Statutory Entitlement Reference
+  description: >
+    The leave policy does not explicitly reference statutory minimum entitlements
+    or confirm compliance with applicable employment law. Policies that fall
+    below statutory minimums are unenforceable and expose the company to
+    claims for unpaid leave entitlements. Employees frequently do not know
+    their statutory rights and may be underusing legal entitlements.
+  tags: [hr, leave, statutory, compliance, employee-rights]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  when:
+    type: regex_match
+    path: content
+    pattern: "(?i)(leave|holiday|vacation|pto|time.{0,10}off|annual.{0,10}leave)"
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(statutory|legal.{0,20}minimum|required.{0,20}by.{0,20}law|employment.{0,20}act|fmla|working.{0,20}time.{0,20}regulation)"
+
+  location: "policy:leave-section"
+  recommendation: >
+    Reference applicable statutory entitlements explicitly:
+
+    US (FMLA): "Employees may be entitled to up to 12 weeks of unpaid,
+    job-protected leave under the Family and Medical Leave Act (FMLA)
+    for qualifying reasons."
+
+    UK (Working Time Regulations): "All employees are entitled to a minimum
+    of 28 days' paid annual leave per year (including 8 public holidays)
+    under the Working Time Regulations 1998."
+
+    EU Working Time Directive: minimum 4 weeks paid leave.
+
+    Also document:
+    - Sick leave: statutory sick pay reference and company enhancement
+    - Parental leave: maternity, paternity, shared parental leave entitlements
+    - Compassionate leave, jury duty, study leave policies
+    - How leave interacts with probation periods
+    - Carry-over rules (must align with statutory provisions)

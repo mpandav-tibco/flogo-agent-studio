@@ -1,0 +1,37 @@
+rule:
+  id: CODE-008
+  enabled: true
+  severity: ERROR
+  category: security
+  title: Weak or Broken Cryptographic Algorithm
+  description: >
+    Usage of MD5, SHA-1, DES, or RC4 was detected. These algorithms are
+    cryptographically broken: MD5/SHA-1 have known collision attacks, DES
+    has a 56-bit key space brute-forceable in hours, RC4 has statistical
+    biases exploited in WEP and TLS attacks. NIST officially deprecated
+    MD5 and SHA-1 for security applications.
+  tags: [security, cryptography, md5, sha1, owasp, encryption]
+
+  applies_to: [.py, .js, .ts, .java, .go, .cs, .rb, .php]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)\\b(md5|sha1|sha-1|des\\.new|rc4|blowfish|hashlib\\.md5|hashlib\\.sha1|MessageDigest\\.getInstance\\s*\\(\\s*\"(MD5|SHA-1|SHA1)\"|Cipher\\.getInstance\\s*\\(\\s*\"DES)"
+
+  location: "code:{{.Scope.name}}"
+  recommendation: >
+    Migrate to approved algorithms:
+    - Password hashing: bcrypt, scrypt, Argon2id (NOT SHA-256 — use key derivation functions)
+    - Data integrity / checksums: SHA-256 or SHA-3
+    - HMAC: HMAC-SHA-256
+    - Symmetric encryption: AES-256-GCM (authenticated encryption)
+    - Asymmetric: RSA-2048+ or ECDSA P-256
+    Library recommendations:
+    - Python: cryptography library (not hashlib for passwords)
+    - Node.js: crypto module with modern algorithms
+    - Java: BouncyCastle or JCA with PKCS#5 v2
+    - Go: golang.org/x/crypto/argon2 for passwords

@@ -1,0 +1,35 @@
+rule:
+  id: LEGAL-002
+  enabled: true
+  severity: WARNING
+  category: contract-terms
+  title: Auto-Renewal Without Adequate Notice Period
+  description: >
+    The contract contains an auto-renewal clause but does not specify
+    a notice period for cancellation, or the notice period is fewer than
+    30 days. Auto-renewal with short notice windows locks parties into
+    unwanted term extensions and is a common source of disputes.
+  tags: [auto-renewal, notice, contract-terms, subscription]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  when:
+    type: regex_match
+    path: content
+    pattern: "(?i)(auto.?renew|automatically.{0,20}renew|renewal.{0,20}automatic)"
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(30|sixty|90|ninety|45).{0,30}(days?.{0,20}(notice|prior|written)|written.{0,20}notice)"
+
+  location: "contract:renewal-clause"
+  recommendation: >
+    Ensure the auto-renewal clause specifies:
+    (1) A cancellation notice period of at least 30 days (60–90 days is standard for annual contracts)
+    (2) The method of notice (written, email to specific contact)
+    (3) What happens if notice is missed (does renewal revert to month-to-month?)
+    Consider adding a calendar reminder obligation or a notification from the vendor before renewal triggers.

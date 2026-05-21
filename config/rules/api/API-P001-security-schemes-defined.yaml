@@ -1,0 +1,30 @@
+rule:
+  id: API-P001
+  enabled: true
+  severity: GOOD
+  category: security
+  title: Security Schemes Defined in API Spec
+  description: >
+    The API specification defines security schemes in components/securitySchemes.
+    This indicates authentication requirements are formally documented and
+    tooling (API gateways, SDK generators, mock servers) can enforce them.
+  tags: [api, security, authentication, openapi]
+
+  applies_to: [.yaml, .yml, .json]
+  parser: yaml
+
+  scope: $.components
+
+  match:
+    type: contains_any
+    path: securitySchemes
+    substrings: ["bearerAuth", "apiKey", "oauth2", "openIdConnect", "type"]
+
+  location: "api:components.securitySchemes"
+  recommendation: >
+    Security schemes detected. Verify:
+    (1) Each scheme is actually applied to operations (not just defined but unused)
+    (2) OAuth2 scopes are defined at minimum required privilege level (least privilege)
+    (3) API key schemes specify the correct 'in' location (header preferred over query)
+    (4) JWT bearerFormat is specified for HTTP bearer schemes
+    (5) Token expiry and refresh strategy is documented (in description or external docs)

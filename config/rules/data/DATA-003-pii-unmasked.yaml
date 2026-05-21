@@ -1,0 +1,43 @@
+rule:
+  id: DATA-003
+  enabled: true
+  severity: ERROR
+  category: privacy
+  title: Unmasked PII Detected in Dataset
+  description: >
+    The dataset appears to contain unmasked Personally Identifiable Information
+    (PII) — email addresses, phone numbers, national ID patterns, or credit
+    card numbers. Storing or transmitting unmasked PII in non-production
+    environments violates GDPR, CCPA, and most internal data classification
+    policies. Even in production, unnecessary PII exposure increases breach impact.
+  tags: [data-quality, pii, privacy, gdpr, compliance, security]
+
+  applies_to: [.json, .csv, .jsonl, .txt, .log]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "([a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}|\\b\\d{3}[\\s.\\-]?\\d{3}[\\s.\\-]?\\d{4}\\b|\\b\\d{4}[\\s\\-]?\\d{4}[\\s\\-]?\\d{4}[\\s\\-]?\\d{4}\\b|\\b(SSN|SIN)\\s*:?\\s*\\d{3}[\\-\\s]\\d{2}[\\-\\s]\\d{4}\\b)"
+
+  location: "data:{{.Scope.name}}"
+  recommendation: >
+    Mask or pseudonymize PII before storing, logging, or sharing data:
+
+    Masking strategies by field type:
+    - Email:    john.doe@example.com → j***@example.com or UUID
+    - Phone:    +1-555-123-4567 → +1-555-***-4567
+    - SSN:      123-45-6789 → ***-**-6789 (last 4 only)
+    - Card:     4111111111111111 → ************1111 (PAN masking, PCI DSS)
+    - Name:     John Doe → [REDACTED] or consistent pseudonym
+
+    Tooling:
+    - Python: Faker for realistic synthetic data, or regex replacement
+    - Presidio (Microsoft): ML-based PII detection and anonymization
+    - AWS Comprehend Medical: medical PII detection
+    - pg_anonymizer: PostgreSQL extension for DB-level masking
+
+    For test data: generate synthetic datasets that are statistically similar
+    but contain no real PII (Mockaroo, Synthea for healthcare).

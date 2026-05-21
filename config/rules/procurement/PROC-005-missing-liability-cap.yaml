@@ -1,0 +1,35 @@
+rule:
+  id: PROC-005
+  enabled: true
+  severity: ERROR
+  category: liability
+  title: No Liability Cap or Indemnification Limit in Proposal
+  description: >
+    The vendor proposal or terms and conditions do not specify a liability
+    cap or limits on indemnification obligations. Without defined limits,
+    the vendor's financial exposure (and conversely, your contractual leverage)
+    is undefined. Most vendor standard terms cap liability at fees paid — ensure
+    this is appropriate for your risk profile.
+  tags: [procurement, liability, indemnification, risk, contract]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(limitation.{0,20}liabilit|limit.{0,20}damages|aggregate.{0,20}liabilit|cap.{0,30}liabilit|maximum.{0,30}liabilit)"
+
+  location: "proposal:document"
+  recommendation: >
+    Ensure liability terms are explicit and appropriate:
+    (1) Cap amount: typically 12 months of fees; negotiate higher for data breach scenarios
+    (2) Carve-outs from cap: data breach caused by vendor negligence should have higher or
+        uncapped liability — standard 1-year fee cap is inadequate for major breach exposure
+    (3) Mutual cap: liability should be capped symmetrically for both parties
+    (4) Insurance requirements: require vendor to carry minimum cyber liability insurance
+        ($1M–$5M depending on criticality) and name your company as additional insured
+    (5) Indemnification scope: vendor should indemnify for IP infringement, data breach
+        caused by vendor's failure, and regulatory fines attributable to vendor's acts

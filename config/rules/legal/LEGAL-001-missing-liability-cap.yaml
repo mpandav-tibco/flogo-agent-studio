@@ -1,0 +1,34 @@
+rule:
+  id: LEGAL-001
+  enabled: true
+  severity: ERROR
+  category: liability
+  title: Missing Limitation of Liability Clause
+  description: >
+    No limitation of liability clause was detected in this contract.
+    Without a cap on damages, either party is exposed to unlimited financial
+    liability for breaches, including consequential and indirect damages.
+    This is one of the highest-risk omissions in any commercial agreement.
+  tags: [liability, risk, contract-essentials]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)limitation.{0,20}liabilit"
+      - "(?i)limit.{0,20}damages"
+      - "(?i)aggregate.{0,20}liabilit"
+      - "(?i)cap.{0,30}liabilit"
+
+  location: "contract:document"
+  recommendation: >
+    Add a Limitation of Liability clause that:
+    (1) Caps aggregate liability at a defined amount (commonly 12 months of fees paid)
+    (2) Excludes liability for indirect, consequential, punitive, and incidental damages
+    (3) Carves out exceptions only where legally required (e.g. gross negligence, fraud, death/injury)
+    Standard wording: "IN NO EVENT SHALL EITHER PARTY'S TOTAL CUMULATIVE LIABILITY...
+    EXCEED THE FEES PAID IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM."

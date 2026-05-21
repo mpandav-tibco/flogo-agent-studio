@@ -1,0 +1,56 @@
+rule:
+  id: DATA-006
+  enabled: true
+  severity: WARNING
+  category: financial
+  title: Monetary Amount Without Currency Code
+  description: >
+    Numeric fields representing monetary values do not have an associated
+    currency code field. Ambiguous currency in financial data is a critical
+    risk — treating USD amounts as EUR or JPY causes order-of-magnitude
+    errors in reporting, reconciliation, and financial statements. This is
+    a common source of costly data bugs in multi-currency systems.
+  tags: [data-quality, financial, currency, money, integrity]
+
+  applies_to: [.json, .csv, .jsonl]
+  parser: text
+
+  scope: line
+
+  when:
+    type: regex_match
+    path: content
+    pattern: "(?i)(amount|price|total|revenue|cost|fee|charge|balance|payment)"
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(currency|currency_code|ccy|curr|iso_currency)"
+
+  location: "data:{{.Scope.name}}"
+  recommendation: >
+    Always pair monetary amounts with an explicit currency code:
+
+    # Correct JSON structure
+    {
+      "amount": 1250.00,
+      "currency": "USD",       # ISO 4217 three-letter code
+      "amount_formatted": "$1,250.00"
+    }
+
+    # For multi-currency line items
+    {
+      "subtotal_amount": 1000.00,
+      "subtotal_currency": "USD",
+      "tax_amount": 80.00,
+      "tax_currency": "USD",
+      "total_amount": 1080.00,
+      "total_currency": "USD"
+    }
+
+    Storage best practices:
+    - Store amounts as integers in smallest currency unit (cents for USD: 125000 = $1,250.00)
+      to avoid floating-point precision errors
+    - Use NUMERIC(19,4) or DECIMAL in SQL, not FLOAT
+    - Store currency as CHAR(3) ISO 4217 code (USD, EUR, GBP, JPY, INR)
+    - Perform currency conversion in a dedicated FX service with dated exchange rates

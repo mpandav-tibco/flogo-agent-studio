@@ -1,0 +1,27 @@
+rule:
+  id: LEGAL-P001
+  enabled: true
+  severity: GOOD
+  category: liability
+  title: Limitation of Liability Clause Present
+  description: >
+    A limitation of liability clause was detected. This is a foundational
+    protective mechanism that caps financial exposure for both parties.
+  tags: [liability, risk-management, contract-essentials]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(limitation.{0,20}liabilit|aggregate.{0,20}liabilit|cap.{0,30}liabilit|limit.{0,20}damages)"
+
+  location: "contract:liability-clause"
+  recommendation: >
+    Liability cap detected. Verify:
+    (1) The cap amount is appropriate for the contract value and risk profile
+    (2) Carve-outs are limited to gross negligence, fraud, and statutory obligations
+    (3) The cap applies symmetrically to both parties unless asymmetry is intentional

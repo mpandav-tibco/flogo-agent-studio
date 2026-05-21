@@ -1,0 +1,36 @@
+rule:
+  id: DB-001
+  enabled: true
+  severity: ERROR
+  category: database
+  title: Database Connection Pool Exhausted
+  description: >
+    The log indicates the database connection pool has been exhausted. New
+    requests are queuing or failing because all connections are in use. This
+    typically indicates a connection leak (connections not returned to pool),
+    a traffic spike exceeding pool capacity, or long-running transactions
+    holding connections open.
+  tags: [database, connection-pool, performance, jdbc, pg]
+
+  applies_to: [.log, .txt]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(connection.{0,30}(pool|exhausted|timeout|max.?size)|no.{0,20}connection.{0,20}available|too.{0,20}many.{0,20}connection|acquire.{0,20}connection.{0,20}timeout|pool.{0,30}(full|exhausted|timeout)|HikariPool.{0,50}timeout|pgbouncer.{0,30}pool.{0,30}full)"
+
+  location: "log:{{.Scope.name}}"
+  recommendation: >
+    Diagnose and resolve connection pool exhaustion:
+    (1) Identify leaks: connections must always be returned in a finally/defer block
+        - Python: use context managers (with conn: / with pool.connection() as conn:)
+        - Java: use try-with-resources (try (Connection conn = pool.getConnection()) { ... })
+        - Go: always call rows.Close() and defer conn.Close()
+    (2) Check for long-running transactions: query pg_stat_activity (Postgres) or
+        information_schema.innodb_trx (MySQL) for connections open > 30s
+    (3) Tune pool size: max connections = (core count * 2) + effective_spindle_count (HikariCP formula)
+    (4) Increase pool timeout as a temporary measure while investigating root cause
+    (5) Add connection pool metrics to your monitoring dashboard (active, idle, pending)

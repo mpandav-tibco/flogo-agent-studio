@@ -1,0 +1,32 @@
+rule:
+  id: LEGAL-007
+  enabled: true
+  severity: WARNING
+  category: service-levels
+  title: Missing SLA / Service Level Definition
+  description: >
+    No service level agreement (SLA) or uptime commitment was detected.
+    Without defined service levels, there are no measurable performance
+    standards and no remedies when service quality falls below expectations.
+    This is a critical gap in any technology services or SaaS agreement.
+  tags: [sla, uptime, service-levels, performance]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(service.{0,20}level|sla|uptime|availability.{0,20}(commitment|guarantee|target)|[0-9]{2}\\.[0-9]+%.{0,20}(uptime|available))"
+
+  location: "contract:document"
+  recommendation: >
+    Add a Service Level Agreement (SLA) section covering:
+    (1) Uptime commitment (e.g., 99.9% monthly measured availability)
+    (2) Measurement methodology (how downtime is calculated, maintenance windows)
+    (3) Service credits structure (e.g., 5% credit per hour of excess downtime)
+    (4) Exclusions (force majeure, customer-caused outages, scheduled maintenance)
+    (5) Escalation and incident response time commitments
+    (6) Reporting frequency (monthly uptime report)

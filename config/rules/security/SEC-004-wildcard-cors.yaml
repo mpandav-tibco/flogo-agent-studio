@@ -1,0 +1,34 @@
+rule:
+  id: SEC-004
+  enabled: true
+  severity: WARNING
+  category: access-control
+  title: Wildcard CORS Origin Configured
+  description: >
+    Access-Control-Allow-Origin is set to '*' (wildcard). This allows any
+    website to make cross-origin requests to your API. When combined with
+    cookie-based authentication or ambient credentials, this enables
+    Cross-Site Request Forgery (CSRF) and credential theft via malicious websites.
+  tags: [security, cors, csrf, api-security, owasp]
+
+  applies_to: [.yaml, .yml, .json, .properties, .conf, .cfg, .py, .js, .ts, .java, .go]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(access.control.allow.origin[\"']?\\s*[=:]+\\s*[\"']?\\*[\"']?|allow_origins?\\s*[=:]+\\s*\\[?[\"']\\*[\"']|cors.{0,20}origin.{0,20}[\"']\\*[\"'])"
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Replace wildcard CORS with an explicit allowlist:
+    - Specify the exact origins: Access-Control-Allow-Origin: https://app.example.com
+    - For multiple origins: maintain a server-side allowlist and reflect the Origin header
+      only if it matches a trusted value
+    - If the API is public/read-only and uses no credentials: wildcard may be acceptable
+      with Access-Control-Allow-Credentials: false
+    - Express.js: cors({ origin: ['https://app.example.com'] })
+    - nginx: add_header 'Access-Control-Allow-Origin' '$http_origin' if allowlisted
+    Also disable Access-Control-Allow-Credentials: true with wildcard origin (browsers reject this anyway).

@@ -1,0 +1,32 @@
+rule:
+  id: CODE-003
+  enabled: true
+  severity: ERROR
+  category: security
+  title: Dangerous eval() or exec() Usage
+  description: >
+    A call to eval(), exec(), execSync(), or equivalent dynamic code execution
+    was detected. When used with any user-controlled input these functions enable
+    Remote Code Execution (RCE) — an attacker can run arbitrary code on the server.
+    Even with sanitized input, dynamic execution makes code unpredictable and untestable.
+  tags: [security, rce, eval, code-injection, owasp]
+
+  applies_to: [.py, .js, .ts, .rb, .php]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?<![_a-zA-Z])(eval|exec|execSync|execFile|spawn\\s*\\(|subprocess\\.call|os\\.system|Runtime\\.getRuntime|ProcessBuilder)\\s*\\("
+
+  location: "code:{{.Scope.name}}"
+  recommendation: >
+    Eliminate eval()/exec() usage:
+    - For configuration: use JSON.parse() or ast.literal_eval() (Python) — never eval()
+    - For dynamic dispatch: use a registry/map pattern (key → function reference)
+    - For system commands: use subprocess.run() with a list (not shell=True), or child_process.execFile() with an array
+    - If dynamic execution is unavoidable: run in a sandboxed environment (vm2, Pyodide, Deno)
+      with no access to filesystem, network, or environment variables
+    Review the specific call site and replace with the appropriate safe alternative.

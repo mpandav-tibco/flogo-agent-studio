@@ -35,7 +35,7 @@ CHAT_URL    = "http://localhost:7001"          # agent-chat-service
 FEEDBACK_URL= "http://localhost:7003"          # feedback-service
 SSE_URL     = "http://localhost:7005"          # sse-stream-service
 RULE_URL    = "http://localhost:7097"          # rule-engine-service (port 7097; 7000 taken by macOS AirPlay)
-MCP_URL     = "http://localhost:3333/mcp"      # mcp-server
+MCP_URL     = "http://localhost:7333/mcp"      # mcp-server
 
 AGENT_NAME    = f"E2E-Functional-Agent-{datetime.date.today()}"
 COLLECTION    = "FunctionalTestKB"
@@ -881,8 +881,8 @@ md_lines += [
     f"| feedback-service | 7003 | Feedback storage (JSONL) | Chainlit thumbs + MCP tools |",
     f"| agent-builder-service | 7010 | LLM config generation + improvement | Forge AI features |",
     f"| sse-stream-service | 7005 | Async SSE streaming pipeline | Broadcast + stream/chat |",
-    f"| rule-engine-service | 7000 | YAML rule quality analysis | Direct POST /api/analyze |",
-    f"| mcp-server | 3333 | JSON-RPC gateway (9 tools) | All 9 tools exercised |",
+    f"| rule-engine-service | 7097 | YAML rule quality analysis | Direct POST /api/analyze |",
+    f"| mcp-server | 7333 | JSON-RPC gateway (9 tools) | All 9 tools exercised |",
     f"| config-service | 7004 | File-based agent registry (legacy) | Not tested (not in critical path) |",
     f"",
     f"---",

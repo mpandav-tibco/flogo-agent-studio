@@ -1,0 +1,51 @@
+rule:
+  id: API-006
+  enabled: true
+  severity: INFO
+  category: design
+  title: No Rate Limit Response Headers Documented
+  description: >
+    The API spec does not document rate limit response headers
+    (X-RateLimit-Limit, X-RateLimit-Remaining, Retry-After). Without
+    documented rate limit headers, API consumers cannot implement backoff
+    strategies and will hit 429 errors unexpectedly without knowing when
+    to retry.
+  tags: [api, rate-limiting, design, openapi, developer-experience]
+
+  applies_to: [.yaml, .yml, .json]
+  parser: yaml
+
+  scope: $.paths[*][*].responses
+
+  match:
+    type: all_missing
+    patterns:
+      - "X-RateLimit"
+      - "Retry-After"
+      - "X-Rate-Limit"
+      - "'429'"
+
+  location: "api:{{.Parent.name}}"
+  recommendation: >
+    Document rate limiting headers in 200 and 429 responses:
+
+    responses:
+      '200':
+        headers:
+          X-RateLimit-Limit:
+            description: Request limit per window
+            schema: { type: integer }
+          X-RateLimit-Remaining:
+            description: Remaining requests in current window
+            schema: { type: integer }
+          X-RateLimit-Reset:
+            description: UTC epoch when the window resets
+            schema: { type: integer }
+      '429':
+        description: Too Many Requests
+        headers:
+          Retry-After:
+            description: Seconds to wait before retrying
+            schema: { type: integer }
+
+    Follow RFC 6585 for the 429 status code and RFC 7231 for Retry-After.

@@ -1,0 +1,35 @@
+rule:
+  id: SEC-009
+  enabled: true
+  severity: WARNING
+  category: data-protection
+  title: Sensitive Data Passed in URL / Query Parameter
+  description: >
+    API paths or query parameters appear to carry sensitive identifiers
+    (tokens, passwords, keys, SSN-like patterns, credit card numbers) in the URL.
+    URLs are logged by web servers, proxies, CDNs, and browsers — including
+    in Referer headers sent to third-party analytics scripts. Credentials
+    in URLs also appear in git commits and CI logs when hardcoded in test scripts.
+  tags: [security, data-protection, sensitive-data, api-design]
+
+  applies_to: [.yaml, .yml, .json, .py, .js, .ts, .java, .go, .txt, .md]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(\\?|&)(token|password|passwd|secret|api_key|apikey|access_key|auth|credential|ssn|cc_num|card_num|cvv)=[^&\\s\"']{4,}"
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Move sensitive values from URLs to request headers or body:
+    - Authentication tokens: Authorization: Bearer <token> header
+    - API keys: X-API-Key header
+    - Sensitive filters: POST body with application/json
+    If tokens in URLs are unavoidable (callback flows, email links):
+    (1) Use short-lived, single-use tokens (max 15 minutes)
+    (2) Invalidate on first use
+    (3) Use HTTPS to minimize interception risk
+    (4) Exclude sensitive URL patterns from access logs (nginx: log_not_found)

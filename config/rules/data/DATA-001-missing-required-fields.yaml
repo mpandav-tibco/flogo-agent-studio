@@ -1,0 +1,36 @@
+rule:
+  id: DATA-001
+  enabled: true
+  severity: ERROR
+  category: completeness
+  title: Required Fields Missing in Data Record
+  description: >
+    One or more records in the dataset appear to have missing or empty values
+    in fields that are typically required (id, name, date, status, amount).
+    Missing required fields cause downstream processing failures, incorrect
+    aggregations, and data integrity violations.
+  tags: [data-quality, completeness, missing-values, validation]
+
+  applies_to: [.json, .csv, .jsonl]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(\"id\"\\s*:\\s*(null|\"\"|'')|\"name\"\\s*:\\s*(null|\"\"|'')|\"email\"\\s*:\\s*(null|\"\"|'')|,\\s*,|^\\s*,|,\\s*$)"
+
+  location: "data:{{.Scope.name}}"
+  recommendation: >
+    Address missing required field values:
+    (1) Identify records with null/empty required fields using your query tool:
+        SQL: SELECT COUNT(*) FROM table WHERE id IS NULL OR id = ''
+        Python: df[df['id'].isna() | (df['id'] == '')].shape[0]
+    (2) Determine if the gap is a data capture issue (upstream form didn't require the field)
+        or a processing issue (ETL dropped the value)
+    (3) For historical gaps: decide whether to backfill from other sources, use a placeholder
+        value, or exclude records from analysis with documentation
+    (4) Add NOT NULL constraints to prevent future gaps at the database level
+    (5) Add data quality validation at ingestion: reject records missing required fields
+        with a clear error message, rather than storing incomplete records

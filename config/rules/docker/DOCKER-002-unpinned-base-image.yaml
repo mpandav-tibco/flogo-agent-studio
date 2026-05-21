@@ -1,0 +1,44 @@
+rule:
+  id: DOCKER-002
+  enabled: true
+  severity: WARNING
+  category: reproducibility
+  title: Base Image Tag is Unpinned (Using :latest or No Tag)
+  description: >
+    The Dockerfile uses a base image with :latest tag or no tag. The :latest
+    tag is mutable — the same tag points to different image digests over time.
+    Builds are non-reproducible, CVE patches or breaking changes in the base
+    image can silently break your application, and security scanners may report
+    different results between builds.
+  tags: [docker, reproducibility, security, base-image, supply-chain]
+
+  applies_to: [Dockerfile, .dockerfile]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "^FROM\\s+[a-zA-Z0-9._/-]+(:latest|\\s|$)"
+
+  location: "dockerfile:FROM"
+  recommendation: >
+    Pin base images to a specific digest (strongest) or a specific version tag:
+
+    # Version tag (good — immutable for well-maintained images)
+    FROM python:3.12.3-slim-bookworm
+
+    # Digest pinning (best — cryptographically immutable)
+    FROM python:3.12.3-slim-bookworm@sha256:abc123...
+
+    # Get the current digest
+    docker pull python:3.12.3-slim-bookworm
+    docker inspect python:3.12.3-slim-bookworm --format='{{index .RepoDigests 0}}'
+
+    Tooling to automate updates:
+    - Renovate or Dependabot: auto-PRs when base image has a newer digest
+    - Trivy or Grype: scan for CVEs in the pinned base image
+    - cosign: verify image signature before pulling
+
+    Prefer official images from Docker Hub official or distroless (gcr.io/distroless).

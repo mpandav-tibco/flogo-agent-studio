@@ -1,0 +1,48 @@
+rule:
+  id: DOCKER-008
+  enabled: true
+  severity: INFO
+  category: best-practices
+  title: No Multi-Stage Build (Large Image Risk)
+  description: >
+    The Dockerfile does not use multi-stage builds. Single-stage Dockerfiles
+    for compiled languages (Go, Java, Rust) or applications with build-time
+    dependencies (Python with native extensions, Node.js with devDependencies)
+    produce unnecessarily large images that include build tools, compilers,
+    and test frameworks — increasing attack surface and registry storage costs.
+  tags: [docker, multi-stage, image-size, best-practices, security]
+
+  applies_to: [Dockerfile, .dockerfile]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)^FROM.+AS\\s+\\w+"
+      - "(?i)^FROM.+as\\s+\\w+"
+
+  location: "dockerfile:document"
+  recommendation: >
+    Use multi-stage builds to separate build and runtime stages:
+
+    # Stage 1: Build
+    FROM golang:1.22-alpine AS builder
+    WORKDIR /app
+    COPY go.mod go.sum ./
+    RUN go mod download
+    COPY . .
+    RUN CGO_ENABLED=0 go build -o /bin/server ./cmd/server
+
+    # Stage 2: Runtime (minimal image)
+    FROM gcr.io/distroless/static-debian12
+    COPY --from=builder /bin/server /server
+    USER nonroot:nonroot
+    ENTRYPOINT ["/server"]
+
+    Benefits:
+    - Final image contains ONLY the runtime binary + dependencies
+    - Build tools, source code, test files never enter the runtime image
+    - Go: from ~800MB → ~10MB | Java: from ~500MB → ~80MB
+    - Smaller image = fewer CVEs to patch, faster pull, lower registry cost

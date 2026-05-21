@@ -1,0 +1,36 @@
+rule:
+  id: CODE-010
+  enabled: true
+  severity: WARNING
+  category: security
+  title: HTTP Request Parameter Used Without Visible Validation
+  description: >
+    A request parameter (query string, body, header, path param) appears
+    to be accessed and used directly without visible validation or sanitization.
+    Unvalidated input is the root cause of injection attacks, path traversal,
+    and business logic abuse (OWASP A03:2021).
+  tags: [security, input-validation, injection, owasp]
+
+  applies_to: [.py, .js, .ts, .java, .go, .cs, .rb, .php]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(request\\.(args|form|json|data|params|body|query|get_json|get|POST|GET)\\[|req\\.(body|query|params)\\.|params\\.get\\(|request\\.param|getParameter\\(|r\\.FormValue\\(|c\\.Param\\()"
+
+  location: "code:{{.Scope.name}}"
+  recommendation: >
+    Validate and sanitize all input at the boundary:
+    (1) Type validation: parse to expected type before use (int(), float(), UUID())
+    (2) Range validation: check min/max for numbers, length for strings
+    (3) Format validation: regex for structured inputs (email, phone, date)
+    (4) Allowlist validation: for finite option sets (enum, set membership)
+    (5) Reject and return 400 for invalid input — never silently correct it
+    Use validation libraries:
+    - Python: pydantic, marshmallow, cerberus
+    - Node.js: joi, zod, express-validator
+    - Java: Bean Validation (javax.validation), Hibernate Validator
+    - Go: go-playground/validator

@@ -1,0 +1,33 @@
+rule:
+  id: PROC-003
+  enabled: true
+  severity: WARNING
+  category: business-continuity
+  title: No Disaster Recovery or Business Continuity Plan Referenced
+  description: >
+    The vendor proposal does not mention disaster recovery (DR), business
+    continuity planning (BCP), or Recovery Time / Recovery Point Objectives
+    (RTO/RPO). For any business-critical vendor dependency, DR capabilities
+    are essential risk management information.
+  tags: [procurement, disaster-recovery, bcp, rto, rpo, business-continuity]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(disaster.?recovery|business.?continuity|bcp|rto|rpo|recovery.?time|recovery.?point|failover|backup.{0,30}(restore|recovery))"
+
+  location: "proposal:document"
+  recommendation: >
+    Require the vendor to disclose and contractually commit to:
+    (1) RTO (Recovery Time Objective): maximum time to restore service after outage
+    (2) RPO (Recovery Point Objective): maximum data loss in case of failure
+    (3) Geographic redundancy: are backup systems in separate availability zones/regions?
+    (4) Backup frequency and retention: how often are backups taken and for how long retained?
+    (5) DR testing: how often is the DR plan tested? When was the last test?
+    (6) Customer notification: within what timeframe will you be notified of a major incident?
+    Typical benchmarks: RTO < 4h, RPO < 1h for business-critical SaaS services.

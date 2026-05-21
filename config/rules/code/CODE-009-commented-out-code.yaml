@@ -1,0 +1,32 @@
+rule:
+  id: CODE-009
+  enabled: true
+  severity: INFO
+  category: code-quality
+  title: Commented-Out Code Block
+  description: >
+    Large blocks of commented-out code were detected. Dead code in comments
+    confuses reviewers, creates maintenance overhead, and sometimes indicates
+    that a feature was disabled rather than removed — raising questions about
+    intent. Version control exists precisely to preserve this history.
+  tags: [code-quality, maintainability, dead-code, cleanliness]
+
+  applies_to: [.py, .js, .ts, .java, .go, .cs, .rb]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "^\\s*(#|//|--).{20,}(\\bdef\\b|\\bfunction\\b|\\bclass\\b|\\bif\\b|\\bfor\\b|\\bwhile\\b|\\breturn\\b|\\bconst\\b|\\bvar\\b|\\blet\\b|\\bimport\\b)"
+
+  location: "code:{{.Scope.name}}"
+  recommendation: >
+    Remove commented-out code — git history preserves it.
+    If the code is disabled temporarily:
+    (1) Use a feature flag instead of commenting out
+    (2) Add a comment explaining WHY it's disabled and when to re-enable
+    (3) Create a ticket to track the decision
+    If the code represents a failed experiment — delete it entirely.
+    If you need it for reference — use a named git branch or tag.

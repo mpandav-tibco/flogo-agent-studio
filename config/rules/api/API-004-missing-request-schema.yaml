@@ -1,0 +1,47 @@
+rule:
+  id: API-004
+  enabled: true
+  severity: WARNING
+  category: design
+  title: POST/PUT Operation Missing Request Body Schema
+  description: >
+    A POST or PUT operation does not define a requestBody schema. Without a
+    schema, the API is undocumented for consumers, code generators produce
+    untyped clients, and validation tools cannot verify payloads. This leads
+    to runtime errors that should be caught at the API contract level.
+  tags: [api, schema, openapi, design, documentation]
+
+  applies_to: [.yaml, .yml, .json]
+  parser: yaml
+
+  scope: $.paths[*]
+
+  when:
+    type: contains_any
+    path: post
+    substrings: ["operationId", "summary", "description"]
+
+  match:
+    type: missing
+    path: post.requestBody
+
+  location: "api:{{.Scope.name}}.post"
+  recommendation: >
+    Add a requestBody definition with a schema:
+
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAgentRequest'
+            example:
+              name: "My Agent"
+              description: "A helpful assistant"
+
+    Best practices:
+    - Mark required: true for POST operations that need a body
+    - Always provide at least one example — tools like Swagger UI render it for consumers
+    - Reference schemas from components/schemas rather than inlining for reuse
+    - For multipart/form-data (file uploads), use encoding to specify content type per field

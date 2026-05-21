@@ -1,0 +1,38 @@
+rule:
+  id: SEC-010
+  enabled: true
+  severity: WARNING
+  category: data-protection
+  title: No Encryption-at-Rest Configuration Detected for Storage
+  description: >
+    A storage or database configuration was detected without explicit encryption-at-rest
+    settings. Unencrypted storage means that anyone with physical or administrative access
+    to the storage medium can read the data directly. This violates GDPR Article 32,
+    HIPAA Technical Safeguard §164.312(a)(2)(iv), and PCI DSS Requirement 3.
+  tags: [security, encryption, data-at-rest, soc2, hipaa, gdpr, iso27001-a10]
+
+  applies_to: [.yaml, .yml, .json, .properties, .conf, .cfg]
+  parser: text
+
+  scope: line
+
+  when:
+    type: regex_match
+    path: content
+    pattern: "(?i)(database|db_host|db_url|storage|bucket|volume|disk|s3|blob|gcs|persistent)"
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(encrypt|kms|cmk|sse|aes|tde|storage.?encrypted|encrypt.?at.?rest|encrypted.?volume)"
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Enable encryption at rest for all storage of sensitive data:
+    - AWS: enable SSE-KMS on S3 buckets; enable storage_encrypted on RDS; EBS volume encryption
+    - Azure: enable Storage Service Encryption; Azure Disk Encryption
+    - GCP: CMEK (Customer-Managed Encryption Keys) for Cloud Storage and Cloud SQL
+    - PostgreSQL: use pgcrypto for column-level encryption of PII; full-disk encryption at OS layer
+    - MongoDB: enable Encrypted Storage Engine (WiredTiger encryption)
+    Key management: use a managed KMS (not self-managed keys) with automatic rotation.
+    Document which data stores hold what categories of sensitive data in your data inventory.

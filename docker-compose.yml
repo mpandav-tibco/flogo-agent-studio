@@ -14,7 +14,7 @@ version: "3.9"
 #     or set in a .env file next to this file.
 #
 # Ports summary (see ports.yaml for canonical registry):
-#   7000  rule-engine-service
+#   7097  rule-engine-service
 #   7001  agent-chat-service
 #   7002  ingestion-service
 #   7003  feedback-service
@@ -24,7 +24,7 @@ version: "3.9"
 #   7025  forge UI (nginx)
 #   7080  chainlit-ui
 #   7099  sse-stream-service (SSE event bus)
-#   3333  mcp-server
+#   7333  mcp-server
 #   8080  weaviate (http)
 #   50051 weaviate (grpc)
 #   11434 ollama
@@ -94,7 +94,7 @@ services:
     image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:rule-engine-${VERSION:-latest}
     restart: unless-stopped
     ports:
-      - "7000:7000"
+      - "7097:7097"
     environment:
       <<: *flogo-env
       FLOGO_APP_PROPS_ENV: auto
@@ -105,7 +105,7 @@ services:
     networks:
       - agent-studio
     healthcheck:
-      test: [ "CMD", "wget", "-qO-", "http://localhost:7000/api/health" ]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:7097/api/health" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -225,11 +225,11 @@ services:
     image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:mcp-server-${VERSION:-latest}
     restart: unless-stopped
     ports:
-      - "3333:3333"
+      - "7333:7333"
     environment:
       <<: *flogo-env
       FLOGO_APP_PROPS_ENV: auto
-      RULE_ENGINE_URL: http://rule-engine:7000/api/analyze
+      RULE_ENGINE_URL: http://rule-engine:7097/api/analyze
       CHAT_SERVICE_URL: http://agent-chat:7001/api/chat
       DESIGN_SERVICE_URL: http://design-service:7020
       FEEDBACK_SERVICE_URL: http://feedback:7003/api/feedback

@@ -1,0 +1,50 @@
+rule:
+  id: API-009
+  enabled: true
+  severity: WARNING
+  category: governance
+  title: Deprecated Field or Endpoint Without Sunset Date
+  description: >
+    An API element marked as deprecated does not have a corresponding
+    x-sunset or deprecation date hint. Deprecated fields without a
+    timeline leave consumers uncertain when removal will happen and
+    create indefinite maintenance burden on the API provider.
+  tags: [api, deprecation, versioning, governance, backward-compatibility]
+
+  applies_to: [.yaml, .yml, .json]
+  parser: yaml
+
+  scope: $.paths[*][*]
+
+  when:
+    type: equals
+    path: deprecated
+    value: true
+
+  match:
+    type: all_missing
+    patterns:
+      - x-sunset
+      - x-deprecation-date
+      - x-removal-date
+
+  location: "api:{{.Parent.name}}.{{.Scope.name}}"
+  recommendation: >
+    Add a sunset date to deprecated operations using the x-sunset extension
+    (standardized in IETF RFC 8594):
+
+    /v1/agents/{id}:
+      get:
+        deprecated: true
+        x-sunset: "2026-12-31"
+        x-deprecation-date: "2025-06-01"
+        x-migration-guide: "https://docs.example.com/migrate-to-v2"
+        summary: "[DEPRECATED] Get agent by ID — use /v2/agents/{id}"
+        description: >
+          **Deprecated**: This endpoint will be removed on 2026-12-31.
+          Migrate to /v2/agents/{id} which supports additional filter options.
+
+    Also:
+    - Return Deprecation and Sunset headers in the response
+    - Send deprecation notification emails to registered API consumers
+    - Remove from SDK documentation and mark clearly in portals

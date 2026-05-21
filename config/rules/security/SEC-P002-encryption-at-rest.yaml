@@ -1,0 +1,30 @@
+rule:
+  id: SEC-P002
+  enabled: true
+  severity: GOOD
+  category: data-protection
+  title: Encryption at Rest Configuration Detected
+  description: >
+    Encryption at rest is configured for storage. This protects data from
+    physical media theft, unauthorized storage access, and compliance
+    requirements under GDPR, HIPAA, PCI DSS, and ISO 27001.
+  tags: [encryption, data-at-rest, soc2, hipaa, compliance]
+
+  applies_to: [.yaml, .yml, .json, .properties, .conf, .cfg]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)(storage.?encrypted\\s*[=:]+\\s*(true|1|yes)|encrypt.?at.?rest\\s*[=:]+\\s*(true|1|yes)|kms.?key.?id|cmk|sse.?kms|encrypted.?volume\\s*[=:]+\\s*true)"
+
+  location: "config:{{.Scope.name}}"
+  recommendation: >
+    Encryption at rest detected. Verify:
+    (1) Encryption covers all data stores containing sensitive data (not just primary DB)
+    (2) Key management uses a managed KMS with audit logging enabled
+    (3) Key rotation is configured (annual minimum; 90-day for high-value data)
+    (4) Encryption extends to backups and snapshots
+    (5) Test key access controls — data should be inaccessible without the KMS key

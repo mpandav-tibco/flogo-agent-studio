@@ -1,0 +1,53 @@
+rule:
+  id: HR-003
+  enabled: true
+  severity: WARNING
+  category: fairness
+  title: Disciplinary Policy Missing Graduated Procedure
+  description: >
+    The disciplinary policy does not describe a graduated or progressive
+    disciplinary procedure. Without clearly defined steps, managers act
+    inconsistently, creating unfair treatment claims and legal liability.
+    Employment tribunals expect employers to have followed a fair and
+    reasonable procedure before dismissal.
+  tags: [hr, disciplinary, fairness, legal, employment-law]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  when:
+    type: regex_match
+    path: content
+    pattern: "(?i)(disciplin|misconduct|termination|dismissal)"
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(verbal.{0,20}warn|written.{0,20}warn|final.{0,20}warn|first.{0,20}warn|step.{0,20}[123]|stage.{0,20}[123])"
+
+  location: "policy:disciplinary-procedure"
+  recommendation: >
+    Define a graduated disciplinary procedure with clear steps:
+
+    Step 1 — Verbal Warning
+    Appropriate for: minor first offences
+    Process: informal meeting, manager records warning, employee acknowledges
+    Duration: remains on record for [6] months
+
+    Step 2 — Written Warning
+    Appropriate for: repeat minor offence or moderate misconduct
+    Process: formal meeting with HR present, written confirmation, right to appeal
+    Duration: remains on record for [12] months
+
+    Step 3 — Final Written Warning
+    Appropriate for: serious misconduct or repeated violations post written warning
+    Duration: remains on record for [12-24] months
+
+    Step 4 — Dismissal
+    Appropriate for: gross misconduct (immediate) or failure to improve post Final Warning
+    Process: investigation, suspension if needed, formal hearing, right to appeal
+
+    Key requirements: right to be accompanied, advance notice of allegations,
+    right to appeal at each stage, investigation before any sanction.

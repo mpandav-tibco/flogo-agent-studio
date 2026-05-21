@@ -1,0 +1,29 @@
+rule:
+  id: CODE-P001
+  enabled: true
+  severity: GOOD
+  category: error-handling
+  title: Error Handling Pattern Detected
+  description: >
+    Structured error handling (try/except, try/catch, error return checks)
+    was found. This indicates the code handles failure cases rather than
+    allowing uncaught exceptions to crash the process.
+  tags: [error-handling, resilience, code-quality]
+
+  applies_to: [.py, .js, .ts, .java, .go, .cs, .rb]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "(?i)\\b(try\\s*:|try\\s*\\{|except\\s+[A-Z]|catch\\s*\\(|rescue\\s+[A-Z]|if err != nil|if\\s+err\\s*!=)"
+
+  location: "code:{{.Scope.name}}"
+  recommendation: >
+    Error handling detected. Verify quality:
+    (1) Errors are logged with sufficient context for debugging
+    (2) The program returns to a consistent state after error recovery
+    (3) Specific exception types are caught (not bare except: / catch(Exception))
+    (4) HTTP response codes correctly reflect the error class (400, 409, 500, 503)

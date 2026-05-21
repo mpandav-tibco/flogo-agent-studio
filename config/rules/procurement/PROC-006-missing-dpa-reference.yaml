@@ -1,0 +1,35 @@
+rule:
+  id: PROC-006
+  enabled: true
+  severity: ERROR
+  category: compliance
+  title: No Data Processing Agreement (DPA) Referenced
+  description: >
+    The vendor proposal does not reference a Data Processing Agreement (DPA)
+    or data processing addendum. If the vendor processes personal data on your
+    behalf (as a data processor), a DPA is legally required under GDPR, UK GDPR,
+    CCPA, and other privacy regulations. Procurement without a DPA exposes your
+    organization to regulatory action.
+  tags: [procurement, dpa, gdpr, privacy, compliance, data-processing]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(data.{0,20}process.{0,20}(agreement|addendum|dpa)|dpa|data.{0,20}process.{0,20}annex|standard.{0,20}contractual.{0,20}clause|scc|gdpr.{0,20}(compliant|addendum))"
+
+  location: "proposal:document"
+  recommendation: >
+    Before signing, ensure:
+    (1) The vendor provides a GDPR-compliant DPA (or has a standard one on their website)
+    (2) The DPA correctly designates roles: are you the controller and vendor the processor?
+    (3) Sub-processors are listed and you are notified before new sub-processors are added
+    (4) International data transfers are covered (SCCs for EU→non-EEA, Adequacy Decisions)
+    (5) Data breach notification commits to 24–48 hours (not just the legal 72-hour minimum)
+    (6) Data subject rights: vendor must support you in fulfilling DSARs within 30 days
+    Reject proposals where the vendor claims they are not a data processor — if they store,
+    access, or transmit your customer data, they are processing it.

@@ -1,0 +1,36 @@
+rule:
+  id: PROC-004
+  enabled: true
+  severity: WARNING
+  category: data-governance
+  title: No Data Portability or Exit Plan Described
+  description: >
+    The vendor proposal does not describe how customer data can be extracted
+    and how the vendor supports transition at contract end. Vendor lock-in
+    through proprietary data formats or no exit assistance is a significant
+    operational and financial risk. Without an exit plan, switching costs
+    are invisible until it is too late to negotiate them.
+  tags: [procurement, data-portability, vendor-lock-in, exit-plan, transition]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(data.{0,20}(export|portab|extract|migration)|exit.{0,20}(plan|support|assist)|transition.{0,20}(plan|support|assist)|data.{0,20}return|termination.{0,30}data)"
+
+  location: "proposal:document"
+  recommendation: >
+    Negotiate the following exit provisions:
+    (1) Data export: vendor must provide all customer data in a standard, machine-readable
+        format (JSON, CSV, SQL dump) within 30 days of termination request
+    (2) Transition assistance: vendor provides N months of read-only access post-termination
+        to support migration (typically 30–90 days)
+    (3) Data deletion certificate: written confirmation that all customer data has been
+        deleted from vendor systems within 90 days of termination
+    (4) Migration support: what assistance (documentation, APIs, professional services) does
+        the vendor offer to help migrate to another platform?
+    (5) No ransom pricing: the exit assistance should be included or at pre-agreed rates

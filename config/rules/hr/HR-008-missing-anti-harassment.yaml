@@ -1,0 +1,42 @@
+rule:
+  id: HR-008
+  enabled: true
+  severity: ERROR
+  category: compliance
+  title: No Anti-Harassment or Dignity at Work Policy
+  description: >
+    The HR documentation does not include an anti-harassment, anti-bullying,
+    or dignity at work policy. Such policies are legally required or strongly
+    mandated in most jurisdictions (UK Worker Protection Act 2024, US EEOC,
+    EU Equal Treatment Directive). Absence leaves the employer liable for
+    hostile work environment claims and increases tribunal risk significantly.
+  tags: [hr, anti-harassment, dignity, compliance, legal, inclusion]
+
+  applies_to: [.txt, .md, .pdf, .docx]
+  parser: text
+
+  scope: line
+
+  match:
+    type: all_missing
+    patterns:
+      - "(?i)(anti.?harassment|harassment.{0,20}policy|bullying.{0,20}policy|dignity.{0,20}(work|workplace)|sexual.{0,20}harassment|hostile.{0,20}work)"
+
+  location: "policy:document"
+  recommendation: >
+    Create a standalone Anti-Harassment and Dignity at Work Policy covering:
+
+    (1) Definition of harassment: unwanted conduct related to a protected characteristic
+        that violates dignity or creates an intimidating, hostile, degrading environment
+    (2) Definition of bullying: persistent, offensive, intimidating behaviour that
+        undermines an individual's confidence and performance
+    (3) Examples: sexual harassment, racial harassment, cyberbullying, exclusion
+    (4) Zero tolerance statement: clear statement that harassment is grounds for dismissal
+    (5) Reporting: multiple reporting routes (line manager, HR, anonymous hotline)
+    (6) Investigation: confidential, impartial, timely (within 10 working days)
+    (7) Support: counselling access (EAP), protection from retaliation for complainants
+    (8) Third parties: extends to clients, contractors, and visitors
+    (9) Training: mandatory for all employees; enhanced training for managers
+
+    UK Worker Protection Act 2024: employers must take "reasonable steps" to prevent
+    sexual harassment — inaction is no longer a defence. Document your preventive measures.

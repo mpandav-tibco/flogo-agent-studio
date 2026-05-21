@@ -1,0 +1,46 @@
+rule:
+  id: API-008
+  enabled: true
+  severity: INFO
+  category: documentation
+  title: API Info Section Missing Contact or License Information
+  description: >
+    The API specification info section is missing contact information or
+    license declaration. For external or partner-facing APIs this is
+    essential — consumers need to know who to contact for support and
+    what rights they have to use the API. Internal APIs benefit from
+    contact info for ownership clarity.
+  tags: [api, documentation, openapi, governance]
+
+  applies_to: [.yaml, .yml, .json]
+  parser: yaml
+
+  scope: $.info
+
+  match:
+    type: all_missing
+    patterns:
+      - contact
+      - license
+
+  location: "api:info"
+  recommendation: >
+    Add contact and license information to the info section:
+
+    info:
+      title: My API
+      version: 1.0.0
+      description: >
+        What this API does and who should use it.
+      contact:
+        name: Platform Team
+        email: platform@example.com
+        url: https://developer.example.com/support
+      license:
+        name: Apache 2.0
+        url: https://www.apache.org/licenses/LICENSE-2.0.html
+      x-internal: false          # custom extension indicating public/private
+      x-team: platform-engineering
+
+    For internal APIs, at minimum add contact.email so consumers know who owns it.
+    For public APIs, a license is legally necessary to clarify usage rights.

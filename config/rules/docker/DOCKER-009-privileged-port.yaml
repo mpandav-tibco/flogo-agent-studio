@@ -1,0 +1,47 @@
+rule:
+  id: DOCKER-009
+  enabled: true
+  severity: INFO
+  category: security
+  title: Container Exposes Privileged Port (Below 1024)
+  description: >
+    The Dockerfile exposes a port below 1024. Privileged ports require
+    root privileges to bind on Linux. If the container runs as root to bind
+    port 80 or 443, it negates the security benefit of running as non-root.
+    The correct pattern is to run the application on a non-privileged port
+    and expose it as the standard port via the container runtime or ingress.
+  tags: [docker, security, ports, root, networking]
+
+  applies_to: [Dockerfile, .dockerfile]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "^EXPOSE\\s+(80|443|21|22|23|25|110|143|389|636|993|995)\\b"
+
+  location: "dockerfile:EXPOSE"
+  recommendation: >
+    Run your application on a non-privileged port internally:
+
+    # App listens on 8080, container exposes 8080
+    EXPOSE 8080
+    CMD ["./server", "--port", "8080"]
+
+    # Map to port 80 at runtime without root:
+    docker run -p 80:8080 myimage
+
+    # In Kubernetes: Service handles the port mapping
+    ports:
+      - containerPort: 8080
+    ---
+    kind: Service
+    spec:
+      ports:
+        - port: 80
+          targetPort: 8080
+
+    For TLS termination: handle at ingress controller (nginx-ingress, Traefik)
+    rather than inside the container.

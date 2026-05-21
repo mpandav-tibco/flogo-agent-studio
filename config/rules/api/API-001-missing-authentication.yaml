@@ -1,0 +1,47 @@
+rule:
+  id: API-001
+  enabled: true
+  severity: ERROR
+  category: security
+  title: API Endpoint Missing Authentication Requirement
+  description: >
+    One or more paths in the OpenAPI spec do not define a security scheme.
+    Unauthenticated endpoints are accessible to anyone on the internet.
+    This is a common misconfiguration that exposes data or functionality
+    unintentionally (OWASP API Security Top 10: API2 Broken Authentication).
+  tags: [api, security, authentication, openapi, owasp]
+
+  applies_to: [.yaml, .yml, .json]
+  parser: yaml
+
+  scope: $.paths[*][*]
+
+  match:
+    type: all_missing
+    patterns:
+      - security
+      - x-auth-required
+
+  location: "api:{{.Parent.name}}.{{.Scope.name}}"
+  recommendation: >
+    Add a security requirement to each operation or at the global level:
+
+    Global (applies to all operations):
+      security:
+        - bearerAuth: []
+
+    Per-operation override (to make a specific endpoint public):
+      /health:
+        get:
+          security: []   # empty array explicitly marks as public
+
+    Define security schemes in components/securitySchemes:
+      securitySchemes:
+        bearerAuth:
+          type: http
+          scheme: bearer
+          bearerFormat: JWT
+        apiKey:
+          type: apiKey
+          in: header
+          name: X-API-Key

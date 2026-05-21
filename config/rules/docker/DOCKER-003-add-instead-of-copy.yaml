@@ -1,0 +1,45 @@
+rule:
+  id: DOCKER-003
+  enabled: true
+  severity: WARNING
+  category: best-practices
+  title: ADD Used Instead of COPY for Local Files
+  description: >
+    The ADD instruction is used where COPY is more appropriate. ADD has
+    hidden behaviors that can introduce security and reproducibility issues:
+    it automatically extracts TAR archives and fetches remote URLs. COPY is
+    explicit, predictable, and preferred for all local file operations.
+    The only legitimate use of ADD is extracting a local TAR archive in a
+    single layer.
+  tags: [docker, best-practices, add, copy, security]
+
+  applies_to: [Dockerfile, .dockerfile]
+  parser: text
+
+  scope: line
+
+  match:
+    type: regex_match
+    path: content
+    pattern: "^ADD\\s+(?!.+\\.tar(\\.gz|\\.bz2|\\.xz)?\\s)"
+
+  location: "dockerfile:ADD"
+  recommendation: >
+    Replace ADD with COPY for local files:
+
+    # Wrong
+    ADD ./app /app
+    ADD requirements.txt /app/
+    ADD https://example.com/file.zip /tmp/    # remote URL - never use ADD for this
+
+    # Correct
+    COPY ./app /app
+    COPY requirements.txt /app/
+
+    # If you genuinely need remote file fetch, use curl/wget and verify checksum:
+    RUN curl -fsSL https://example.com/file.tar.gz | \
+        tar xz --strip-components=1 && \
+        echo "expected_sha256  file" | sha256sum -c
+
+    ADD is acceptable ONLY for extracting a local archive:
+    ADD myapp.tar.gz /app/    # legitimate use of ADD
