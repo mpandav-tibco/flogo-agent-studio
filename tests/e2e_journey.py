@@ -135,9 +135,8 @@ SERVICES = [
     ("rule-engine-service",    7097),
     ("agent-chat-service",     7001),   # includes SSE streaming (merged)
     ("ingestion-service",      7002),
-    ("feedback-service",       7003),
+    ("platform-service",       7020),   # design + feedback merged
     ("agent-builder-service",  7010),
-    ("design-service",         7020),
 ]
 print()
 for svc, port in SERVICES:
@@ -163,15 +162,15 @@ print(f"  [{icon}]  mcp-server                    port=7333  HTTP 200  ({el_hc}m
 LOG.append(f"  [{icon}] mcp-server port=7333 HTTP 200 ({el_hc}ms)")
 
 # =============================================================================
-banner("PHASE 2 - DESIGN-SERVICE (port 7020): Discover agents")
-# NOTE: config-service (7004) was retired. Agent registry now lives in design-service.
+banner("PHASE 2 - PLATFORM-SERVICE (port 7020): Discover agents")
+# NOTE: config-service (7004) was retired; feedback-service (7003) merged into platform-service.
 # =============================================================================
 
 COLLECTION    = "KnowledgeBase"
 AGENT_ID      = "default"
 DESIGN_AGENT_ID = None
 
-step(1, "List all agents from design-service")
+step(1, "List all agents from platform-service")
 print(f"       REQUEST : GET http://localhost:7020/api/v1/agents")
 s, body, el = req("http://localhost:7020/api/v1/agents")
 ok = show_result(s, el)
@@ -186,7 +185,7 @@ if ok:
 else:
     all_ok = False
 
-step(2, "Get first active agent config from design-service")
+step(2, "Get first active agent config from platform-service")
 active = [a for a in records if a.get("status") == "active"]
 if active:
     DESIGN_AGENT_ID = active[0]["id"]
@@ -337,7 +336,7 @@ else:
     print(f"       ERROR: {chat_resp}"); all_ok = False
 
 # =============================================================================
-banner("PHASE 6 - FEEDBACK-SERVICE (port 7003): Submit and retrieve feedback")
+banner("PHASE 6 - PLATFORM-SERVICE (port 7020): Submit and retrieve feedback")
 # =============================================================================
 
 step(6, f"Submit user feedback (rating=5) for agent '{AGENT_ID}'")
@@ -347,11 +346,11 @@ fb_payload = {
     "comment":   f"RAG answer correctly listed AgenticAI activities. Answer: {ANSWER[:80]}",
     "sessionId": "e2e-journey-001"
 }
-print(f"       REQUEST : POST http://localhost:7003/api/feedback")
+print(f"       REQUEST : POST http://localhost:7020/api/feedback")
 print(f"       BODY    : agentId={AGENT_ID}  rating=5  sessionId=e2e-journey-001")
 print(f"       BODY    : comment='{fb_payload['comment'][:70]}...'")
 LOG.append(f"       REQUEST: POST /api/feedback body={json.dumps(fb_payload)}")
-s, body, el = req("http://localhost:7003/api/feedback", "POST", fb_payload)
+s, body, el = req("http://localhost:7020/api/feedback", "POST", fb_payload)
 ok = show_result(s, el)
 if ok and isinstance(body, dict):
     fpath = body.get("fullPath", "")
@@ -363,9 +362,9 @@ else:
     print(f"       ERROR: {body}"); all_ok = False
 
 step(7, f"Retrieve stored feedback records for agent '{AGENT_ID}'")
-print(f"       REQUEST : GET http://localhost:7003/api/feedback/{AGENT_ID}")
+print(f"       REQUEST : GET http://localhost:7020/api/feedback/{AGENT_ID}")
 LOG.append(f"       REQUEST: GET /api/feedback/{AGENT_ID}")
-s, body, el = req(f"http://localhost:7003/api/feedback/{AGENT_ID}")
+s, body, el = req(f"http://localhost:7020/api/feedback/{AGENT_ID}")
 ok = show_result(s, el)
 if ok:
     print(f"       RESPONSE:")

@@ -80,7 +80,7 @@
               },
               "body": {
                 "type": "json",
-                "value": "{\"$schema\": \"http://json-schema.org/draft-04/schema#\", \"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"description\": {\"type\": \"string\"}, \"config\": {\"type\": \"object\"}, \"template\": {\"type\": \"string\"}}}",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"config\":{\"type\":\"object\",\"properties\":{}},\"template\":{\"type\":\"string\"}}}",
                 "fe_metadata": "{\"name\": \"my-agent\", \"description\": \"Agent description\", \"config\": {}, \"template\": \"default\"}"
               }
             }
@@ -153,7 +153,8 @@
               "status": "=$.queryParams.status"
             },
             "output": {
-              "code": "=$.code"
+              "code": "=$.code",
+              "data": "=$.data"
             }
           },
           "reply": {
@@ -232,7 +233,7 @@
               },
               "body": {
                 "type": "json",
-                "value": "{\"$schema\": \"http://json-schema.org/draft-04/schema#\", \"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"description\": {\"type\": \"string\"}, \"config\": {\"type\": \"object\"}, \"status\": {\"type\": \"string\"}, \"template\": {\"type\": \"string\"}}}",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"config\":{\"type\":\"object\",\"properties\":{}},\"status\":{\"type\":\"string\"},\"template\":{\"type\":\"string\"}}}",
                 "fe_metadata": "{\"name\": \"my-agent\", \"description\": \"Agent description\", \"config\": {}, \"status\": \"active\", \"template\": \"default\"}"
               }
             }
@@ -652,7 +653,7 @@
           {
             "id": "LogRequest",
             "name": "LogRequest",
-            "description": "",
+            "description": "Simple Log Message Activity",
             "activity": {
               "ref": "#log",
               "input": {
@@ -680,7 +681,7 @@
                 "Schema": "public",
                 "Query": "INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
                 "manualmode": false,
-                "State": "3db282ce-27ed-457d-8959-e2e193857272INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
+                "State": "3e6e42b8-fa79-4341-9d87-ed8d19584b02INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -720,6 +721,14 @@
               }
             },
             {
+              "name": "body",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"config\":{\"type\":\"object\",\"properties\":{}},\"template\":{\"type\":\"string\"}}"
+              }
+            },
+            {
               "name": "requestURI",
               "type": "string"
             },
@@ -734,13 +743,13 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
-            "input": "{\"type\":\"object\",\"title\":\"DesignRESTTrigger\",\"properties\":{\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
-            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"data\":{\"type\":\"object\",\"properties\":{}}},\"required\":[]}"
+            "input": "{\"type\":\"object\",\"title\":\"PlatformRESTTrigger\",\"properties\":{\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"body\":{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"config\":{\"type\":\"object\",\"properties\":{}},\"template\":{\"type\":\"string\"}}},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"message\":{\"type\":\"string\"}},\"required\":[]}"
           }
         },
         "explicitReply": true
@@ -793,7 +802,7 @@
                 "Schema": "public",
                 "Query": "SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
                 "manualmode": false,
-                "State": "64ffadb1-059c-4203-8869-a3eb1e6b076aSELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
+                "State": "6724c911-c1d2-4781-a088-1b281f58720aSELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -892,7 +901,7 @@
                 "Schema": "public",
                 "Query": "SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC",
                 "manualmode": false,
-                "State": "2366f19c-f7a2-4c03-b0b3-34d5e829b1baSELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC"
+                "State": "d3873675-d853-45ee-a47c-d36fb6b01b23SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC"
               }
             }
           },
@@ -984,7 +993,7 @@
                 "Schema": "public",
                 "Query": "UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
                 "manualmode": false,
-                "State": "725a2bab-961f-496c-8ff4-d155356f9224UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
+                "State": "cdff8259-3b4a-4478-9a8b-88603ec11229UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -1091,7 +1100,7 @@
                 "Schema": "public",
                 "Query": "UPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
                 "manualmode": false,
-                "State": "f268e5c7-331f-4eeb-8df9-93ccb36e95acUPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
+                "State": "d9148873-4e81-4213-b54d-a4b8d6725a8eUPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -1195,7 +1204,7 @@
                 "Schema": "public",
                 "Query": "DELETE FROM agents WHERE id=?agentId RETURNING id",
                 "manualmode": false,
-                "State": "81996a19-4359-4907-a247-03810a1b15c9DELETE FROM agents WHERE id=?agentId RETURNING id",
+                "State": "c1dff8af-8bb2-41f7-8b48-447ccd9de219DELETE FROM agents WHERE id=?agentId RETURNING id",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -1666,7 +1675,7 @@
                 "Schema": "public",
                 "Query": "SELECT 1 AS alive",
                 "manualmode": false,
-                "State": "67ca52e4-ab59-4a1d-8e48-7cf0b8479c71SELECT 1 AS alive",
+                "State": "8a40ba0c-95a1-4940-9f05-ac89995da30fSELECT 1 AS alive",
                 "input": {
                   "mapping": {
                     "parameters": {}
@@ -1769,7 +1778,7 @@
                 "fetchMetadata": "",
                 "Fields": [],
                 "RuntimeQuery": "",
-                "State": "0f97f135-7e55-4e2d-835e-cba8fdefeb0eSELECT config->>'collectionName' as \"collectionName\", config->>'topK' as \"topK\", config->>'systemPrompt' as \"systemPrompt\", config->>'llmProvider' as \"llmProvider\", config->>'llmModel' as \"llmModel\", config->>'llmBaseUrl' as \"llmBaseUrl\", config->>'temperature' as \"temperature\", config->>'chunkStrategy' as \"chunkStrategy\" FROM agents WHERE id = ?agentId",
+                "State": "1fad9be2-c7b5-45ee-89ff-56978f274041SELECT config->>'collectionName' as \"collectionName\", config->>'topK' as \"topK\", config->>'systemPrompt' as \"systemPrompt\", config->>'llmProvider' as \"llmProvider\", config->>'llmModel' as \"llmModel\", config->>'llmBaseUrl' as \"llmBaseUrl\", config->>'temperature' as \"temperature\", config->>'chunkStrategy' as \"chunkStrategy\" FROM agents WHERE id = ?agentId",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -2302,7 +2311,7 @@
     {
       "name": "PostgreSQL.Design_Service_DB.Password",
       "type": "string",
-      "value": "SECRET:6XQGcT26zUw6KNh9n69cBNG/jUQmCm3p"
+      "value": "SECRET:/G2pfPlh4IB/LxQWsOcwzbJ3v9ZyKwBw"
     },
     {
       "name": "PostgreSQL.Design_Service_DB.Maximum_Open_Connections",
@@ -2347,7 +2356,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:a+JoenlFYoKMuQCFDRTHOWjU/knGCFLv"
+      "value": "SECRET:aoEddYH3heMf7OnWh/brA95RFXxAPsDm"
     },
     {
       "name": "FEEDBACK_LOG_PATH",
@@ -2420,6 +2429,15 @@
                     "description": "Request parameter",
                     "required": false,
                     "type": "string"
+                  },
+                  {
+                    "name": "body",
+                    "in": "body",
+                    "description": "request body parameter",
+                    "required": true,
+                    "schema": {
+                      "$ref": "#/definitions/schema1"
+                    }
                   }
                 ],
                 "responses": {
@@ -2512,6 +2530,15 @@
                     "description": "Request parameter",
                     "required": false,
                     "type": "string"
+                  },
+                  {
+                    "name": "body",
+                    "in": "body",
+                    "description": "request body parameter",
+                    "required": true,
+                    "schema": {
+                      "$ref": "#/definitions/schema2"
+                    }
                   }
                 ],
                 "responses": {
@@ -2691,7 +2718,7 @@
                     "description": "request body parameter",
                     "required": true,
                     "schema": {
-                      "$ref": "#/definitions/schema1"
+                      "$ref": "#/definitions/schema3"
                     }
                   }
                 ],
@@ -2765,6 +2792,45 @@
           },
           "definitions": {
             "schema1": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "config": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "template": {
+                  "type": "string"
+                }
+              }
+            },
+            "schema2": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "config": {
+                  "type": "object",
+                  "properties": {}
+                },
+                "status": {
+                  "type": "string"
+                },
+                "template": {
+                  "type": "string"
+                }
+              }
+            },
+            "schema3": {
               "type": "object",
               "properties": {
                 "agentId": {
