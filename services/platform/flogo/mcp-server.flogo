@@ -484,6 +484,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
@@ -695,6 +696,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
@@ -896,6 +898,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
@@ -1090,10 +1093,11 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"AGENT_BY_ID_BASE_URL\"], $flow.agentId)",
+                "Uri": "=$property[\"AGENT_BY_ID_BASE_URL\"]",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -1290,6 +1294,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
@@ -1491,6 +1496,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
@@ -1685,6 +1691,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
@@ -1900,10 +1907,11 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
-                "Uri": "=string.concat($property[\"DEPLOY_AGENT_BASE_URL\"], $flow.agentId, \"/deploy\")",
+                "Uri": "=$property[\"DEPLOY_AGENT_BASE_URL\"]",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -2100,6 +2108,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
@@ -2255,7 +2264,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:HoGciR0t38e/caLYADpBajAvDSMm3NxU"
+      "value": "SECRET:uxs4Ps+vOHtOutOHiJ7Ll5P93n+APL/2"
     },
     {
       "name": "API_AUTH_HEADER",
@@ -2285,12 +2294,12 @@
     {
       "name": "AGENT_BY_ID_BASE_URL",
       "type": "string",
-      "value": "http://localhost:7020/api/v1/agents/"
+      "value": "http://localhost:7020/api/v1/agents/{agentId}"
     },
     {
       "name": "DEPLOY_AGENT_BASE_URL",
       "type": "string",
-      "value": "http://localhost:7030/api/v1/agents/"
+      "value": "http://localhost:7030/api/v1/agents/{agentId}/deploy"
     }
   ],
   "schemas": {
