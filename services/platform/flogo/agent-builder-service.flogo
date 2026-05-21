@@ -550,7 +550,7 @@
           {
             "id": "ReadCurrentConfig",
             "name": "ReadCurrentConfig",
-            "description": "GET current agent config from config-service",
+            "description": "GET current agent config from platform-service",
             "settings": {
               "retryOnError": {
                 "count": 0,
@@ -610,6 +610,11 @@
                     "type": "json",
                     "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
                     "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "responseBody": {
+                    "type": "json",
+                    "value": "{\"$schema\": \"http://json-schema.org/draft-07/schema#\", \"type\": \"object\", \"properties\": {\"id\": {\"type\": \"string\"}, \"name\": {\"type\": \"string\"}, \"description\": {\"type\": \"string\"}, \"status\": {\"type\": \"string\"}, \"config\": {\"type\": \"object\", \"properties\": {}}, \"created_at\": {\"type\": \"string\"}, \"updated_at\": {\"type\": \"string\"}, \"version\": {\"type\": \"integer\"}}}",
+                    "fe_metadata": "{\"$schema\": \"http://json-schema.org/draft-07/schema#\", \"type\": \"object\", \"properties\": {\"id\": {\"type\": \"string\"}, \"name\": {\"type\": \"string\"}, \"description\": {\"type\": \"string\"}, \"status\": {\"type\": \"string\"}, \"config\": {\"type\": \"object\", \"properties\": {}}, \"created_at\": {\"type\": \"string\"}, \"updated_at\": {\"type\": \"string\"}, \"version\": {\"type\": \"integer\"}}}"
                   }
                 }
               },
