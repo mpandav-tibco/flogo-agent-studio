@@ -200,6 +200,20 @@
                 "parserOverride": "=$flow.body.parserOverride",
                 "disabledRules": "=$flow.body.disabledRules",
                 "tags": "=$flow.body.tags"
+              },
+              "schemas": {
+                "input": {
+                  "disabledRules": {
+                    "type": "json",
+                    "value": "{\"type\":\"array\",\"items\":{\"type\":\"string\"}}",
+                    "fe_metadata": "[\"abc\"]"
+                  },
+                  "tags": {
+                    "type": "json",
+                    "value": "{\"type\":\"array\",\"items\":{\"type\":\"string\"}}",
+                    "fe_metadata": "[\"abc\"]"
+                  }
+                }
               }
             }
           },
