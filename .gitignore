@@ -22,6 +22,7 @@ tests/*.md
 data/feedback/*.jsonl
 !data/feedback/default.jsonl
 data/agent-runtime.json
+data/agent-runtimes/
 nohup.out
 
 # ── Python ────────────────────────────────────────────────────────────────────

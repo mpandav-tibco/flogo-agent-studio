@@ -293,7 +293,8 @@ services:
     networks:
       - agent-studio
     depends_on:
-      design-service:  # now platform-service
+      design-service:
+        # now platform-service
         condition: service_healthy
       agent-builder:
         condition: service_healthy

@@ -28,11 +28,11 @@ if hasattr(sys.stdout, "reconfigure"):
 
 # ── constants ─────────────────────────────────────────────────────────────────
 AUTH = "Basic ZmxvZ286Y2hhbmdlbWU="          # flogo:changeme
-FORGE_URL   = "http://localhost:7020"          # design-service (Forge backend)
+FORGE_URL   = "http://localhost:7020"          # platform-service (design + feedback merged)
 BUILDER_URL = "http://localhost:7010"          # agent-builder-service
 INGEST_URL  = "http://localhost:7002"          # ingestion-service
 CHAT_URL    = "http://localhost:7001"          # agent-chat-service
-FEEDBACK_URL= "http://localhost:7003"          # feedback-service
+FEEDBACK_URL= "http://localhost:7020"          # platform-service (feedback merged at 7020)
 SSE_URL     = "http://localhost:7005"          # agent-chat-service (SSE REST trigger, merged)
 RULE_URL    = "http://localhost:7097"          # rule-engine-service (port 7097; 7000 taken by macOS AirPlay)
 MCP_URL     = "http://localhost:7333/mcp"      # mcp-server
@@ -611,9 +611,9 @@ record("MCP tools/list", "POST /mcp method=tools/list — discover all 9 tools",
 # the MCP session to expire if it times out, breaking subsequent tool calls.
 MCP_TOOL_CALLS = [
     ("list_agents",   {},
-     "list all agents from design-service"),
+     "list all agents from platform-service"),
     ("get_agent",     {"agentId": agent_id},
-     "get specific agent config from design-service"),
+     "get specific agent config from platform-service"),
     ("create_agent",  {"name": f"MCP-Test-Agent-{SESSION_ID[:8]}", "description": "MCP tool test",
                        "config": json.dumps({"collectionName": COLLECTION, "topK": 3})},
      "create agent via MCP tool"),
@@ -875,10 +875,10 @@ md_lines += [
     f"",
     f"| Service | Port | Role | Tested Via |",
     f"|---------|------|------|------------|",
-    f"| design-service | 7020 | Agent registry (PostgreSQL) | Forge CRUD + MCP tools |",
+    f"| platform-service | 7020 | Agent registry + Feedback (PostgreSQL + JSONL) | Forge CRUD + MCP tools + feedback |",
     f"| ingestion-service | 7002 | Knowledge ingestion → Weaviate | Direct POST /api/ingest |",
     f"| agent-chat-service | 7001 | RAG chat + SSE streaming (merged) | Chainlit chat + MCP rag_chat + SSE |",
-    f"| feedback-service | 7003 | Feedback storage (JSONL) | Chainlit thumbs + MCP tools |",
+    f"| (feedback merged → platform-service:7020) | — | — | see platform-service |",
     f"| agent-builder-service | 7010 | LLM config generation + improvement | Forge AI features |",
     f"| rule-engine-service | 7097 | YAML rule quality analysis | Direct POST /api/analyze |",
     f"| mcp-server | 7333 | JSON-RPC gateway (9 tools) | All 9 tools exercised |",
