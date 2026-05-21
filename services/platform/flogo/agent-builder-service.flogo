@@ -21,7 +21,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger â€” agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger \u00e2\u20ac\u201d agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7010,
         "APISpecUpdate": false,
@@ -136,7 +136,7 @@
           "name": "improve_agent"
         },
         {
-          "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
+          "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
           "settings": {
             "Method": "POST",
             "reqType": "application/json",
@@ -271,6 +271,18 @@
             "type": "expression",
             "label": "GenerateConfig to Return",
             "value": "$flow.body.register != true"
+          },
+          {
+            "id": 6,
+            "type": "error",
+            "from": "GenerateConfig",
+            "to": "ErrorReturn"
+          },
+          {
+            "id": 7,
+            "type": "error",
+            "from": "RegisterConfig",
+            "to": "ErrorReturn"
           }
         ],
         "tasks": [
@@ -321,6 +333,15 @@
               "input": {
                 "userPrompt": "=string.concat(\"Generate an agent config for: \", coerce.toString($flow.body.description))",
                 "conversationId": ""
+              },
+              "schemas": {
+                "output": {
+                  "response": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\"}",
+                    "fe_metadata": "{}"
+                  }
+                }
               }
             }
           },
@@ -362,7 +383,9 @@
                     "Content-Type": "application/json"
                   }
                 },
-                "body": "=$activity[GenerateConfig].response"
+                "body": {
+                  "mapping": "=$activity[GenerateConfig].output.response"
+                }
               },
               "output": {
                 "configureResponseCodes": false,
@@ -381,13 +404,18 @@
                     "type": "json",
                     "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
                     "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  },
+                  "body": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"any\"}",
+                    "fe_metadata": "null"
                   }
                 },
                 "output": {
-                  "headers": {
+                  "responseBody": {
                     "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
-                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"status\":{\"type\":\"string\"}}}",
+                    "fe_metadata": "{\"id\":\"abc\",\"name\":\"abc\",\"status\":\"abc\"}"
                   }
                 }
               },
@@ -405,10 +433,10 @@
                   "code": 200,
                   "data": {
                     "mapping": {
-                      "config": "=$activity[GenerateConfig].response",
+                      "config": "=$activity[GenerateConfig].output.response",
                       "description": "=$flow.body.description",
                       "registered": true,
-                      "registeredId": "=$activity[RegisterConfig].output.responseBody.id"
+                      "registeredId": "=$activity[RegisterConfig].responseBody.id"
                     }
                   }
                 }
@@ -426,7 +454,7 @@
                   "code": 200,
                   "data": {
                     "mapping": {
-                      "config": "=$activity[GenerateConfig].response",
+                      "config": "=$activity[GenerateConfig].output.response",
                       "description": "=$flow.body.description",
                       "registered": false
                     }
@@ -434,9 +462,27 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "mapping": {
+                      "error": "Internal server error"
+                    }
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiR2VuZXJhdGVDb25maWciOnsieCI6NDUwLCJ5IjoyNTB9LCJSZWdpc3RlckNvbmZpZyI6eyJ4Ijo2NTAsInkiOjM1MH0sIlJldHVyblJlZ2lzdGVyZWQiOnsieCI6ODUwLCJ5Ijo0NTB9LCJSZXR1cm4iOnsieCI6NjUwLCJ5Ijo1NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiR2VuZXJhdGVDb25maWciOnsieCI6NDUwLCJ5IjoyNTB9LCJSZWdpc3RlckNvbmZpZyI6eyJ4Ijo2NTAsInkiOjM1MH0sIlJldHVyblJlZ2lzdGVyZWQiOnsieCI6ODUwLCJ5Ijo0NTB9LCJSZXR1cm4iOnsieCI6NjUwLCJ5Ijo1NTB9LCJFcnJvclJldHVybiI6eyJ4Ijo5MDAsInkiOjE1NX19",
         "metadata": {
           "input": [
             {
@@ -522,6 +568,24 @@
             "to": "ReturnImproved",
             "type": "label",
             "label": "SuggestImprovements to ReturnImproved"
+          },
+          {
+            "id": 6,
+            "type": "error",
+            "from": "ReadCurrentConfig",
+            "to": "ErrorReturn"
+          },
+          {
+            "id": 7,
+            "type": "error",
+            "from": "ReadFeedback",
+            "to": "ErrorReturn"
+          },
+          {
+            "id": 8,
+            "type": "error",
+            "from": "SuggestImprovements",
+            "to": "ErrorReturn"
           }
         ],
         "tasks": [
@@ -717,8 +781,17 @@
                 "systemPrompt": "IMPORTANT: Output ONLY a raw JSON object. No markdown. No code fences. No backticks. No explanation. Your response MUST start with { and end with }. Using ``` will cause a fatal parse error. You are an AI agent configuration expert. Review the provided Flogo Agent Studio agent config and suggest improvements. Return a JSON object with two fields: \"improved\" (the full improved config JSON object) and \"changes\" (array of strings describing what changed and why). Focus on: systemPrompt clarity, appropriate temperature for the use case, correct tool selection, and meaningful description. Return ONLY the raw JSON object starting with { and ending with }."
               },
               "input": {
-                "userPrompt": "=string.concat(\"Review and improve this agent config: \", coerce.toString($activity[ReadCurrentConfig].output.responseBody), \". Recent user feedback (JSONL): \", coerce.toString($activity[ReadFeedback].output.responseBody), \". Additional context: \", coerce.toString($flow.body.feedback))",
+                "userPrompt": "=string.concat(\"Review and improve this agent config: \", coerce.toString($activity[ReadCurrentConfig].responseBody), \". Recent user feedback (JSONL): \", coerce.toString($activity[ReadFeedback].responseBody), \". Additional context: \", coerce.toString($flow.body.feedback))",
                 "conversationId": ""
+              },
+              "schemas": {
+                "output": {
+                  "response": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"string\"}",
+                    "fe_metadata": "\"abc\""
+                  }
+                }
               }
             }
           },
@@ -733,8 +806,26 @@
                   "code": 200,
                   "data": {
                     "mapping": {
-                      "config": "=$activity[SuggestImprovements].response",
+                      "config": "=$activity[SuggestImprovements].output.response",
                       "agentId": "=$flow.body.agentId"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "mapping": {
+                      "error": "Internal server error"
                     }
                   }
                 }
@@ -742,7 +833,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUmVhZEN1cnJlbnRDb25maWciOnsieCI6NDUwLCJ5IjoyNTB9LCJSZWFkRmVlZGJhY2siOnsieCI6NjUwLCJ5IjozNTB9LCJTdWdnZXN0SW1wcm92ZW1lbnRzIjp7IngiOjg1MCwieSI6NDUwfSwiUmV0dXJuSW1wcm92ZWQiOnsieCI6MTA1MCwieSI6NTUwfX0=",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUmVhZEN1cnJlbnRDb25maWciOnsieCI6NDUwLCJ5IjoyNTB9LCJSZWFkRmVlZGJhY2siOnsieCI6NjUwLCJ5IjozNTB9LCJTdWdnZXN0SW1wcm92ZW1lbnRzIjp7IngiOjg1MCwieSI6NDUwfSwiUmV0dXJuSW1wcm92ZWQiOnsieCI6MTA1MCwieSI6NTUwfSwiRXJyb3JSZXR1cm4iOnsieCI6MTEwMCwieSI6MTU1fX0=",
         "metadata": {
           "input": [
             {
@@ -792,7 +883,7 @@
       "id": "flow:validate_agent",
       "data": {
         "name": "validate_agent",
-        "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
+        "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
         "links": [
           {
             "id": 1,
@@ -814,6 +905,12 @@
             "to": "Return",
             "type": "label",
             "label": "ValidateConfig to Return"
+          },
+          {
+            "id": 4,
+            "type": "error",
+            "from": "ValidateConfig",
+            "to": "ErrorReturn"
           }
         ],
         "tasks": [
@@ -864,6 +961,15 @@
               "input": {
                 "userPrompt": "=string.concat(\"Validate this agent config: \", coerce.toString($flow.body.config))",
                 "conversationId": ""
+              },
+              "schemas": {
+                "output": {
+                  "response": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"string\"}",
+                    "fe_metadata": "\"abc\""
+                  }
+                }
               }
             }
           },
@@ -876,13 +982,31 @@
               "settings": {
                 "mappings": {
                   "code": 200,
-                  "data": "=$activity[ValidateConfig].response"
+                  "data": "=$activity[ValidateConfig].output.response"
+                }
+              }
+            }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "mapping": {
+                      "error": "Internal server error"
+                    }
+                  }
                 }
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiVmFsaWRhdGVDb25maWciOnsieCI6NDUwLCJ5IjoyNTB9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiVmFsaWRhdGVDb25maWciOnsieCI6NDUwLCJ5IjoyNTB9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9LCJFcnJvclJldHVybiI6eyJ4Ijo3MDAsInkiOjE1NX19",
         "metadata": {
           "input": [
             {
@@ -1078,7 +1202,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1haS1hZ2VudC9zcmMvYXBwL0FnZW50aWNBSSIsImlkIjoiQWdlbnRpY0FJIiwidmVyc2lvbiI6IjAuOS4xIiwidGFnIjoiMC45LjEtYjAyIiwibmFtZSI6IkFnZW50aWMgQUkgKFRlY2ggUHJldmlldykiLCJzM2xvY2F0aW9uIjoiVGliY28vQWdlbnRpY0FJIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLWFpLWFnZW50L3NyYy9hcHAvQWdlbnRpY0FJIiwiaWQiOiJBZ2VudGljQUkiLCJ2ZXJzaW9uIjoiMC45LjAiLCJ0YWciOiIwLjkuMC1iMDMiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIEFnZW50aWMgQUkgKFRlY2ggUHJldmlldykiLCJzM2xvY2F0aW9uIjoiVGliY28vQWdlbnRpY0FJIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
   "metadata": {
     "endpoints": [
       {
@@ -1094,7 +1218,7 @@
           "info": {
             "title": "agent-builder-service",
             "version": "1.0.0",
-            "description": "REST trigger â€” agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger \u00e2\u20ac\u201d agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/agent-builder/generate": {
@@ -1199,7 +1323,7 @@
                     }
                   }
                 },
-                "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
+                "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
                 "consumes": [
                   "application/json"
                 ]

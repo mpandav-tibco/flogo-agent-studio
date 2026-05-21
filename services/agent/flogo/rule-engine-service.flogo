@@ -78,7 +78,7 @@
               },
               "body": {
                 "type": "json",
-                "value": "{\"$schema\": \"http://json-schema.org/draft-04/schema#\", \"type\": \"object\", \"properties\": {\"content\": {\"type\": \"string\"}, \"fileName\": {\"type\": \"string\"}, \"parserOverride\": {\"type\": \"string\"}, \"disabledRules\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}}",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"content\":{\"type\":\"string\"},\"fileName\":{\"type\":\"string\"},\"parserOverride\":{\"type\":\"string\"},\"disabledRules\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}}",
                 "fe_metadata": "{\n    \"content\": \"abc\",\n    \"fileName\": \"abc\",\n    \"parserOverride\": \"abc\",\n    \"disabledRules\": [\n        \"abc\"\n    ],\n    \"tags\": [\n        \"abc\"\n    ]\n}"
               }
             }
@@ -205,16 +205,17 @@
                 "input": {
                   "disabledRules": {
                     "type": "json",
-                    "value": "{\"type\":\"array\",\"items\":{\"type\":\"string\"}}",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"array\",\"items\":{\"type\":\"string\"}}",
                     "fe_metadata": "[\"abc\"]"
                   },
                   "tags": {
                     "type": "json",
-                    "value": "{\"type\":\"array\",\"items\":{\"type\":\"string\"}}",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"array\",\"items\":{\"type\":\"string\"}}",
                     "fe_metadata": "[\"abc\"]"
                   }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
@@ -228,15 +229,15 @@
                   "code": 200,
                   "data": {
                     "mapping": {
-                      "success": "=$activity[RuleEngine1].success",
-                      "findings": "=$activity[RuleEngine1].findings",
-                      "positives": "=$activity[RuleEngine1].positives",
-                      "overview": "=$activity[RuleEngine1].overview",
-                      "errorCount": "=$activity[RuleEngine1].errorCount",
-                      "warningCount": "=$activity[RuleEngine1].warningCount",
-                      "infoCount": "=$activity[RuleEngine1].infoCount",
-                      "markdown": "=$activity[RuleEngine1].markdown",
-                      "error": "=$activity[RuleEngine1].error"
+                      "success": "=$activity[RuleEngine1].output.success",
+                      "findings": "=$activity[RuleEngine1].output.findings",
+                      "positives": "=$activity[RuleEngine1].output.positives",
+                      "overview": "=$activity[RuleEngine1].output.overview",
+                      "errorCount": "=$activity[RuleEngine1].output.errorCount",
+                      "warningCount": "=$activity[RuleEngine1].output.warningCount",
+                      "infoCount": "=$activity[RuleEngine1].output.infoCount",
+                      "markdown": "=$activity[RuleEngine1].output.markdown",
+                      "error": "=$activity[RuleEngine1].output.error"
                     }
                   }
                 }
@@ -262,7 +263,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUnVsZUVuZ2luZTEiOnsieCI6Mzg4LCJ5IjoyNzV9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9LCJFcnJvclJldHVybiI6eyJ4Ijo2MDUsInkiOjE1OX19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI0OCwieSI6MTE5fSwiUnVsZUVuZ2luZTEiOnsieCI6NDMxLCJ5IjoyNTN9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9LCJFcnJvclJldHVybiI6eyJ4Ijo2NDksInkiOjE1NX19",
         "metadata": {
           "input": [
             {
@@ -388,7 +389,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:qP4hj7ZHIv/pB0CfWJEvtuDvznaWZKT8"
+      "value": "SECRET:HEnLTf+Olww8DuumNr3WWHfvvggIeaIf"
     }
   ],
   "connections": {},

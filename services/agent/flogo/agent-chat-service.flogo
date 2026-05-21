@@ -25,7 +25,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger \u2014 agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7001,
         "APISpecUpdate": false,
@@ -296,7 +296,7 @@
           "name": "health_check"
         },
         {
-          "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately \u2014 SSE clients receive tokens in real time.",
+          "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
           "settings": {
             "APISpecPath": "",
             "Method": "POST",
@@ -400,7 +400,7 @@
     {
       "ref": "#trigger",
       "name": "sse",
-      "description": "SSE event bus \u2014 clients connect to /events on port 7099 and receive streamed token events.",
+      "description": "SSE event bus — clients connect to /events on port 7099 and receive streamed token events.",
       "settings": {
         "port": 7099,
         "path": "/events",
@@ -552,7 +552,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "Internal server error"
+                    }
                   }
                 }
               }
@@ -705,7 +707,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "Internal server error"
+                    }
                   }
                 }
               }
@@ -778,17 +782,17 @@
           },
           {
             "id": 5,
-            "from": "RAGRetrieve",
-            "to": "ErrorReturn",
-            "type": "error",
-            "label": "RAGRetrieve error"
-          },
-          {
-            "id": 6,
             "from": "AgentChat",
             "to": "ErrorReturn",
             "type": "error",
             "label": "AgentChat error"
+          },
+          {
+            "id": 6,
+            "from": "RAGRetrieve",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "RAGRetrieve error"
           }
         ],
         "tasks": [
@@ -899,7 +903,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "Internal server error"
+                    }
                   }
                 }
               }
@@ -1005,7 +1011,7 @@
       "id": "flow:stream_chat",
       "data": {
         "name": "stream_chat",
-        "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately \u2014 SSE clients receive tokens in real time.",
+        "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
         "links": [
           {
             "id": 1,
@@ -1423,7 +1429,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "Internal server error"
+                    }
                   }
                 }
               }
@@ -1554,7 +1562,7 @@
     {
       "name": "AgenticAI.llm-provider.API_Key",
       "type": "string",
-      "value": "SECRET:UHLa90JP+bhv8WxCLbkGUZtlqhql0Ndu8wx3wSlOo6mrSXxCtht9S5swQfw3IBIMNx9ApYdhr7V+Mrpyg64Jd5rvY+rpCJrL1w=="
+      "value": "SECRET:JPk6UNTUe6cTYcTcLw7RfJvKX4oI6uoJE33t0ZmWzTkuolTl09j7d37XlvB7MUVF2VUxRv5yE4OnWSDihoX8uFB0QzLCHUUN/A=="
     },
     {
       "name": "AgenticAI.llm-provider.LLM_Base_URL",
@@ -1569,7 +1577,7 @@
     {
       "name": "AgenticAI.LLM_Provider.API_Key",
       "type": "string",
-      "value": "SECRET:3TsqHLUOkF5LX7BTgKQhOvgQOggm/JfF"
+      "value": "SECRET:IKxsYqQtr9H5vTwqpoYd/ppdE4vAgC0D"
     },
     {
       "name": "AgenticAI.LLM_Provider.LLM_Base_URL",
@@ -1624,7 +1632,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:CfwFfui4eiZwhOvZR05Y2ue2hJc/5bvK"
+      "value": "SECRET:MDlu80yEeu0PCMEvZKmOksCHryrKHaoE"
     },
     {
       "name": "API_AUTH_HEADER",
@@ -1644,105 +1652,135 @@
     {
       "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Connection_Name",
       "type": "string",
-      "value": "vectordb-weaviate"
+      "value": "$property[\"VectorDB.vectordb-weaviate.Connection_Name\"]"
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].DB_Provider",
       "type": "string",
-      "value": "weaviate"
+      "value": "$property[\"VectorDB.vectordb-weaviate.DB_Provider\"]"
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Host",
       "type": "string",
-      "value": "localhost"
+      "value": "$property[\"VectorDB.vectordb-weaviate.Host\"]"
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Port",
       "type": "float64",
-      "value": 18080
+      "value": "$property[\"VectorDB.vectordb-weaviate.Port\"]"
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].API_Key",
       "type": "string",
-      "value": ""
+      "value": "SECRET:vlNXSwShzlHXMt0o8RqbpGITAjXEpaAMsj+DjMdfXtURBXjF0z+DXf7yJXFN67lsbYYBaWYArCtcQHWii67+JcA="
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Secure_Connection",
       "type": "boolean",
-      "value": false
+      "value": "$property[\"VectorDB.vectordb-weaviate.Secure_Connection\"]"
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Timeout_(seconds)",
       "type": "float64",
-      "value": 30
+      "value": "$property[\"VectorDB.vectordb-weaviate.Timeout_(seconds)\"]"
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Max_Retries",
       "type": "float64",
-      "value": 3
+      "value": "$property[\"VectorDB.vectordb-weaviate.Max_Retries\"]"
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Retry_Backoff_(ms)",
       "type": "float64",
-      "value": 500
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].HTTP_Scheme",
-      "type": "string",
-      "value": "http"
+      "value": "$property[\"VectorDB.vectordb-weaviate.Retry_Backoff_(ms)\"]"
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Configure_Embedding_Provider",
       "type": "boolean",
-      "value": true
+      "value": "$property[\"VectorDB.vectordb-weaviate.Configure_Embedding_Provider\"]"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_Provider",
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Connection_Name",
       "type": "string",
-      "value": "Ollama"
+      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Connection_Name\"]"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_API_Key",
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].DB_Provider",
       "type": "string",
-      "value": ""
+      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].DB_Provider\"]"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_Base_URL",
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Host",
       "type": "string",
-      "value": "http://localhost:11434/v1"
+      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Host\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Port",
+      "type": "float64",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Port\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].API_Key",
+      "type": "string",
+      "value": "SECRET:zG2whBZ3dDoBhoKdXnJrXYdvYKymckOZ0C4NUS2YnOOvP9wAkbLghgi/edi1+tZ+ZedqvMeDrJVxZZxe3AmC6ghjem2f6j4g6BbFyu7NeRkd6p2mHZUbr890LArDsbQ4NhcBmdGDob+c"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Secure_Connection",
+      "type": "boolean",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Secure_Connection\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Timeout_(seconds)",
+      "type": "float64",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Timeout_(seconds)\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Max_Retries",
+      "type": "float64",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Max_Retries\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Retry_Backoff_(ms)",
+      "type": "float64",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Retry_Backoff_(ms)\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider",
+      "type": "boolean",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Configure_Embedding_Provider\"]"
     }
   ],
   "connections": {
     "vectordb-weaviate": {
       "id": "vectordb-weaviate",
-      "name": "vectordb-weaviate",
+      "name": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Connection_Name\"]",
       "ref": "#connector",
       "isGlobal": false,
       "settings": {
-        "name": "=$property[\"VectorDB.vectordb-weaviate.Connection_Name\"]",
-        "dbType": "=$property[\"VectorDB.vectordb-weaviate.DB_Provider\"]",
-        "host": "=$property[\"VectorDB.vectordb-weaviate.Host\"]",
-        "port": "=$property[\"VectorDB.vectordb-weaviate.Port\"]",
-        "apiKey": "=$property[\"VectorDB.vectordb-weaviate.API_Key\"]",
-        "useTLS": "=$property[\"VectorDB.vectordb-weaviate.Secure_Connection\"]",
+        "name": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Connection_Name\"]",
+        "dbType": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].DB_Provider\"]",
+        "host": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Host\"]",
+        "port": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Port\"]",
+        "apiKey": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].API_Key\"]",
+        "useTLS": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Secure_Connection\"]",
         "tlsInsecureSkipVerify": false,
         "tlsServerName": "",
         "caCert": "",
         "clientCert": "",
         "clientKey": "",
-        "timeoutSeconds": "=$property[\"VectorDB.vectordb-weaviate.Timeout_(seconds)\"]",
-        "maxRetries": "=$property[\"VectorDB.vectordb-weaviate.Max_Retries\"]",
-        "retryBackoffMs": "=$property[\"VectorDB.vectordb-weaviate.Retry_Backoff_(ms)\"]",
+        "timeoutSeconds": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Timeout_(seconds)\"]",
+        "maxRetries": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Max_Retries\"]",
+        "retryBackoffMs": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Retry_Backoff_(ms)\"]",
         "grpcPort": 50051,
-        "scheme": "=$property[\"VectorDB.vectordb-weaviate.HTTP_Scheme\"]",
+        "scheme": "$property[\"VectorDB.vectordb-weaviate.HTTP_Scheme\"]",
         "username": "",
         "password": "",
         "dbName": "default",
         "defaultMetricType": "cosine",
-        "enableEmbedding": "=$property[\"VectorDB.vectordb-weaviate.Configure_Embedding_Provider\"]",
-        "embeddingProvider": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Provider\"]",
-        "embeddingAPIKey": "=$property[\"VectorDB.vectordb-weaviate.Embedding_API_Key\"]",
-        "embeddingBaseURL": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Base_URL\"]"
+        "enableEmbedding": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider\"]",
+        "embeddingProvider": "$property[\"VectorDB.vectordb-weaviate.Embedding_Provider\"]",
+        "embeddingAPIKey": "SECRET:aViawVBNPwSKBfJCn94fhpKz8nGElSpcQZTMLIj8tl84aHrxXVg6zQPsub0FLa3BMDSWlkia+mefVSo7T6v1m+Y0GlXwvnugPUB7",
+        "embeddingBaseURL": "$property[\"VectorDB.vectordb-weaviate.Embedding_Base_URL\"]"
       }
     },
     "llm-provider": {
@@ -1788,7 +1826,7 @@
           "info": {
             "title": "agent-chat-service-AgentChatRESTTrigger",
             "version": "1.0.0",
-            "description": "REST trigger \u2014 agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/chat": {
@@ -2049,7 +2087,7 @@
                     }
                   }
                 },
-                "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately \u2014 SSE clients receive tokens in real time.",
+                "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
                 "consumes": [
                   "application/json"
                 ]
