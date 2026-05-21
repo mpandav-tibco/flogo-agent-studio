@@ -9,7 +9,8 @@
     "github.com/tibco/flogo-mcp/src/app/MCP/trigger/mcpserver",
     "github.com/project-flogo/contrib/function/array",
     "github.com/project-flogo/contrib/function/coerce",
-    "github.com/project-flogo/contrib/function/string"
+    "github.com/project-flogo/contrib/function/string",
+    "act_general_log github.com/tibco/flogo-general/src/app/General/activity/log"
   ],
   "name": "mcp-server",
   "description": "Flogo Agent Studio MCP Server. Exposes all Phase 1 services as MCP tools for Claude, Cursor, and any MCP client. Registered in .mcp.json as 'flogo-dev-assist'. Part of Flogo Agent Studio Phase 2.",
@@ -440,9 +441,16 @@
           {
             "id": 4,
             "from": "MapResult",
+            "to": "LogResult",
+            "type": "label",
+            "label": "MapResult to LogResult"
+          },
+          {
+            "id": 5,
+            "from": "LogResult",
             "to": "Return",
             "type": "label",
-            "label": "MapResult to Return"
+            "label": "LogResult to Return"
           }
         ],
         "tasks": [
@@ -595,6 +603,20 @@
                 }
               }
             }
+          },
+          {
+            "id": "LogResult",
+            "name": "LogResult",
+            "description": "Log analyze_flogo result",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "message": "=string.concat(\"[MCP] analyze_flogo completed: data=\", coerce.toString($activity[MapResult].output.data))",
+                "flowInfo": false,
+                "useExtLogger": false
+              }
+            }
           }
         ],
         "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsUnVsZUVuZ2luZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
@@ -652,9 +674,16 @@
           {
             "id": 4,
             "from": "MapResult",
+            "to": "LogResult",
+            "type": "label",
+            "label": "MapResult to LogResult"
+          },
+          {
+            "id": 5,
+            "from": "LogResult",
             "to": "Return",
             "type": "label",
-            "label": "MapResult to Return"
+            "label": "LogResult to Return"
           }
         ],
         "tasks": [
@@ -801,6 +830,20 @@
                 }
               }
             }
+          },
+          {
+            "id": "LogResult",
+            "name": "LogResult",
+            "description": "Log rag_chat result",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "message": "=string.concat(\"[MCP] rag_chat completed: data=\", coerce.toString($activity[MapResult].output.data))",
+                "flowInfo": false,
+                "useExtLogger": false
+              }
+            }
           }
         ],
         "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsQ2hhdFNlcnZpY2UiOnsieCI6NDUwLCJ5Ijo1MH0sIk1hcFJlc3VsdCI6eyJ4Ijo2NTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjg1MCwieSI6NTB9fQ==",
@@ -854,9 +897,16 @@
           {
             "id": 4,
             "from": "MapResult",
+            "to": "LogResult",
+            "type": "label",
+            "label": "MapResult to LogResult"
+          },
+          {
+            "id": 5,
+            "from": "LogResult",
             "to": "Return",
             "type": "label",
-            "label": "MapResult to Return"
+            "label": "LogResult to Return"
           }
         ],
         "tasks": [
@@ -1002,6 +1052,20 @@
                 }
               }
             }
+          },
+          {
+            "id": "LogResult",
+            "name": "LogResult",
+            "description": "Log list_agents result",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "message": "=string.concat(\"[MCP] list_agents completed: data=\", coerce.toString($activity[MapResult].output.data))",
+                "flowInfo": false,
+                "useExtLogger": false
+              }
+            }
           }
         ],
         "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsQ29uZmlnU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
@@ -1049,9 +1113,16 @@
           {
             "id": 4,
             "from": "MapResult",
+            "to": "LogResult",
+            "type": "label",
+            "label": "MapResult to LogResult"
+          },
+          {
+            "id": 5,
+            "from": "LogResult",
             "to": "Return",
             "type": "label",
-            "label": "MapResult to Return"
+            "label": "LogResult to Return"
           }
         ],
         "tasks": [
@@ -1101,10 +1172,16 @@
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
+                "Client Certificate": "",
+                "Client Key": "",
+                "Server Certificate": "",
                 "disableSSLVerification": false,
                 "disableKeepAlives": false,
                 "followRedirects": true,
                 "Timeout": 0,
+                "proxy": "",
+                "host": "",
+                "serviceUrl": "",
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
@@ -1120,6 +1197,11 @@
                       }
                     ]
                   }
+                },
+                "pathParams": {
+                  "mapping": {
+                    "agentId": "=$flow.agentId"
+                  }
                 }
               },
               "output": {
@@ -1130,6 +1212,11 @@
               },
               "schemas": {
                 "input": {
+                  "pathParams": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"agentId\",\"type\":\"string\"}]"
+                  },
                   "headers": {
                     "type": "json",
                     "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
@@ -1197,6 +1284,20 @@
                 }
               }
             }
+          },
+          {
+            "id": "LogResult",
+            "name": "LogResult",
+            "description": "Log get_agent result",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "message": "=string.concat(\"[MCP] get_agent completed: data=\", coerce.toString($activity[MapResult].output.data))",
+                "flowInfo": false,
+                "useExtLogger": false
+              }
+            }
           }
         ],
         "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsQ29uZmlnU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
@@ -1250,9 +1351,16 @@
           {
             "id": 4,
             "from": "MapResult",
+            "to": "LogResult",
+            "type": "label",
+            "label": "MapResult to LogResult"
+          },
+          {
+            "id": 5,
+            "from": "LogResult",
             "to": "Return",
             "type": "label",
-            "label": "MapResult to Return"
+            "label": "LogResult to Return"
           }
         ],
         "tasks": [
@@ -1399,6 +1507,20 @@
                 }
               }
             }
+          },
+          {
+            "id": "LogResult",
+            "name": "LogResult",
+            "description": "Log submit_feedback result",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "message": "=string.concat(\"[MCP] submit_feedback completed: data=\", coerce.toString($activity[MapResult].output.data))",
+                "flowInfo": false,
+                "useExtLogger": false
+              }
+            }
           }
         ],
         "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsRmVlZGJhY2tTZXJ2aWNlIjp7IngiOjQ1MCwieSI6NTB9LCJNYXBSZXN1bHQiOnsieCI6NjUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo4NTAsInkiOjUwfX0=",
@@ -1452,9 +1574,16 @@
           {
             "id": 4,
             "from": "MapResult",
+            "to": "LogResult",
+            "type": "label",
+            "label": "MapResult to LogResult"
+          },
+          {
+            "id": 5,
+            "from": "LogResult",
             "to": "Return",
             "type": "label",
-            "label": "MapResult to Return"
+            "label": "LogResult to Return"
           }
         ],
         "tasks": [
@@ -1600,6 +1729,20 @@
                 }
               }
             }
+          },
+          {
+            "id": "LogResult",
+            "name": "LogResult",
+            "description": "Log get_feedback result",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "message": "=string.concat(\"[MCP] get_feedback completed: data=\", coerce.toString($activity[MapResult].output.data))",
+                "flowInfo": false,
+                "useExtLogger": false
+              }
+            }
           }
         ],
         "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsRmVlZGJhY2tTZXJ2aWNlIjp7IngiOjQ1MCwieSI6NTB9LCJNYXBSZXN1bHQiOnsieCI6NjUwLCJ5Ijo1MH0sIlJldHVybiI6eyJ4Ijo4NTAsInkiOjUwfX0=",
@@ -1647,9 +1790,16 @@
           {
             "id": 4,
             "from": "MapResult",
+            "to": "LogResult",
+            "type": "label",
+            "label": "MapResult to LogResult"
+          },
+          {
+            "id": 5,
+            "from": "LogResult",
             "to": "Return",
             "type": "label",
-            "label": "MapResult to Return"
+            "label": "LogResult to Return"
           }
         ],
         "tasks": [
@@ -1810,6 +1960,20 @@
                 }
               }
             }
+          },
+          {
+            "id": "LogResult",
+            "name": "LogResult",
+            "description": "Log create_agent result",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "message": "=string.concat(\"[MCP] create_agent completed: data=\", coerce.toString($activity[MapResult].output.data))",
+                "flowInfo": false,
+                "useExtLogger": false
+              }
+            }
           }
         ],
         "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
@@ -1863,9 +2027,16 @@
           {
             "id": 4,
             "from": "MapResult",
+            "to": "LogResult",
+            "type": "label",
+            "label": "MapResult to LogResult"
+          },
+          {
+            "id": 5,
+            "from": "LogResult",
             "to": "Return",
             "type": "label",
-            "label": "MapResult to Return"
+            "label": "LogResult to Return"
           }
         ],
         "tasks": [
@@ -1915,10 +2086,16 @@
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
+                "Client Certificate": "",
+                "Client Key": "",
+                "Server Certificate": "",
                 "disableSSLVerification": false,
                 "disableKeepAlives": false,
                 "followRedirects": true,
                 "Timeout": 0,
+                "proxy": "",
+                "host": "",
+                "serviceUrl": "",
                 "headers": {
                   "mapping": {
                     "Content-Type": "application/json",
@@ -1934,6 +2111,11 @@
                       }
                     ]
                   }
+                },
+                "pathParams": {
+                  "mapping": {
+                    "agentId": "=$flow.agentId"
+                  }
                 }
               },
               "output": {
@@ -1944,6 +2126,11 @@
               },
               "schemas": {
                 "input": {
+                  "pathParams": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"agentId\",\"type\":\"string\"}]"
+                  },
                   "headers": {
                     "type": "json",
                     "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
@@ -2011,6 +2198,20 @@
                 }
               }
             }
+          },
+          {
+            "id": "LogResult",
+            "name": "LogResult",
+            "description": "Log deploy_agent_tool result",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "message": "=string.concat(\"[MCP] deploy_agent_tool completed: data=\", coerce.toString($activity[MapResult].output.data))",
+                "flowInfo": false,
+                "useExtLogger": false
+              }
+            }
           }
         ],
         "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
@@ -2064,9 +2265,16 @@
           {
             "id": 4,
             "from": "MapResult",
+            "to": "LogResult",
+            "type": "label",
+            "label": "MapResult to LogResult"
+          },
+          {
+            "id": 5,
+            "from": "LogResult",
             "to": "Return",
             "type": "label",
-            "label": "MapResult to Return"
+            "label": "LogResult to Return"
           }
         ],
         "tasks": [
@@ -2212,6 +2420,20 @@
                 }
               }
             }
+          },
+          {
+            "id": "LogResult",
+            "name": "LogResult",
+            "description": "Log list_templates_tool result",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "message": "=string.concat(\"[MCP] list_templates_tool completed: data=\", coerce.toString($activity[MapResult].output.data))",
+                "flowInfo": false,
+                "useExtLogger": false
+              }
+            }
           }
         ],
         "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJDYWxsU2VydmljZSI6eyJ4Ijo0NTAsInkiOjUwfSwiTWFwUmVzdWx0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH19",
@@ -2264,7 +2486,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:uxs4Ps+vOHtOutOHiJ7Ll5P93n+APL/2"
+      "value": "SECRET:NjB0C5QA+3FoXoOxMngv+nhwepgyTgdY"
     },
     {
       "name": "API_AUTH_HEADER",
