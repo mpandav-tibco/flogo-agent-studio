@@ -21,7 +21,7 @@
     {
       "ref": "#mcpserver",
       "name": "flogo-mcp-mcpsever",
-      "description": "MCP Server \u2014 exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:7333/mcp.",
+      "description": "MCP Server — exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:7333/mcp.",
       "settings": {
         "serverName": "flogo-agent-studio-assist",
         "serverVersion": "1.0.0",
@@ -318,8 +318,8 @@
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}",
-                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}"
+                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}"
               }
             }
           },
@@ -899,7 +899,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/v1/agents\")",
+                "Uri": "=$property[\"CONFIG_AGENTS_URL\"]",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -1093,7 +1093,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"CONFIG_SERVICE_BASE_URL\"], \"/api/v1/agents/\", $flow.agentId)",
+                "Uri": "=string.concat($property[\"AGENT_BY_ID_BASE_URL\"], $flow.agentId)",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -1688,7 +1688,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/agents\")",
+                "Uri": "=$property[\"CONFIG_AGENTS_URL\"]",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -1903,7 +1903,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
-                "Uri": "=string.concat($property[\"DEPLOY_SERVICE_URL\"], \"/api/v1/agents/\", $flow.agentId, \"/deploy\")",
+                "Uri": "=string.concat($property[\"DEPLOY_AGENT_BASE_URL\"], $flow.agentId, \"/deploy\")",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -2103,7 +2103,7 @@
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
-                "Uri": "=string.concat($property[\"DESIGN_SERVICE_URL\"], \"/api/v1/templates\")",
+                "Uri": "=$property[\"DESIGN_TEMPLATES_URL\"]",
                 "requestType": "application/json",
                 "Use certificate for verification": false,
                 "mutualAuth": false,
@@ -2271,6 +2271,26 @@
       "name": "DEPLOY_SERVICE_URL",
       "type": "string",
       "value": "http://localhost:7030"
+    },
+    {
+      "name": "CONFIG_AGENTS_URL",
+      "type": "string",
+      "value": "http://localhost:7020/api/v1/agents"
+    },
+    {
+      "name": "DESIGN_TEMPLATES_URL",
+      "type": "string",
+      "value": "http://localhost:7020/api/v1/templates"
+    },
+    {
+      "name": "AGENT_BY_ID_BASE_URL",
+      "type": "string",
+      "value": "http://localhost:7020/api/v1/agents/"
+    },
+    {
+      "name": "DEPLOY_AGENT_BASE_URL",
+      "type": "string",
+      "value": "http://localhost:7030/api/v1/agents/"
     }
   ],
   "schemas": {
@@ -2281,7 +2301,7 @@
     }
   },
   "connections": {},
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1tY3Avc3JjL2FwcC9NQ1AiLCJpZCI6Ik1DUCIsInZlcnNpb24iOiIxLjAuMiIsInRhZyI6IjEuMC4yLWIwMSIsIm5hbWUiOiJNb2RlbCBDb250ZXh0IFByb3RvY29sIChNQ1ApIiwiczNsb2NhdGlvbiI6IlRpYmNvL01DUCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9XQ==",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1tY3Avc3JjL2FwcC9NQ1AiLCJpZCI6Ik1DUCIsInZlcnNpb24iOiIxLjAuMSIsInRhZyI6IjEuMC4xLWIwMiIsIm5hbWUiOiJUSUJDTyBGbG9nb8KuIENvbm5lY3RvciBmb3IgTW9kZWwgQ29udGV4dCBQcm90b2NvbCAoTUNQKSIsInMzbG9jYXRpb24iOiJUaWJjby9NQ1AiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tZ2VuZXJhbC9zcmMvYXBwL0dlbmVyYWwiLCJpZCI6IkdlbmVyYWwiLCJ2ZXJzaW9uIjoiMS42LjEyIiwidGFnIjoiMS42LjEyLWIwNiIsIm5hbWUiOiJUSUJDTyBGbG9nbyBDb25uZWN0b3IgZm9yIEdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9XQ==",
   "metadata": {
     "endpoints": [
       {
