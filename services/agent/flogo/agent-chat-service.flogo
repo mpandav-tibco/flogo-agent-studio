@@ -1564,7 +1564,7 @@
     {
       "name": "AgenticAI.llm-provider.API_Key",
       "type": "string",
-      "value": "SECRET:OzToiYzV4qA7IL/khybuE04rDFy0iUjSuGC+eF+gtS4XeAPkueqi2eye4ldO/kxwyAR5fv1u87T/hkg6D8QaVTnjjNRgOakGhw=="
+      "value": "SECRET:Fr2YwsQy2GpZBxudMxEOa9ndoJSVdWKfO66yUZ1QMNcc9vtbhxtDHMeYLP6Lr/Q6VLKjNAnF2n5csctevqd5Yzv9ppGDVKR6Yg=="
     },
     {
       "name": "AgenticAI.llm-provider.LLM_Base_URL",
@@ -1579,7 +1579,7 @@
     {
       "name": "AgenticAI.LLM_Provider.API_Key",
       "type": "string",
-      "value": "SECRET:m962TPd3+ybsitW4XLOhLN1mcpr1ddvN"
+      "value": "SECRET:yANVIkVeMQInHeKHUKWZUaXqeSGAiyFZ"
     },
     {
       "name": "AgenticAI.LLM_Provider.LLM_Base_URL",
@@ -1634,7 +1634,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:HXp8BSlA0IYwrzmCSBLPDEu9EaSXtYOW"
+      "value": "SECRET:qWauToD2QocP6QwFpQANgFuIw1AplsO2"
     },
     {
       "name": "API_AUTH_HEADER",
@@ -1674,7 +1674,7 @@
     {
       "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].API_Key",
       "type": "string",
-      "value": "SECRET:DlPSOSAQIDoif8VIXPLn/44IUt8wcsYmL4YZrmF0XXN/QPfB+OoJu7y6muw4QETe95s7fZZDpE+A7rQBgzW5iuc="
+      "value": "SECRET:Cp6KdyIXOOsfMFHByUriNbNeuaHQF92GwUgMbootT+F2N8EGRJjV9ObCM6V3A9qowhMs2Sjxv+KGDXiWQYTDM4Y="
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Secure_Connection",
@@ -1724,7 +1724,7 @@
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].API_Key",
       "type": "string",
-      "value": "SECRET:VB+2gjMnEcDEYTKm+28NVtnJsV/JQYd6Apyu6KVvffBF1+ARWeQpP0RbWDismnya/UMC5sgN10Tp80XK8xZ4V1sPYvr8zsI+S7NAx/5xYGYGwbLsQRg+bpF1DBOV6ze7WcqwGZN0ISuE"
+      "value": "SECRET:l2tU0NzNbN7cgyrTrSYXwHyYKVhXhFqd/eESULhlUOlNCXoin4G2LWDZedVgROUE5B64Ck4d7LbBtVN4SC22vIl2GVAs5riStbOqeA46Wku+LvaUKXqA++XlOkk7fPK6TEW/zD1mWV01"
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Secure_Connection",
@@ -1774,7 +1774,7 @@
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
       "type": "string",
-      "value": "SECRET:8OAvycmWNr0fkgIp38bvl9siiFdhcH8VVJPhrZyW3bl9Z+rShXw+zMRiPdSpvddx28aiJ0woJb0xJ69b6eIk+w/V9lkN7wrOWyqf45DDuSFzgQDgOVLRT8TqZ95+Z45iI7n0gvXFUE9n6XGqpfQmZEE0fe85mWZEU8MyfzPvc9ymD+jhaRokTzCyEm4cQHoa/Q=="
+      "value": "SECRET:lpQGok8yDe2sHZv9vMfcimy6CMqwQBOw0y1bOnyA20VU+DJMWWGVzm3UULM4K9iFc7pGEmczqBbTXOZo63/2V58XoDXAMFFMdMVcUUEqj84Kka0EC0u0yhV3rV9iJrCRoGlcZOdkD2GWLuCltAw6eDvVCTO0hDRoOlGVo7jB0BorlkHZyX+qBNRgz7naVuHATQ=="
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection",
@@ -1824,7 +1824,7 @@
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
       "type": "string",
-      "value": "SECRET:92BgpxPHLZTny1a97yIIuCsoVuvMcWRVAMlTuglwm3NYxCImvOaRdpH/e0hDxd9G6AhSYrRcO51Th/xTAGI7lIPAAeBBEdpq1jYpG086rbuf6xHptmTVci22qF43f+t0dh3Vr17l5DZis7bMX0gPKMYOplFgPbtA/7D2SgRk8MZnzDqnBNPafVE8zWixCotx7K5ZNZVhprOWi59pj5tsjE4A6KHGap/6s3J68Ll6dp4rIXsy2P4iA+k="
+      "value": "SECRET:1oe0dinvFxi4UtwsZJBEX19cSrUKI868bf7e6OpgPLWYMgYGggC1h/d7/+VmTr5sCyolk+W/Msybkqvhwq7uQdPg2JThyPkQD3Rq9lhI2TmHbHQaEvZ2fU78SY3p8+yWPrtudoD/r7tkpz3twX9jOLN2eGgvh/YV2SAiHCE57xpuLLGnLDK9Os6cJRIG3y9mDuDp9+EdMR2DLRywNyvc3pccq0YpsxPcNjxRFBLYWjnWknCE5mNjzqQ="
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection",
@@ -1874,7 +1874,7 @@
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
       "type": "string",
-      "value": "SECRET:wb5rlZujCWysHo/fIPSJNBeGCAlcbxvJDQKXH166ipQTuS+MPtrBm8v3KaxR2yNQ3NUfCeatk1iFXnnDcn6G3G0qWmHd0HRixc97xPFTs7vqVbUM3cZL7ggkAQiqhOAg4de0eeHRpiE1BACg6PUdZAe04PCEZJojxPqXGXw1GijnqIiIzziVM+GwDtAQon0qAXZ6GHA++uI+VUzeJOFI1vRt1YFdTXjGbW7+yxN0r5XEt4NgHPHssHOAldJpQg9/xox5qH/Vkg8d8c2jCeC2DU1raMjrDj/FRnT8LaTAql/L"
+      "value": "SECRET:F2KfeoWYu1sXMWRKxnqQ4ZuranNhsAGWWpvkqcech3X1CyIcOJ4hF3Bp6p4KCn3tvL6sIiT2VseCo8wglojLbo+br2067ONU5sFUWC6XLNVJg1ew5i1WVvZHU1XEqeMEKjw6H+WgXr0h4lkNFYu2mPckqbZTtWwnQVlNMW38VKzeVMuNQHIozpGWmthg6lvuW7WmkrHrW6t6Eh1HQkr6QxMSBv5yWTV04VGuoru2pBYfU+tcze8laXibpjCojw8ulBOSNLQipnIWH4ZLO3GNM5kG5/HGvS6LTbSazN6qM8Kt"
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection",
@@ -1924,7 +1924,7 @@
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
       "type": "string",
-      "value": "SECRET:UkQntTe3TbN+VTiV125Idth1yQ9GP17vTZM1ArJmpcERn4OoYtDTs1hloey0cujihOvxSiT9WutU5ANdTI5H781kR77RjKmi64oIHzNmVyx1ZSZrmpabDPeXHuuB3GPAeV6ztWelRIsK9ZeEifCdThsC/MMVlR8sJkmjSNnrdqfqQU4dwELN9mzbjBkaG4iwicTdhQrmHoE7CH8barTpTSp81TqNdCQ+vyb/WEm949yxw9VXlBkVeH2NmifgGFRoP4PhoI57ITho1P9MjpNGHJhYf+ayLiSmqxpOgkClmlRdEGrYVOTUmOtHhclJp1rMNOYnqidv1si4OIZbdIrUFHLtMfrV0oJpdA=="
+      "value": "SECRET:bQP9h69G8ANCz1pBuL2632fOr68RpqkerJcphZnsZs0+UsK2vgNJdMFnat5GkUcHtYYNCfGT21wjQf1e7JYVHc4slV10IJuLHmc5DTfLMgw58B/kDgSgXvzcw3GGvWzDi+snFusX9cCz3G/8j/EzzTlCOigEQmbHYdOVDwYjYixYmDi5kCGg7fNx0r1KayNsa0vQvt4mcMoUXnIxv77q4OgZw753HaNy7Ym9bYf2YWeagI5lz3TmKW8Ks13cSmM2hcJWUjukMW2KrwCAq+yXzqPAvMDEB62GfDDI5YHU/YKY99LIjhaVMd3map3koDDTGxPdzVw/yNOehzHustSG6sKUclHCkSgiKg=="
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection",
@@ -1974,7 +1974,7 @@
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
       "type": "string",
-      "value": "SECRET:XehNpd+IP5pKKfE1NkJ0shxO715nMf0jReiBhVzqwk27xQdzMe/QuVQ9P5SEQwD1lrghHIU6EZxCYL8MMcAoJJ8st0n+3Ru1SYbpinsypjify5Vz/qJLtIbuF6Cqh/PYJtnEP8YmB/UHcRjvw34vIQ8u9Msx7YVhijyMzjjkVQyuDZQh1vXK4Q1slesWyFBfSvb1+emuTwXqvMLU32gnsSl9O4c6HS++FX/E/J6X3vSYiy0l3ccNY1Ju1nRl6YMFtlo9drGKW2TFlhNCI2SzxRk6H7jLxtTvJwgFjA8vTp8iE9wd0q1IaR1t4gtmpIk058uAubZejMkoZb28rluOPns95zuoafYP2ULEQvyP2HcFfRwB60FrJ3Cr5/hfjCPUI8JDQhgELfoMYbXgHAVMYPQ="
+      "value": "SECRET:vJA8e1J1ytBgZT5IOsOblwU07YcCjAx7J9k6cq+Suq5nd0BYZ8rUGSO47C78MlX9W1iEm1mA6ik2dVGGOvKoUr1lfXMnxWMM0Td5YbA+07s+KT21bc6FUW5mIh2zTUyrhZFeOQzU/2sOEvWCO1k9DSBXCveHqOSK6ksC324r8eqDzcTrBGvKDyyCqVRwOf3kfwaUvc1crvlIOKPYu9S75sbst1clVYtyCblZZYm5sS673QarSlSppsT4aGX/Z8tKD8dobSTCH2guANBSD1de9nXEe+lkbbiJZ7YS1KsLR21j83w9826/jKWJivuOQgxvV5qgOopwM4sNvi4W+tncH9Tm7vTFMC2kdzstM55pASFa3ucqKxENKX/ODzNwngIGixigH5KN1v1V4kZgTUJ523Y="
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection",
@@ -2000,38 +2000,88 @@
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider",
       "type": "boolean",
       "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Connection_Name",
+      "type": "string",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Connection_Name\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].DB_Provider",
+      "type": "string",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].DB_Provider\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Host",
+      "type": "string",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Host\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Port",
+      "type": "float64",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Port\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
+      "type": "string",
+      "value": "SECRET:r69bXP0stKtaDo3VUVxWsnLYb+eiK+REIz5BvHhJfORy1T4Z89YaX0IKu7I4tHUPzg+BNPxkH1uRCjk36HrTJVIEqCt/B4HB7QfsJOqODtJCukgibJRJA3XU/X12jw0fkbXHVZFsrcGEoUvojTk0lUYAPw4haaMbOP3HaiIQu4Es0lN34pHp0S9YCTnVCI6NAAAJ+m72kJy/erAlRjZKt5S89DIYp5rqrjO25UkS+foAa22usA50Bo1rQCqFVeSSCeXIhHJSZF69isGDyDaPBpNdjC+mYgzsBNdRzcFOHCDWaEO5CTwMu0qmoFZlOXqG//Z0VFzmsa21QKBxBlMAn2dF/eY5RkQNqPmsZuAvjJOGKnRBbKuU8SWIIeqzj5G4feznQjcc8i5Fub0x2oNgc3+H2QuODiqJ2VMyDJlra8ykU0ejSFzGIqcllzlAF7klFrIpEnvI0ODk"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection",
+      "type": "boolean",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Timeout_(seconds)",
+      "type": "float64",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Timeout_(seconds)\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Max_Retries",
+      "type": "float64",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Max_Retries\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Retry_Backoff_(ms)",
+      "type": "float64",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Retry_Backoff_(ms)\"]"
+    },
+    {
+      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider",
+      "type": "boolean",
+      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider\"]"
     }
   ],
   "connections": {
     "vectordb-weaviate": {
       "id": "vectordb-weaviate",
-      "name": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Connection_Name\"]",
+      "name": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Connection_Name\"]",
       "ref": "#connector",
       "isGlobal": false,
       "settings": {
-        "name": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Connection_Name\"]",
-        "dbType": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].DB_Provider\"]",
-        "host": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Host\"]",
-        "port": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Port\"]",
-        "apiKey": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key\"]",
-        "useTLS": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection\"]",
+        "name": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Connection_Name\"]",
+        "dbType": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].DB_Provider\"]",
+        "host": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Host\"]",
+        "port": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Port\"]",
+        "apiKey": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key\"]",
+        "useTLS": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection\"]",
         "tlsInsecureSkipVerify": false,
         "tlsServerName": "",
         "caCert": "",
         "clientCert": "",
         "clientKey": "",
-        "timeoutSeconds": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Timeout_(seconds)\"]",
-        "maxRetries": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Max_Retries\"]",
-        "retryBackoffMs": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Retry_Backoff_(ms)\"]",
+        "timeoutSeconds": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Timeout_(seconds)\"]",
+        "maxRetries": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Max_Retries\"]",
+        "retryBackoffMs": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Retry_Backoff_(ms)\"]",
         "grpcPort": 50051,
         "scheme": "$property[\"VectorDB.vectordb-weaviate.HTTP_Scheme\"]",
         "username": "",
         "password": "",
         "dbName": "default",
         "defaultMetricType": "cosine",
-        "enableEmbedding": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider\"]",
+        "enableEmbedding": "=$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider\"]",
         "embeddingProvider": "$property[\"VectorDB.vectordb-weaviate.Embedding_Provider\"]",
-        "embeddingAPIKey": "SECRET:QzVD47QsDNAgr4YiYLXEigN3tVEbkh+hhqrG77EfJ/+8x9rkyUQ4teWlXWKatlXpqP810n88jmbTkEv9mDIiYMoO0K2+ZoL0/iOA",
+        "embeddingAPIKey": "SECRET:rciDemmFbEwmDqFEOYmznqie+rXz5W8AnrNaSI6F8VsVR/OgQA0RV80rIgljZmF5JOceahBReFG6tMFoQlL/CP3hOuFfX06ufbT9",
         "embeddingBaseURL": "$property[\"VectorDB.vectordb-weaviate.Embedding_Base_URL\"]"
       }
     },
@@ -2062,7 +2112,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuYyIsImlkIjoiVmVjdG9yREIiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJWZWN0b3JEQiBSQUcgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tYWktYWdlbnQvc3JjL2FwcC9BZ2VudGljQUkiLCJpZCI6IkFnZW50aWNBSSIsInZlcnNpb24iOiIwLjkuMCIsInRhZyI6IjAuOS4wLWIwMyIsIm5hbWUiOiJUSUJDTyBGbG9nb8KuIENvbm5lY3RvciBmb3IgQWdlbnRpYyBBSSAoVGVjaCBQcmV2aWV3KSIsInMzbG9jYXRpb24iOiJUaWJjby9BZ2VudGljQUkiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfSx7InJlZiI6ImdpdGh1Yi5jb20vbXBhbmRhdi10aWJjby9mbG9nby1jdXN0b20tZXh0ZW5zaW9ucy9zc2UvYWN0aXZpdHkiLCJpZCI6IkRlZmF1bHQiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJSdWxlIEVuZ2luZSIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9TU0UvYWN0aXZpdHkiLCJpc1VzZXJFeHRlbnNpb24iOnRydWV9LHsicmVmIjoiZ2l0aHViLmNvbS9tcGFuZGF2LXRpYmNvL2Zsb2dvLWN1c3RvbS1leHRlbnNpb25zL3NzZS90cmlnZ2VyIiwiaWQiOiJEZWZhdWx0IiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiUnVsZSBFbmdpbmUiLCJzM2xvY2F0aW9uIjoie1VTRVJJRH0vU1NFL3RyaWdnZXIiLCJpc1VzZXJFeHRlbnNpb24iOnRydWV9XQ==",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmMiLCJpZCI6IlZlY3RvckRCIiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiVmVjdG9yREIgUkFHIENvbm5lY3RvciIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9WZWN0b3JEQiIsImlzVXNlckV4dGVuc2lvbiI6dHJ1ZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLWFpLWFnZW50L3NyYy9hcHAvQWdlbnRpY0FJIiwiaWQiOiJBZ2VudGljQUkiLCJ2ZXJzaW9uIjoiMC45LjEiLCJ0YWciOiIwLjkuMS1iMDIiLCJuYW1lIjoiQWdlbnRpYyBBSSAoVGVjaCBQcmV2aWV3KSIsInMzbG9jYXRpb24iOiJUaWJjby9BZ2VudGljQUkiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfSx7InJlZiI6ImdpdGh1Yi5jb20vbXBhbmRhdi10aWJjby9mbG9nby1jdXN0b20tZXh0ZW5zaW9ucy9zc2UvYWN0aXZpdHkiLCJpZCI6IkRlZmF1bHQiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJSdWxlIEVuZ2luZSIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9TU0UvYWN0aXZpdHkiLCJpc1VzZXJFeHRlbnNpb24iOnRydWV9LHsicmVmIjoiZ2l0aHViLmNvbS9tcGFuZGF2LXRpYmNvL2Zsb2dvLWN1c3RvbS1leHRlbnNpb25zL3NzZS90cmlnZ2VyIiwiaWQiOiJEZWZhdWx0IiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiUnVsZSBFbmdpbmUiLCJzM2xvY2F0aW9uIjoie1VTRVJJRH0vU1NFL3RyaWdnZXIiLCJpc1VzZXJFeHRlbnNpb24iOnRydWV9XQ==",
   "metadata": {
     "endpoints": [
       {
