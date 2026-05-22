@@ -22,11 +22,22 @@ export default function Gallery() {
     queryFn: () => listAgents(),
   });
 
+  // Track agents whose toggle action just fired — keeps the in-flight UI visible
+  // until the runtime poller confirms the agent is actually starting/ready/draft.
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
+
   const deployMutation = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
       active ? undeployAgent(id) : deployAgent(id),
+    onMutate: ({ id }) => {
+      setTogglingIds((prev) => new Set(prev).add(id));
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["agents"] });
+    },
+    onError: (_err, { id }) => {
+      // Clear immediately on error so the button doesn't stay stuck
+      setTogglingIds((prev) => { const s = new Set(prev); s.delete(id); return s; });
     },
   });
 
@@ -73,6 +84,24 @@ export default function Gallery() {
       qc.invalidateQueries({ queryKey: ["agents"] });
     }
   }, [runtimeStates, qc]);
+
+  // Clear the local toggling state once the agent has reached a stable state:
+  // • Activation path: runtime confirms "starting" or "ready"
+  // • Deactivation path: agent list shows status !== "active"
+  useEffect(() => {
+    if (togglingIds.size === 0) return;
+    setTogglingIds((prev) => {
+      const next = new Set(prev);
+      for (const id of prev) {
+        const rt = runtimeStates?.[id];
+        const agent = allAgents.find((a) => a.id === id);
+        const runtimeStarted = rt === "starting" || rt === "ready" || rt === "degraded";
+        const deactivated = agent && agent.status !== "active";
+        if (runtimeStarted || deactivated) next.delete(id);
+      }
+      return next.size === prev.size ? prev : next;
+    });
+  }, [runtimeStates, allAgents, togglingIds.size]);
 
   // An agent is "starting" when it's active but runtime hasn't confirmed "ready"/"degraded" yet
   const isAgentStarting = (id: string): boolean => {
@@ -209,7 +238,7 @@ export default function Gallery() {
                 onToggleDeploy={() =>
                   deployMutation.mutate({ id: agent.id, active: agent.status === "active" })
                 }
-                deployPending={deployMutation.isPending && deployMutation.variables?.id === agent.id}
+                deployPending={togglingIds.has(agent.id)}
                 isStarting={isAgentStarting(agent.id)}
               />
             ))}
