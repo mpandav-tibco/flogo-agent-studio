@@ -346,23 +346,27 @@ if agent_id:
     record("Discover Agent Ports", "GET /api/agents/{id} — resolve actual chat/ingest/sse ports", ok, ms,
            f"chat={CHAT_URL}", "" if ok else "runtime-manager did not return agent ports (agent not yet started?)")
 
-    # Readiness gate: wait until per-agent chat service is actually accepting connections
+    # Readiness gate: wait until ALL per-agent services are confirmed ready.
+    # deployment.py sets readiness="ready" only after polling chat, sse_rest,
+    # ingestion (and optionally chainlit) ports.  Polling the runtime-manager
+    # readiness field avoids a race where chat (7201) is up but ingestion (7204)
+    # is still starting — which caused "Connection refused" on POST /api/ingest.
     if ok:
         _emit("  Waiting for per-agent services to become ready (health check)...")
         import time as _time2
         _ready = False
-        for _hp in range(1, 25):   # up to ~2 min
+        for _hp in range(1, 31):   # up to ~60s (2s sleep × 30 iterations)
             try:
-                _hsc, _, _, _ = http(f"{CHAT_URL}/api/health", timeout=5)
-                if _hsc == 200:
-                    _emit(f"  Per-agent services ready after {_hp * 5}s")
+                _hsc, _rbody, _, _ = http(f"http://localhost:7050/api/agents/{agent_id}", timeout=5)
+                if _hsc == 200 and isinstance(_rbody, dict) and _rbody.get("readiness") == "ready":
+                    _emit(f"  Per-agent services ready after {_hp * 2}s")
                     _ready = True
                     break
             except Exception:
                 pass
-            _time2.sleep(5)
+            _time2.sleep(2)
         if not _ready:
-            _emit("  WARNING: per-agent services did not become ready within 2 min; proceeding anyway")
+            _emit("  WARNING: per-agent services did not become ready within 60s; proceeding anyway")
 
     # Step 5.5: Ingest knowledge (now that INGEST_URL is resolved to per-agent port)
     step_header("Ingest knowledge document", f"POST {INGEST_URL}/api/ingest")

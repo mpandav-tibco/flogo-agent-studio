@@ -1061,6 +1061,34 @@
             "to": "Return",
             "type": "label",
             "label": "EmitDone to Return"
+          },
+          {
+            "id": 8,
+            "from": "CallRAG",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "CallRAG error"
+          },
+          {
+            "id": 9,
+            "from": "RunLLM",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "RunLLM error"
+          },
+          {
+            "id": 10,
+            "from": "EmitAnswer",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "EmitAnswer error"
+          },
+          {
+            "id": 11,
+            "from": "EmitDone",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "EmitDone error"
           }
         ],
         "tasks": [
@@ -1272,6 +1300,25 @@
                     "mapping": {
                       "streaming": true,
                       "eventsUrl": "/events"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 200 with error details on flow failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": {
+                    "mapping": {
+                      "error": "=$error.message",
+                      "streaming": false
                     }
                   }
                 }
