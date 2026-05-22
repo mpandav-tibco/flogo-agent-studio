@@ -106,3 +106,11 @@ export interface AgentRuntime {
   readiness: "starting" | "ready" | "degraded";
   health: Record<string, "running" | "dead">;
 }
+
+/** One platform service entry returned by GET /api/admin/services */
+export interface PlatformService {
+  name: string;
+  port: number;
+  status: "online" | "offline";
+  pid: number | null;
+}

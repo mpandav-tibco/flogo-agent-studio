@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { LayoutTemplate, Plus, Search } from "lucide-react";
+import { Activity, LayoutTemplate, Plus, Search } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { deployAgent, getAgentRuntime, listAgents, undeployAgent } from "../api";
@@ -101,6 +101,13 @@ export default function Gallery() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <img src="/logo.svg" alt="AgentForge Studio" className="h-14" />
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate("/admin")}
+              className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-400 px-4 py-2 rounded-lg transition-colors"
+            >
+              <Activity size={15} />
+              Admin
+            </button>
             <button
               onClick={() => setShowTemplates(true)}
               className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-400 px-4 py-2 rounded-lg transition-colors"

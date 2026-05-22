@@ -1174,6 +1174,52 @@ async def _handle_docker_stop(request: web.Request) -> web.Response:
     })
 
 
+# ── Admin helpers ─────────────────────────────────────────────────────────────
+
+_PLATFORM_SERVICES = [
+    {"name": "platform-service",   "port": 7020, "healthPath": "/api/health"},
+    {"name": "agent-builder",      "port": 7010, "healthPath": "/api/health"},
+    {"name": "mcp-server",         "port": 7333, "healthPath": "/api/health"},
+    {"name": "rule-engine-service","port": 7097, "healthPath": "/api/health"},
+    {"name": "runtime-manager",    "port": 7050, "healthPath": "/api/health"},
+    {"name": "forge-ui",           "port": 7025, "healthPath": "/"},
+]
+
+def _pid_on_port(port: int) -> Optional[int]:
+    """Return the PID of the process listening on *port*, or None."""
+    try:
+        result = subprocess.run(
+            ["lsof", "-ti", f"tcp:{port}", "-sTCP:LISTEN"],
+            capture_output=True, text=True, timeout=5,
+        )
+        pids = [int(p) for p in result.stdout.strip().split() if p.isdigit()]
+        return pids[0] if pids else None
+    except Exception:
+        return None
+
+async def _handle_admin_services(request: web.Request) -> web.Response:
+    """GET /api/admin/services — health + PID of all platform services."""
+    import socket
+    services = []
+    for svc in _PLATFORM_SERVICES:
+        port = svc["port"]
+        # Quick TCP probe
+        alive = False
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=0.5):
+                alive = True
+        except OSError:
+            pass
+        pid = _pid_on_port(port) if alive else None
+        services.append({
+            "name":    svc["name"],
+            "port":    port,
+            "status":  "online" if alive else "offline",
+            "pid":     pid,
+        })
+    return web.json_response(services)
+
+
 # ── REST API handlers ─────────────────────────────────────────────────────────
 
 async def _handle_health(request: web.Request) -> web.Response:
@@ -1189,7 +1235,7 @@ async def _handle_list_agents(request: web.Request) -> web.Response:
         result = []
         for agent_id, rec in _state.items():
             health = _health_check_record(rec)
-            result.append({**rec, "health": health})
+            result.append({"agentId": agent_id, **rec, "health": health})
     return web.json_response(result)
 
 
@@ -1601,9 +1647,13 @@ def _build_app() -> web.Application:
     app.router.add_get("/api/agents/{agentId}/docker-deploy",   _handle_docker_status)
     app.router.add_delete("/api/agents/{agentId}/docker-deploy",_handle_docker_stop)
     # /api/runtime prefix aliases (used by forge UI proxy)
+    app.router.add_get("/api/admin/services",                              _handle_admin_services)
+    app.router.add_get("/api/runtime/admin/services",                     _handle_admin_services)
     app.router.add_get("/api/runtime/health",                              _handle_health)
     app.router.add_get("/api/runtime/agents",                              _handle_list_agents)
     app.router.add_get("/api/runtime/agents/{agentId}",                          _handle_get_agent)
+    app.router.add_post("/api/runtime/agents/{agentId}/start",                   _handle_start_agent)
+    app.router.add_delete("/api/runtime/agents/{agentId}/stop",                  _handle_stop_agent)
     app.router.add_post("/api/runtime/agents/{agentId}/docker-deploy",           _handle_docker_deploy)
     app.router.add_get("/api/runtime/agents/{agentId}/docker-deploy",            _handle_docker_status)
     app.router.add_delete("/api/runtime/agents/{agentId}/docker-deploy",         _handle_docker_stop)

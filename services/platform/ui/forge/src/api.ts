@@ -326,6 +326,7 @@ export const ingestConfluence = async (
   confluenceBaseUrl: string,
   chunkStrategy?: string,
   serviceUrl?: string,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<string> => {
   const base = agentIngestBase(serviceUrl);
   const res = await mutate(`${base}/api/ingest/confluence`, "POST", { collection, spaceKey, baseUrl: confluenceBaseUrl, chunkStrategy });
@@ -349,3 +350,25 @@ export const ingestFile = async (
   if (!res.ok) throw new Error(text || res.statusText);
   return text;
 };
+
+// ── Admin console ─────────────────────────────────────────────────────────────
+
+import type { PlatformService } from "./types";
+
+export const listPlatformServices = async (): Promise<PlatformService[]> => {
+  const res = await fetch("/api/admin/services", { headers: headers() });
+  if (!res.ok) return [];
+  return res.json() as Promise<PlatformService[]>;
+};
+
+export const listRuntimeAgents = async (): Promise<AgentRuntime[]> => {
+  const res = await fetch("/api/runtime/agents", { headers: headers() });
+  if (!res.ok) return [];
+  return res.json() as Promise<AgentRuntime[]>;
+};
+
+export const stopRuntimeAgent = (agentId: string): Promise<void> =>
+  fetch(`/api/runtime/agents/${agentId}/stop`, { method: "DELETE", headers: headers() }).then(() => undefined);
+
+export const startRuntimeAgent = (agentId: string): Promise<void> =>
+  fetch(`/api/runtime/agents/${agentId}/start`, { method: "POST", headers: headers(true) }).then(() => undefined);
