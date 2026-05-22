@@ -852,6 +852,12 @@ def _docker_slot_ports(agent_id: str) -> dict[str, int]:
 
 _DOCKER_BUILD_CACHE_FILE = DATA_DIR / "docker-build-cache.json"
 
+# In-progress / recent deploy jobs keyed by agentId.
+# Each entry: {"status": "deploying"|"done"|"error", "startedAt": float,
+#              "error": str|None, "buildResults": dict, "composeFile": str,
+#              "stdout": str, "stderr": str}
+_docker_jobs: dict[str, dict] = {}
+
 # Services to build: (service_name, flogo_source, dockerfile_dir, image_tag)
 _DOCKER_AGENT_SERVICES = [
     ("agent-chat-service", SERVICES_AGENT_APPS / "agent-chat-service.flogo",
@@ -1282,10 +1288,12 @@ async def _handle_docker_build(request: web.Request) -> web.Response:
 async def _handle_docker_deploy(request: web.Request) -> web.Response:
     """
     POST /api/agents/{agentId}/docker-deploy
-    1. Builds Docker images if missing or stale (cached by .flogo SHA256).
-    2. Generates a per-agent docker-compose.yml.
-    3. Runs `docker compose up -d`.
-    Idempotent — safe to call multiple times.
+    Fires a background task that:
+      1. Builds Docker images if missing or stale (cached by .flogo SHA256).
+      2. Generates a per-agent docker-compose.yml.
+      3. Runs `docker compose up -d`.
+    Returns 202 immediately; poll GET /api/agents/{agentId}/docker-deploy for status.
+    Idempotent — calling again while a deploy is in-flight is a no-op.
     """
     agent_id = request.match_info["agentId"]
 
@@ -1295,87 +1303,111 @@ async def _handle_docker_deploy(request: web.Request) -> web.Response:
             status=503,
         )
 
-    # ── Step 1: ensure images are built ──────────────────────────────────────
-    build_results: dict = {}
+    # If already in-flight, return current state
+    job = _docker_jobs.get(agent_id, {})
+    if job.get("status") == "deploying":
+        return web.json_response({"status": "deploying", "agentId": agent_id}, status=202)
+
+    # Mark as starting and kick off background task
+    _docker_jobs[agent_id] = {
+        "status": "deploying", "startedAt": time.time(),
+        "error": None, "buildResults": {}, "composeFile": "", "stdout": "", "stderr": "",
+    }
+    asyncio.ensure_future(_run_docker_deploy(agent_id))
+
+    return web.json_response({"status": "deploying", "agentId": agent_id}, status=202)
+
+
+async def _run_docker_deploy(agent_id: str) -> None:
+    """Background task: build images → generate compose → docker compose up -d."""
+    job = _docker_jobs[agent_id]
+
+    # ── Step 1: build images ─────────────────────────────────────────────────
     try:
         build_results = await asyncio.get_event_loop().run_in_executor(
             None, lambda: build_docker_images(force=False)
         )
+        job["buildResults"] = build_results
         log.info("docker images ready for [%s]: %s",
                  agent_id[:8],
                  {k: ("built" if v["built"] else "cached") for k, v in build_results.items()})
     except Exception as exc:
         log.error("Image build failed for [%s]: %s", agent_id[:8], exc)
-        return web.json_response(
-            {"error": f"Image build failed: {exc}", "buildResults": build_results},
-            status=500,
-        )
+        job.update({"status": "error", "error": f"Image build failed: {exc}"})
+        return
 
-    # ── Step 2: fetch agent config ────────────────────────────────────────────
+    # ── Step 2: fetch agent config ───────────────────────────────────────────
     agents = await _fetch_all_agents()
     agent = next((a for a in agents if a["id"] == agent_id), None)
     if not agent:
-        return web.json_response({"error": f"agent {agent_id} not found"}, status=404)
+        job.update({"status": "error", "error": f"agent {agent_id} not found"})
+        return
 
     # ── Step 3: generate compose YAML ────────────────────────────────────────
     try:
         compose_yaml = _generate_compose_yaml(agent)
     except Exception as exc:
         log.error("Failed to generate compose YAML for [%s]: %s", agent_id[:8], exc)
-        return web.json_response({"error": f"Could not generate compose YAML: {exc}"}, status=500)
+        job.update({"status": "error", "error": f"Could not generate compose YAML: {exc}"})
+        return
 
     agent_dir = DOCKER_DEPLOY_DIR / agent_id
     agent_dir.mkdir(parents=True, exist_ok=True)
     compose_file = agent_dir / "docker-compose.yml"
     compose_file.write_text(compose_yaml)
+    job["composeFile"] = str(compose_file)
 
-    # ── Step 4: docker compose up -d (no --pull; images are local) ───────────
+    # ── Step 4: docker compose up -d ─────────────────────────────────────────
     try:
         result = await asyncio.get_event_loop().run_in_executor(
             None,
             lambda: subprocess.run(
                 ["docker", "compose", "-f", str(compose_file), "up", "-d"],
-                capture_output=True, text=True, timeout=120,
+                capture_output=True, text=True, timeout=300,
             ),
         )
     except subprocess.TimeoutExpired:
         log.error("docker compose up timed out for [%s]", agent_id[:8])
-        return web.json_response({"error": "docker compose up timed out (120s)"}, status=504)
+        job.update({"status": "error", "error": "docker compose up timed out (300s)"})
+        return
     except Exception as exc:
         log.error("docker compose up failed for [%s]: %s", agent_id[:8], exc)
-        return web.json_response({"error": f"docker compose failed: {exc}"}, status=500)
+        job.update({"status": "error", "error": f"docker compose failed: {exc}"})
+        return
 
     log.info("docker compose up for [%s] exit=%s", agent_id[:8], result.returncode)
+    job["stdout"] = result.stdout[-2000:]
+    job["stderr"] = result.stderr[-2000:]
 
     if result.returncode != 0:
-        return web.json_response({
-            "success": False,
-            "exitCode": result.returncode,
-            "stdout": result.stdout[-2000:],
-            "stderr": result.stderr[-2000:],
-            "composeFile": str(compose_file),
-        }, status=500)
-
-    return web.json_response({
-        "success":      True,
-        "agentId":      agent_id,
-        "composeFile":  str(compose_file),
-        "buildResults": build_results,
-        "stdout":       result.stdout[-2000:],
-        "stderr":       result.stderr[-2000:],
-    }, status=200)
+        job.update({"status": "error", "error": f"docker compose exited {result.returncode}"})
+    else:
+        job["status"] = "done"
 
 
 async def _handle_docker_status(request: web.Request) -> web.Response:
     """
     GET /api/agents/{agentId}/docker-deploy
-    Returns `docker compose ps` output for the agent.
+    Returns job state (deploying/done/error) merged with `docker compose ps` output.
     """
     agent_id = request.match_info["agentId"]
     compose_file = DOCKER_DEPLOY_DIR / agent_id / "docker-compose.yml"
 
+    # Include in-progress or recent job state
+    job = _docker_jobs.get(agent_id)
+    if job and job.get("status") == "deploying":
+        return web.json_response({
+            "status":   "deploying",
+            "agentId":  agent_id,
+            "containers": [],
+        })
+
     if not compose_file.exists():
-        return web.json_response({"status": "not_deployed", "containers": []}, status=200)
+        base = {"status": "not_deployed", "agentId": agent_id, "containers": []}
+        if job:
+            base.update({"jobStatus": job["status"], "jobError": job.get("error"),
+                         "stdout": job.get("stdout", ""), "stderr": job.get("stderr", "")})
+        return web.json_response(base, status=200)
 
     if not _docker_available():
         return web.json_response({"error": "docker not found on PATH"}, status=503)
@@ -1400,12 +1432,16 @@ async def _handle_docker_status(request: web.Request) -> web.Response:
             pass
 
     running = any(c.get("State") == "running" for c in containers)
-    return web.json_response({
-        "status":     "running" if running else "stopped",
-        "agentId":    agent_id,
-        "containers": containers,
+    response: dict = {
+        "status":      "running" if running else "stopped",
+        "agentId":     agent_id,
+        "containers":  containers,
         "composeFile": str(compose_file),
-    })
+    }
+    if job:
+        response.update({"jobStatus": job["status"], "jobError": job.get("error"),
+                         "stdout": job.get("stdout", ""), "stderr": job.get("stderr", "")})
+    return web.json_response(response)
 
 
 async def _handle_docker_stop(request: web.Request) -> web.Response:

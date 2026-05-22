@@ -810,6 +810,8 @@ export default function Editor() {
 
   const dockerDeployMutation = useMutation<DockerDeployResult, Error>({
     mutationFn: () => dockerDeploy(id!),
+    // 202 "deploying" means the job was accepted — start polling status
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["docker-status", id] }),
   });
 
   const dockerStopMutation = useMutation<DockerDeployResult, Error>({
@@ -820,9 +822,15 @@ export default function Editor() {
   const dockerStatusQuery = useQuery<DockerDeployStatus>({
     queryKey: ["docker-status", id],
     queryFn: () => dockerDeployStatus(id!),
-    refetchInterval: dockerDeployMutation.isPending ? 3000 : 10000,
+    // refetchInterval as a function: poll frequently while deploying
+    refetchInterval: (query) =>
+      (dockerDeployMutation.isPending || query.state.data?.status === "deploying") ? 4000 : 15000,
     enabled: !isNew,
   });
+
+  const isDockerDeploying =
+    dockerDeployMutation.isPending ||
+    dockerStatusQuery.data?.status === "deploying";
 
   // agent?.status is the canonical source of truth; deployRecord is stale historical data
   const currentStatus = agent?.status ?? "draft";
@@ -1455,13 +1463,13 @@ export default function Editor() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => dockerDeployMutation.mutate()}
-                    disabled={dockerDeployMutation.isPending}
+                    disabled={isDockerDeploying}
                     className="flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50"
                   >
-                    {dockerDeployMutation.isPending
+                    {isDockerDeploying
                       ? <RefreshCw size={14} className="animate-spin" />
                       : <Container size={14} />}
-                    {dockerDeployMutation.isPending ? "Deploying…" : "Deploy with Docker"}
+                    {isDockerDeploying ? "Building & deploying…" : "Deploy with Docker"}
                   </button>
 
                   {dockerStatusQuery.data?.status === "running" && (
