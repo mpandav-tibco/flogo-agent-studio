@@ -89,6 +89,7 @@ async def post_chat(
     agent_id: str,
     query: str,
     session_id: str,
+    request_id: str,
     collection_name: str = "",
     top_k: int = 5,
 ) -> dict:
@@ -98,6 +99,7 @@ async def post_chat(
             "message": query,          # field name is "message" not "query"
             "agentId": agent_id,
             "sessionId": session_id,
+            "requestId": request_id,
             "topK": top_k,
         }
         if collection_name:
@@ -115,17 +117,17 @@ async def stream_chat_sse(
     agent_id: str,
     query: str,
     session_id: str,
+    request_id: str,
     collection_name: str = "",
     top_k: int = 5,
 ) -> dict:
     """
     Trigger the RAG+LLM pipeline via agent-chat-service SSE REST trigger, then consume the SSE
-    event bus and return the answer once stream.done is received.
+    event bus for this session's topic and return the answer once stream.done is received.
 
     Flow:
       1. POST SSE_SERVICE_URL/api/stream/chat  → 202 accepted
-      2. GET  SSE_EVENTS_URL/events            → SSE stream (shared bus)
-         Filter by sessionId to isolate this session's events.
+      2. GET  SSE_EVENTS_URL/events?topic=<sessionId>  → SSE stream (session-scoped)
 
     SSE event types (emitted by agent-chat-service SSE trigger):
       stream.start  → {sessionId, agentId, query}
@@ -136,6 +138,7 @@ async def stream_chat_sse(
         "message": query,
         "agentId": agent_id,
         "sessionId": session_id,
+        "requestId": request_id,
         "topK": top_k,
     }
     if collection_name:
@@ -149,11 +152,12 @@ async def stream_chat_sse(
             headers=_AUTH_HEADER,
         )
 
-    # 2. Consume SSE event bus, filter by sessionId, collect answer
+    # 2. Consume SSE event bus scoped to this session's topic (server-side routing)
     answer: str = ""
     raw_sources: list = []
-    events_url = f"{SSE_EVENTS_URL}/events"
+    events_url = f"{SSE_EVENTS_URL}/events?topic={session_id}"
     current_event_type: str = ""
+    log.info("[req=%s session=%s agent=%s] SSE consume started: %s", request_id, session_id, agent_id, events_url)
 
     try:
         async with httpx.AsyncClient(timeout=None) as client:
@@ -167,9 +171,12 @@ async def stream_chat_sse(
                         elif raw_line.startswith("data:"):
                             try:
                                 evt = json.loads(raw_line[5:].strip())
-                            except Exception:
+                            except (json.JSONDecodeError, ValueError) as parse_err:
+                                log.debug("[req=%s] SSE data parse error: %s — line: %r", request_id, parse_err, raw_line)
                                 continue
+                            # Defense-in-depth: server routes by topic, but verify sessionId anyway
                             if evt.get("sessionId") != session_id:
+                                log.debug("[req=%s] Skipping event for sessionId=%s", request_id, evt.get("sessionId"))
                                 continue
                             if current_event_type == "stream.answer":
                                 answer = evt.get("answer", "")
@@ -178,7 +185,7 @@ async def stream_chat_sse(
                                 return
                 await asyncio.wait_for(_consume(), timeout=REQUEST_TIMEOUT)
     except asyncio.TimeoutError:
-        log.warning("stream_chat_sse: SSE stream timed out after %ss (session=%s)", REQUEST_TIMEOUT, session_id)
+        log.warning("[req=%s session=%s] SSE stream timed out after %ss", request_id, session_id, REQUEST_TIMEOUT)
         if not answer:
             answer = "⚠️ The request timed out before a response was received. Please try again."
 
@@ -204,7 +211,7 @@ async def post_feedback(
     """Call feedback-service POST /api/feedback (fire-and-forget; errors are silently logged)."""
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            await client.post(
+            resp = await client.post(
                 f"{FEEDBACK_URL}/api/feedback",
                 json={
                     "agentId": agent_id,
@@ -215,8 +222,11 @@ async def post_feedback(
                 },
                 headers=_AUTH_HEADER,
             )
-    except Exception as exc:
-        print(f"[Feedback] failed to submit: {exc}")
+            resp.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        log.warning("[session=%s] Feedback HTTP error %s: %s", session_id, exc.response.status_code, exc.response.text)
+    except (httpx.ConnectError, httpx.TimeoutException) as exc:
+        log.warning("[session=%s] Feedback unreachable (%s): %s", session_id, FEEDBACK_URL, exc)
 
 
 def agent_label(agent: dict) -> str:
@@ -235,7 +245,11 @@ async def set_chat_profiles(current_user, language=None):
         return []   # single-agent mode: no profile selector
     try:
         agents = await fetch_agents()
-    except Exception:
+    except httpx.HTTPStatusError as exc:
+        log.warning("set_chat_profiles: design-service returned %s", exc.response.status_code)
+        return []
+    except (httpx.ConnectError, httpx.TimeoutException) as exc:
+        log.warning("set_chat_profiles: design-service unreachable (%s): %s", DESIGN_URL, exc)
         return []
     return [
         cl.ChatProfile(
@@ -284,12 +298,17 @@ async def on_chat_start():
         try:
             agents = await fetch_agents()   # fetch to get full config
             agent  = next((a for a in agents if a["id"] == AGENT_ID), None)
-        except Exception:
+        except httpx.HTTPStatusError as exc:
+            log.warning("[session=%s] on_chat_start: design-service returned %s", session_id, exc.response.status_code)
+            agent = None
+        except (httpx.ConnectError, httpx.TimeoutException) as exc:
+            log.warning("[session=%s] on_chat_start: design-service unreachable (%s): %s", session_id, DESIGN_URL, exc)
             agent = None
 
         if not agent:
             # Runtime Manager set AGENT_ID but design-service doesn't know it yet
             # (race on first start). Use a minimal placeholder.
+            log.info("[session=%s] on_chat_start: AGENT_ID=%s not found in design-service, using placeholder", session_id, AGENT_ID)
             agent = {"id": AGENT_ID, "name": "Agent", "description": "", "collectionName": ""}
 
         cl.user_session.set("agents",          [agent])
@@ -416,16 +435,18 @@ async def on_message(message: cl.Message):
     session_id      = cl.user_session.get("session_id", str(uuid.uuid4()))
     collection_name = cl.user_session.get("collection_name", "")
     message_id      = str(uuid.uuid4())
+    request_id      = str(uuid.uuid4())   # unique ID for this single request — use to correlate across service logs
 
     cl.user_session.set("last_message_id", message_id)
     cl.user_session.set("last_agent_id", agent_id)
+    log.info("[req=%s session=%s agent=%s] on_message: %r", request_id, session_id, agent_id, message.content[:120])
 
     async with cl.Step(name=f"{agent_name} — thinking", show_input=False) as step:
         try:
             if SSE_SERVICE_URL and SSE_EVENTS_URL:
-                result = await stream_chat_sse(agent_id, message.content, session_id, collection_name)
+                result = await stream_chat_sse(agent_id, message.content, session_id, request_id, collection_name)
             else:
-                result = await post_chat(agent_id, message.content, session_id, collection_name)
+                result = await post_chat(agent_id, message.content, session_id, request_id, collection_name)
         except httpx.HTTPStatusError as exc:
             step.output = f"HTTP {exc.response.status_code}: {exc.response.text}"
             await cl.Message(
