@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "flogo-dev-assist": {
+    "flogo-studio-agent-assist": {
       "type": "sse",
       "url": "http://localhost:7333/mcp"
     }

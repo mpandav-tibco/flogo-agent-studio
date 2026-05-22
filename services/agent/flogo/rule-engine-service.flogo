@@ -19,7 +19,7 @@
     {
       "ref": "#rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger \u2014 rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger — rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7097,
         "APISpecUpdate": false,
@@ -297,8 +297,8 @@
               "type": "integer"
             },
             {
-              "name": "message",
-              "type": "string"
+              "name": "data",
+              "type": "object"
             }
           ],
           "fe_metadata": {
@@ -393,7 +393,7 @@
     }
   ],
   "connections": {},
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS9tcGFuZGF2LXRpYmNvL2Zsb2dvLWN1c3RvbS1leHRlbnNpb25zL2FjdGl2aXR5L3J1bGVlbmdpbmUiLCJpZCI6IkRlZmF1bHQiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJSdWxlIEVuZ2luZSIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9ydWxlZW5naW5lIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfV0=",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL21wYW5kYXYtdGliY28vZmxvZ28tY3VzdG9tLWV4dGVuc2lvbnMvYWN0aXZpdHkvcnVsZWVuZ2luZSIsImlkIjoiRGVmYXVsdCIsInZlcnNpb24iOiIxLjAuMCIsInRhZyI6IjEuMC4wIiwibmFtZSI6IlJ1bGUgRW5naW5lIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L3J1bGVlbmdpbmUiLCJpc1VzZXJFeHRlbnNpb24iOnRydWV9XQ==",
   "metadata": {
     "endpoints": [
       {
@@ -409,7 +409,7 @@
           "info": {
             "title": "rule-engine-service",
             "version": "1.0.0",
-            "description": "REST trigger \u2014 rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger — rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/analyze": {

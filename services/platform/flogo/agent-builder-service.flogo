@@ -21,7 +21,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger \u00e2\u20ac\u201d agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger â€” agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7010,
         "APISpecUpdate": false,
@@ -136,7 +136,7 @@
           "name": "improve_agent"
         },
         {
-          "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
+          "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
           "settings": {
             "Method": "POST",
             "reqType": "application/json",
@@ -266,6 +266,13 @@
           },
           {
             "id": 5,
+            "from": "RegisterConfig",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "RegisterConfig to ErrorReturn"
+          },
+          {
+            "id": 6,
             "from": "GenerateConfig",
             "to": "Return",
             "type": "expression",
@@ -273,16 +280,11 @@
             "value": "$flow.body.register != true"
           },
           {
-            "id": 6,
-            "type": "error",
-            "from": "GenerateConfig",
-            "to": "ErrorReturn"
-          },
-          {
             "id": 7,
+            "from": "GenerateConfig",
+            "to": "ErrorReturn",
             "type": "error",
-            "from": "RegisterConfig",
-            "to": "ErrorReturn"
+            "label": "GenerateConfig to ErrorReturn"
           }
         ],
         "tasks": [
@@ -338,11 +340,12 @@
                 "output": {
                   "response": {
                     "type": "json",
-                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\"}",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{}}",
                     "fe_metadata": "{}"
                   }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
@@ -383,9 +386,7 @@
                     "Content-Type": "application/json"
                   }
                 },
-                "body": {
-                  "mapping": "=$activity[GenerateConfig].output.response"
-                }
+                "body": "=$activity[GenerateConfig].response"
               },
               "output": {
                 "configureResponseCodes": false,
@@ -407,8 +408,8 @@
                   },
                   "body": {
                     "type": "json",
-                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"any\"}",
-                    "fe_metadata": "null"
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"systemPrompt\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"llmProvider\":{\"type\":\"string\"},\"llmBaseUrl\":{\"type\":\"string\"},\"apiKey\":{\"type\":\"string\"},\"model\":{\"type\":\"string\"},\"temperature\":{\"type\":\"number\"},\"maxTokens\":{\"type\":\"integer\"},\"topK\":{\"type\":\"integer\"},\"tools\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"chunkStrategy\":{\"type\":\"string\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"version\":{\"type\":\"string\"},\"active\":{\"type\":\"boolean\"}}}",
+                    "fe_metadata": "{\"name\":\"my-agent\",\"description\":\"Agent description\",\"systemPrompt\":\"You are a helpful assistant.\",\"collectionName\":\"MyCollection\",\"llmProvider\":\"ollama\",\"model\":\"llama3.2:3b\",\"temperature\":0.7,\"maxTokens\":2048,\"topK\":5,\"tools\":[\"ragQuery\"],\"chunkStrategy\":\"sentence\",\"tags\":[\"example\"],\"version\":\"1.0.0\",\"active\":true}"
                   }
                 },
                 "output": {
@@ -416,6 +417,11 @@
                     "type": "json",
                     "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"status\":{\"type\":\"string\"}}}",
                     "fe_metadata": "{\"id\":\"abc\",\"name\":\"abc\",\"status\":\"abc\"}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
                   }
                 }
               },
@@ -433,30 +439,10 @@
                   "code": 200,
                   "data": {
                     "mapping": {
-                      "config": "=$activity[GenerateConfig].output.response",
+                      "config": "=$activity[GenerateConfig].response",
                       "description": "=$flow.body.description",
                       "registered": true,
                       "registeredId": "=$activity[RegisterConfig].responseBody.id"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "id": "Return",
-            "name": "Return",
-            "description": "",
-            "activity": {
-              "ref": "#actreturn",
-              "settings": {
-                "mappings": {
-                  "code": 200,
-                  "data": {
-                    "mapping": {
-                      "config": "=$activity[GenerateConfig].output.response",
-                      "description": "=$flow.body.description",
-                      "registered": false
                     }
                   }
                 }
@@ -480,9 +466,29 @@
                 }
               }
             }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 200,
+                  "data": {
+                    "mapping": {
+                      "config": "=$activity[GenerateConfig].response",
+                      "description": "=$flow.body.description",
+                      "registered": false
+                    }
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiR2VuZXJhdGVDb25maWciOnsieCI6NDUwLCJ5IjoyNTB9LCJSZWdpc3RlckNvbmZpZyI6eyJ4Ijo2NTAsInkiOjM1MH0sIlJldHVyblJlZ2lzdGVyZWQiOnsieCI6ODUwLCJ5Ijo0NTB9LCJSZXR1cm4iOnsieCI6NjUwLCJ5Ijo1NTB9LCJFcnJvclJldHVybiI6eyJ4Ijo5MDAsInkiOjE1NX19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiR2VuZXJhdGVDb25maWciOnsieCI6NDUwLCJ5IjoyNTB9LCJSZWdpc3RlckNvbmZpZyI6eyJ4Ijo2NTAsInkiOjM1MH0sIlJldHVyblJlZ2lzdGVyZWQiOnsieCI6ODUwLCJ5Ijo0NTB9LCJFcnJvclJldHVybiI6eyJ4Ijo5MDAsInkiOjE1NX0sIlJldHVybiI6eyJ4Ijo2NTAsInkiOjU1MH19",
         "metadata": {
           "input": [
             {
@@ -571,21 +577,24 @@
           },
           {
             "id": 6,
+            "from": "SuggestImprovements",
+            "to": "ErrorReturn",
             "type": "error",
-            "from": "ReadCurrentConfig",
-            "to": "ErrorReturn"
+            "label": "SuggestImprovements to ErrorReturn"
           },
           {
             "id": 7,
-            "type": "error",
             "from": "ReadFeedback",
-            "to": "ErrorReturn"
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "ReadFeedback to ErrorReturn"
           },
           {
             "id": 8,
+            "from": "ReadCurrentConfig",
+            "to": "ErrorReturn",
             "type": "error",
-            "from": "SuggestImprovements",
-            "to": "ErrorReturn"
+            "label": "ReadCurrentConfig to ErrorReturn"
           }
         ],
         "tasks": [
@@ -638,15 +647,15 @@
                 "disableKeepAlives": false,
                 "followRedirects": true,
                 "Timeout": 0,
+                "pathParams": {
+                  "mapping": {
+                    "agentId": "=$flow.body.agentId"
+                  }
+                },
                 "headers": {
                   "mapping": {
                     "Accept": "application/json",
                     "Authorization": "=$property[\"API_AUTH_HEADER\"]"
-                  }
-                },
-                "pathParams": {
-                  "mapping": {
-                    "agentId": "=$flow.body.agentId"
                   }
                 }
               },
@@ -670,15 +679,15 @@
                   }
                 },
                 "output": {
-                  "headers": {
-                    "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
-                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
-                  },
                   "responseBody": {
                     "type": "json",
                     "value": "{\"$schema\": \"http://json-schema.org/draft-07/schema#\", \"type\": \"object\", \"properties\": {\"id\": {\"type\": \"string\"}, \"name\": {\"type\": \"string\"}, \"description\": {\"type\": \"string\"}, \"status\": {\"type\": \"string\"}, \"config\": {\"type\": \"object\", \"properties\": {}}, \"created_at\": {\"type\": \"string\"}, \"updated_at\": {\"type\": \"string\"}, \"version\": {\"type\": \"integer\"}}}",
                     "fe_metadata": "{\"$schema\": \"http://json-schema.org/draft-07/schema#\", \"type\": \"object\", \"properties\": {\"id\": {\"type\": \"string\"}, \"name\": {\"type\": \"string\"}, \"description\": {\"type\": \"string\"}, \"status\": {\"type\": \"string\"}, \"config\": {\"type\": \"object\", \"properties\": {}}, \"created_at\": {\"type\": \"string\"}, \"updated_at\": {\"type\": \"string\"}, \"version\": {\"type\": \"integer\"}}}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
                   }
                 }
               },
@@ -712,15 +721,15 @@
                 "disableKeepAlives": false,
                 "followRedirects": true,
                 "Timeout": 0,
+                "pathParams": {
+                  "mapping": {
+                    "agentId": "=$flow.body.agentId"
+                  }
+                },
                 "headers": {
                   "mapping": {
                     "Accept": "application/json",
                     "Authorization": "=$property[\"API_AUTH_HEADER\"]"
-                  }
-                },
-                "pathParams": {
-                  "mapping": {
-                    "agentId": "=$flow.body.agentId"
                   }
                 }
               },
@@ -788,11 +797,12 @@
                 "output": {
                   "response": {
                     "type": "json",
-                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"string\"}",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"title\":\"abc\",\"type\":\"undefined\"}",
                     "fe_metadata": "\"abc\""
                   }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
@@ -806,7 +816,7 @@
                   "code": 200,
                   "data": {
                     "mapping": {
-                      "config": "=$activity[SuggestImprovements].output.response",
+                      "config": "=$activity[SuggestImprovements].response",
                       "agentId": "=$flow.body.agentId"
                     }
                   }
@@ -867,8 +877,8 @@
               "type": "integer"
             },
             {
-              "name": "message",
-              "type": "string"
+              "name": "data",
+              "type": "object"
             }
           ],
           "fe_metadata": {
@@ -883,7 +893,7 @@
       "id": "flow:validate_agent",
       "data": {
         "name": "validate_agent",
-        "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
+        "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
         "links": [
           {
             "id": 1,
@@ -908,9 +918,10 @@
           },
           {
             "id": 4,
-            "type": "error",
             "from": "ValidateConfig",
-            "to": "ErrorReturn"
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "ValidateConfig to ErrorReturn"
           }
         ],
         "tasks": [
@@ -966,11 +977,12 @@
                 "output": {
                   "response": {
                     "type": "json",
-                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"string\"}",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"title\":\"abc\",\"type\":\"undefined\"}",
                     "fe_metadata": "\"abc\""
                   }
                 }
-              }
+              },
+              "feSchemaMap": {}
             }
           },
           {
@@ -982,7 +994,7 @@
               "settings": {
                 "mappings": {
                   "code": 200,
-                  "data": "=$activity[ValidateConfig].output.response"
+                  "data": "=$activity[ValidateConfig].response"
                 }
               }
             }
@@ -1040,8 +1052,8 @@
               "type": "integer"
             },
             {
-              "name": "message",
-              "type": "string"
+              "name": "data",
+              "type": "object"
             }
           ],
           "fe_metadata": {
@@ -1128,7 +1140,7 @@
     {
       "name": "AgenticAI.LLM_Provider.API_Key",
       "type": "string",
-      "value": "SECRET:v3orjAH+Dih2LEBM9Njh9KMzTTkcSe7IhL55geuQsbb/zmW3spjfihjJJnu31+Fu2+O5fC+GLwbg/maF/wVt8v5EHuZDPxiqqQ=="
+      "value": "SECRET:3yLO1/udK40L36boH/03NbaXATLRG3gS6481V9evsX8RoLIr50AxpB5DDf7CX5I0s73sMos8+oXxl3JOmaIQ+mApVKJuDcpXhA=="
     },
     {
       "name": "AgenticAI.LLM_Provider.LLM_Base_URL",
@@ -1153,7 +1165,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:zbEUrGvx8aJesut63Bf+MSjMsLlBdbTl"
+      "value": "SECRET:sURBQ8O88PwF0foXJmGl+rBl9L2YqvSo"
     },
     {
       "name": "API_AUTH_HEADER",
@@ -1218,7 +1230,7 @@
           "info": {
             "title": "agent-builder-service",
             "version": "1.0.0",
-            "description": "REST trigger \u00e2\u20ac\u201d agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger â€” agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/agent-builder/generate": {
@@ -1323,7 +1335,7 @@
                     }
                   }
                 },
-                "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
+                "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
                 "consumes": [
                   "application/json"
                 ]
