@@ -78,6 +78,7 @@ DATA_DIR         = PROJECT_ROOT / "data"
 RUNTIME_DIR      = DATA_DIR / "agent-runtimes"   # per-agent generated files
 LOGS_AGENT_DIR   = PROJECT_ROOT / "logs" / "agents"
 STATE_FILE       = DATA_DIR / "agent-runtime.json"
+DOCKER_DEPLOY_DIR = DATA_DIR / "docker-deployments"   # per-agent compose files
 LAUNCH_PY        = PROJECT_ROOT / "services" / "launch.py"
 CHAINLIT_DIR     = PROJECT_ROOT / "services" / "agent" / "ui" / "chainlit"
 
@@ -756,6 +757,10 @@ async def _restart_dead_processes(agent_id: str):
     if not record:
         return
 
+    # Docker-mode agents are managed by compose — don't touch their pids
+    if record.get("deploymentMode") == "docker":
+        return
+
     health = _health_check_record(record)
     dead = [r for r, s in health.items() if s == "dead" and record["pids"].get(r) is not None]
     if not dead:
@@ -790,15 +795,22 @@ async def _reconcile_once():
     active_ids  = {a["id"] for a in agents if a.get("status") == "active"}
     running_ids = set(_state.keys())
 
-    # Start runtimes for newly-active agents
+    # Start runtimes for newly-active agents (skip docker-mode agents)
     for agent in agents:
-        if agent.get("status") == "active" and agent["id"] not in running_ids:
+        aid = agent["id"]
+        if agent.get("status") == "active" and aid not in running_ids:
+            # Don't auto-start as local process if a compose file exists for this agent
+            compose_file = DOCKER_DEPLOY_DIR / aid / "docker-compose.yml"
+            if compose_file.exists():
+                log.debug("Reconcile: skipping local start for [%s] — docker deployment present",
+                          aid[:8])
+                continue
             log.info("Reconcile: starting runtime for [%s] (%s)",
-                     agent["id"][:8], agent.get("name"))
+                     aid[:8], agent.get("name"))
             try:
                 await _start_runtime(agent)
             except Exception as exc:
-                log.error("Failed to start runtime for [%s]: %s", agent["id"][:8], exc)
+                log.error("Failed to start runtime for [%s]: %s", aid[:8], exc)
 
     # Stop runtimes for deactivated agents
     for agent_id in list(running_ids):
@@ -815,8 +827,6 @@ async def _reconcile_once():
 
 
 # ── Docker Compose deployment ────────────────────────────────────────────────
-
-DOCKER_DEPLOY_DIR = DATA_DIR / "docker-deployments"   # per-agent compose files + state
 
 
 def _docker_available() -> bool:
@@ -945,9 +955,12 @@ def _build_flogo_service_image(
                 "-v", f"{flogo_src}:/work/{flogo_src.name}:ro",
                 "-v", f"{output_dir}:/work/output",
                 "alpine:3.19",
-                "/usr/local/bin/flogobuild",
+                "/usr/local/bin/flogobuild", "build-exe",
                 "-f", f"/work/{flogo_src.name}",
-                "-o", f"/work/output/{service_name}",
+                "-c", "flogo-studio",
+                "-n", service_name,
+                "-o", "/work/output",
+                "-p", "linux/amd64",
             ],
             capture_output=True, text=True, timeout=180,
         )
@@ -1383,6 +1396,15 @@ async def _run_docker_deploy(agent_id: str) -> None:
         job.update({"status": "error", "error": f"docker compose exited {result.returncode}"})
     else:
         job["status"] = "done"
+        # Mark this agent as docker-managed so the reconcile loop won't
+        # try to (re)start it as a local process.
+        async with _state_lock:
+            if agent_id in _state:
+                _state[agent_id]["deploymentMode"] = "docker"
+            else:
+                _state[agent_id] = {"deploymentMode": "docker", "pids": {}}
+        await _save_state()
+        log.info("Agent [%s] marked as docker-managed", agent_id[:8])
 
 
 async def _handle_docker_status(request: web.Request) -> web.Response:
