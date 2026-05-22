@@ -305,7 +305,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[AgentBuilder] generate: \", coerce.toString($flow.body.description), \" register=\", coerce.toString($flow.body.register))",
+                "message": "=string.concat(\"[AgentBuilder] generate: \", coerce.toString($flow.body.description), \" register=\", coerce.toString($flow.body.register), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
                 "logLevel": ""
               }
             }
@@ -615,7 +615,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[AgentBuilder] improve: agentId=\", coerce.toString($flow.body.agentId))",
+                "message": "=string.concat(\"[AgentBuilder] improve: agentId=\", coerce.toString($flow.body.agentId), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
                 "logLevel": ""
               }
             }
@@ -942,7 +942,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "[AgentBuilder] validate config",
+                "message": "=string.concat(\"[AgentBuilder] validate config | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
                 "logLevel": ""
               }
             }

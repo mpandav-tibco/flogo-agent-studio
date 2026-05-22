@@ -477,7 +477,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "[MCP] analyze_flogo tool invoked",
+                "message": "=string.concat(\"[MCP] analyze_flogo | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
                 "logLevel": ""
               }
             }
@@ -605,7 +605,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] analyze_flogo completed: data=\", coerce.toString($activity[MapResult].output.data))"
+                "message": "=string.concat(\"[MCP] analyze_flogo done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
               }
             }
           },
@@ -732,7 +732,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "[MCP] rag_chat tool invoked",
+                "message": "=string.concat(\"[MCP] rag_chat | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
                 "logLevel": ""
               }
             }
@@ -854,7 +854,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] rag_chat completed: data=\", coerce.toString($activity[MapResult].output.data))"
+                "message": "=string.concat(\"[MCP] rag_chat done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
               }
             }
           },
@@ -977,7 +977,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "[MCP] list_agents",
+                "message": "=string.concat(\"[MCP] list_agents | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
                 "logLevel": ""
               }
             }
@@ -1098,7 +1098,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] list_agents completed: data=\", coerce.toString($activity[MapResult].output.data))"
+                "message": "=string.concat(\"[MCP] list_agents done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
               }
             }
           },
@@ -1215,7 +1215,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] get_agent: \", coerce.toString($flow.agentId))",
+                "message": "=string.concat(\"[MCP] get_agent: \", coerce.toString($flow.agentId), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
                 "logLevel": ""
               }
             }
@@ -1352,7 +1352,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] get_agent completed: data=\", coerce.toString($activity[MapResult].output.data))"
+                "message": "=string.concat(\"[MCP] get_agent done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
               }
             }
           },
@@ -1475,7 +1475,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "[MCP] submit_feedback tool invoked",
+                "message": "=string.concat(\"[MCP] submit_feedback | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
                 "logLevel": ""
               }
             }
@@ -1597,7 +1597,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] submit_feedback completed: data=\", coerce.toString($activity[MapResult].output.data))"
+                "message": "=string.concat(\"[MCP] submit_feedback done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
               }
             }
           },
@@ -1720,7 +1720,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "[MCP] get_feedback",
+                "message": "=string.concat(\"[MCP] get_feedback | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
                 "logLevel": ""
               }
             }
@@ -1841,7 +1841,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] get_feedback completed: data=\", coerce.toString($activity[MapResult].output.data))"
+                "message": "=string.concat(\"[MCP] get_feedback done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
               }
             }
           },
@@ -1958,7 +1958,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "[MCP] create_agent tool invoked",
+                "message": "=string.concat(\"[MCP] create_agent | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
                 "logLevel": ""
               }
             }
@@ -2094,7 +2094,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] create_agent completed: data=\", coerce.toString($activity[MapResult].output.data))"
+                "message": "=string.concat(\"[MCP] create_agent done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
               }
             }
           },
@@ -2217,7 +2217,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "[MCP] deploy_agent_tool tool invoked",
+                "message": "=string.concat(\"[MCP] deploy_agent_tool | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
                 "logLevel": ""
               }
             }
@@ -2354,7 +2354,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] deploy_agent_tool completed: data=\", coerce.toString($activity[MapResult].output.data))"
+                "message": "=string.concat(\"[MCP] deploy_agent_tool done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
               }
             }
           },
@@ -2477,7 +2477,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "[MCP] list_templates_tool tool invoked",
+                "message": "=string.concat(\"[MCP] list_templates_tool | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
                 "logLevel": ""
               }
             }
@@ -2598,7 +2598,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] list_templates_tool completed: data=\", coerce.toString($activity[MapResult].output.data))"
+                "message": "=string.concat(\"[MCP] list_templates_tool done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
               }
             }
           },

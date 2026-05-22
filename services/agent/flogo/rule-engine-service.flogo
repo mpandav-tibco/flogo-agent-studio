@@ -183,7 +183,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[RuleEngine] Analyze request: fileName=\", coerce.toString($flow.body.fileName))"
+                "message": "=string.concat(\"[RuleEngine] Analyze: fileName=\", coerce.toString($flow.body.fileName), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
               }
             }
           },

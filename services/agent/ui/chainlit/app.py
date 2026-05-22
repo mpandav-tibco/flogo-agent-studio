@@ -178,7 +178,12 @@ async def stream_chat_sse(
                             if evt.get("sessionId") != session_id:
                                 log.debug("[req=%s] Skipping event for sessionId=%s", request_id, evt.get("sessionId"))
                                 continue
-                            if current_event_type == "stream.answer":
+                            if current_event_type == "stream.start":
+                                # Capture the Flogo TraceId from flowctx so we can correlate client+server logs
+                                trace_id = evt.get("traceId", "")
+                                if trace_id:
+                                    log.info("[req=%s session=%s] Flogo traceId=%s flowId bridged", request_id, session_id, trace_id)
+                            elif current_event_type == "stream.answer":
                                 answer = evt.get("answer", "")
                                 raw_sources = evt.get("sources", [])
                             elif current_event_type == "stream.done":
