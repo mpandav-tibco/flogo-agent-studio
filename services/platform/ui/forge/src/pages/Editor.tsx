@@ -814,7 +814,7 @@ export default function Editor() {
 
   const dockerStopMutation = useMutation<DockerDeployResult, Error>({
     mutationFn: () => dockerDeployStop(id!),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["docker-status", id] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["docker-status", id] }),
   });
 
   const dockerStatusQuery = useQuery<DockerDeployStatus>({
@@ -1476,7 +1476,7 @@ export default function Editor() {
                   )}
 
                   <button
-                    onClick={() => queryClient.invalidateQueries({ queryKey: ["docker-status", id] })}
+                    onClick={() => qc.invalidateQueries({ queryKey: ["docker-status", id] })}
                     className="ml-auto text-gray-400 hover:text-gray-600 transition-colors"
                     title="Refresh status"
                   >

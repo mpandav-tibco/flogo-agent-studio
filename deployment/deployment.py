@@ -915,8 +915,9 @@ def _build_flogo_service_image(
 ) -> None:
     """
     Build a Docker image for a Flogo service:
-      1. Compile flogo source → linux_amd64 binary using flogobuild
-      2. docker build with the binary as build context
+      1. Run flogobuild inside a linux/amd64 container (the binary is linux-only
+         and cannot execute directly on macOS / arm64 hosts).
+      2. docker build --platform linux/amd64 with the resulting binary.
     """
     import tempfile, shutil as _shutil
 
@@ -924,27 +925,44 @@ def _build_flogo_service_image(
 
     with tempfile.TemporaryDirectory(prefix="flogo-docker-build-") as tmpdir:
         tmp = Path(tmpdir)
+        output_dir = tmp / "output"
+        output_dir.mkdir()
 
-        # Step 1: compile .flogo → linux binary
-        binary_path = tmp / service_name
+        # Step 1: compile .flogo → linux/amd64 binary via a throwaway container.
+        # Mounting the host flogobuild binary into an alpine container lets it run
+        # natively as linux/amd64 regardless of the host OS/arch.
         result = subprocess.run(
-            [flogobuild_bin, "-f", str(flogo_src), "-o", str(binary_path)],
-            capture_output=True, text=True, timeout=120,
+            [
+                "docker", "run", "--rm",
+                "--platform", "linux/amd64",
+                "-v", f"{flogobuild_bin}:/usr/local/bin/flogobuild:ro",
+                "-v", f"{flogo_src}:/work/{flogo_src.name}:ro",
+                "-v", f"{output_dir}:/work/output",
+                "alpine:3.19",
+                "/usr/local/bin/flogobuild",
+                "-f", f"/work/{flogo_src.name}",
+                "-o", f"/work/output/{service_name}",
+            ],
+            capture_output=True, text=True, timeout=180,
         )
         if result.returncode != 0:
             raise RuntimeError(
-                f"flogobuild failed for {service_name}:\n"
+                f"flogobuild (container) failed for {service_name}:\n"
                 f"stdout: {result.stdout[-1000:]}\nstderr: {result.stderr[-1000:]}"
             )
+        binary_path = output_dir / service_name
+        if not binary_path.exists():
+            raise RuntimeError(f"flogobuild produced no output for {service_name}")
         binary_path.chmod(0o755)
         log.info("  flogobuild OK → %s (%d bytes)", service_name, binary_path.stat().st_size)
 
-        # Step 2: copy Dockerfile into build context
+        # Step 2: assemble build context
         _shutil.copy(str(dockerfile_dir / "Dockerfile"), str(tmp / "Dockerfile"))
+        _shutil.copy(str(binary_path), str(tmp / service_name))
 
-        # Step 3: docker build
+        # Step 3: docker build --platform linux/amd64
         result = subprocess.run(
-            ["docker", "build", "-t", image_tag, str(tmp)],
+            ["docker", "build", "--platform", "linux/amd64", "-t", image_tag, str(tmp)],
             capture_output=True, text=True, timeout=300,
         )
         if result.returncode != 0:
@@ -959,7 +977,7 @@ def _build_chainlit_image(chainlit_dir: Path, image_tag: str) -> None:
     """Build the chainlit Docker image from its own Dockerfile."""
     log.info("Building chainlit image %s ...", image_tag)
     result = subprocess.run(
-        ["docker", "build", "-t", image_tag, str(chainlit_dir)],
+        ["docker", "build", "--platform", "linux/amd64", "-t", image_tag, str(chainlit_dir)],
         capture_output=True, text=True, timeout=300,
     )
     if result.returncode != 0:
@@ -1136,6 +1154,7 @@ def _generate_compose_yaml(agent: dict) -> str:
           # SSEEventBus          :7099 (mapped to host {ports['sse_events']})
           agent-chat:
             image: flogo-agent-studio/agent-chat-service:latest
+            platform: linux/amd64
             restart: unless-stopped
             ports:
               - "{ports['sse_rest']}:7005"
@@ -1167,6 +1186,7 @@ def _generate_compose_yaml(agent: dict) -> str:
           # ── Ingestion service ───────────────────────────────────────────────
           ingestion:
             image: flogo-agent-studio/ingestion-service:latest
+            platform: linux/amd64
             restart: unless-stopped
             ports:
               - "{ports['ingestion']}:7002"
@@ -1194,6 +1214,7 @@ def _generate_compose_yaml(agent: dict) -> str:
           # ── Chainlit chat UI ────────────────────────────────────────────────
           chainlit:
             image: flogo-agent-studio/chainlit:latest
+            platform: linux/amd64
             restart: unless-stopped
             ports:
               - "{ports['chainlit']}:7080"
@@ -1213,6 +1234,7 @@ def _generate_compose_yaml(agent: dict) -> str:
           # ── Rule engine service (per-agent) ─────────────────────────────────
           rule-engine:
             image: flogo-agent-studio/rule-engine-service:latest
+            platform: linux/amd64
             restart: unless-stopped
             volumes:
               - {str(PROJECT_ROOT / "config" / "rules")}:/rules:ro
