@@ -76,13 +76,20 @@ const DEFAULTS: FormState = {
   temperature: "0.7",
 };
 
+// Weaviate collection names must be PascalCase, letters+digits only.
+// Derive a stable unique name from the agent UUID: Agent + first 8 hex chars.
+function deriveCollectionName(agentId: string): string {
+  const hex = agentId.replace(/-/g, "").slice(0, 8);
+  return `Agent${hex.charAt(0).toUpperCase()}${hex.slice(1)}`;
+}
+
 function toFormState(agent: Agent): FormState {
   const c = agent.config ?? {};
   return {
     name: agent.name,
     description: agent.description,
     systemPrompt: c.systemPrompt ?? "",
-    collectionName: c.collectionName ?? "",
+    collectionName: c.collectionName || deriveCollectionName(agent.id),
     topK: String(c.topK ?? 5),
     chunkStrategy: c.chunkStrategy ?? "sentence",
     embeddingProvider: c.embeddingProvider ?? "Ollama",
@@ -729,12 +736,26 @@ export default function Editor() {
 
   const saveMutation = useMutation({
     mutationFn: async (): Promise<Agent> => {
+      const config = toConfig(form);
       const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
-        config: toConfig(form),
+        config,
       };
-      return isNew ? createAgent(payload) : updateAgent(id!, payload);
+      if (isNew) {
+        const created = await createAgent(payload);
+        // Auto-assign a collection name derived from the new agent ID if the
+        // user left it blank — do it as an immediate follow-up update so the
+        // agent always has a stable, unique collection name from creation.
+        if (!config.collectionName) {
+          const derived = deriveCollectionName(created.id);
+          return updateAgent(created.id, {
+            config: { ...config, collectionName: derived },
+          });
+        }
+        return created;
+      }
+      return updateAgent(id!, payload);
     },
     onSuccess: (saved) => {
       qc.invalidateQueries({ queryKey: ["agents"] });
@@ -1036,14 +1057,26 @@ export default function Editor() {
               <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Retrieval</h3>
                 <Field label="Weaviate Collection">
-                  <input
-                    value={form.collectionName}
-                    onChange={set("collectionName")}
-                    placeholder="e.g. KnowledgeBase"
-                    className="input"
-                  />
+                  <div className="relative">
+                    <input
+                      value={form.collectionName}
+                      onChange={set("collectionName")}
+                      placeholder="e.g. AgentAbc12345"
+                      className="input pr-8"
+                    />
+                    {id && form.collectionName !== deriveCollectionName(id) && (
+                      <button
+                        type="button"
+                        title="Reset to auto-generated name"
+                        onClick={() => setForm((f) => ({ ...f, collectionName: deriveCollectionName(id) }))}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-brand-500 transition-colors"
+                      >
+                        ↺
+                      </button>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-400 mt-1">
-                    Must match the collection name used during document ingestion.
+                    Auto-generated from the agent ID. You can override this, but it must match the collection used during ingestion.
                   </p>
                 </Field>
 
