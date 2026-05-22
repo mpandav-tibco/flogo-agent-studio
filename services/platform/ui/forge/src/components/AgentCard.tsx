@@ -9,12 +9,16 @@ import type { Agent } from "../types";
 const STATUS_STYLES: Record<string, string> = {
   active: "bg-green-100 text-green-800",
   starting: "bg-blue-100 text-blue-700",
+  activating: "bg-blue-100 text-blue-700",
+  deactivating: "bg-amber-100 text-amber-700",
   draft: "bg-slate-100 text-slate-600",
   archived: "bg-red-50 text-red-600",
 };
 
 const STATUS_BORDER: Record<string, string> = {
   active: "border-l-green-400",
+  activating: "border-l-blue-400",
+  deactivating: "border-l-amber-400",
   draft: "border-l-slate-300",
   archived: "border-l-red-300",
 };
@@ -65,14 +69,19 @@ export default function AgentCard({ agent, onToggleDeploy, deployPending, isStar
   const provider = agent.config?.llmProvider ?? "—";
   const model = agent.config?.llmModel ?? "default model";
   const isActive = agent.status === "active";
-  const borderClass = STATUS_BORDER[agent.status] ?? STATUS_BORDER.draft;
+
+  // Optimistic display state while the toggle is in-flight
+  const pendingKey = deployPending ? (isActive ? "deactivating" : "activating") : null;
+  const displayStatus = pendingKey ?? (isStarting ? "starting" : agent.status);
+  const borderClass = STATUS_BORDER[pendingKey ?? agent.status] ?? STATUS_BORDER.draft;
+
   // chatUrl is only set once deployment.py has patched chatUiUrl into design-service
   // (which now happens only after all services are confirmed ready).
   const chatUrl = isActive ? (agent.config?.chatUiUrl || null) : null;
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 ${borderClass} flex flex-col hover:shadow-md transition-shadow cursor-pointer`}
+      className={`bg-white rounded-xl shadow-sm border border-gray-200 border-l-4 ${borderClass} flex flex-col hover:shadow-md transition-all duration-300 cursor-pointer${deployPending ? " ring-2 ring-blue-200 ring-offset-1" : ""}`}
       onClick={() => navigate(`/agents/${agent.id}`)}
     >
       {/* Card body */}
@@ -82,8 +91,8 @@ export default function AgentCard({ agent, onToggleDeploy, deployPending, isStar
 
           {/* Status badge + overflow menu — stop propagation so click doesn't open editor */}
           <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[isStarting ? "starting" : agent.status] ?? STATUS_STYLES.draft}`}>
-              {isStarting ? "starting" : agent.status}
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full transition-colors duration-300 ${STATUS_STYLES[displayStatus] ?? STATUS_STYLES.draft}`}>
+              {displayStatus}
             </span>
 
             <div className="relative" ref={menuRef}>
@@ -160,17 +169,27 @@ export default function AgentCard({ agent, onToggleDeploy, deployPending, isStar
           <button
             onClick={onToggleDeploy}
             disabled={deployPending || isStarting}
-            className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full transition-colors disabled:opacity-40 ${isActive
-              ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
-              : "bg-green-50 text-green-700 hover:bg-green-100"
-              }`}
+            className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full transition-colors disabled:opacity-60 ${
+              isActive
+                ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                : "bg-green-50 text-green-700 hover:bg-green-100"
+            }`}
           >
-            {isActive ? <><Square size={11} /> Deactivate</> : <><Play size={11} /> Activate</>}
+            {deployPending ? (
+              <>
+                <Loader2 size={11} className="animate-spin" />
+                {isActive ? "Deactivating…" : "Activating…"}
+              </>
+            ) : isActive ? (
+              <><Square size={11} /> Deactivate</>
+            ) : (
+              <><Play size={11} /> Activate</>
+            )}
           </button>
         )}
 
         {/* Show spinner while services are starting; Open Chat only once chatUiUrl is patched */}
-        {isActive && isStarting && (
+        {isActive && isStarting && !deployPending && (
           <span className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 ml-auto">
             <Loader2 size={11} className="animate-spin" /> Starting…
           </span>
