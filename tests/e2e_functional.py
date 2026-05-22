@@ -29,11 +29,12 @@ if hasattr(sys.stdout, "reconfigure"):
 # ── constants ─────────────────────────────────────────────────────────────────
 AUTH = "Basic ZmxvZ286Y2hhbmdlbWU="          # flogo:changeme
 FORGE_URL   = "http://localhost:7020"          # platform-service (design + feedback merged)
+DEPLOY_URL  = "http://localhost:7020"          # deploy endpoints are on platform-service
 BUILDER_URL = "http://localhost:7010"          # agent-builder-service
-INGEST_URL  = "http://localhost:7002"          # ingestion-service
-CHAT_URL    = "http://localhost:7001"          # agent-chat-service
+INGEST_URL  = "http://localhost:7002"          # ingestion-service (per-agent; updated post-deploy)
+CHAT_URL    = "http://localhost:7001"          # agent-chat-service (per-agent; updated post-deploy)
 FEEDBACK_URL= "http://localhost:7020"          # platform-service (feedback merged at 7020)
-SSE_URL     = "http://localhost:7005"          # agent-chat-service (SSE REST trigger, merged)
+SSE_URL     = "http://localhost:7005"          # agent-chat-service (SSE REST; updated post-deploy)
 RULE_URL    = "http://localhost:7097"          # rule-engine-service (port 7097; 7000 taken by macOS AirPlay)
 MCP_URL     = "http://localhost:7333/mcp"      # mcp-server
 
@@ -215,9 +216,10 @@ if STATE.get("generated_config") and agent_id:
            f"version={updated.get('version')}", err)
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# PHASE 3 — INGESTION: Load knowledge into vector database
+# PHASE 3 — INGESTION: Knowledge doc prepared here; actual ingest runs in Phase 5
+# after agent deployment so INGEST_URL resolves to the correct per-agent port.
 # ═══════════════════════════════════════════════════════════════════════════════
-phase("INGESTION — Load Knowledge Base into Weaviate")
+phase("INGESTION — Prepare Knowledge Document (runs post-deploy)")
 
 KNOWLEDGE_DOC = (
     "TIBCO Flogo AgenticAI is a comprehensive platform for building intelligent AI-powered "
@@ -231,7 +233,6 @@ KNOWLEDGE_DOC = (
     "nomic-embed-text for high-quality 768-dimension embeddings."
 )
 
-step_header("Ingest knowledge document", f"POST {INGEST_URL}/api/ingest")
 ingest_payload = {
     "collectionName": COLLECTION,
     "documents": [
@@ -241,18 +242,8 @@ ingest_payload = {
         }
     ]
 }
-row("Collection", COLLECTION); row("Document chars", len(KNOWLEDGE_DOC))
-sc, body, ms, err = http(f"{INGEST_URL}/api/ingest", method="POST", body=ingest_payload, timeout=60)
-row("HTTP status", sc)
-if isinstance(body, dict):
-    row("Chunks created", body.get("chunksCreated", body.get("chunkCount","?")))
-    row("Ingested count", body.get("ingestedCount","?"))
-    row("Embedding dims", body.get("dimensions","?"))
-    row("Duration", body.get("duration","?"))
-    STATE["vector_id"] = body.get("vectorId","")
-ok = sc == 200 and isinstance(body, dict) and (body.get("ingestedCount",0) > 0 or body.get("chunksCreated",0) > 0)
-record("Ingest Knowledge", "POST /api/ingest — embed & store in Weaviate", ok, ms,
-       f"chunks={body.get('chunksCreated','?') if isinstance(body,dict) else '?'}", err)
+_emit(f"  NOTE: ingestion-service is per-agent (dynamic port). Actual POST /api/ingest runs in Phase 5 after port discovery.")
+_emit(f"        Document prepared: {len(KNOWLEDGE_DOC)} chars, collection={COLLECTION}")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PHASE 4 — RULE ENGINE: Quality analysis
@@ -352,6 +343,21 @@ if agent_id:
     ok = CHAT_URL != "http://localhost:7001"   # confirms dynamic URL was resolved
     record("Discover Agent Ports", "GET /api/agents/{id} — resolve actual chat/ingest/sse ports", ok, ms,
            f"chat={CHAT_URL}", "" if ok else "runtime-manager did not return agent ports (agent not yet started?)")
+
+    # Step 5.5: Ingest knowledge (now that INGEST_URL is resolved to per-agent port)
+    step_header("Ingest knowledge document", f"POST {INGEST_URL}/api/ingest")
+    row("Collection", COLLECTION); row("Document chars", len(KNOWLEDGE_DOC))
+    sc, body, ms, err = http(f"{INGEST_URL}/api/ingest", method="POST", body=ingest_payload, timeout=60)
+    row("HTTP status", sc)
+    if isinstance(body, dict):
+        row("Chunks created", body.get("chunksCreated", body.get("chunkCount","?")))
+        row("Ingested count", body.get("ingestedCount","?"))
+        row("Embedding dims", body.get("dimensions","?"))
+        row("Duration", body.get("duration","?"))
+        STATE["vector_id"] = body.get("vectorId","")
+    ok = sc == 200 and isinstance(body, dict) and (body.get("ingestedCount",0) > 0 or body.get("chunksCreated",0) > 0)
+    record("Ingest Knowledge", "POST /api/ingest — embed & store in Weaviate", ok, ms,
+           f"chunks={body.get('chunksCreated','?') if isinstance(body,dict) else '?'}", err)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PHASE 6 — CHAINLIT UI: Chat session (RAG pipeline)
