@@ -328,6 +328,31 @@ if agent_id:
     record("List Active Agents", "GET /api/v1/agents — find deployed agent in Forge sidebar", ok, ms,
            f"found={our_agent is not None}", err or ("agent not in active list" if not ok else ""))
 
+    # Step 5.4: Discover agent runtime ports via runtime-manager
+    # Agent services are per-agent on dynamic ports (7200+); query runtime-manager for actuals.
+    step_header("Discover agent runtime ports", f"GET http://localhost:7050/api/agents/{agent_id}")
+    _chat_url = CHAT_URL
+    _ingest_url = INGEST_URL
+    _sse_url = SSE_URL
+    for _attempt in range(1, 13):   # up to ~60s for runtime-manager to start services
+        _sc, _body, _ms, _err = http(f"http://localhost:7050/api/agents/{agent_id}", timeout=5)
+        if _sc == 200 and isinstance(_body, dict):
+            _chat_url   = _body.get("chatApiUrl",   CHAT_URL)
+            _ingest_url = _body.get("ingestionUrl", INGEST_URL)
+            _sse_url    = _body.get("sseUrl",       SSE_URL)
+            if _chat_url != CHAT_URL:   # runtime-manager has started the agent
+                break
+        import time as _time; _time.sleep(5)
+    CHAT_URL   = _chat_url
+    INGEST_URL = _ingest_url
+    SSE_URL    = _sse_url
+    row("Chat API URL",   CHAT_URL)
+    row("Ingestion URL",  INGEST_URL)
+    row("SSE URL",        SSE_URL)
+    ok = CHAT_URL != "http://localhost:7001"   # confirms dynamic URL was resolved
+    record("Discover Agent Ports", "GET /api/agents/{id} — resolve actual chat/ingest/sse ports", ok, ms,
+           f"chat={CHAT_URL}", "" if ok else "runtime-manager did not return agent ports (agent not yet started?)")
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # PHASE 6 — CHAINLIT UI: Chat session (RAG pipeline)
 # ═══════════════════════════════════════════════════════════════════════════════

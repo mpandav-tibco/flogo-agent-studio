@@ -21,7 +21,7 @@ PORTS  = {
     "rule-engine":    7097,
     "agent-chat":     7001,
     "ingestion":      7002,
-    "feedback":       7003,
+    "feedback":       7020,   # merged into platform-service
     "sse-stream":     7005,
     "agent-builder":  7010,
     "design":         7020,
@@ -296,7 +296,8 @@ def test_ingestion():
               f"body={b}")
 
     # ── ingest url  (local URL — no external dependency) ─────────────────────
-    local_url = "http://localhost:7003/api/health"
+    # Use platform-service health endpoint (7020) — feedback-service 7003 is merged
+    local_url = "http://localhost:7020/api/health"
     s, b = req(f"{base}/api/ingest/url", "POST", {
         "collectionName": COLLECTION,
         "url": local_url,
@@ -372,7 +373,7 @@ def test_agent_chat():
 # ═════════════════════════════════════════════════════════════════════════════
 def test_feedback():
     service("feedback")
-    base  = "http://localhost:7003"
+    base  = "http://localhost:7020"   # feedback merged into platform-service
     aid   = ctx.get("design_agent_id") or "functional-test-agent-id"
     other = "00000000-0000-0000-0000-000000000000"   # an agent that won't have our feedback
 

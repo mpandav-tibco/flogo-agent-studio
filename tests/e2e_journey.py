@@ -527,10 +527,10 @@ TOOL_CALLS = [
      4, "design-service:7020 -> GET /api/v1/agents/{id}"),
     ("submit_feedback",
      {"agentId": AGENT_ID, "rating": 5, "comment": "MCP round-trip works perfectly", "sessionId": "mcp-journey-001"},
-     5, "feedback-service:7003 -> POST /api/feedback"),
+     5, "platform-service:7020 -> POST /api/feedback"),
     ("get_feedback",
      {"agentId": AGENT_ID},
-     6, "feedback-service:7003 -> GET /api/feedback/{id}"),
+     6, "platform-service:7020 -> GET /api/feedback/{id}"),
     ("rag_chat",
      {"message": QUESTION, "agentId": DESIGN_AGENT_ID or AGENT_ID, "sessionId": "mcp-journey-001"},
      7, "agent-chat-service:7001 -> POST /api/chat (RAG pipeline)"),
@@ -694,7 +694,8 @@ banner("PHASE 11 - COVERAGE GAPS: ingest/url, ingest/github, ingest/confluence, 
 
 step(28, "Ingest via URL -> POST /api/ingest/url")
 # Use a locally reachable URL (no external network dependency)
-local_url = "http://localhost:7003/api/health"
+# Use platform-service health (7020) — feedback-service at 7003 is merged into platform-service
+local_url = "http://localhost:7020/api/health"
 url_payload = {
     "collectionName": COLLECTION,
     "url": local_url,
@@ -835,7 +836,7 @@ print(f"""
   | ingestion-service           | 7002 | Ingest text/url/github/confluence into Weaviate    |
   | rule-engine-service         | 7097 | Run quality rules against flogo app                |
   | agent-chat-service          | 7001 | RAG chat + SSE streaming (merged, ports 7001/7005) |
-  | feedback-service            | 7003 | Write/read user ratings and comments (JSONL)       |
+  | feedback-service            | 7020 | Write/read user ratings (merged into platform-svc) |
   | agent-builder-service       | 7010 | LLM generate + improve agent config (llama3.2:3b)  |
   | mcp-server                  | 7333 | MCP gateway - all 6 tools via JSON-RPC             |
   | design-service              | 7020 | Create/read/update/delete agents (PostgreSQL)      |
@@ -844,8 +845,8 @@ print(f"""
   MCP TOOLS EXERCISED:
     list_agents     -> design-service    GET  /api/v1/agents
     get_agent       -> design-service    GET  /api/v1/agents/{id}
-    submit_feedback -> feedback-service  POST /api/feedback
-    get_feedback    -> feedback-service  GET  /api/feedback/default
+    submit_feedback -> platform-service  POST /api/feedback
+    get_feedback    -> platform-service  GET  /api/feedback/default
     rag_chat        -> agent-chat        POST /api/chat (Weaviate RAG)
     analyze_flogo   -> rule-engine       POST /api/analyze
 
