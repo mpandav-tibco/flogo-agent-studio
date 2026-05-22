@@ -2025,74 +2025,9 @@
       "value": "http://localhost:8001/v0/markdown"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Connection_Name",
-      "type": "string",
-      "value": "$property[\"VectorDB.vectordb-weaviate.Connection_Name\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].DB_Provider",
-      "type": "string",
-      "value": "$property[\"VectorDB.vectordb-weaviate.DB_Provider\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Host",
-      "type": "string",
-      "value": "$property[\"VectorDB.vectordb-weaviate.Host\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Port",
-      "type": "float64",
-      "value": "$property[\"VectorDB.vectordb-weaviate.Port\"]"
-    },
-    {
       "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].API_Key",
       "type": "string",
       "value": "SECRET:Saynb1e8Wk0E3DvnE8jQDnTEEuwuomE1DUBhrJFtkzVEq1AFSV2yiGZy3CB0U6KFZMYbQjYZRDz7eXbUH08oJhU="
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Secure_Connection",
-      "type": "boolean",
-      "value": "$property[\"VectorDB.vectordb-weaviate.Secure_Connection\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Timeout_(seconds)",
-      "type": "float64",
-      "value": "$property[\"VectorDB.vectordb-weaviate.Timeout_(seconds)\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Max_Retries",
-      "type": "float64",
-      "value": "$property[\"VectorDB.vectordb-weaviate.Max_Retries\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Retry_Backoff_(ms)",
-      "type": "float64",
-      "value": "$property[\"VectorDB.vectordb-weaviate.Retry_Backoff_(ms)\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Configure_Embedding_Provider",
-      "type": "boolean",
-      "value": "$property[\"VectorDB.vectordb-weaviate.Configure_Embedding_Provider\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Connection_Name",
-      "type": "string",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Connection_Name\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].DB_Provider",
-      "type": "string",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].DB_Provider\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Host",
-      "type": "string",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Host\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Port",
-      "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Port\"]"
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].API_Key",
@@ -2100,99 +2035,9 @@
       "value": "SECRET:FPccWJ3ayBamab7VFfD7HsmEuFMbxgLWJk9Af5mKzByg2iHU/E4NsXJYC7QBAWH6C7pez2JTib42wbdNGJMtoCwsL7TfQMICL/BbNVZF/onMnOlBECwWPy55beoo+Cf57o7ISpNYfC1e"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Secure_Connection",
-      "type": "boolean",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Secure_Connection\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Timeout_(seconds)",
-      "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Timeout_(seconds)\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Max_Retries",
-      "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Max_Retries\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Retry_Backoff_(ms)",
-      "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Retry_Backoff_(ms)\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider",
-      "type": "boolean",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Configure_Embedding_Provider\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Connection_Name",
-      "type": "string",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Connection_Name\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].DB_Provider",
-      "type": "string",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].DB_Provider\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Host",
-      "type": "string",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Host\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Port",
-      "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Port\"]"
-    },
-    {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
       "type": "string",
       "value": "SECRET:OZiuIAzOpwRjX2q4JP8XYUHKUtd9oDyadzT46nqmB9bxrLpClKtaEIlkLbeY/t1/o3tZDu5/W1T22wJzeD2Nvq5L9puMzoIBYfS8A1xkxbVXuIBJql7jXpNXdLZyInkQM/da++tC3jdQGrScGCfhO7BLRwg3P5JQTjAXNIayWG/UcUnJNWe8ZyCb2k+Fn0nC8A=="
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection",
-      "type": "boolean",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Secure_Connection\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Timeout_(seconds)",
-      "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Timeout_(seconds)\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Max_Retries",
-      "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Max_Retries\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Retry_Backoff_(ms)",
-      "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Retry_Backoff_(ms)\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider",
-      "type": "boolean",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Connection_Name",
-      "type": "string",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Connection_Name\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].DB_Provider",
-      "type": "string",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].DB_Provider\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Host",
-      "type": "string",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Host\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Port",
-      "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Port\"]"
     },
     {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
@@ -2200,79 +2045,79 @@
       "value": "SECRET:DDYkra5YAYzHqOhBG/PkbXCz/TWbZ8uOczngy/IEHlGC4p2REC89rc3fIVGcPHO21rTFo4QjsFPWnV1TrGcJ87eW7MAiQPdiTqc/MgFLGp4s+8EAnJjuDC/Onhm6nkRxQUX3/qM2aEamo0UCzoH12+5idN5jvZ+ZY1fJHT/1EIFQqe0po0itItbFklHbaZrApNarL02pwK5qLK0zFZgFamItmwfWO5dOBz41LR1UC57vA0yG2/9AAa8="
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection",
-      "type": "boolean",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Timeout_(seconds)",
-      "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Timeout_(seconds)\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Max_Retries",
-      "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Max_Retries\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Retry_Backoff_(ms)",
-      "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Retry_Backoff_(ms)\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider",
-      "type": "boolean",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Connection_Name",
-      "type": "string",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Connection_Name\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].DB_Provider",
-      "type": "string",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].DB_Provider\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Host",
-      "type": "string",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Host\"]"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Port",
-      "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Port\"]"
-    },
-    {
       "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
       "type": "string",
       "value": "SECRET:DwIxg+ncE/ofCB4udSu9yOuCJ8guM28VXhNoh8teDaLxKsC6T4IwDHYi77CphkJtLdcX0QisC8A90Pdf4R0+fQv5HO3ERimDH6Dg4m1bUO5LCpkmhXE/irQ8KUHXT1FQeZ1k9ZFkTYYHBGgedGKX/46cR+ZANOSj91LDZ95ZfZIYWhHHrU+WmaO8LXTIgRWJI/tQsKXX2NaHWsLD229LdqhNo0tgpHWROc6W0IhcvPB8t+GOaacB91zEs+chXkugbenUZ24RKww62Gb7Nrjtr/aZ92mdI0f3Qo7v6oJw0Tht"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection",
+      "name": "VectorDB.vectordb-weaviate.Connection_Name",
+      "type": "string",
+      "value": "vectordb-weaviate"
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.DB_Provider",
+      "type": "string",
+      "value": "weaviate"
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Host",
+      "type": "string",
+      "value": "localhost"
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Port",
+      "type": "float64",
+      "value": 18080
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.API_Key",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Secure_Connection",
       "type": "boolean",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Secure_Connection\"]"
+      "value": false
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Timeout_(seconds)",
+      "name": "VectorDB.vectordb-weaviate.Timeout_(seconds)",
       "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Timeout_(seconds)\"]"
+      "value": 30
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Max_Retries",
+      "name": "VectorDB.vectordb-weaviate.Max_Retries",
       "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Max_Retries\"]"
+      "value": 3
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Retry_Backoff_(ms)",
+      "name": "VectorDB.vectordb-weaviate.Retry_Backoff_(ms)",
       "type": "float64",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Retry_Backoff_(ms)\"]"
+      "value": 500
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider",
+      "name": "VectorDB.vectordb-weaviate.HTTP_Scheme",
+      "type": "string",
+      "value": "http"
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Configure_Embedding_Provider",
       "type": "boolean",
-      "value": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Configure_Embedding_Provider\"]"
+      "value": true
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Embedding_Provider",
+      "type": "string",
+      "value": "Ollama"
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Embedding_API_Key",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Embedding_Base_URL",
+      "type": "string",
+      "value": "http://localhost:11434/v1"
     }
   ],
   "specs": {
@@ -2287,7 +2132,7 @@
   "connections": {
     "vectordb-weaviate": {
       "id": "vectordb-weaviate",
-      "name": "$property[\"VectorDB.$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].Connection_Name\"]",
+      "name": "vectordb-weaviate",
       "ref": "#connector",
       "isGlobal": false,
       "settings": {
@@ -2306,15 +2151,15 @@
         "maxRetries": 3,
         "retryBackoffMs": 500,
         "grpcPort": 50051,
-        "scheme": "$property[\"VectorDB.vectordb-weaviate.HTTP_Scheme\"]",
+        "scheme": "http",
         "username": "",
         "password": "",
         "dbName": "default",
         "defaultMetricType": "cosine",
         "enableEmbedding": true,
-        "embeddingProvider": "$property[\"VectorDB.vectordb-weaviate.Embedding_Provider\"]",
+        "embeddingProvider": "Ollama",
         "embeddingAPIKey": "SECRET:m6+4DNBTALkaVqsDSTyROpdAMvbTv7WcDzuHzRcNjA3NEvbPlnoIvD5IOldDm1wozJ1TJ6/7/fpbFLeF4LTX6ISSRKW3N//MbGVK",
-        "embeddingBaseURL": "$property[\"VectorDB.vectordb-weaviate.Embedding_Base_URL\"]"
+        "embeddingBaseURL": "http://localhost:11434/v1"
       }
     }
   },
