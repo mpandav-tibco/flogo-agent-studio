@@ -21,7 +21,7 @@
     {
       "ref": "#mcpserver",
       "name": "flogo-mcp-mcpsever",
-      "description": "MCP Server — exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:7333/mcp.",
+      "description": "MCP Server \u2014 exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:7333/mcp.",
       "settings": {
         "serverName": "flogo-agent-studio-assist",
         "serverVersion": "1.0.0",
@@ -318,8 +318,8 @@
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}",
-                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}"
+                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}"
               }
             }
           },
@@ -477,7 +477,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] analyze_flogo | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
+                "message": "=string.concat(\"[MCP] analyze_flogo\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "logLevel": ""
               }
             }
@@ -605,7 +605,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] analyze_flogo done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
+                "message": "=string.concat(\"[MCP] analyze_flogo done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -732,7 +732,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] rag_chat | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
+                "message": "=string.concat(\"[MCP] rag_chat\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "logLevel": ""
               }
             }
@@ -854,7 +854,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] rag_chat done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
+                "message": "=string.concat(\"[MCP] rag_chat done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -977,7 +977,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] list_agents | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
+                "message": "=string.concat(\"[MCP] list_agents\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "logLevel": ""
               }
             }
@@ -1098,7 +1098,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] list_agents done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
+                "message": "=string.concat(\"[MCP] list_agents done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -1215,7 +1215,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] get_agent: \", coerce.toString($flow.agentId), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
+                "message": "=string.concat(\"[MCP] get_agent: \", coerce.toString($flow.agentId), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "logLevel": ""
               }
             }
@@ -1352,7 +1352,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] get_agent done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
+                "message": "=string.concat(\"[MCP] get_agent done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -1475,7 +1475,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] submit_feedback | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
+                "message": "=string.concat(\"[MCP] submit_feedback\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "logLevel": ""
               }
             }
@@ -1597,7 +1597,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] submit_feedback done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
+                "message": "=string.concat(\"[MCP] submit_feedback done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -1720,7 +1720,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] get_feedback | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
+                "message": "=string.concat(\"[MCP] get_feedback\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "logLevel": ""
               }
             }
@@ -1841,7 +1841,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] get_feedback done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
+                "message": "=string.concat(\"[MCP] get_feedback done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -1958,7 +1958,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] create_agent | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
+                "message": "=string.concat(\"[MCP] create_agent\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "logLevel": ""
               }
             }
@@ -2094,7 +2094,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] create_agent done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
+                "message": "=string.concat(\"[MCP] create_agent done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -2217,7 +2217,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] deploy_agent_tool | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
+                "message": "=string.concat(\"[MCP] deploy_agent_tool\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "logLevel": ""
               }
             }
@@ -2354,7 +2354,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] deploy_agent_tool done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
+                "message": "=string.concat(\"[MCP] deploy_agent_tool done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -2477,7 +2477,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] list_templates_tool | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
+                "message": "=string.concat(\"[MCP] list_templates_tool\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "logLevel": ""
               }
             }
@@ -2598,7 +2598,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[MCP] list_templates_tool done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
+                "message": "=string.concat(\"[MCP] list_templates_tool done: data=\", coerce.toString($activity[MapResult].output.data), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },

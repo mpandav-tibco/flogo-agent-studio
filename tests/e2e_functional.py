@@ -346,6 +346,24 @@ if agent_id:
     record("Discover Agent Ports", "GET /api/agents/{id} — resolve actual chat/ingest/sse ports", ok, ms,
            f"chat={CHAT_URL}", "" if ok else "runtime-manager did not return agent ports (agent not yet started?)")
 
+    # Readiness gate: wait until per-agent chat service is actually accepting connections
+    if ok:
+        _emit("  Waiting for per-agent services to become ready (health check)...")
+        import time as _time2
+        _ready = False
+        for _hp in range(1, 25):   # up to ~2 min
+            try:
+                _hsc, _, _, _ = http(f"{CHAT_URL}/api/health", timeout=5)
+                if _hsc == 200:
+                    _emit(f"  Per-agent services ready after {_hp * 5}s")
+                    _ready = True
+                    break
+            except Exception:
+                pass
+            _time2.sleep(5)
+        if not _ready:
+            _emit("  WARNING: per-agent services did not become ready within 2 min; proceeding anyway")
+
     # Step 5.5: Ingest knowledge (now that INGEST_URL is resolved to per-agent port)
     step_header("Ingest knowledge document", f"POST {INGEST_URL}/api/ingest")
     row("Collection", COLLECTION); row("Document chars", len(KNOWLEDGE_DOC))

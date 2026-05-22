@@ -25,7 +25,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger \u2014 agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7001,
         "APISpecUpdate": false,
@@ -296,7 +296,7 @@
           "name": "health_check"
         },
         {
-          "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
+          "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately \u2014 SSE clients receive tokens in real time.",
           "settings": {
             "APISpecPath": "",
             "Method": "POST",
@@ -400,7 +400,7 @@
     {
       "ref": "#trigger",
       "name": "sse",
-      "description": "SSE event bus — clients connect to /events on port 7099 and receive streamed token events.",
+      "description": "SSE event bus \u2014 clients connect to /events on port 7099 and receive streamed token events.",
       "settings": {
         "port": 7099,
         "path": "/events",
@@ -487,7 +487,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[AgentChat] Chat request: session=\", coerce.toString($flow.body.sessionId), \" collection=\", coerce.toString($flow.body.collectionName), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
+                "message": "=string.concat(\"[AgentChat] Chat request: session=\", coerce.toString($flow.body.sessionId), \" collection=\", coerce.toString($flow.body.collectionName), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -644,7 +644,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[AgentChat] Retrieve-only: collection=\", coerce.toString($flow.body.collectionName), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
+                "message": "=string.concat(\"[AgentChat] Retrieve-only: collection=\", coerce.toString($flow.body.collectionName), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -813,7 +813,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[AgentChat/OOTB] session=\", coerce.toString($flow.body.sessionId), \" collection=\", coerce.toString($flow.body.collectionName), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
+                "message": "=string.concat(\"[AgentChat/OOTB] session=\", coerce.toString($flow.body.sessionId), \" collection=\", coerce.toString($flow.body.collectionName), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -1011,7 +1011,7 @@
       "id": "flow:stream_chat",
       "data": {
         "name": "stream_chat",
-        "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
+        "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately \u2014 SSE clients receive tokens in real time.",
         "links": [
           {
             "id": 1,
@@ -1081,7 +1081,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[SSE] stream_chat: requestId=\", coerce.toString($flow.body.requestId), \" sessionId=\", coerce.toString($flow.body.sessionId), \" agentId=\", coerce.toString($flow.body.agentId), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
+                "message": "=string.concat(\"[SSE] stream_chat: requestId=\", coerce.toString($flow.body.requestId), \" sessionId=\", coerce.toString($flow.body.sessionId), \" agentId=\", coerce.toString($flow.body.agentId), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "logLevel": ""
               }
             }
@@ -1108,7 +1108,7 @@
                     "sessionId": "=$flow.body.sessionId",
                     "agentId": "=$flow.body.agentId",
                     "query": "=$flow.body.query",
-                    "traceId": "=$env[flowctx].TraceId"
+                    "traceId": "=$flowctx[\"TraceId\"]"
                   }
                 }
               }
@@ -1378,7 +1378,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[SSE] broadcast: eventType=\", coerce.toString($flow.body.eventType), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
+                "message": "=string.concat(\"[SSE] broadcast: eventType=\", coerce.toString($flow.body.eventType), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "logLevel": ""
               }
             }
@@ -1505,7 +1505,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[SSE] new client connected to /events | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))",
+                "message": "=string.concat(\"[SSE] new client connected to /events\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "logLevel": ""
               }
             }
@@ -2128,7 +2128,7 @@
           "info": {
             "title": "agent-chat-service-AgentChatRESTTrigger",
             "version": "1.0.0",
-            "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger \u2014 agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/chat": {
@@ -2389,7 +2389,7 @@
                     }
                   }
                 },
-                "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
+                "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately \u2014 SSE clients receive tokens in real time.",
                 "consumes": [
                   "application/json"
                 ]

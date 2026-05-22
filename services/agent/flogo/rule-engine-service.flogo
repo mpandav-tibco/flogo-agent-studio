@@ -19,7 +19,7 @@
     {
       "ref": "#rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger — rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger \u2014 rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7097,
         "APISpecUpdate": false,
@@ -183,7 +183,7 @@
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[RuleEngine] Analyze: fileName=\", coerce.toString($flow.body.fileName), \" | traceId=\", coerce.toString($env[flowctx].TraceId), \" flowId=\", coerce.toString($env[flowctx].FlowId))"
+                "message": "=string.concat(\"[RuleEngine] Analyze: fileName=\", coerce.toString($flow.body.fileName), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -409,7 +409,7 @@
           "info": {
             "title": "rule-engine-service",
             "version": "1.0.0",
-            "description": "REST trigger — rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger \u2014 rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/analyze": {
