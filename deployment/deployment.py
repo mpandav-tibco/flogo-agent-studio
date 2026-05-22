@@ -1180,9 +1180,12 @@ _PLATFORM_SERVICES = [
     {"name": "platform-service",   "port": 7020, "healthPath": "/api/health"},
     {"name": "agent-builder",      "port": 7010, "healthPath": "/api/health"},
     {"name": "mcp-server",         "port": 7333, "healthPath": "/api/health"},
-    {"name": "rule-engine-service","port": 7097, "healthPath": "/api/health"},
     {"name": "runtime-manager",    "port": 7050, "healthPath": "/api/health"},
     {"name": "forge-ui",           "port": 7025, "healthPath": "/"},
+]
+
+_AGENT_SUPPORT_SERVICES = [
+    {"name": "rule-engine-service", "port": 7097, "healthPath": "/api/health"},
 ]
 
 def _pid_on_port(port: int) -> Optional[int]:
@@ -1198,12 +1201,11 @@ def _pid_on_port(port: int) -> Optional[int]:
         return None
 
 async def _handle_admin_services(request: web.Request) -> web.Response:
-    """GET /api/admin/services — health + PID of all platform services."""
+    """GET /api/admin/services — health + PID of all platform and agent-support services."""
     import socket
     services = []
-    for svc in _PLATFORM_SERVICES:
+    for svc in _PLATFORM_SERVICES + _AGENT_SUPPORT_SERVICES:
         port = svc["port"]
-        # Quick TCP probe
         alive = False
         try:
             with socket.create_connection(("127.0.0.1", port), timeout=0.5):
@@ -1211,11 +1213,13 @@ async def _handle_admin_services(request: web.Request) -> web.Response:
         except OSError:
             pass
         pid = _pid_on_port(port) if alive else None
+        category = "platform" if svc in _PLATFORM_SERVICES else "agent-support"
         services.append({
-            "name":    svc["name"],
-            "port":    port,
-            "status":  "online" if alive else "offline",
-            "pid":     pid,
+            "name":     svc["name"],
+            "port":     port,
+            "status":   "online" if alive else "offline",
+            "pid":      pid,
+            "category": category,
         })
     return web.json_response(services)
 

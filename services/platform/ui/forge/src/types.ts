@@ -113,4 +113,5 @@ export interface PlatformService {
   port: number;
   status: "online" | "offline";
   pid: number | null;
+  category: "platform" | "agent-support";
 }

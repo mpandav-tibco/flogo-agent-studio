@@ -326,7 +326,7 @@ export const ingestConfluence = async (
   confluenceBaseUrl: string,
   chunkStrategy?: string,
   serviceUrl?: string,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<string> => {
   const base = agentIngestBase(serviceUrl);
   const res = await mutate(`${base}/api/ingest/confluence`, "POST", { collection, spaceKey, baseUrl: confluenceBaseUrl, chunkStrategy });
