@@ -29,7 +29,8 @@ if hasattr(sys.stdout, "reconfigure"):
 # ── constants ─────────────────────────────────────────────────────────────────
 AUTH = "Basic ZmxvZ286Y2hhbmdlbWU="          # flogo:changeme
 FORGE_URL   = "http://localhost:7020"          # platform-service (design + feedback merged)
-DEPLOY_URL  = "http://localhost:7020"          # deploy endpoints are on platform-service
+DEPLOY_URL   = "http://localhost:7020"          # deploy endpoints are on platform-service
+RUNTIME_URL  = "http://localhost:7050"          # runtime-manager: export, per-agent ops
 BUILDER_URL = "http://localhost:7010"          # agent-builder-service
 INGEST_URL  = "http://localhost:7002"          # ingestion-service (per-agent; updated post-deploy)
 CHAT_URL    = "http://localhost:7001"          # agent-chat-service (per-agent; updated post-deploy)
@@ -284,27 +285,28 @@ phase("FORGE UI — Deploy & Activate Agent")
 
 if agent_id:
     # Step 5.1: Deploy agent (Forge "Deploy" button)
-    step_header("Deploy agent (activate)", f"POST {DEPLOY_URL}/api/v1/agents/{agent_id}/deploy")
-    sc, body, ms, err = http(f"{DEPLOY_URL}/api/v1/agents/{agent_id}/deploy", method="POST", body={})
+    step_header("Deploy agent (activate)", f"PUT {DEPLOY_URL}/api/v1/agents/{agent_id}")
+    sc, body, ms, err = http(f"{DEPLOY_URL}/api/v1/agents/{agent_id}", method="PUT", body={"status": "active"})
     dep_status = None
     if isinstance(body, dict):
         records = body.get("records", [body])
         dep_status = records[0].get("status") if records else body.get("status")
     row("HTTP status", sc); row("Deploy status", dep_status)
     ok = sc == 200 and dep_status == "active"
-    record("Deploy Agent", "POST /api/v1/agents/{id}/deploy — activate (Forge Deploy button)", ok, ms,
+    record("Deploy Agent", "PUT /api/v1/agents/{id} status=active — activate (Forge Deploy button)", ok, ms,
            f"status={dep_status}", err or ("not active" if not ok else ""))
 
     # Step 5.2: Verify deployment status (Forge status badge)
-    step_header("Verify deployment status", f"GET {DEPLOY_URL}/api/v1/agents/{agent_id}/deploy")
-    sc, body, ms, err = http(f"{DEPLOY_URL}/api/v1/agents/{agent_id}/deploy")
+    step_header("Verify deployment status", f"GET {DEPLOY_URL}/api/v1/agents/{agent_id}")
+    sc, body, ms, err = http(f"{DEPLOY_URL}/api/v1/agents/{agent_id}")
+    records_count = 1
     if isinstance(body, dict):
         records = body.get("records", [body])
         dep_status = records[0].get("status") if records else body.get("status")
         records_count = len(records) if isinstance(body.get("records"), list) else 1
     row("HTTP status", sc); row("Records", records_count); row("Status", dep_status)
     ok = sc == 200 and dep_status == "active"
-    record("Verify Deploy", "GET /api/v1/agents/{id}/deploy — confirm active status", ok, ms,
+    record("Verify Deploy", "GET /api/v1/agents/{id} — confirm active status", ok, ms,
            f"records={records_count}, status={dep_status}", err)
 
     # Step 5.3: List agents with status filter (what Forge sidebar does)
@@ -728,7 +730,7 @@ phase("FORGE UI — Export Agent Artifacts")
 
 if agent_id:
     for fmt, suffix in [("kubernetes", "K8s YAML"), ("docker-compose", "Docker Compose YAML")]:
-        url = f"{DEPLOY_URL}/api/v1/agents/{agent_id}/export/{fmt}"
+        url = f"{RUNTIME_URL}/api/v1/agents/{agent_id}/export/{fmt}"
         step_header(f"Export {suffix}", f"GET {url}")
         sc, body, ms, err = http(url)
         row("HTTP status", sc)
@@ -750,26 +752,27 @@ phase("FORGE UI — Decommission Agent (Undeploy → Archive)")
 
 if agent_id:
     # Step 12.1: Undeploy (Forge "Deactivate" button)
-    step_header("Undeploy agent (Forge Deactivate)", f"DELETE {DEPLOY_URL}/api/v1/agents/{agent_id}/deploy")
-    sc, body, ms, err = http(f"{DEPLOY_URL}/api/v1/agents/{agent_id}/deploy", method="DELETE")
+    step_header("Undeploy agent (Forge Deactivate)", f"PUT {DEPLOY_URL}/api/v1/agents/{agent_id}")
+    sc, body, ms, err = http(f"{DEPLOY_URL}/api/v1/agents/{agent_id}", method="PUT", body={"status": "draft"})
     status_after = None
     if isinstance(body, dict):
         records = body.get("records", [body])
         status_after = records[0].get("status") if records else body.get("status")
     row("HTTP status", sc); row("Status after undeploy", status_after)
     ok = sc == 200 and status_after in ("draft", "inactive", None)
-    record("Undeploy Agent", "DELETE /api/v1/agents/{id}/deploy — deactivate (Forge button)", ok, ms,
+    record("Undeploy Agent", "PUT /api/v1/agents/{id} status=draft — deactivate (Forge button)", ok, ms,
            f"status={status_after}", err)
 
     # Step 12.2: Verify status back to draft
-    step_header("Verify deactivated status", f"GET {DEPLOY_URL}/api/v1/agents/{agent_id}/deploy")
-    sc, body, ms, err = http(f"{DEPLOY_URL}/api/v1/agents/{agent_id}/deploy")
+    step_header("Verify deactivated status", f"GET {DEPLOY_URL}/api/v1/agents/{agent_id}")
+    sc, body, ms, err = http(f"{DEPLOY_URL}/api/v1/agents/{agent_id}")
+    dep_status = None
     if isinstance(body, dict):
         records = body.get("records", [body])
         dep_status = records[0].get("status") if records else body.get("status")
     row("HTTP status", sc); row("Status", dep_status)
     ok = sc == 200 and dep_status in ("draft", "inactive")
-    record("Verify Undeploy", "GET /api/v1/agents/{id}/deploy — confirm deactivated", ok, ms,
+    record("Verify Undeploy", "GET /api/v1/agents/{id} — confirm deactivated", ok, ms,
            f"status={dep_status}", err)
 
     # Step 12.3: Archive agent (Forge "Delete" button)
@@ -795,7 +798,7 @@ if agent_id:
 # Cleanup: archive MCP-created agent too
 if mcp_created_agent_id:
     try:
-        http(f"{DEPLOY_URL}/api/v1/agents/{mcp_created_agent_id}/deploy", method="DELETE")
+        http(f"{DEPLOY_URL}/api/v1/agents/{mcp_created_agent_id}", method="PUT", body={"status": "draft"})
         http(f"{FORGE_URL}/api/v1/agents/{mcp_created_agent_id}", method="DELETE")
     except:
         pass
