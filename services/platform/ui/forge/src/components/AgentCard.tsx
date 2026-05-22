@@ -177,8 +177,8 @@ export default function AgentCard({ agent, onToggleDeploy, deployPending, deploy
             onClick={onToggleDeploy}
             disabled={deployPending || isStarting}
             className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full transition-colors disabled:opacity-60 ${buttonIsDeactivating
-                ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
-                : "bg-green-50 text-green-700 hover:bg-green-100"
+              ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+              : "bg-green-50 text-green-700 hover:bg-green-100"
               }`}
           >
             {deployPending ? (

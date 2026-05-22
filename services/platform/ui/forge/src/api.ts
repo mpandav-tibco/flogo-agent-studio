@@ -199,6 +199,11 @@ export const dockerDeployStop = (id: string): Promise<DockerDeployResult> =>
   fetch(`${RUNTIME_BASE}/${id}/docker-deploy`, { method: "DELETE", headers: headers() })
     .then(json<DockerDeployResult>);
 
+/** Build (or rebuild) Docker images for all agent services. force=true ignores cache. */
+export const dockerBuildImages = (force = false): Promise<{ success: boolean; images: Record<string, { image: string; built: boolean; cached: boolean }> }> =>
+  fetch(`/api/runtime/docker-build${force ? "?force=true" : ""}`, { method: "POST", headers: headers(true) })
+    .then(json);
+
 // ── Per-agent runtime status ──────────────────────────────────────────────────
 
 /** Fetch the live runtime record for an agent (port health + readiness). */

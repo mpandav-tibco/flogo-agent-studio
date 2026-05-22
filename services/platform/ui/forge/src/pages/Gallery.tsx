@@ -246,7 +246,7 @@ export default function Gallery() {
                   deployMutation.mutate({ id: agent.id, active: agent.status === "active" })
                 }
                 deployPending={togglingIds.has(agent.id)}
-                  deployIntent={togglingIds.get(agent.id)}
+                deployIntent={togglingIds.get(agent.id)}
                 isStarting={isAgentStarting(agent.id)}
               />
             ))}

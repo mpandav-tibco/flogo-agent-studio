@@ -21,7 +21,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger \u00e2\u20ac\u201d agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger â€” agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7010,
         "APISpecUpdate": false,
@@ -136,7 +136,7 @@
           "name": "improve_agent"
         },
         {
-          "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
+          "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
           "settings": {
             "Method": "POST",
             "reqType": "application/json",
@@ -408,7 +408,7 @@
                   },
                   "body": {
                     "type": "json",
-                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"systemPrompt\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"llmProvider\":{\"type\":\"string\"},\"llmBaseUrl\":{\"type\":\"string\"},\"apiKey\":{\"type\":\"string\"},\"model\":{\"type\":\"string\"},\"temperature\":{\"type\":\"number\"},\"maxTokens\":{\"type\":\"integer\"},\"topK\":{\"type\":\"integer\"},\"tools\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"chunkStrategy\":{\"type\":\"string\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"version\":{\"type\":\"string\"},\"active\":{\"type\":\"boolean\"}}}",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"systemPrompt\":{\"type\":\"string\"},\"collectionName\":{\"type\":\"string\"},\"llmProvider\":{\"type\":\"string\"},\"model\":{\"type\":\"string\"},\"temperature\":{\"type\":\"number\"},\"maxTokens\":{\"type\":\"number\"},\"topK\":{\"type\":\"number\"},\"tools\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"chunkStrategy\":{\"type\":\"string\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"version\":{\"type\":\"string\"},\"active\":{\"type\":\"boolean\"}}}",
                     "fe_metadata": "{\"name\":\"my-agent\",\"description\":\"Agent description\",\"systemPrompt\":\"You are a helpful assistant.\",\"collectionName\":\"MyCollection\",\"llmProvider\":\"ollama\",\"model\":\"llama3.2:3b\",\"temperature\":0.7,\"maxTokens\":2048,\"topK\":5,\"tools\":[\"ragQuery\"],\"chunkStrategy\":\"sentence\",\"tags\":[\"example\"],\"version\":\"1.0.0\",\"active\":true}"
                   }
                 },
@@ -877,8 +877,8 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
@@ -893,7 +893,7 @@
       "id": "flow:validate_agent",
       "data": {
         "name": "validate_agent",
-        "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
+        "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
         "links": [
           {
             "id": 1,
@@ -1052,8 +1052,8 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
@@ -1140,7 +1140,7 @@
     {
       "name": "AgenticAI.LLM_Provider.API_Key",
       "type": "string",
-      "value": "SECRET:3yLO1/udK40L36boH/03NbaXATLRG3gS6481V9evsX8RoLIr50AxpB5DDf7CX5I0s73sMos8+oXxl3JOmaIQ+mApVKJuDcpXhA=="
+      "value": "SECRET:q3Il4NQ9j94lNhSvSlv9cHhApK2LTNqXZ4QY4SIWKBjfeQIvyv+0kX8sQ03gfVCrWuQYIqv0dm8ebZFzazrUk+JbGn2mppeEZQ=="
     },
     {
       "name": "AgenticAI.LLM_Provider.LLM_Base_URL",
@@ -1165,7 +1165,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:sURBQ8O88PwF0foXJmGl+rBl9L2YqvSo"
+      "value": "SECRET:jYsuSSv1pxP/yoQq3Qgf5X0ulL4hVFFM"
     },
     {
       "name": "API_AUTH_HEADER",
@@ -1214,7 +1214,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLWFpLWFnZW50L3NyYy9hcHAvQWdlbnRpY0FJIiwiaWQiOiJBZ2VudGljQUkiLCJ2ZXJzaW9uIjoiMC45LjAiLCJ0YWciOiIwLjkuMC1iMDMiLCJuYW1lIjoiVElCQ08gRmxvZ2/CriBDb25uZWN0b3IgZm9yIEFnZW50aWMgQUkgKFRlY2ggUHJldmlldykiLCJzM2xvY2F0aW9uIjoiVGliY28vQWdlbnRpY0FJIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1haS1hZ2VudC9zcmMvYXBwL0FnZW50aWNBSSIsImlkIjoiQWdlbnRpY0FJIiwidmVyc2lvbiI6IjAuOS4xIiwidGFnIjoiMC45LjEtYjAyIiwibmFtZSI6IkFnZW50aWMgQUkgKFRlY2ggUHJldmlldykiLCJzM2xvY2F0aW9uIjoiVGliY28vQWdlbnRpY0FJIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX1d",
   "metadata": {
     "endpoints": [
       {
@@ -1230,7 +1230,7 @@
           "info": {
             "title": "agent-builder-service",
             "version": "1.0.0",
-            "description": "REST trigger \u00e2\u20ac\u201d agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger â€” agent builder service on port 7010 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/agent-builder/generate": {
@@ -1335,7 +1335,7 @@
                     }
                   }
                 },
-                "description": "Validates an agent config object against required fields. Pure logic \u00e2\u20ac\u201d no LLM call, no I/O. Returns {valid, errors[]}.",
+                "description": "Validates an agent config object against required fields. Pure logic â€” no LLM call, no I/O. Returns {valid, errors[]}.",
                 "consumes": [
                   "application/json"
                 ]

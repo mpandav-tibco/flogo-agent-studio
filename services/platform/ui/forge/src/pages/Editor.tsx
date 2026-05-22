@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, Save, Play, Square, Download, Sparkles, MessageSquare, Container, CircleStop, RefreshCw } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Save, Play, Square, Download, Sparkles, MessageSquare, Container, CircleStop, RefreshCw, ChevronDown, Monitor } from "lucide-react";
 import {
   createAgent,
   deployAgent,
+  dockerBuildImages,
   dockerDeploy,
   dockerDeployStatus,
   dockerDeployStop,
@@ -703,6 +704,9 @@ export default function Editor() {
   // Deactivate confirmation
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
 
+  // Activation mode picker: null = closed, "local" | "docker" = chosen
+  const [activateMenuOpen, setActivateMenuOpen] = useState(false);
+
   // Improve state (feedback loaded via query on tab activation)
   const [improveResult, setImproveResult] = useState<GeneratedConfig | null>(null);
 
@@ -875,19 +879,52 @@ export default function Editor() {
                   {currentStatus}
                 </span>
 
-                <button
-                  onClick={() => currentStatus === "active" ? setConfirmDeactivate(true) : deployMutation.mutate()}
-                  disabled={deployMutation.isPending}
-                  className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${currentStatus === "active"
-                    ? "bg-amber-100 hover:bg-amber-200 text-amber-800"
-                    : "bg-green-500 hover:bg-green-600 text-white"
-                    }`}
-                >
-                  {currentStatus === "active"
-                    ? <><Square size={13} /> {deployMutation.isPending ? "Deactivating…" : "Deactivate"}</>
-                    : <><Play size={13} /> {deployMutation.isPending ? "Activating…" : "Activate"}</>
-                  }
-                </button>
+                {currentStatus === "active" ? (
+                  <button
+                    onClick={() => setConfirmDeactivate(true)}
+                    disabled={deployMutation.isPending}
+                    className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 bg-amber-100 hover:bg-amber-200 text-amber-800"
+                  >
+                    <Square size={13} /> {deployMutation.isPending ? "Deactivating…" : "Deactivate"}
+                  </button>
+                ) : (
+                  <div className="relative flex">
+                    <button
+                      onClick={() => deployMutation.mutate()}
+                      disabled={deployMutation.isPending || dockerDeployMutation.isPending}
+                      className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-l-lg transition-colors disabled:opacity-50 bg-green-500 hover:bg-green-600 text-white"
+                    >
+                      <Monitor size={13} /> {deployMutation.isPending ? "Activating…" : "Activate"}
+                    </button>
+                    <button
+                      onClick={() => setActivateMenuOpen(v => !v)}
+                      disabled={deployMutation.isPending || dockerDeployMutation.isPending}
+                      className="flex items-center px-1.5 py-1.5 rounded-r-lg transition-colors disabled:opacity-50 bg-green-600 hover:bg-green-700 text-white border-l border-green-400"
+                      title="More activation options"
+                    >
+                      <ChevronDown size={13} />
+                    </button>
+                    {activateMenuOpen && (
+                      <div
+                        className="absolute right-0 top-full mt-1 w-52 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+                        onBlur={() => setActivateMenuOpen(false)}
+                      >
+                        <button
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-50 text-gray-700"
+                          onClick={() => { setActivateMenuOpen(false); deployMutation.mutate(); }}
+                        >
+                          <Monitor size={13} /> Local Process
+                        </button>
+                        <button
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-50 text-gray-700"
+                          onClick={() => { setActivateMenuOpen(false); dockerDeployMutation.mutate(); }}
+                        >
+                          <Container size={13} /> Docker Container
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {currentStatus === "active" && (
                   <a
@@ -1310,19 +1347,49 @@ export default function Editor() {
                   </span>
                 </div>
 
-                <button
-                  onClick={() => currentStatus === "active" ? setConfirmDeactivate(true) : deployMutation.mutate()}
-                  disabled={deployMutation.isPending}
-                  className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 ${currentStatus === "active"
-                    ? "bg-amber-100 hover:bg-amber-200 text-amber-800"
-                    : "bg-green-500 hover:bg-green-600 text-white"
-                    }`}
-                >
-                  {currentStatus === "active"
-                    ? <><Square size={15} /> {deployMutation.isPending ? "Deactivating…" : "Deactivate Agent"}</>
-                    : <><Play size={15} /> {deployMutation.isPending ? "Activating…" : "Activate Agent"}</>
-                  }
-                </button>
+                {currentStatus === "active" ? (
+                  <button
+                    onClick={() => setConfirmDeactivate(true)}
+                    disabled={deployMutation.isPending}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 bg-amber-100 hover:bg-amber-200 text-amber-800"
+                  >
+                    <Square size={15} /> {deployMutation.isPending ? "Deactivating…" : "Deactivate Agent"}
+                  </button>
+                ) : (
+                  <div className="relative flex w-full">
+                    <button
+                      onClick={() => deployMutation.mutate()}
+                      disabled={deployMutation.isPending || dockerDeployMutation.isPending}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-l-lg text-sm font-semibold transition-colors disabled:opacity-50 bg-green-500 hover:bg-green-600 text-white"
+                    >
+                      <Monitor size={15} /> {deployMutation.isPending ? "Activating…" : "Activate Agent"}
+                    </button>
+                    <button
+                      onClick={() => setActivateMenuOpen(v => !v)}
+                      disabled={deployMutation.isPending || dockerDeployMutation.isPending}
+                      className="flex items-center px-2 py-2.5 rounded-r-lg transition-colors disabled:opacity-50 bg-green-600 hover:bg-green-700 text-white border-l border-green-400"
+                      title="More activation options"
+                    >
+                      <ChevronDown size={15} />
+                    </button>
+                    {activateMenuOpen && (
+                      <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                        <button
+                          className="flex items-center gap-2 w-full px-3 py-2.5 text-sm hover:bg-gray-50 text-gray-700"
+                          onClick={() => { setActivateMenuOpen(false); deployMutation.mutate(); }}
+                        >
+                          <Monitor size={14} /> Local Process
+                        </button>
+                        <button
+                          className="flex items-center gap-2 w-full px-3 py-2.5 text-sm hover:bg-gray-50 text-gray-700"
+                          onClick={() => { setActivateMenuOpen(false); dockerDeployMutation.mutate(); }}
+                        >
+                          <Container size={14} /> Docker Container
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {currentStatus === "active" && (
                   <a

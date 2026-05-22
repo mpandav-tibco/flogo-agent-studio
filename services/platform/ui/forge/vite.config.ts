@@ -12,6 +12,11 @@ export default defineConfig({
         target: "http://127.0.0.1:7050",
         changeOrigin: true,
       },
+      // Admin console — platform service health + agent process list
+      "/api/admin": {
+        target: "http://127.0.0.1:7050",
+        changeOrigin: true,
+      },
       // Deploy/export endpoints — handled by Python runtime manager (deploy-service retired)
       "^/api/v1/agents/[^/]+/deploy": {
         target: "http://127.0.0.1:7050",

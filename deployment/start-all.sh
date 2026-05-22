@@ -55,11 +55,11 @@ check_port() {
 MANAGED_PORTS=(
   7025   # forge-ui (platform)
   7050   # runtime-manager (deployment.py)
-  7097   # rule-engine (platform)
   7020   # platform-service: design + feedback (merged)
   7010   # agent-builder (platform)
   7333   # mcp-server (platform)
   # Legacy static agent ports — cleaned up on startup so orphaned processes don't block port pool
+  7097   # rule-engine (legacy static; now per-agent via deployment.py)
   7080   # chainlit-ui (legacy static; now per-agent via deployment.py)
   7001   # agent-chat+sse (legacy static; now per-agent via deployment.py)
   7002   # ingestion  (legacy static; now per-agent via deployment.py)
@@ -337,11 +337,10 @@ wait_for_port "forge-ui" 7025 30
 echo ""
 
 # ── Platform services only ────────────────────────────────────────────────────
-# Agent services (chat+sse, ingestion, chainlit) are NOT started here.
-# The runtime-manager (deployment.py) starts a dedicated set per agent when
-# that agent is activated from the AgentForge UI.
+# Agent services (chat+sse, ingestion, rule-engine, chainlit) are NOT started
+# here. The runtime-manager (deployment.py) starts a dedicated set per agent
+# when that agent is activated from the AgentForge UI.
 SERVICES=(
-  "bin/rule-engine-service:rule-engine:7097"      # shared Flogo analyser
   "bin/platform-service:platform:7020"            # design + feedback (merged)
   "bin/agent-builder-service:agent-builder:7010"  # LLM config generation
   "bin/mcp-server:mcp-server:7333"                # MCP gateway

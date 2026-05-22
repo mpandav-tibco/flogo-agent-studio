@@ -88,11 +88,12 @@ _MAX_SLOTS  = 10
 _PORTS_PER_SLOT = 10    # reserve 10 ports per slot for future growth
 
 _PORT_OFFSETS = {
-    "chat":      1,
-    "sse_rest":  2,
-    "sse_events":3,
-    "ingestion": 4,
-    "chainlit":  5,
+    "chat":        1,
+    "sse_rest":    2,
+    "sse_events":  3,
+    "ingestion":   4,
+    "chainlit":    5,
+    "rule_engine": 6,
 }
 
 
@@ -561,6 +562,32 @@ async def _start_runtime(agent: dict) -> dict:
     pids["ingestion"] = ing_proc.pid
     log.info("  [%s] ingestion   pid=%-7s port=%s", short, ing_proc.pid, ports["ingestion"])
 
+    # ── rule-engine-service (per-agent) ───────────────────────────────────────
+    re_src   = SERVICES_AGENT_APPS / "rule-engine-service.flogo"
+    re_flogo = rt_dir / "rule-engine-service.flogo"
+    re_env   = rt_dir / "rule-engine-service.env"
+
+    if not re_src.exists():
+        raise FileNotFoundError(f"Missing source: {re_src}")
+    if not await _ensure_binary(re_src, "rule-engine-service"):
+        raise RuntimeError("rule-engine-service binary unavailable and could not be built")
+
+    rules_path = str(PROJECT_ROOT / "config" / "rules")
+    _modify_flogo_port(re_src, re_flogo, {"RuleEngineRESTTrigger": ports["rule_engine"]})
+    _generate_env_file(
+        SERVICES_AGENT_ENV / "rule-engine-service.env",
+        re_env,
+        {"RULES_PATH": rules_path},
+    )
+    re_proc = subprocess.Popen(
+        [sys.executable, str(LAUNCH_PY), str(re_env),
+         str(SERVICES_BIN / "rule-engine-service"), "-app", str(re_flogo)],
+        stdout=_open_log("rule-engine"), stderr=subprocess.STDOUT,
+        env={**base_env, "OTEL_SERVICE_NAME": f"rule-engine-{short}"},
+    )
+    pids["rule_engine"] = re_proc.pid
+    log.info("  [%s] rule-engine  pid=%-7s port=%s", short, re_proc.pid, ports["rule_engine"])
+
     # ── Chainlit UI ────────────────────────────────────────────────────────────
     cmd = _chainlit_cmd()
     if cmd and CHAINLIT_DIR.exists():
@@ -597,6 +624,7 @@ async def _start_runtime(agent: dict) -> dict:
         "chatApiUrl":   f"http://localhost:{ports['chat']}",
         "sseUrl":       f"http://localhost:{ports['sse_rest']}",
         "ingestionUrl": f"http://localhost:{ports['ingestion']}",
+        "ruleEngineUrl": f"http://localhost:{ports['rule_engine']}",
         "startedAt":    time.time(),
         "readiness":    "starting",
     }
@@ -820,23 +848,201 @@ def _docker_slot_ports(agent_id: str) -> dict[str, int]:
     }
 
 
+# ── Docker image build pipeline ───────────────────────────────────────────────
+
+_DOCKER_BUILD_CACHE_FILE = DATA_DIR / "docker-build-cache.json"
+
+# Services to build: (service_name, flogo_source, dockerfile_dir, image_tag)
+_DOCKER_AGENT_SERVICES = [
+    ("agent-chat-service", SERVICES_AGENT_APPS / "agent-chat-service.flogo",
+     PROJECT_ROOT / "docker" / "agent-chat-service"),
+    ("ingestion-service",  SERVICES_AGENT_APPS / "ingestion-service.flogo",
+     PROJECT_ROOT / "docker" / "ingestion-service"),
+    ("rule-engine-service", SERVICES_AGENT_APPS / "rule-engine-service.flogo",
+     PROJECT_ROOT / "docker" / "rule-engine-service"),
+]
+_DOCKER_CHAINLIT_SERVICE = (
+    "chainlit",
+    PROJECT_ROOT / "services" / "agent" / "ui" / "chainlit",
+)
+
+
+def _flogo_sha256(flogo_path: Path) -> str:
+    import hashlib
+    return hashlib.sha256(flogo_path.read_bytes()).hexdigest()[:16]
+
+
+def _docker_image_exists(tag: str) -> bool:
+    """Return True if a local Docker image with the given tag exists."""
+    try:
+        r = subprocess.run(
+            ["docker", "image", "inspect", tag],
+            capture_output=True, timeout=10,
+        )
+        return r.returncode == 0
+    except Exception:
+        return False
+
+
+def _detect_flogobuild_linux() -> Optional[str]:
+    """Return path to linux_amd64 flogobuild binary, or None."""
+    candidate = PROJECT_ROOT / "tools" / "flogobuild" / "linux_amd64" / "flogobuild"
+    if candidate.is_file() and os.access(str(candidate), os.X_OK):
+        return str(candidate)
+    return None
+
+
+def _load_build_cache() -> dict:
+    try:
+        if _DOCKER_BUILD_CACHE_FILE.exists():
+            return json.loads(_DOCKER_BUILD_CACHE_FILE.read_text())
+    except Exception:
+        pass
+    return {}
+
+
+def _save_build_cache(cache: dict) -> None:
+    _DOCKER_BUILD_CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _DOCKER_BUILD_CACHE_FILE.write_text(json.dumps(cache, indent=2))
+
+
+def _build_flogo_service_image(
+    service_name: str,
+    flogo_src: Path,
+    dockerfile_dir: Path,
+    flogobuild_bin: str,
+    image_tag: str,
+) -> None:
+    """
+    Build a Docker image for a Flogo service:
+      1. Compile flogo source → linux_amd64 binary using flogobuild
+      2. docker build with the binary as build context
+    """
+    import tempfile, shutil as _shutil
+
+    log.info("Building image %s from %s ...", image_tag, flogo_src.name)
+
+    with tempfile.TemporaryDirectory(prefix="flogo-docker-build-") as tmpdir:
+        tmp = Path(tmpdir)
+
+        # Step 1: compile .flogo → linux binary
+        binary_path = tmp / service_name
+        result = subprocess.run(
+            [flogobuild_bin, "-f", str(flogo_src), "-o", str(binary_path)],
+            capture_output=True, text=True, timeout=120,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"flogobuild failed for {service_name}:\n"
+                f"stdout: {result.stdout[-1000:]}\nstderr: {result.stderr[-1000:]}"
+            )
+        binary_path.chmod(0o755)
+        log.info("  flogobuild OK → %s (%d bytes)", service_name, binary_path.stat().st_size)
+
+        # Step 2: copy Dockerfile into build context
+        _shutil.copy(str(dockerfile_dir / "Dockerfile"), str(tmp / "Dockerfile"))
+
+        # Step 3: docker build
+        result = subprocess.run(
+            ["docker", "build", "-t", image_tag, str(tmp)],
+            capture_output=True, text=True, timeout=300,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"docker build failed for {image_tag}:\n"
+                f"stdout: {result.stdout[-2000:]}\nstderr: {result.stderr[-2000:]}"
+            )
+        log.info("  docker build OK → %s", image_tag)
+
+
+def _build_chainlit_image(chainlit_dir: Path, image_tag: str) -> None:
+    """Build the chainlit Docker image from its own Dockerfile."""
+    log.info("Building chainlit image %s ...", image_tag)
+    result = subprocess.run(
+        ["docker", "build", "-t", image_tag, str(chainlit_dir)],
+        capture_output=True, text=True, timeout=300,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"docker build failed for {image_tag}:\n"
+            f"stdout: {result.stdout[-2000:]}\nstderr: {result.stderr[-2000:]}"
+        )
+    log.info("  docker build OK → %s", image_tag)
+
+
+def build_docker_images(force: bool = False) -> dict:
+    """
+    Build Docker images for all agent services if they are missing or stale.
+    Returns a dict: {service_name: {"image": str, "built": bool, "cached": bool}}.
+
+    Caches builds by SHA256 of the source .flogo file — rebuilds only when the
+    source changes (or when force=True, or the image was removed).
+    """
+    if not _docker_available():
+        raise RuntimeError("docker not found on PATH — install Docker Desktop or Docker Engine")
+
+    flogobuild_bin = _detect_flogobuild_linux()
+    if not flogobuild_bin:
+        raise RuntimeError(
+            "tools/flogobuild/linux_amd64/flogobuild not found — "
+            "cannot build Linux Docker images on this host"
+        )
+
+    cache = _load_build_cache()
+    results = {}
+
+    # ── Flogo services ────────────────────────────────────────────────────────
+    for service_name, flogo_src, dockerfile_dir in _DOCKER_AGENT_SERVICES:
+        image_tag = f"flogo-agent-studio/{service_name}:latest"
+        flogo_hash = _flogo_sha256(flogo_src)
+        cached_hash = cache.get(service_name, {}).get("flogo_sha256")
+        image_exists = _docker_image_exists(image_tag)
+
+        if not force and image_exists and cached_hash == flogo_hash:
+            log.info("  %s — up to date (cached)", image_tag)
+            results[service_name] = {"image": image_tag, "built": False, "cached": True}
+            continue
+
+        reason = "forced" if force else ("new/changed source" if cached_hash != flogo_hash else "image missing")
+        log.info("  %s — building (%s) ...", image_tag, reason)
+        _build_flogo_service_image(service_name, flogo_src, dockerfile_dir, flogobuild_bin, image_tag)
+
+        cache[service_name] = {"flogo_sha256": flogo_hash, "image": image_tag}
+        _save_build_cache(cache)
+        results[service_name] = {"image": image_tag, "built": True, "cached": False}
+
+    # ── Chainlit ──────────────────────────────────────────────────────────────
+    chainlit_name, chainlit_dir = _DOCKER_CHAINLIT_SERVICE
+    chainlit_tag = f"flogo-agent-studio/{chainlit_name}:latest"
+
+    if not force and _docker_image_exists(chainlit_tag):
+        log.info("  %s — up to date (cached)", chainlit_tag)
+        results[chainlit_name] = {"image": chainlit_tag, "built": False, "cached": True}
+    else:
+        log.info("  %s — building ...", chainlit_tag)
+        _build_chainlit_image(chainlit_dir, chainlit_tag)
+        results[chainlit_name] = {"image": chainlit_tag, "built": True, "cached": False}
+
+    return results
+
+
 def _generate_compose_yaml(agent: dict) -> str:
     """
-    Generate a complete per-agent docker-compose.yml.
+    Generate a per-agent docker-compose.yml using locally-built images.
 
-    Services included:
-      weaviate      — dedicated vector DB for this agent
-      ollama        — LLM backend (shared model cache via ~/.ollama volume)
-      agent-chat    — RAG chat service
-      sse-stream    — SSE REST gateway + event bus
-      ingestion     — document ingestion
-      chainlit      — web chat UI
+    Services:
+      weaviate      — dedicated vector DB (public image, no build needed)
+      ollama        — LLM backend, shares ~/.ollama model cache with host
+      agent-chat    — agent-chat-service binary (chat + SSE, 3 triggers merged)
+      ingestion     — ingestion-service binary
+      chainlit      — chat UI (Python)
 
-    Host ports: 7400-7490 range, deterministically assigned per agentId.
-    Internal ports match the standard Flogo service defaults (7001/7002/7005/7099).
-    Images: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:*-${VERSION:-latest}
-    All per-agent configuration is passed via environment variables — no
-    image rebuild needed per agent.
+    Images for Flogo services are built locally by build_docker_images() and
+    tagged flogo-agent-studio/<service>:latest — no registry pull needed.
+
+    Host ports: deterministic 7400-7490 range per agentId hash.
+    Internal ports are fixed (matching .flogo trigger defaults):
+      7001 chat  7005 sse-rest  7099 sse-events  7002 ingestion  7080 chainlit
     """
     agent_id    = agent["id"]
     agent_name  = agent.get("name", agent_id)
@@ -862,27 +1068,22 @@ def _generate_compose_yaml(agent: dict) -> str:
     ports       = _docker_slot_ports(agent_id)
 
     import textwrap, datetime
-    # Escape special YAML characters in the system prompt
+    # Single-quote escape for YAML block scalar
     prompt_escaped = prompt.replace("'", "''")
 
     generated_at = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
     yaml = textwrap.dedent(f"""\
         # AgentForge — {agent_name} ({short})
-        # Generated : {generated_at}
-        # Agent ID  : {agent_id}
+        # Generated  : {generated_at}
+        # Agent ID   : {agent_id}
         #
-        # Quick start:
-        #   docker compose up -d
-        #   docker compose logs -f chainlit      # tail chat UI logs
-        #   docker compose ps                    # check status
-        #   docker compose down                  # stop all
-        #
-        # Images are pulled from the registry. To override:
-        #   FLOGO_IMAGE=myregistry/flogo-agent-studio VERSION=v1.2 docker compose up -d
+        # Images are built locally by the runtime manager before first deploy.
+        # Re-build: POST /api/runtime/docker-build  (or click "Rebuild Images" in UI)
         #
         # Chat UI: http://localhost:{ports['chainlit']}
         # Ingest : http://localhost:{ports['ingestion']}/api/ingest
+        # SSE    : http://localhost:{ports['sse_rest']}
 
         name: agent-{safe_name}
 
@@ -895,7 +1096,7 @@ def _generate_compose_yaml(agent: dict) -> str:
 
         services:
 
-          # ── Vector database ──────────────────────────────────────────────────
+          # ── Vector database ─────────────────────────────────────────────────
           weaviate:
             image: semitechnologies/weaviate:1.24.6
             restart: unless-stopped
@@ -915,7 +1116,7 @@ def _generate_compose_yaml(agent: dict) -> str:
               timeout: 5s
               retries: 12
 
-          # ── LLM provider ─────────────────────────────────────────────────────
+          # ── LLM provider ────────────────────────────────────────────────────
           ollama:
             image: ollama/ollama:latest
             restart: unless-stopped
@@ -929,10 +1130,16 @@ def _generate_compose_yaml(agent: dict) -> str:
               timeout: 10s
               retries: 5
 
-          # ── Agent chat service ────────────────────────────────────────────────
+          # ── Agent chat + SSE service (single binary, three triggers) ────────
+          # AgentChatRESTTrigger :7001 (internal only)
+          # SSEStreamRESTTrigger :7005 (mapped to host {ports['sse_rest']})
+          # SSEEventBus          :7099 (mapped to host {ports['sse_events']})
           agent-chat:
-            image: ${{FLOGO_IMAGE:-tibco/flogo-agent-studio}}:agent-chat-${{VERSION:-latest}}
+            image: flogo-agent-studio/agent-chat-service:latest
             restart: unless-stopped
+            ports:
+              - "{ports['sse_rest']}:7005"
+              - "{ports['sse_events']}:7099"
             environment:
               FLOGO_APP_PROPS_ENV: auto
               FLOGO_LOG_LEVEL: INFO
@@ -943,6 +1150,7 @@ def _generate_compose_yaml(agent: dict) -> str:
               LLM_BASE_URL: http://ollama:11434/v1
               WEAVIATE_HOST: weaviate
               WEAVIATE_PORT: "8080"
+              CHAT_SERVICE_URL: http://localhost:7001/api/chat
             networks:
               - agent-net
             depends_on:
@@ -956,32 +1164,9 @@ def _generate_compose_yaml(agent: dict) -> str:
               timeout: 5s
               retries: 5
 
-          # ── SSE stream service ────────────────────────────────────────────────
-          sse-stream:
-            image: ${{FLOGO_IMAGE:-tibco/flogo-agent-studio}}:sse-stream-${{VERSION:-latest}}
-            restart: unless-stopped
-            ports:
-              - "{ports['sse_rest']}:7005"
-              - "{ports['sse_events']}:7099"
-            environment:
-              FLOGO_APP_PROPS_ENV: auto
-              FLOGO_LOG_LEVEL: INFO
-              CHAT_SERVICE_URL: http://agent-chat:7001
-              LLM_MODEL: {llm_model}
-            networks:
-              - agent-net
-            depends_on:
-              agent-chat:
-                condition: service_healthy
-            healthcheck:
-              test: ["CMD", "wget", "-qO-", "http://localhost:7005/api/health"]
-              interval: 15s
-              timeout: 5s
-              retries: 5
-
-          # ── Ingestion service ─────────────────────────────────────────────────
+          # ── Ingestion service ───────────────────────────────────────────────
           ingestion:
-            image: ${{FLOGO_IMAGE:-tibco/flogo-agent-studio}}:ingestion-${{VERSION:-latest}}
+            image: flogo-agent-studio/ingestion-service:latest
             restart: unless-stopped
             ports:
               - "{ports['ingestion']}:7002"
@@ -1006,9 +1191,9 @@ def _generate_compose_yaml(agent: dict) -> str:
               timeout: 5s
               retries: 5
 
-          # ── Chainlit chat UI ──────────────────────────────────────────────────
+          # ── Chainlit chat UI ────────────────────────────────────────────────
           chainlit:
-            image: ${{FLOGO_IMAGE:-tibco/flogo-agent-studio}}:chainlit-${{VERSION:-latest}}
+            image: flogo-agent-studio/chainlit:latest
             restart: unless-stopped
             ports:
               - "{ports['chainlit']}:7080"
@@ -1016,23 +1201,69 @@ def _generate_compose_yaml(agent: dict) -> str:
               AGENT_ID: {agent_id}
               DESIGN_SERVICE_URL: {DESIGN_URL}
               CHAT_SERVICE_URL: http://agent-chat:7001
-              SSE_SERVICE_URL: http://sse-stream:7005
-              SSE_EVENTS_URL: http://sse-stream:7099
+              SSE_SERVICE_URL: http://agent-chat:7005
+              SSE_EVENTS_URL: http://agent-chat:7099
               FEEDBACK_SERVICE_URL: {FEEDBACK_URL}
             networks:
               - agent-net
             depends_on:
-              - agent-chat
-              - sse-stream
+              agent-chat:
+                condition: service_healthy
+
+          # ── Rule engine service (per-agent) ─────────────────────────────────
+          rule-engine:
+            image: flogo-agent-studio/rule-engine-service:latest
+            restart: unless-stopped
+            volumes:
+              - {str(PROJECT_ROOT / "config" / "rules")}:/rules:ro
+            environment:
+              FLOGO_APP_PROPS_ENV: auto
+              FLOGO_LOG_LEVEL: INFO
+              RULES_PATH: /rules
+              API_KEY: changeme
+            networks:
+              - agent-net
+            healthcheck:
+              test: ["CMD", "wget", "-qO-", "http://localhost:7097/api/health"]
+              interval: 15s
+              timeout: 5s
+              retries: 5
         """)
     return yaml
+
+
+async def _handle_docker_build(request: web.Request) -> web.Response:
+    """
+    POST /api/runtime/docker-build
+    Build (or rebuild) Docker images for all agent services.
+    Query param: ?force=true to rebuild even when source is unchanged.
+    """
+    if not _docker_available():
+        return web.json_response(
+            {"error": "docker not found on PATH — install Docker Desktop or Docker Engine"},
+            status=503,
+        )
+
+    force = request.rel_url.query.get("force", "").lower() in ("1", "true", "yes")
+
+    try:
+        results = await asyncio.get_event_loop().run_in_executor(
+            None, lambda: build_docker_images(force=force)
+        )
+    except Exception as exc:
+        log.error("docker build failed: %s", exc)
+        return web.json_response({"error": str(exc)}, status=500)
+
+    return web.json_response({"success": True, "images": results})
 
 
 async def _handle_docker_deploy(request: web.Request) -> web.Response:
     """
     POST /api/agents/{agentId}/docker-deploy
-    Generates a complete docker-compose.yml for the agent and runs
-    `docker compose up -d`.  Idempotent — safe to call multiple times.
+    1. Builds Docker images if missing or stale (cached by .flogo SHA256).
+    2. Generates a per-agent docker-compose.yml.
+    3. Runs `docker compose up -d`.
+    Idempotent — safe to call multiple times.
     """
     agent_id = request.match_info["agentId"]
 
@@ -1042,31 +1273,46 @@ async def _handle_docker_deploy(request: web.Request) -> web.Response:
             status=503,
         )
 
-    # Fetch current agent config from design-service
+    # ── Step 1: ensure images are built ──────────────────────────────────────
+    build_results: dict = {}
+    try:
+        build_results = await asyncio.get_event_loop().run_in_executor(
+            None, lambda: build_docker_images(force=False)
+        )
+        log.info("docker images ready for [%s]: %s",
+                 agent_id[:8],
+                 {k: ("built" if v["built"] else "cached") for k, v in build_results.items()})
+    except Exception as exc:
+        log.error("Image build failed for [%s]: %s", agent_id[:8], exc)
+        return web.json_response(
+            {"error": f"Image build failed: {exc}", "buildResults": build_results},
+            status=500,
+        )
+
+    # ── Step 2: fetch agent config ────────────────────────────────────────────
     agents = await _fetch_all_agents()
     agent = next((a for a in agents if a["id"] == agent_id), None)
     if not agent:
         return web.json_response({"error": f"agent {agent_id} not found"}, status=404)
 
-    # Generate compose YAML locally (no dependency on deploy-service stub)
+    # ── Step 3: generate compose YAML ────────────────────────────────────────
     try:
         compose_yaml = _generate_compose_yaml(agent)
     except Exception as exc:
         log.error("Failed to generate compose YAML for [%s]: %s", agent_id[:8], exc)
         return web.json_response({"error": f"Could not generate compose YAML: {exc}"}, status=500)
 
-    # Write to a stable location so `docker compose` can reference it later
     agent_dir = DOCKER_DEPLOY_DIR / agent_id
     agent_dir.mkdir(parents=True, exist_ok=True)
     compose_file = agent_dir / "docker-compose.yml"
     compose_file.write_text(compose_yaml)
 
-    # docker compose up -d
+    # ── Step 4: docker compose up -d (no --pull; images are local) ───────────
     try:
         result = await asyncio.get_event_loop().run_in_executor(
             None,
             lambda: subprocess.run(
-                ["docker", "compose", "-f", str(compose_file), "up", "-d", "--pull", "missing"],
+                ["docker", "compose", "-f", str(compose_file), "up", "-d"],
                 capture_output=True, text=True, timeout=120,
             ),
         )
@@ -1089,11 +1335,12 @@ async def _handle_docker_deploy(request: web.Request) -> web.Response:
         }, status=500)
 
     return web.json_response({
-        "success":     True,
-        "agentId":     agent_id,
-        "composeFile": str(compose_file),
-        "stdout":      result.stdout[-2000:],
-        "stderr":      result.stderr[-2000:],
+        "success":      True,
+        "agentId":      agent_id,
+        "composeFile":  str(compose_file),
+        "buildResults": build_results,
+        "stdout":       result.stdout[-2000:],
+        "stderr":       result.stderr[-2000:],
     }, status=200)
 
 
@@ -1184,9 +1431,8 @@ _PLATFORM_SERVICES = [
     {"name": "forge-ui",           "port": 7025, "healthPath": "/"},
 ]
 
-_AGENT_SUPPORT_SERVICES = [
-    {"name": "rule-engine-service", "port": 7097, "healthPath": "/api/health"},
-]
+# rule-engine-service is now per-agent (started by _start_runtime for each agent)
+_AGENT_SUPPORT_SERVICES: list = []
 
 def _pid_on_port(port: int) -> Optional[int]:
     """Return the PID of the process listening on *port*, or None."""
@@ -1650,6 +1896,7 @@ def _build_app() -> web.Application:
     app.router.add_post("/api/agents/{agentId}/docker-deploy",  _handle_docker_deploy)
     app.router.add_get("/api/agents/{agentId}/docker-deploy",   _handle_docker_status)
     app.router.add_delete("/api/agents/{agentId}/docker-deploy",_handle_docker_stop)
+    app.router.add_post("/api/runtime/docker-build",             _handle_docker_build)
     # /api/runtime prefix aliases (used by forge UI proxy)
     app.router.add_get("/api/admin/services",                              _handle_admin_services)
     app.router.add_get("/api/runtime/admin/services",                     _handle_admin_services)

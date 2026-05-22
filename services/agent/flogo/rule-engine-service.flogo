@@ -19,7 +19,7 @@
     {
       "ref": "#rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger \u2014 rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger — rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7097,
         "APISpecUpdate": false,
@@ -227,19 +227,7 @@
               "settings": {
                 "mappings": {
                   "code": 200,
-                  "data": {
-                    "mapping": {
-                      "success": "=$activity[RuleEngine1].output.success",
-                      "findings": "=$activity[RuleEngine1].output.findings",
-                      "positives": "=$activity[RuleEngine1].output.positives",
-                      "overview": "=$activity[RuleEngine1].output.overview",
-                      "errorCount": "=$activity[RuleEngine1].output.errorCount",
-                      "warningCount": "=$activity[RuleEngine1].output.warningCount",
-                      "infoCount": "=$activity[RuleEngine1].output.infoCount",
-                      "markdown": "=$activity[RuleEngine1].output.markdown",
-                      "error": "=$activity[RuleEngine1].output.error"
-                    }
-                  }
+                  "message": "=coerce.toString($activity[RuleEngine1])"
                 }
               }
             }
@@ -389,7 +377,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:QGk8ouQjrt0bAMrn4ZQlvWWaiCqEBM9x"
+      "value": "SECRET:9ybM7x8cnvgQl65KV6DBTNOLZYn+uY4l"
     }
   ],
   "connections": {},
@@ -409,7 +397,7 @@
           "info": {
             "title": "rule-engine-service",
             "version": "1.0.0",
-            "description": "REST trigger \u2014 rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger — rule engine service on port 7000 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/analyze": {

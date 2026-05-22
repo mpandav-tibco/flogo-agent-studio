@@ -21,7 +21,7 @@
     {
       "ref": "#mcpserver",
       "name": "flogo-mcp-mcpsever",
-      "description": "MCP Server \u2014 exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:7333/mcp.",
+      "description": "MCP Server — exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:7333/mcp.",
       "settings": {
         "serverName": "flogo-agent-studio-assist",
         "serverVersion": "1.0.0",
@@ -318,8 +318,8 @@
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}",
-                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}"
+                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}"
               }
             }
           },
@@ -498,6 +498,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
@@ -632,7 +633,7 @@
                 "mappings": {
                   "response": {
                     "mapping": {
-                      "error": "=$error.message"
+                      "error": "=coerce.toString($error[CallRuleEngine])"
                     }
                   }
                 }
@@ -753,6 +754,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
@@ -998,6 +1000,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
@@ -1236,6 +1239,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
@@ -1496,6 +1500,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
@@ -1741,6 +1746,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
@@ -1979,6 +1985,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
@@ -2238,6 +2245,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
@@ -2498,6 +2506,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "GET",
@@ -2548,8 +2557,8 @@
                 "output": {
                   "responseBody": {
                     "type": "json",
-                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}",
-                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"properties\": {\n    \"data\": {\n      \"type\": \"string\"\n    }\n  },\n  \"type\": \"object\"\n}"
+                    "value": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"object\"\n  }\n}",
+                    "fe_metadata": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"object\"\n  }\n}"
                   },
                   "headers": {
                     "type": "json",
@@ -2570,7 +2579,7 @@
               "input": {
                 "input": {
                   "mapping": {
-                    "data": "=$activity[CallService].responseBody.data"
+                    "data": "=coerce.toString($activity[CallService].responseBody)"
                   }
                 }
               },
@@ -2683,7 +2692,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:TzMCl2z6iErDz3SXvlpG6yBDZGJ1SQVP"
+      "value": "SECRET:VbkrBl/LEUUHPXKxWcNsANMbuI+fzseL"
     },
     {
       "name": "API_AUTH_HEADER",

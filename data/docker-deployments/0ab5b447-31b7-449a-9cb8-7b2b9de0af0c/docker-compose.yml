@@ -1,0 +1,156 @@
+# AgentForge — Documentation Support Agent (0ab5b447)
+# Generated : 2026-05-22 18:49 UTC
+# Agent ID  : 0ab5b447-31b7-449a-9cb8-7b2b9de0af0c
+#
+# Quick start:
+#   docker compose up -d
+#   docker compose logs -f chainlit      # tail chat UI logs
+#   docker compose ps                    # check status
+#   docker compose down                  # stop all
+#
+# Images are pulled from the registry. To override:
+#   FLOGO_IMAGE=myregistry/flogo-agent-studio VERSION=v1.2 docker compose up -d
+#
+# Chat UI: http://localhost:7465
+# Ingest : http://localhost:7464/api/ingest
+
+name: agent-documentation-support-agent
+
+networks:
+  agent-net:
+    driver: bridge
+
+volumes:
+  weaviate-data:
+
+services:
+
+  # ── Vector database ──────────────────────────────────────────────────
+  weaviate:
+    image: semitechnologies/weaviate:1.24.6
+    restart: unless-stopped
+    environment:
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: none
+      ENABLE_MODULES: ""
+      CLUSTER_HOSTNAME: node1
+    volumes:
+      - weaviate-data:/var/lib/weaviate
+    networks:
+      - agent-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/v1/.well-known/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  # ── LLM provider ─────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ~/.ollama:/root/.ollama
+    networks:
+      - agent-net
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ── Agent chat service ────────────────────────────────────────────────
+  agent-chat:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:agent-chat-${VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      FLOGO_APP_PROPS_ENV: auto
+      FLOGO_LOG_LEVEL: INFO
+      COLLECTION_NAME: KnowledgeBase
+      SYSTEM_PROMPT: 'You are a documentation support assistant. Use RAG to retrieve relevant documents and provide concise, accurate answers.'
+      LLM_MODEL: gpt-3.5-turbo
+      LLM_PROVIDER: openai
+      LLM_BASE_URL: http://ollama:11434/v1
+      WEAVIATE_HOST: weaviate
+      WEAVIATE_PORT: "8080"
+    networks:
+      - agent-net
+    depends_on:
+      weaviate:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7001/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── SSE stream service ────────────────────────────────────────────────
+  sse-stream:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:sse-stream-${VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "7462:7005"
+      - "7463:7099"
+    environment:
+      FLOGO_APP_PROPS_ENV: auto
+      FLOGO_LOG_LEVEL: INFO
+      CHAT_SERVICE_URL: http://agent-chat:7001
+      LLM_MODEL: gpt-3.5-turbo
+    networks:
+      - agent-net
+    depends_on:
+      agent-chat:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7005/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Ingestion service ─────────────────────────────────────────────────
+  ingestion:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:ingestion-${VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "7464:7002"
+    environment:
+      FLOGO_APP_PROPS_ENV: auto
+      FLOGO_LOG_LEVEL: INFO
+      COLLECTION_NAME: KnowledgeBase
+      WEAVIATE_HOST: weaviate
+      WEAVIATE_PORT: "8080"
+      EMBEDDING_MODEL: nomic-embed-text
+      EMBEDDING_PROVIDER: Ollama
+      EMBEDDING_BASE_URL: http://localhost:11434
+      CHUNK_STRATEGY: paragraph
+    networks:
+      - agent-net
+    depends_on:
+      weaviate:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7002/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Chainlit chat UI ──────────────────────────────────────────────────
+  chainlit:
+    image: ${FLOGO_IMAGE:-tibco/flogo-agent-studio}:chainlit-${VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "7465:7080"
+    environment:
+      AGENT_ID: 0ab5b447-31b7-449a-9cb8-7b2b9de0af0c
+      DESIGN_SERVICE_URL: http://localhost:7020
+      CHAT_SERVICE_URL: http://agent-chat:7001
+      SSE_SERVICE_URL: http://sse-stream:7005
+      SSE_EVENTS_URL: http://sse-stream:7099
+      FEEDBACK_SERVICE_URL: http://localhost:7020
+    networks:
+      - agent-net
+    depends_on:
+      - agent-chat
+      - sse-stream
