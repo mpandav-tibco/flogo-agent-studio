@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Play, Square, Download, Sparkles, MessageSquare, Container, CircleStop, RefreshCw } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Save, Play, Square, Download, Sparkles, MessageSquare, Container, CircleStop, RefreshCw } from "lucide-react";
 import {
   createAgent,
   deployAgent,
@@ -693,6 +693,9 @@ export default function Editor() {
   // Export modal state
   const [exportContent, setExportContent] = useState<{ title: string; content: string } | null>(null);
 
+  // Deactivate confirmation
+  const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+
   // Improve state (feedback loaded via query on tab activation)
   const [improveResult, setImproveResult] = useState<GeneratedConfig | null>(null);
 
@@ -796,8 +799,8 @@ export default function Editor() {
     enabled: !isNew,
   });
 
-  const deployRecord = deployData?.records?.[0];
-  const currentStatus = deployRecord?.status ?? agent?.status ?? "draft";
+  // agent?.status is the canonical source of truth; deployRecord is stale historical data
+  const currentStatus = agent?.status ?? "draft";
 
   // Normalise mixed rating formats: numeric 1–5 or string "thumbsUp"/"thumbsDown"
   const normalizeRating = (raw: unknown): number | null => {
@@ -852,7 +855,7 @@ export default function Editor() {
                 </span>
 
                 <button
-                  onClick={() => deployMutation.mutate()}
+                  onClick={() => currentStatus === "active" ? setConfirmDeactivate(true) : deployMutation.mutate()}
                   disabled={deployMutation.isPending}
                   className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${currentStatus === "active"
                     ? "bg-amber-100 hover:bg-amber-200 text-amber-800"
@@ -1275,7 +1278,7 @@ export default function Editor() {
                 </div>
 
                 <button
-                  onClick={() => deployMutation.mutate()}
+                  onClick={() => currentStatus === "active" ? setConfirmDeactivate(true) : deployMutation.mutate()}
                   disabled={deployMutation.isPending}
                   className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 ${currentStatus === "active"
                     ? "bg-amber-100 hover:bg-amber-200 text-amber-800"
@@ -1433,6 +1436,39 @@ export default function Editor() {
           content={exportContent.content}
           onClose={() => setExportContent(null)}
         />
+      )}
+
+      {confirmDeactivate && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 bg-amber-100 rounded-full p-2">
+                <AlertTriangle size={20} className="text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">Deactivate agent?</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  This will stop all running services for <span className="font-medium text-gray-700">{agent?.name}</span>.
+                  Active chat sessions will be disconnected.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setConfirmDeactivate(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { setConfirmDeactivate(false); deployMutation.mutate(); }}
+                className="px-4 py-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors"
+              >
+                Deactivate
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
