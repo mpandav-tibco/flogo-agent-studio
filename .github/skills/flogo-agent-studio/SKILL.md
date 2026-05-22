@@ -250,3 +250,20 @@ Key extensions:
 4. **PostgreSQL activity**: Output is `$activity[X].Output.records` (capital O in Output).
 
 5. **FDA multiFileMode**: FDA must be started with `--multiFileMode true` when working with apps in a directory. Without it, only a single file can be loaded.
+
+6. **`wire-trigger-handler` DANGER — whole-file corruption**: `wire-trigger-handler` triggers whole-file normalization on EVERY call and has known side effects: reorders tasks across ALL flows (not just the target), restructures links, mangles UTF-8 in descriptions, adds `reply.data = {type:json,value:{}}` scaffold to the handler. **DO NOT use `wire-trigger-handler` to fix `metadata.output` mismatches.** It can swap Return/ErrorReturn task content in sibling flows, causing silent runtime failures.
+
+7. **Correct fix for `metadata.output` mismatch** (FDA check-mapping error: `$.data` not in flow outputs): Use `flogodesign-cli set-attribute flow --jsonValue` via terminal — NOT MCP `set-attribute` and NOT `wire-trigger-handler`:
+   ```bash
+   FDA=/Users/milindpandav/.vscode/extensions/tibco.flogo-2.26.3-2442/bin/flogodesign-cli
+   "$FDA" -f services/<path>/service.flogo set-attribute flow \
+     "<FlowName>.metadata.output" "" \
+     --jsonValue '[{"name":"code","type":"integer"},{"name":"data","type":"object"}]'
+   ```
+   Unlock (`chmod 644`) before running, relock (`chmod 444`) after for platform-service and agent-builder-service.
+
+8. **MCP `set-attribute` + JSON arrays/objects**: MCP `set-attribute` requires `configType` (string/number/boolean). Using `configType: "string"` for a JSON array stores it as a **quoted string literal** — breaking fields like `metadata.output` or `metadata.input`. For JSON values, always use the FDA CLI with `--jsonValue`.
+
+9. **FDA whole-file normalization**: Every FDA call (MCP or CLI) rewrites the whole file: UTF-8 em-dashes may re-encode, link labels added, task JSON order may change, `{"mapping":"=expr"}` body wrappers unwrap to `"=expr"`. These are cosmetic/structural — runtime behavior is unaffected. Accept them as part of FDA file ownership.
+
+10. **`#agentactivity` output path**: `$activity[X].response` — NOT `$activity[X].output.response`. FDA does not flag this error (null output schema) but it IS a runtime bug. Always use the short path.
