@@ -169,7 +169,7 @@
               "flowURI": "res://flow:list_agents"
             },
             "input": {
-              "status": "=$.status"
+              "status": "=$.queryParams.status"
             },
             "output": {
               "code": "=$.code",
