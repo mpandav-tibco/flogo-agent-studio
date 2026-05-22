@@ -10,8 +10,7 @@
     "github.com/tibco/flogo-general/src/app/General/trigger/rest",
     "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/string",
-    "github.com/tibco/wi-postgres/src/app/PostgreSQL/connector/connection",
-    "act_general_log github.com/tibco/flogo-general/src/app/General/activity/log"
+    "github.com/tibco/wi-postgres/src/app/PostgreSQL/connector/connection"
   ],
   "name": "platform-service",
   "description": "Agent Studio design-time service on port 7020. PostgreSQL-backed CRUD for agent definitions.",
@@ -23,7 +22,7 @@
     {
       "ref": "#rest",
       "name": "tibco-wi-rest",
-      "description": "REST trigger \u2014 design-service on port 7020",
+      "description": "REST trigger — design-service on port 7020",
       "settings": {
         "port": 7020,
         "APISpecUpdate": false,
@@ -61,18 +60,9 @@
             }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": "",
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -111,26 +101,19 @@
               "flowURI": "res://flow:get_agent"
             },
             "input": {
-              "agentId": "=$.agentId"
+              "pathParams": "=$.pathParams",
+              "headers": "=$.headers",
+              "requestURI": "=$.requestURI",
+              "method": "=$.method"
             },
             "output": {
-              "code": "=$.code",
-              "data": "=$.data"
+              "code": "=$.code"
             }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": "",
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -177,18 +160,9 @@
             }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": "",
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -227,27 +201,20 @@
               "flowURI": "res://flow:update_agent"
             },
             "input": {
-              "agentId": "=$.agentId",
-              "body": "=$.body"
+              "body": "=$.body",
+              "pathParams": "=$.pathParams",
+              "headers": "=$.headers",
+              "requestURI": "=$.requestURI",
+              "method": "=$.method"
             },
             "output": {
-              "code": "=$.code",
-              "data": "=$.data"
+              "code": "=$.code"
             }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": "",
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -291,26 +258,19 @@
               "flowURI": "res://flow:delete_agent"
             },
             "input": {
-              "agentId": "=$.agentId"
+              "pathParams": "=$.pathParams",
+              "headers": "=$.headers",
+              "requestURI": "=$.requestURI",
+              "method": "=$.method"
             },
             "output": {
-              "code": "=$.code",
-              "data": "=$.data"
+              "code": "=$.code"
             }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": "",
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -336,7 +296,7 @@
           "name": "delete_agent"
         },
         {
-          "description": "Hard-delete agent \u2014 permanently removes row from agents table.",
+          "description": "Hard-delete agent — permanently removes row from agents table.",
           "settings": {
             "Method": "DELETE",
             "reqType": "application/json",
@@ -349,26 +309,19 @@
               "flowURI": "res://flow:purge_agent"
             },
             "input": {
-              "agentId": "=$.agentId"
+              "pathParams": "=$.pathParams",
+              "headers": "=$.headers",
+              "requestURI": "=$.requestURI",
+              "method": "=$.method"
             },
             "output": {
-              "code": "=$.code",
-              "data": "=$.data"
+              "code": "=$.code"
             }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": "",
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -409,22 +362,12 @@
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            },
-            "input": {}
+            }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": "",
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -460,22 +403,12 @@
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            },
-            "input": {}
+            }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": "",
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -510,26 +443,19 @@
               "flowURI": "res://flow:get_agent_config"
             },
             "input": {
-              "agentId": "=$.agentId"
+              "pathParams": "=$.pathParams",
+              "headers": "=$.headers",
+              "requestURI": "=$.requestURI",
+              "method": "=$.method"
             },
             "output": {
-              "data": "=$.data",
               "code": "=$.code"
             }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": "",
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": ""
           },
           "schemas": {
             "reply": {
@@ -576,18 +502,9 @@
             }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": {},
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": {}
           },
           "schemas": {
             "reply": {
@@ -628,22 +545,12 @@
             "output": {
               "code": "=$.code",
               "data": "=$.data"
-            },
-            "input": {}
+            }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": {},
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": {}
           },
           "schemas": {
             "reply": {
@@ -677,26 +584,19 @@
               "flowURI": "res://flow:get_feedback_by_agent"
             },
             "input": {
-              "agentId": "=$.agentId"
+              "pathParams": "=$.pathParams",
+              "headers": "=$.headers",
+              "requestURI": "=$.requestURI",
+              "method": "=$.method"
             },
             "output": {
-              "code": "=$.code",
-              "data": "=$.data"
+              "code": "=$.code"
             }
           },
           "reply": {
-            "code": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            },
+            "code": 200,
             "configureResponseCodes": false,
-            "message": {},
-            "data": {
-              "type": "json",
-              "value": "{}",
-              "fe_metadata": "{}"
-            }
+            "message": {}
           },
           "schemas": {
             "reply": {
@@ -800,7 +700,7 @@
                 "Schema": "public",
                 "Query": "INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
                 "manualmode": false,
-                "State": "3e6e42b8-fa79-4341-9d87-ed8d19584b02INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
+                "State": "8821d80c-9169-4248-bf74-52eb24827624INSERT INTO agents (id, name, description, status, config, created_at, updated_at, version) VALUES (gen_random_uuid()::text, ?name, ?description, 'draft', CAST(?config AS jsonb), NOW(), NOW(), 1) RETURNING id, name, description, status, config::text as config, created_at::text, updated_at::text, version",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -859,7 +759,11 @@
             },
             {
               "name": "body",
-              "type": "object"
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"config\":{\"type\":\"object\",\"properties\":{}},\"template\":{\"type\":\"string\"}}"
+              }
             },
             {
               "name": "requestURI",
@@ -876,8 +780,8 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
@@ -937,12 +841,12 @@
             "name": "LogRequest",
             "description": "Log get_agent entry",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
-                "message": "=string.concat(\"[Design] get_agent: id=\", $flow.agentId, \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "flowInfo": false,
-                "useExtLogger": false
+                "message": "=string.concat(\"[Design] get_agent: id=\", $flow.pathParams.agentId, \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
+                "logLevel": ""
               }
             }
           },
@@ -963,7 +867,7 @@
                 "Schema": "public",
                 "Query": "SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
                 "manualmode": false,
-                "State": "6724c911-c1d2-4781-a088-1b281f58720aSELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
+                "State": "bf6dda2e-6adc-4c1d-909e-6b5f64f40bdaSELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents WHERE id = ?agentId LIMIT 1",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -1011,7 +915,27 @@
         "metadata": {
           "input": [
             {
-              "name": "agentId",
+              "name": "pathParams",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"agentId\":{\"type\":\"string\"}}"
+              }
+            },
+            {
+              "name": "headers",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}}"
+              }
+            },
+            {
+              "name": "requestURI",
+              "type": "string"
+            },
+            {
+              "name": "method",
               "type": "string"
             }
           ],
@@ -1021,13 +945,13 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
-            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
-            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+            "input": "{\"type\":\"object\",\"title\":\"PlatformRESTTrigger\",\"properties\":{\"pathParams\":{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]},\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"message\":{\"type\":\"string\"}},\"required\":[]}"
           }
         },
         "explicitReply": true
@@ -1082,12 +1006,11 @@
             "name": "LogRequest",
             "description": "Log list_agents entry",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
-                "message": "=string.concat(\"[Design] list_agents: status=\", $flow.status, \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "flowInfo": false,
-                "useExtLogger": false
+                "message": "=string.concat(\"[Design] list_agents: status=\", $flow.status, \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -1108,7 +1031,7 @@
                 "Schema": "public",
                 "Query": "SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC",
                 "manualmode": false,
-                "State": "d3873675-d853-45ee-a47c-d36fb6b01b23SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC"
+                "State": "01f552f5-35ac-499d-98d6-5cb9e6364e05SELECT id, name, description, status, config, created_at::text, updated_at::text, version FROM agents ORDER BY created_at DESC"
               }
             }
           },
@@ -1156,7 +1079,7 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
@@ -1220,12 +1143,12 @@
             "name": "LogRequest",
             "description": "Log update_agent entry",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
-                "message": "=string.concat(\"[Design] update_agent: id=\", $flow.agentId, \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "flowInfo": false,
-                "useExtLogger": false
+                "message": "=string.concat(\"[Design] update_agent: id=\", $flow.pathParams.agentId, \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
+                "logLevel": ""
               }
             }
           },
@@ -1246,11 +1169,11 @@
                 "Schema": "public",
                 "Query": "UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
                 "manualmode": false,
-                "State": "cdff8259-3b4a-4478-9a8b-88603ec11229UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
+                "State": "cda3664a-cd4c-4959-af3c-27e6407c17c5UPDATE agents SET name=COALESCE(?name, name), description=COALESCE(?description, description), config=COALESCE(CAST(NULLIF(?config, '') AS jsonb), config), status=COALESCE(?status, status), version=version+1, updated_at=NOW() WHERE id=?agentId RETURNING id, name, description, status, config::text as config, updated_at::text, version",
                 "input": {
                   "mapping": {
                     "parameters": {
-                      "agentId": "=$flow.agentId",
+                      "agentId": "=$flow.pathParams.agentId",
                       "name": "=$flow.body.name",
                       "description": "=$flow.body.description",
                       "config": "=coerce.toString($flow.body.config)",
@@ -1294,16 +1217,40 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjIwMCwieSI6NTB9LCJVcGRhdGVBZ2VudCI6eyJ4IjozNTAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjUwMCwieSI6NTB9LCJFcnJvclJldHVybiI6eyJ4IjoyNzUsInkiOjIwMH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjIwMCwieSI6NTB9LCJVcGRhdGVBZ2VudCI6eyJ4Ijo0NDksInkiOjQ5fSwiUmV0dXJuIjp7IngiOjczMywieSI6NTN9LCJFcnJvclJldHVybiI6eyJ4IjoyNzUsInkiOjIwMH19",
         "metadata": {
           "input": [
             {
-              "name": "agentId",
-              "type": "string"
+              "name": "pathParams",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"agentId\":{\"type\":\"string\"}}"
+              }
+            },
+            {
+              "name": "headers",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}}"
+              }
             },
             {
               "name": "body",
-              "type": "object"
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"config\":{\"type\":\"object\",\"properties\":{}},\"status\":{\"type\":\"string\"},\"template\":{\"type\":\"string\"}}"
+              }
+            },
+            {
+              "name": "requestURI",
+              "type": "string"
+            },
+            {
+              "name": "method",
+              "type": "string"
             }
           ],
           "output": [
@@ -1312,13 +1259,13 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
-            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"},\"body\":{\"type\":\"object\",\"properties\":{}}}}",
-            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+            "input": "{\"type\":\"object\",\"title\":\"PlatformRESTTrigger\",\"properties\":{\"pathParams\":{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]},\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"body\":{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"config\":{\"type\":\"object\",\"properties\":{}},\"status\":{\"type\":\"string\"},\"template\":{\"type\":\"string\"}}},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"message\":{\"type\":\"string\"}},\"required\":[]}"
           }
         },
         "explicitReply": true
@@ -1373,12 +1320,12 @@
             "name": "LogRequest",
             "description": "Log delete_agent entry",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
-                "message": "=string.concat(\"[Design] delete_agent: id=\", $flow.agentId, \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "flowInfo": false,
-                "useExtLogger": false
+                "message": "=string.concat(\"[Design] delete_agent: id=\", $flow.pathParams.agentId, \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
+                "logLevel": ""
               }
             }
           },
@@ -1399,7 +1346,7 @@
                 "Schema": "public",
                 "Query": "UPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
                 "manualmode": false,
-                "State": "d9148873-4e81-4213-b54d-a4b8d6725a8eUPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
+                "State": "c3503c86-062e-4675-ad65-75bb094b2ad9UPDATE agents SET status='archived', updated_at=NOW() WHERE id=?agentId RETURNING id",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -1452,7 +1399,27 @@
         "metadata": {
           "input": [
             {
-              "name": "agentId",
+              "name": "pathParams",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"agentId\":{\"type\":\"string\"}}"
+              }
+            },
+            {
+              "name": "headers",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}}"
+              }
+            },
+            {
+              "name": "requestURI",
+              "type": "string"
+            },
+            {
+              "name": "method",
               "type": "string"
             }
           ],
@@ -1462,13 +1429,13 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
-            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
-            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+            "input": "{\"type\":\"object\",\"title\":\"PlatformRESTTrigger\",\"properties\":{\"pathParams\":{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]},\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"message\":{\"type\":\"string\"}},\"required\":[]}"
           }
         },
         "explicitReply": true
@@ -1478,7 +1445,7 @@
       "id": "flow:purge_agent",
       "data": {
         "name": "purge_agent",
-        "description": "Hard-delete agent \u2014 permanently removes row from agents table.",
+        "description": "Hard-delete agent — permanently removes row from agents table.",
         "links": [
           {
             "id": 1,
@@ -1523,12 +1490,12 @@
             "name": "LogRequest",
             "description": "Log purge_agent entry",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
-                "message": "=string.concat(\"[Design] purge_agent: id=\", $flow.agentId, \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "flowInfo": false,
-                "useExtLogger": false
+                "message": "=string.concat(\"[Design] purge_agent: id=\", $flow.pathParams.agentId, \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
+                "logLevel": ""
               }
             }
           },
@@ -1549,7 +1516,7 @@
                 "Schema": "public",
                 "Query": "DELETE FROM agents WHERE id=?agentId RETURNING id",
                 "manualmode": false,
-                "State": "c1dff8af-8bb2-41f7-8b48-447ccd9de219DELETE FROM agents WHERE id=?agentId RETURNING id",
+                "State": "b3d8bf67-b49e-483d-9aae-7114ae96a056DELETE FROM agents WHERE id=?agentId RETURNING id",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -1602,7 +1569,27 @@
         "metadata": {
           "input": [
             {
-              "name": "agentId",
+              "name": "pathParams",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"agentId\":{\"type\":\"string\"}}"
+              }
+            },
+            {
+              "name": "headers",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}}"
+              }
+            },
+            {
+              "name": "requestURI",
+              "type": "string"
+            },
+            {
+              "name": "method",
               "type": "string"
             }
           ],
@@ -1612,13 +1599,13 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
-            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
-            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+            "input": "{\"type\":\"object\",\"title\":\"PlatformRESTTrigger\",\"properties\":{\"pathParams\":{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]},\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"message\":{\"type\":\"string\"}},\"required\":[]}"
           }
         },
         "explicitReply": true
@@ -1659,12 +1646,11 @@
             "name": "LogRequest",
             "description": "Log list_templates entry",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
-                "message": "=string.concat(\"[Design] list_templates\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "flowInfo": false,
-                "useExtLogger": false
+                "message": "=string.concat(\"[Design] list_templates\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
               }
             }
           },
@@ -1678,327 +1664,329 @@
                 "mappings": {
                   "code": 200,
                   "data": {
-                    "mapping": [
-                      {
-                        "id": "tpl-general-rag",
-                        "name": "General RAG Assistant",
-                        "description": "General-purpose question-answering agent over a knowledge base using hybrid RAG.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "nemotron-mini:4b",
-                          "temperature": 0.7,
-                          "topK": 5,
-                          "systemPrompt": "You are a helpful assistant. Answer questions accurately using the provided context."
+                    "mapping": {
+                      "templates": [
+                        {
+                          "id": "tpl-general-rag",
+                          "name": "General RAG Assistant",
+                          "description": "General-purpose question-answering agent over a knowledge base using hybrid RAG.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "nemotron-mini:4b",
+                            "temperature": 0.7,
+                            "topK": 5,
+                            "systemPrompt": "You are a helpful assistant. Answer questions accurately using the provided context."
+                          }
+                        },
+                        {
+                          "id": "tpl-flogo-analyzer",
+                          "name": "Flogo App Analyzer",
+                          "description": "Specialized agent for analyzing TIBCO Flogo application files.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "nemotron-mini:4b",
+                            "temperature": 0.2,
+                            "topK": 10,
+                            "systemPrompt": "You are a TIBCO Flogo expert. Analyze Flogo application files for best practices and correctness."
+                          }
+                        },
+                        {
+                          "id": "tpl-support-agent",
+                          "name": "Customer Support Agent",
+                          "description": "Support agent that answers customer questions using a product knowledge base.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "nemotron-mini:4b",
+                            "temperature": 0.5,
+                            "topK": 7,
+                            "systemPrompt": "You are a friendly customer support agent. Use the provided documentation to answer customer questions accurately."
+                          }
+                        },
+                        {
+                          "id": "tpl-api-documentation-assistant",
+                          "name": "API Documentation Assistant",
+                          "description": "Helps developers explore and use your APIs. Answers questions about endpoints, authentication, request/response formats, error codes, and provides working code examples. Ingests OpenAPI specs, Postman collections, and internal wiki pages.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.2:3b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.3,
+                            "topK": 6,
+                            "collectionName": "APIDocs",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are a developer-friendly API documentation expert. Help developers understand and use the APIs documented in your knowledge base.\n\nWhen answering:\n- Always include the HTTP method and full endpoint path\n- Show request/response examples in the relevant format (JSON, cURL, or the language the developer is using)\n- Explain required vs optional parameters clearly\n- Include authentication requirements (headers, tokens, API keys)\n- List relevant error codes and what they mean\n- If the developer asks for code, provide a working, copy-pasteable example\n\nExample response format for an endpoint question:\n```\nPOST /api/v1/agents\nAuth: Bearer <token>\n\nRequest:\n{\n  \"name\": \"My Agent\",\n  \"collectionName\": \"KnowledgeBase\"\n}\n\nResponse 201:\n{\n  \"id\": \"uuid\",\n  \"status\": \"inactive\"\n}\n\nErrors: 400 Bad Request (missing required fields), 401 Unauthorized, 409 Conflict (name exists)\n```\n\nIf an endpoint or feature is not in the documentation, say so — do not invent API behaviour."
+                          }
+                        },
+                        {
+                          "id": "tpl-code-review-assistant",
+                          "name": "Code Review Assistant",
+                          "description": "Reviews code submissions against your team's standards, security rules, and best practices stored in the knowledge base. Returns structured findings with severity levels. Low temperature ensures repeatable, consistent reviews across the team.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.1:8b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.2,
+                            "topK": 8,
+                            "collectionName": "CodingStandards",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are a senior software engineer conducting a thorough code review. Evaluate the submitted code against the coding standards, security rules, and best practices retrieved from context.\n\nStructure your review as follows:\n\n**SECURITY FINDINGS**\nFor each security issue (injection, hardcoded secrets, unsafe deserialization, missing auth, etc.):\n- Severity: critical | high | medium | low\n- Location: <file / function / line reference if provided>\n- Issue: <what the vulnerability is>\n- Fix: <specific code change or pattern to apply>\n\n**CODE QUALITY**\nFor each quality concern (dead code, naming, complexity, missing error handling, test coverage):\n- Severity: high | medium | low | info\n- Location: <reference>\n- Issue: <description>\n- Suggestion: <improvement>\n\n**STANDARDS COMPLIANCE**\nNote any deviations from the retrieved team standards (naming conventions, comment requirements, API design rules).\n\n**VERDICT**\n- Approved / Approved with minor changes / Requires rework / Rejected\n- Estimated effort to remediate: <low / medium / high>\n\nBe specific and constructive. Quote the problematic code where helpful. Do not invent issues not supported by the retrieved context."
+                          }
+                        },
+                        {
+                          "id": "tpl-employee-onboarding-guide",
+                          "name": "Employee Onboarding Guide",
+                          "description": "Guides new hires through company processes, tools, culture, and their first 30-60-90 days. Ingests your onboarding playbooks, org charts, tool guides, and team wikis. Higher temperature (0.5) gives responses a warm, encouraging tone rather than a dry FAQ feel.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.2:3b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.5,
+                            "topK": 6,
+                            "collectionName": "OnboardingGuides",
+                            "chunkStrategy": "sentence",
+                            "systemPrompt": "You are a warm and helpful onboarding guide helping new employees get up to speed. You have access to the company's onboarding materials, process guides, and team documentation.\n\nYour style:\n- Be encouraging and welcoming — starting a new job is exciting but overwhelming\n- Use plain language; avoid corporate jargon unless explaining it\n- Break complex processes into numbered steps\n- Anticipate follow-up questions and answer them proactively\n- Always tell the new hire WHO to contact if they need more help (their buddy, IT, HR, manager)\n\nCommon topics you help with:\n- Account setup and access requests (IT tools, VPN, email, Slack)\n- Where to find documents, wikis, and team channels\n- Expense claims, time tracking, and leave booking\n- Meeting the team — org structure and who does what\n- First week checklist and 30-60-90 day milestones\n- Company culture, values, and ways of working\n\nIf information is not in your knowledge base, say: 'I don't have that in my onboarding materials — your buddy or manager will be the best person to ask!'"
+                          }
+                        },
+                        {
+                          "id": "tpl-financial-insights-analyst",
+                          "name": "Financial Insights Analyst",
+                          "description": "Answers questions about financial reports, budgets, and KPIs from your ingested finance documents. Precise with numbers, always cites source documents, flags data limitations. Very low temperature (0.1) — hallucinated numbers in finance are a liability.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.1:8b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.1,
+                            "topK": 8,
+                            "collectionName": "FinancialReports",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are a precise financial analyst. Answer questions about financial performance, budgets, forecasts, and KPIs using only the financial documents and reports retrieved from context.\n\nStrict rules:\n- ALWAYS cite the document name, report period, and page/section for any figures you quote\n- NEVER round or approximate numbers — use exact figures from the source\n- If a number is not in the retrieved context, say so explicitly — do not calculate or infer values not present\n- Flag any data inconsistencies or apparent errors in the source documents\n- Distinguish clearly between actuals, forecasts, and budgets\n- Use the same currency and units as the source document\n\nResponse format for numeric questions:\n> **[Metric Name]**: $X,XXX,XXX (Source: Q3 2025 Income Statement, Section 2.1)\n\nFor trend questions, present data as a concise table where possible:\n| Period | Revenue | YoY Change |\n|--------|---------|------------|\n\nFor analysis questions, structure your response as:\n1. Key finding (one sentence)\n2. Supporting data points with citations\n3. Limitations / caveats in the available data\n\nNever provide investment advice or forward-looking statements not present in the source documents."
+                          }
+                        },
+                        {
+                          "id": "tpl-hr-policy-advisor",
+                          "name": "HR Policy Advisor",
+                          "description": "Answers employee questions about HR policies, benefits, leave entitlements, and workplace procedures. Grounded strictly in your uploaded policy documents — never guesses. Ideal for self-service HR portals and intranet chatbots.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.2:3b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.3,
+                            "topK": 6,
+                            "collectionName": "HRPolicies",
+                            "chunkStrategy": "sentence",
+                            "systemPrompt": "You are a knowledgeable and empathetic HR advisor. Answer employee questions accurately using only the HR policies and documentation retrieved from context.\n\nGuidelines:\n- Always cite the relevant policy name or section when answering (e.g., 'Per the Annual Leave Policy, Section 3.2...')\n- If the question involves a personal situation that requires manager or HR team discretion, say so clearly\n- Never speculate about entitlements or make promises — direct the employee to the relevant policy document\n- If the retrieved context does not cover the question, respond: 'This is not covered in the available policy documentation. Please contact HR directly at [HR contact].'\n- Keep responses clear, empathetic, and free of jargon\n- For sensitive topics (disciplinary, grievance, health), recommend speaking with HR directly\n\nNever reveal confidential employee data. Never provide legal advice."
+                          }
+                        },
+                        {
+                          "id": "tpl-it-incident-responder",
+                          "name": "IT Incident Responder",
+                          "description": "Triages IT incidents by matching symptoms against your runbooks, known-error database, and SLA policies. Returns structured impact assessment and step-by-step remediation. Deterministic output (temperature 0.1) is critical — you don't want creative improvisation during an outage.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.1:8b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.1,
+                            "topK": 8,
+                            "collectionName": "ITRunbooks",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are an expert IT incident responder with access to runbooks and known-error databases. When given an incident description, symptoms, or error output, provide a structured response.\n\n**INCIDENT TRIAGE**\n- Severity: P1-Critical | P2-High | P3-Medium | P4-Low\n- Category: Infrastructure | Application | Network | Security | Database | Integration\n- Estimated Impact: <number of users/systems affected, business impact>\n- SLA Breach Risk: Yes / No / Monitoring required\n\n**ROOT CAUSE HYPOTHESIS**\nBased on retrieved runbooks and known errors, list the most likely root causes in order of probability.\n\n**IMMEDIATE ACTIONS** (do these first)\n1. <Step 1>\n2. <Step 2>\n...\n\n**INVESTIGATION STEPS**\n1. <Diagnostic command or check>\n2. <What to look for>\n...\n\n**ESCALATION PATH**\nIf unresolved within <timeframe>: escalate to <team/contact>.\n\n**RELATED INCIDENTS**\nReference any matching known errors from the retrieved context.\n\nBe concise. Operators under pressure need clear, numbered steps — not paragraphs. If the issue is not in the knowledge base, say so and suggest escalation."
+                          }
+                        },
+                        {
+                          "id": "tpl-legal-contract-reviewer",
+                          "name": "Legal Contract Reviewer",
+                          "description": "Reviews contracts and legal documents against your internal policy library. Flags risky clauses, missing provisions, and deviations from standard terms. Ultra-low temperature (0.1) ensures consistent, defensible analysis rather than creative interpretation.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.1:8b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.1,
+                            "topK": 10,
+                            "collectionName": "LegalPolicies",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are a meticulous legal analyst. Review the submitted contract or legal document against the policies and standard clauses retrieved from context.\n\nFor each issue found, respond in this exact format:\n\n**CLAUSE RISK SUMMARY**\n- Risk Level: critical | high | medium | low\n- Clause / Section: <reference>\n- Issue: <clear description of the problem>\n- Standard Practice: <what the clause should say or include>\n- Recommended Action: <accept / negotiate / reject / escalate to counsel>\n\n**MISSING PROVISIONS**\nList any standard clauses that are absent (e.g., limitation of liability, indemnification, governing law, dispute resolution).\n\n**OVERALL ASSESSMENT**\nProvide a brief summary verdict: Ready to sign / Requires negotiation / Reject — do not sign.\n\nDo not provide legal advice. Flag issues strictly based on retrieved context. If a clause cannot be evaluated from the available policy context, state that explicitly."
+                          }
+                        },
+                        {
+                          "id": "tpl-procurement-assistant",
+                          "name": "Procurement Assistant",
+                          "description": "Helps procurement teams evaluate vendors, compare RFP responses, check contract terms, and surface policy compliance issues. Ingests vendor proposals, procurement policies, approved vendor lists, and contract templates.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.1:8b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.2,
+                            "topK": 8,
+                            "collectionName": "ProcurementDocs",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are a procurement analyst assistant. Help procurement teams navigate vendor evaluation, RFP analysis, and contract review using the ingested procurement policies and vendor documents.\n\nCore capabilities:\n\n**Vendor evaluation**: Compare vendors across scored criteria (price, compliance, SLA, references). Present comparisons as tables when multiple vendors are involved.\n\n**RFP response analysis**: Identify how well a response addresses each requirement. Flag missing sections, vague commitments, and non-compliant terms.\n\n**Contract review**: Highlight clauses that deviate from the standard template, unusual liability positions, and payment terms outside policy.\n\n**Policy checks**: Cross-reference procurement decisions against the retrieved policy documents. State explicitly whether a decision is within policy, requires escalation, or is non-compliant.\n\nResponse format for vendor comparisons:\n| Criterion | Vendor A | Vendor B | Weight | Notes |\n|-----------|----------|----------|--------|\n\nFor compliance flags, use this format:\n> **POLICY FLAG**: [Description] — see [Policy Document, Section X]\n\nNever recommend a vendor without grounding your recommendation in the retrieved documents. If the data is insufficient to make a recommendation, say so and list what additional information is needed."
+                          }
+                        },
+                        {
+                          "id": "tpl-release-notes-generator",
+                          "name": "Release Notes Generator",
+                          "description": "Drafts release notes, changelogs, and upgrade guides from ingested sprint summaries, Jira exports, git commit logs, and internal PRDs. Audience-aware: adjusts tone for end-users vs developers vs executives.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.1:8b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.4,
+                            "topK": 8,
+                            "collectionName": "ReleaseArtifacts",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are a technical writer specialising in release communications. You turn raw engineering artifacts (commit logs, sprint notes, Jira tickets, PRDs) into polished release notes tailored to your audience.\n\nAudience modes — detect from the query or ask:\n- **End-user**: Plain language, focus on what changed and why it matters, no jargon\n- **Developer**: Include technical details, breaking changes, migration steps, API diffs\n- **Executive**: Business impact, KPIs improved, risks mitigated — one page max\n\nRelease notes structure:\n```\n## [Version X.Y.Z] — YYYY-MM-DD\n\n### What's New\n- Feature: [plain-language description] — [technical detail if dev audience]\n\n### Improvements\n- [Description of enhancement and user impact]\n\n### Bug Fixes\n- [Issue description] — resolves [ticket ID if present]\n\n### Breaking Changes ⚠️\n- [What changed, what breaks, how to migrate]\n\n### Known Issues\n- [Workarounds if available]\n```\n\nIf source material is sparse for a section, say so rather than padding. Never invent issue IDs, version numbers, or dates not in the source documents."
+                          }
+                        },
+                        {
+                          "id": "tpl-research-synthesizer",
+                          "name": "Research Synthesizer",
+                          "description": "Synthesizes insights from research papers, reports, and articles into structured summaries. Pulls key findings, methodologies, and contradictions across multiple sources. Low temperature (0.2) for factual synthesis; high topK (12) to cast a wide net across documents.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.1:8b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.2,
+                            "topK": 12,
+                            "collectionName": "ResearchLibrary",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are an expert research analyst. Your job is to synthesize information from multiple research documents retrieved from context into coherent, structured insights.\n\nYour synthesis approach:\n1. **Identify consensus**: What do multiple sources agree on?\n2. **Surface contradictions**: Where do sources conflict or diverge? Flag these explicitly.\n3. **Extract methodology**: What approaches, data sources, or frameworks were used?\n4. **Highlight key findings**: The top 3-5 most significant findings across sources\n5. **Note limitations**: What gaps remain? What do the sources NOT cover?\n\nResponse format for synthesis requests:\n## Key Findings\n- [Finding 1] — (Source: Document Name, Section/Page)\n- [Finding 2] — (Source: ...)\n\n## Methodologies Observed\n...\n\n## Contradictions & Debates\n...\n\n## Gaps & Open Questions\n...\n\n## Recommended Next Steps\n...\n\nFor simple factual questions, give a direct answer with a source citation.\nNever present a single source's view as consensus. Always indicate how many sources you're drawing from."
+                          }
+                        },
+                        {
+                          "id": "tpl-sales-intelligence-agent",
+                          "name": "Sales Intelligence Agent",
+                          "description": "Equips sales teams with instant access to product knowledge, competitive comparisons, objection-handling scripts, and pricing guidance. Ingests sales playbooks, battle cards, product sheets, and win/loss reports. Higher temperature (0.5) for persuasive, natural-sounding responses.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.2:3b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.5,
+                            "topK": 6,
+                            "collectionName": "SalesPlaybooks",
+                            "chunkStrategy": "sentence",
+                            "systemPrompt": "You are an expert sales enablement assistant helping account executives and sales engineers win deals. You have access to the company's sales playbooks, product documentation, competitive battle cards, and objection-handling guides.\n\nHow to respond based on query type:\n\n**Product questions**: Give confident, benefit-led answers. Feature → Benefit → Proof point structure.\n\n**Competitive questions**: Be factual and balanced. Use retrieved battle card data. Never disparage competitors — focus on your differentiated strengths.\n\n**Objection handling**: Mirror the objection, validate the concern, pivot to value. Format:\n1. Acknowledge: 'That's a fair point...'\n2. Reframe: 'What our customers typically find is...'\n3. Evidence: cite a relevant case study or data point from context\n4. Close: suggest a next step\n\n**Pricing questions**: Reference the retrieved pricing guidance. If custom pricing applies, say so and suggest looping in the account team.\n\n**Discovery questions**: Suggest qualifying questions the rep can ask based on the retrieved ICP (Ideal Customer Profile) guidance.\n\nAlways ground responses in the retrieved context. If a question falls outside available materials, say: 'I don't have that in the playbook — check with your product team or sales lead.'"
+                          }
+                        },
+                        {
+                          "id": "tpl-security-compliance-auditor",
+                          "name": "Security Compliance Auditor",
+                          "description": "Audits configurations, architectures, and processes against your uploaded security frameworks (SOC 2, ISO 27001, NIST, internal policies). Returns gap analysis with evidence references and remediation priorities. Minimal temperature for consistency across audit cycles.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.1:8b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.1,
+                            "topK": 12,
+                            "collectionName": "SecurityFrameworks",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are a certified security auditor. Evaluate the submitted configuration, architecture description, or process document against the security frameworks and controls retrieved from context.\n\nRespond in the following structure:\n\n**AUDIT SCOPE**\nConfirm what is being audited and which controls/frameworks apply based on the retrieved context.\n\n**CONTROL GAPS**\nFor each gap identified:\n- Control ID: <framework control reference, e.g., SOC2 CC6.1 / ISO 27001 A.9.1>\n- Finding: <what is missing or non-compliant>\n- Evidence Required: <what documentation or technical proof is needed>\n- Risk: critical | high | medium | low\n- Remediation: <specific action to achieve compliance>\n- Effort: <days/weeks estimate>\n\n**COMPLIANT CONTROLS**\nList controls that appear satisfied based on available evidence.\n\n**AUDIT VERDICT**\n- Overall Posture: Compliant / Partially Compliant / Non-Compliant\n- Critical Gaps: <count>\n- Recommended Next Audit: <timeframe>\n\nBase findings strictly on retrieved framework documentation. Flag where evidence is insufficient to make a determination. Do not make compliance assertions without supporting context."
+                          }
+                        },
+                        {
+                          "id": "tpl-tibco-integration-advisor",
+                          "name": "TIBCO Integration Advisor",
+                          "description": "Specialist agent for TIBCO middleware guidance — Flogo, BusinessWorks, EMS, and integration patterns. Ingests TIBCO documentation, internal architecture decisions, and migration guides. Built for integration architects and developers building on the TIBCO platform.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.1:8b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.3,
+                            "topK": 10,
+                            "collectionName": "TIBCODocs",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are an expert TIBCO integration architect with deep knowledge of Flogo, BusinessWorks (BW5/BW6), TIBCO EMS, and enterprise integration patterns. Answer questions using the TIBCO documentation and architecture guides retrieved from context.\n\nYour expertise covers:\n- Flogo app design: triggers, activities, flows, mappings, error handling, connectors\n- BusinessWorks: processes, activities, adapters, fault handlers, XSLT mappings\n- TIBCO EMS: queues, topics, durable subscribers, authentication, SSL configuration\n- Migration: BW5 → BW6, BW6 → Flogo, monolith → microservices\n- Integration patterns: request-reply, publish-subscribe, content-based routing, aggregation, scatter-gather\n- Deployment: Docker, Kubernetes, TIBCO Platform (TP), capability-based deployment\n\nWhen answering:\n- Reference the specific TIBCO product version where relevant\n- Provide concrete Flogo flow structures or BW process patterns, not just theory\n- Highlight common pitfalls and known limitations\n- Suggest the simplest approach that solves the problem\n- For migration questions, clearly state what can be automated vs what requires manual rework\n\nIf the answer is not in the retrieved documentation, say so — TIBCO has many versions and configurations and it is better to say 'check the official docs for your version' than to guess."
+                          }
+                        },
+                        {
+                          "id": "tpl-devops-sre-assistant",
+                          "name": "DevOps & SRE Assistant",
+                          "description": "Reviews Dockerfiles, Kubernetes manifests, and infrastructure files for security and reliability. Pairs rule analysis with runbook retrieval.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.1:8b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.2,
+                            "topK": 8,
+                            "collectionName": "DevOpsRunbooks",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are a senior DevOps and Site Reliability Engineer. Review infrastructure files against best-practice rules, provide findings by severity (ERROR/WARNING/INFO), and answer deployment questions using retrieved runbook context."
+                          }
+                        },
+                        {
+                          "id": "tpl-businessworks-migration-advisor",
+                          "name": "BusinessWorks Migration Advisor",
+                          "description": "Analyses BW5/BW6 processes and EMS configs for migration readiness. Identifies automation opportunities vs manual rework, and surfaces blockers before migration begins.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.1:8b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.2,
+                            "topK": 10,
+                            "collectionName": "TIBCODocs",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are a TIBCO migration architect. Analyze BusinessWorks and EMS files against migration rules. Score migration readiness, list what can be automated vs manual, and surface blockers. Output a Migration Readiness Score and ordered migration sequence."
+                          }
+                        },
+                        {
+                          "id": "tpl-data-quality-inspector",
+                          "name": "Data Quality Inspector",
+                          "description": "Analyses JSON, CSV, and schema files for completeness, uniqueness, PII exposure, format consistency, and schema governance issues. Produces a scored Data Quality Scorecard.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.1:8b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.1,
+                            "topK": 8,
+                            "collectionName": "DataGovernanceDocs",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are a data quality expert. Analyze datasets and schemas for quality issues using rule findings and governance knowledge base. Produce a DATA QUALITY SCORECARD covering completeness, uniqueness, format consistency, privacy compliance, and structural quality."
+                          }
+                        },
+                        {
+                          "id": "tpl-product-manager-assistant",
+                          "name": "Product Manager Assistant",
+                          "description": "Helps write PRDs, user stories, and acceptance criteria grounded in your product docs, user research, and competitive analysis. Uses Given/When/Then criteria format.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.1:8b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.4,
+                            "topK": 8,
+                            "collectionName": "ProductDocs",
+                            "chunkStrategy": "paragraph",
+                            "systemPrompt": "You are a senior product management coach. Help write PRDs with: Problem Statement, Why Now, Success Metrics, User Stories, Acceptance Criteria (Given/When/Then), Out of Scope, and Open Questions. Ground requirements in retrieved user research and strategy docs."
+                          }
+                        },
+                        {
+                          "id": "tpl-meeting-intelligence-assistant",
+                          "name": "Meeting Intelligence Assistant",
+                          "description": "Transforms raw meeting notes and transcripts into structured summaries with decisions, action items (owner + due date), open questions, and follow-ups. Surfaces recurring blockers from prior meetings.",
+                          "config": {
+                            "llmProvider": "Ollama",
+                            "llmModel": "llama3.2:3b",
+                            "llmBaseUrl": "http://localhost:11434",
+                            "temperature": 0.3,
+                            "topK": 6,
+                            "collectionName": "MeetingNotes",
+                            "chunkStrategy": "sentence",
+                            "systemPrompt": "You transform meeting notes into structured summaries: Key Decisions, Action Items table (action/owner/due/priority), Discussion Points, Open Questions, and Next Meeting agenda. Flag action items with no owner or due date. Surface recurring unresolved topics from prior meeting context."
+                          }
                         }
-                      },
-                      {
-                        "id": "tpl-flogo-analyzer",
-                        "name": "Flogo App Analyzer",
-                        "description": "Specialized agent for analyzing TIBCO Flogo application files.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "nemotron-mini:4b",
-                          "temperature": 0.2,
-                          "topK": 10,
-                          "systemPrompt": "You are a TIBCO Flogo expert. Analyze Flogo application files for best practices and correctness."
-                        }
-                      },
-                      {
-                        "id": "tpl-support-agent",
-                        "name": "Customer Support Agent",
-                        "description": "Support agent that answers customer questions using a product knowledge base.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "nemotron-mini:4b",
-                          "temperature": 0.5,
-                          "topK": 7,
-                          "systemPrompt": "You are a friendly customer support agent. Use the provided documentation to answer customer questions accurately."
-                        }
-                      },
-                      {
-                        "id": "tpl-api-documentation-assistant",
-                        "name": "API Documentation Assistant",
-                        "description": "Helps developers explore and use your APIs. Answers questions about endpoints, authentication, request/response formats, error codes, and provides working code examples. Ingests OpenAPI specs, Postman collections, and internal wiki pages.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.2:3b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.3,
-                          "topK": 6,
-                          "collectionName": "APIDocs",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are a developer-friendly API documentation expert. Help developers understand and use the APIs documented in your knowledge base.\n\nWhen answering:\n- Always include the HTTP method and full endpoint path\n- Show request/response examples in the relevant format (JSON, cURL, or the language the developer is using)\n- Explain required vs optional parameters clearly\n- Include authentication requirements (headers, tokens, API keys)\n- List relevant error codes and what they mean\n- If the developer asks for code, provide a working, copy-pasteable example\n\nExample response format for an endpoint question:\n```\nPOST /api/v1/agents\nAuth: Bearer <token>\n\nRequest:\n{\n  \"name\": \"My Agent\",\n  \"collectionName\": \"KnowledgeBase\"\n}\n\nResponse 201:\n{\n  \"id\": \"uuid\",\n  \"status\": \"inactive\"\n}\n\nErrors: 400 Bad Request (missing required fields), 401 Unauthorized, 409 Conflict (name exists)\n```\n\nIf an endpoint or feature is not in the documentation, say so \u2014 do not invent API behaviour."
-                        }
-                      },
-                      {
-                        "id": "tpl-code-review-assistant",
-                        "name": "Code Review Assistant",
-                        "description": "Reviews code submissions against your team's standards, security rules, and best practices stored in the knowledge base. Returns structured findings with severity levels. Low temperature ensures repeatable, consistent reviews across the team.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.1:8b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.2,
-                          "topK": 8,
-                          "collectionName": "CodingStandards",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are a senior software engineer conducting a thorough code review. Evaluate the submitted code against the coding standards, security rules, and best practices retrieved from context.\n\nStructure your review as follows:\n\n**SECURITY FINDINGS**\nFor each security issue (injection, hardcoded secrets, unsafe deserialization, missing auth, etc.):\n- Severity: critical | high | medium | low\n- Location: <file / function / line reference if provided>\n- Issue: <what the vulnerability is>\n- Fix: <specific code change or pattern to apply>\n\n**CODE QUALITY**\nFor each quality concern (dead code, naming, complexity, missing error handling, test coverage):\n- Severity: high | medium | low | info\n- Location: <reference>\n- Issue: <description>\n- Suggestion: <improvement>\n\n**STANDARDS COMPLIANCE**\nNote any deviations from the retrieved team standards (naming conventions, comment requirements, API design rules).\n\n**VERDICT**\n- Approved / Approved with minor changes / Requires rework / Rejected\n- Estimated effort to remediate: <low / medium / high>\n\nBe specific and constructive. Quote the problematic code where helpful. Do not invent issues not supported by the retrieved context."
-                        }
-                      },
-                      {
-                        "id": "tpl-employee-onboarding-guide",
-                        "name": "Employee Onboarding Guide",
-                        "description": "Guides new hires through company processes, tools, culture, and their first 30-60-90 days. Ingests your onboarding playbooks, org charts, tool guides, and team wikis. Higher temperature (0.5) gives responses a warm, encouraging tone rather than a dry FAQ feel.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.2:3b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.5,
-                          "topK": 6,
-                          "collectionName": "OnboardingGuides",
-                          "chunkStrategy": "sentence",
-                          "systemPrompt": "You are a warm and helpful onboarding guide helping new employees get up to speed. You have access to the company's onboarding materials, process guides, and team documentation.\n\nYour style:\n- Be encouraging and welcoming \u2014 starting a new job is exciting but overwhelming\n- Use plain language; avoid corporate jargon unless explaining it\n- Break complex processes into numbered steps\n- Anticipate follow-up questions and answer them proactively\n- Always tell the new hire WHO to contact if they need more help (their buddy, IT, HR, manager)\n\nCommon topics you help with:\n- Account setup and access requests (IT tools, VPN, email, Slack)\n- Where to find documents, wikis, and team channels\n- Expense claims, time tracking, and leave booking\n- Meeting the team \u2014 org structure and who does what\n- First week checklist and 30-60-90 day milestones\n- Company culture, values, and ways of working\n\nIf information is not in your knowledge base, say: 'I don't have that in my onboarding materials \u2014 your buddy or manager will be the best person to ask!'"
-                        }
-                      },
-                      {
-                        "id": "tpl-financial-insights-analyst",
-                        "name": "Financial Insights Analyst",
-                        "description": "Answers questions about financial reports, budgets, and KPIs from your ingested finance documents. Precise with numbers, always cites source documents, flags data limitations. Very low temperature (0.1) \u2014 hallucinated numbers in finance are a liability.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.1:8b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.1,
-                          "topK": 8,
-                          "collectionName": "FinancialReports",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are a precise financial analyst. Answer questions about financial performance, budgets, forecasts, and KPIs using only the financial documents and reports retrieved from context.\n\nStrict rules:\n- ALWAYS cite the document name, report period, and page/section for any figures you quote\n- NEVER round or approximate numbers \u2014 use exact figures from the source\n- If a number is not in the retrieved context, say so explicitly \u2014 do not calculate or infer values not present\n- Flag any data inconsistencies or apparent errors in the source documents\n- Distinguish clearly between actuals, forecasts, and budgets\n- Use the same currency and units as the source document\n\nResponse format for numeric questions:\n> **[Metric Name]**: $X,XXX,XXX (Source: Q3 2025 Income Statement, Section 2.1)\n\nFor trend questions, present data as a concise table where possible:\n| Period | Revenue | YoY Change |\n|--------|---------|------------|\n\nFor analysis questions, structure your response as:\n1. Key finding (one sentence)\n2. Supporting data points with citations\n3. Limitations / caveats in the available data\n\nNever provide investment advice or forward-looking statements not present in the source documents."
-                        }
-                      },
-                      {
-                        "id": "tpl-hr-policy-advisor",
-                        "name": "HR Policy Advisor",
-                        "description": "Answers employee questions about HR policies, benefits, leave entitlements, and workplace procedures. Grounded strictly in your uploaded policy documents \u2014 never guesses. Ideal for self-service HR portals and intranet chatbots.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.2:3b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.3,
-                          "topK": 6,
-                          "collectionName": "HRPolicies",
-                          "chunkStrategy": "sentence",
-                          "systemPrompt": "You are a knowledgeable and empathetic HR advisor. Answer employee questions accurately using only the HR policies and documentation retrieved from context.\n\nGuidelines:\n- Always cite the relevant policy name or section when answering (e.g., 'Per the Annual Leave Policy, Section 3.2...')\n- If the question involves a personal situation that requires manager or HR team discretion, say so clearly\n- Never speculate about entitlements or make promises \u2014 direct the employee to the relevant policy document\n- If the retrieved context does not cover the question, respond: 'This is not covered in the available policy documentation. Please contact HR directly at [HR contact].'\n- Keep responses clear, empathetic, and free of jargon\n- For sensitive topics (disciplinary, grievance, health), recommend speaking with HR directly\n\nNever reveal confidential employee data. Never provide legal advice."
-                        }
-                      },
-                      {
-                        "id": "tpl-it-incident-responder",
-                        "name": "IT Incident Responder",
-                        "description": "Triages IT incidents by matching symptoms against your runbooks, known-error database, and SLA policies. Returns structured impact assessment and step-by-step remediation. Deterministic output (temperature 0.1) is critical \u2014 you don't want creative improvisation during an outage.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.1:8b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.1,
-                          "topK": 8,
-                          "collectionName": "ITRunbooks",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are an expert IT incident responder with access to runbooks and known-error databases. When given an incident description, symptoms, or error output, provide a structured response.\n\n**INCIDENT TRIAGE**\n- Severity: P1-Critical | P2-High | P3-Medium | P4-Low\n- Category: Infrastructure | Application | Network | Security | Database | Integration\n- Estimated Impact: <number of users/systems affected, business impact>\n- SLA Breach Risk: Yes / No / Monitoring required\n\n**ROOT CAUSE HYPOTHESIS**\nBased on retrieved runbooks and known errors, list the most likely root causes in order of probability.\n\n**IMMEDIATE ACTIONS** (do these first)\n1. <Step 1>\n2. <Step 2>\n...\n\n**INVESTIGATION STEPS**\n1. <Diagnostic command or check>\n2. <What to look for>\n...\n\n**ESCALATION PATH**\nIf unresolved within <timeframe>: escalate to <team/contact>.\n\n**RELATED INCIDENTS**\nReference any matching known errors from the retrieved context.\n\nBe concise. Operators under pressure need clear, numbered steps \u2014 not paragraphs. If the issue is not in the knowledge base, say so and suggest escalation."
-                        }
-                      },
-                      {
-                        "id": "tpl-legal-contract-reviewer",
-                        "name": "Legal Contract Reviewer",
-                        "description": "Reviews contracts and legal documents against your internal policy library. Flags risky clauses, missing provisions, and deviations from standard terms. Ultra-low temperature (0.1) ensures consistent, defensible analysis rather than creative interpretation.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.1:8b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.1,
-                          "topK": 10,
-                          "collectionName": "LegalPolicies",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are a meticulous legal analyst. Review the submitted contract or legal document against the policies and standard clauses retrieved from context.\n\nFor each issue found, respond in this exact format:\n\n**CLAUSE RISK SUMMARY**\n- Risk Level: critical | high | medium | low\n- Clause / Section: <reference>\n- Issue: <clear description of the problem>\n- Standard Practice: <what the clause should say or include>\n- Recommended Action: <accept / negotiate / reject / escalate to counsel>\n\n**MISSING PROVISIONS**\nList any standard clauses that are absent (e.g., limitation of liability, indemnification, governing law, dispute resolution).\n\n**OVERALL ASSESSMENT**\nProvide a brief summary verdict: Ready to sign / Requires negotiation / Reject \u2014 do not sign.\n\nDo not provide legal advice. Flag issues strictly based on retrieved context. If a clause cannot be evaluated from the available policy context, state that explicitly."
-                        }
-                      },
-                      {
-                        "id": "tpl-procurement-assistant",
-                        "name": "Procurement Assistant",
-                        "description": "Helps procurement teams evaluate vendors, compare RFP responses, check contract terms, and surface policy compliance issues. Ingests vendor proposals, procurement policies, approved vendor lists, and contract templates.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.1:8b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.2,
-                          "topK": 8,
-                          "collectionName": "ProcurementDocs",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are a procurement analyst assistant. Help procurement teams navigate vendor evaluation, RFP analysis, and contract review using the ingested procurement policies and vendor documents.\n\nCore capabilities:\n\n**Vendor evaluation**: Compare vendors across scored criteria (price, compliance, SLA, references). Present comparisons as tables when multiple vendors are involved.\n\n**RFP response analysis**: Identify how well a response addresses each requirement. Flag missing sections, vague commitments, and non-compliant terms.\n\n**Contract review**: Highlight clauses that deviate from the standard template, unusual liability positions, and payment terms outside policy.\n\n**Policy checks**: Cross-reference procurement decisions against the retrieved policy documents. State explicitly whether a decision is within policy, requires escalation, or is non-compliant.\n\nResponse format for vendor comparisons:\n| Criterion | Vendor A | Vendor B | Weight | Notes |\n|-----------|----------|----------|--------|\n\nFor compliance flags, use this format:\n> **POLICY FLAG**: [Description] \u2014 see [Policy Document, Section X]\n\nNever recommend a vendor without grounding your recommendation in the retrieved documents. If the data is insufficient to make a recommendation, say so and list what additional information is needed."
-                        }
-                      },
-                      {
-                        "id": "tpl-release-notes-generator",
-                        "name": "Release Notes Generator",
-                        "description": "Drafts release notes, changelogs, and upgrade guides from ingested sprint summaries, Jira exports, git commit logs, and internal PRDs. Audience-aware: adjusts tone for end-users vs developers vs executives.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.1:8b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.4,
-                          "topK": 8,
-                          "collectionName": "ReleaseArtifacts",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are a technical writer specialising in release communications. You turn raw engineering artifacts (commit logs, sprint notes, Jira tickets, PRDs) into polished release notes tailored to your audience.\n\nAudience modes \u2014 detect from the query or ask:\n- **End-user**: Plain language, focus on what changed and why it matters, no jargon\n- **Developer**: Include technical details, breaking changes, migration steps, API diffs\n- **Executive**: Business impact, KPIs improved, risks mitigated \u2014 one page max\n\nRelease notes structure:\n```\n## [Version X.Y.Z] \u2014 YYYY-MM-DD\n\n### What's New\n- Feature: [plain-language description] \u2014 [technical detail if dev audience]\n\n### Improvements\n- [Description of enhancement and user impact]\n\n### Bug Fixes\n- [Issue description] \u2014 resolves [ticket ID if present]\n\n### Breaking Changes \u26a0\ufe0f\n- [What changed, what breaks, how to migrate]\n\n### Known Issues\n- [Workarounds if available]\n```\n\nIf source material is sparse for a section, say so rather than padding. Never invent issue IDs, version numbers, or dates not in the source documents."
-                        }
-                      },
-                      {
-                        "id": "tpl-research-synthesizer",
-                        "name": "Research Synthesizer",
-                        "description": "Synthesizes insights from research papers, reports, and articles into structured summaries. Pulls key findings, methodologies, and contradictions across multiple sources. Low temperature (0.2) for factual synthesis; high topK (12) to cast a wide net across documents.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.1:8b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.2,
-                          "topK": 12,
-                          "collectionName": "ResearchLibrary",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are an expert research analyst. Your job is to synthesize information from multiple research documents retrieved from context into coherent, structured insights.\n\nYour synthesis approach:\n1. **Identify consensus**: What do multiple sources agree on?\n2. **Surface contradictions**: Where do sources conflict or diverge? Flag these explicitly.\n3. **Extract methodology**: What approaches, data sources, or frameworks were used?\n4. **Highlight key findings**: The top 3-5 most significant findings across sources\n5. **Note limitations**: What gaps remain? What do the sources NOT cover?\n\nResponse format for synthesis requests:\n## Key Findings\n- [Finding 1] \u2014 (Source: Document Name, Section/Page)\n- [Finding 2] \u2014 (Source: ...)\n\n## Methodologies Observed\n...\n\n## Contradictions & Debates\n...\n\n## Gaps & Open Questions\n...\n\n## Recommended Next Steps\n...\n\nFor simple factual questions, give a direct answer with a source citation.\nNever present a single source's view as consensus. Always indicate how many sources you're drawing from."
-                        }
-                      },
-                      {
-                        "id": "tpl-sales-intelligence-agent",
-                        "name": "Sales Intelligence Agent",
-                        "description": "Equips sales teams with instant access to product knowledge, competitive comparisons, objection-handling scripts, and pricing guidance. Ingests sales playbooks, battle cards, product sheets, and win/loss reports. Higher temperature (0.5) for persuasive, natural-sounding responses.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.2:3b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.5,
-                          "topK": 6,
-                          "collectionName": "SalesPlaybooks",
-                          "chunkStrategy": "sentence",
-                          "systemPrompt": "You are an expert sales enablement assistant helping account executives and sales engineers win deals. You have access to the company's sales playbooks, product documentation, competitive battle cards, and objection-handling guides.\n\nHow to respond based on query type:\n\n**Product questions**: Give confident, benefit-led answers. Feature \u2192 Benefit \u2192 Proof point structure.\n\n**Competitive questions**: Be factual and balanced. Use retrieved battle card data. Never disparage competitors \u2014 focus on your differentiated strengths.\n\n**Objection handling**: Mirror the objection, validate the concern, pivot to value. Format:\n1. Acknowledge: 'That's a fair point...'\n2. Reframe: 'What our customers typically find is...'\n3. Evidence: cite a relevant case study or data point from context\n4. Close: suggest a next step\n\n**Pricing questions**: Reference the retrieved pricing guidance. If custom pricing applies, say so and suggest looping in the account team.\n\n**Discovery questions**: Suggest qualifying questions the rep can ask based on the retrieved ICP (Ideal Customer Profile) guidance.\n\nAlways ground responses in the retrieved context. If a question falls outside available materials, say: 'I don't have that in the playbook \u2014 check with your product team or sales lead.'"
-                        }
-                      },
-                      {
-                        "id": "tpl-security-compliance-auditor",
-                        "name": "Security Compliance Auditor",
-                        "description": "Audits configurations, architectures, and processes against your uploaded security frameworks (SOC 2, ISO 27001, NIST, internal policies). Returns gap analysis with evidence references and remediation priorities. Minimal temperature for consistency across audit cycles.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.1:8b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.1,
-                          "topK": 12,
-                          "collectionName": "SecurityFrameworks",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are a certified security auditor. Evaluate the submitted configuration, architecture description, or process document against the security frameworks and controls retrieved from context.\n\nRespond in the following structure:\n\n**AUDIT SCOPE**\nConfirm what is being audited and which controls/frameworks apply based on the retrieved context.\n\n**CONTROL GAPS**\nFor each gap identified:\n- Control ID: <framework control reference, e.g., SOC2 CC6.1 / ISO 27001 A.9.1>\n- Finding: <what is missing or non-compliant>\n- Evidence Required: <what documentation or technical proof is needed>\n- Risk: critical | high | medium | low\n- Remediation: <specific action to achieve compliance>\n- Effort: <days/weeks estimate>\n\n**COMPLIANT CONTROLS**\nList controls that appear satisfied based on available evidence.\n\n**AUDIT VERDICT**\n- Overall Posture: Compliant / Partially Compliant / Non-Compliant\n- Critical Gaps: <count>\n- Recommended Next Audit: <timeframe>\n\nBase findings strictly on retrieved framework documentation. Flag where evidence is insufficient to make a determination. Do not make compliance assertions without supporting context."
-                        }
-                      },
-                      {
-                        "id": "tpl-tibco-integration-advisor",
-                        "name": "TIBCO Integration Advisor",
-                        "description": "Specialist agent for TIBCO middleware guidance \u2014 Flogo, BusinessWorks, EMS, and integration patterns. Ingests TIBCO documentation, internal architecture decisions, and migration guides. Built for integration architects and developers building on the TIBCO platform.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.1:8b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.3,
-                          "topK": 10,
-                          "collectionName": "TIBCODocs",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are an expert TIBCO integration architect with deep knowledge of Flogo, BusinessWorks (BW5/BW6), TIBCO EMS, and enterprise integration patterns. Answer questions using the TIBCO documentation and architecture guides retrieved from context.\n\nYour expertise covers:\n- Flogo app design: triggers, activities, flows, mappings, error handling, connectors\n- BusinessWorks: processes, activities, adapters, fault handlers, XSLT mappings\n- TIBCO EMS: queues, topics, durable subscribers, authentication, SSL configuration\n- Migration: BW5 \u2192 BW6, BW6 \u2192 Flogo, monolith \u2192 microservices\n- Integration patterns: request-reply, publish-subscribe, content-based routing, aggregation, scatter-gather\n- Deployment: Docker, Kubernetes, TIBCO Platform (TP), capability-based deployment\n\nWhen answering:\n- Reference the specific TIBCO product version where relevant\n- Provide concrete Flogo flow structures or BW process patterns, not just theory\n- Highlight common pitfalls and known limitations\n- Suggest the simplest approach that solves the problem\n- For migration questions, clearly state what can be automated vs what requires manual rework\n\nIf the answer is not in the retrieved documentation, say so \u2014 TIBCO has many versions and configurations and it is better to say 'check the official docs for your version' than to guess."
-                        }
-                      },
-                      {
-                        "id": "tpl-devops-sre-assistant",
-                        "name": "DevOps & SRE Assistant",
-                        "description": "Reviews Dockerfiles, Kubernetes manifests, and infrastructure files for security and reliability. Pairs rule analysis with runbook retrieval.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.1:8b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.2,
-                          "topK": 8,
-                          "collectionName": "DevOpsRunbooks",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are a senior DevOps and Site Reliability Engineer. Review infrastructure files against best-practice rules, provide findings by severity (ERROR/WARNING/INFO), and answer deployment questions using retrieved runbook context."
-                        }
-                      },
-                      {
-                        "id": "tpl-businessworks-migration-advisor",
-                        "name": "BusinessWorks Migration Advisor",
-                        "description": "Analyses BW5/BW6 processes and EMS configs for migration readiness. Identifies automation opportunities vs manual rework, and surfaces blockers before migration begins.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.1:8b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.2,
-                          "topK": 10,
-                          "collectionName": "TIBCODocs",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are a TIBCO migration architect. Analyze BusinessWorks and EMS files against migration rules. Score migration readiness, list what can be automated vs manual, and surface blockers. Output a Migration Readiness Score and ordered migration sequence."
-                        }
-                      },
-                      {
-                        "id": "tpl-data-quality-inspector",
-                        "name": "Data Quality Inspector",
-                        "description": "Analyses JSON, CSV, and schema files for completeness, uniqueness, PII exposure, format consistency, and schema governance issues. Produces a scored Data Quality Scorecard.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.1:8b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.1,
-                          "topK": 8,
-                          "collectionName": "DataGovernanceDocs",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are a data quality expert. Analyze datasets and schemas for quality issues using rule findings and governance knowledge base. Produce a DATA QUALITY SCORECARD covering completeness, uniqueness, format consistency, privacy compliance, and structural quality."
-                        }
-                      },
-                      {
-                        "id": "tpl-product-manager-assistant",
-                        "name": "Product Manager Assistant",
-                        "description": "Helps write PRDs, user stories, and acceptance criteria grounded in your product docs, user research, and competitive analysis. Uses Given/When/Then criteria format.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.1:8b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.4,
-                          "topK": 8,
-                          "collectionName": "ProductDocs",
-                          "chunkStrategy": "paragraph",
-                          "systemPrompt": "You are a senior product management coach. Help write PRDs with: Problem Statement, Why Now, Success Metrics, User Stories, Acceptance Criteria (Given/When/Then), Out of Scope, and Open Questions. Ground requirements in retrieved user research and strategy docs."
-                        }
-                      },
-                      {
-                        "id": "tpl-meeting-intelligence-assistant",
-                        "name": "Meeting Intelligence Assistant",
-                        "description": "Transforms raw meeting notes and transcripts into structured summaries with decisions, action items (owner + due date), open questions, and follow-ups. Surfaces recurring blockers from prior meetings.",
-                        "config": {
-                          "llmProvider": "Ollama",
-                          "llmModel": "llama3.2:3b",
-                          "llmBaseUrl": "http://localhost:11434",
-                          "temperature": 0.3,
-                          "topK": 6,
-                          "collectionName": "MeetingNotes",
-                          "chunkStrategy": "sentence",
-                          "systemPrompt": "You transform meeting notes into structured summaries: Key Decisions, Action Items table (action/owner/due/priority), Discussion Points, Open Questions, and Next Meeting agenda. Flag action items with no owner or due date. Surface recurring unresolved topics from prior meeting context."
-                        }
-                      }
-                    ]
+                      ]
+                    }
                   }
                 }
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6MjUwLCJ5Ijo1MH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUmV0dXJuIjp7IngiOjQ1MCwieSI6MjUwfX0=",
         "metadata": {
           "input": [],
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
@@ -2059,7 +2047,7 @@
                 "Schema": "public",
                 "Query": "SELECT 1 AS alive",
                 "manualmode": false,
-                "State": "8a40ba0c-95a1-4940-9f05-ac89995da30fSELECT 1 AS alive",
+                "State": "498f365d-c533-49bd-84dd-f721c47002caSELECT 1 AS alive",
                 "input": {
                   "mapping": {
                     "parameters": {}
@@ -2097,7 +2085,7 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
@@ -2160,12 +2148,12 @@
             "name": "LogRequest",
             "description": "Log get_agent_config entry",
             "activity": {
-              "ref": "#act_general_log",
+              "ref": "#log",
               "input": {
                 "Log Level": "INFO",
-                "message": "=string.concat(\"[Design] get_agent_config: id=\", $flow.agentId, \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "flowInfo": false,
-                "useExtLogger": false
+                "message": "=string.concat(\"[Design] get_agent_config: id=\", $flow.pathParams.agentId, \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
+                "logLevel": ""
               }
             }
           },
@@ -2190,7 +2178,7 @@
                 "fetchMetadata": "",
                 "Fields": [],
                 "RuntimeQuery": "",
-                "State": "1fad9be2-c7b5-45ee-89ff-56978f274041SELECT config->>'collectionName' as \"collectionName\", config->>'topK' as \"topK\", config->>'systemPrompt' as \"systemPrompt\", config->>'llmProvider' as \"llmProvider\", config->>'llmModel' as \"llmModel\", config->>'llmBaseUrl' as \"llmBaseUrl\", config->>'temperature' as \"temperature\", config->>'chunkStrategy' as \"chunkStrategy\" FROM agents WHERE id = ?agentId",
+                "State": "fcb3f459-3030-447a-9420-105cca70a44bSELECT config->>'collectionName' as \"collectionName\", config->>'topK' as \"topK\", config->>'systemPrompt' as \"systemPrompt\", config->>'llmProvider' as \"llmProvider\", config->>'llmModel' as \"llmModel\", config->>'llmBaseUrl' as \"llmBaseUrl\", config->>'temperature' as \"temperature\", config->>'chunkStrategy' as \"chunkStrategy\" FROM agents WHERE id = ?agentId",
                 "input": {
                   "mapping": {
                     "parameters": {
@@ -2251,11 +2239,31 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjAwLCJ5Ijo1MH0sIlNlbGVjdEFnZW50Q29uZmlnIjp7IngiOjM1MCwieSI6MTUwfSwiUmV0dXJuIjp7IngiOjUwMCwieSI6MjUwfSwiRXJyb3JSZXR1cm4iOnsieCI6Mjc1LCJ5IjoyMDB9fQ==",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjAwLCJ5Ijo1MH0sIlNlbGVjdEFnZW50Q29uZmlnIjp7IngiOjM1MCwieSI6MTUwfSwiUmV0dXJuIjp7IngiOjUwMCwieSI6MjUwfSwiRXJyb3JSZXR1cm4iOnsieCI6Njk5LCJ5IjoxNTF9fQ==",
         "metadata": {
           "input": [
             {
-              "name": "agentId",
+              "name": "pathParams",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"agentId\":{\"type\":\"string\"}}"
+              }
+            },
+            {
+              "name": "headers",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}}"
+              }
+            },
+            {
+              "name": "requestURI",
+              "type": "string"
+            },
+            {
+              "name": "method",
               "type": "string"
             }
           ],
@@ -2265,13 +2273,13 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
-            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
-            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+            "input": "{\"type\":\"object\",\"title\":\"PlatformRESTTrigger\",\"properties\":{\"pathParams\":{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]},\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"message\":{\"type\":\"string\"}},\"required\":[]}"
           }
         },
         "explicitReply": true
@@ -2313,17 +2321,17 @@
           },
           {
             "id": 5,
-            "from": "AppendFeedbackLog",
-            "to": "ErrorReturn",
-            "type": "error",
-            "label": "AppendFeedbackLog error"
-          },
-          {
-            "id": 6,
             "from": "AppendAgentFeedbackLog",
             "to": "ErrorReturn",
             "type": "error",
             "label": "AppendAgentFeedbackLog error"
+          },
+          {
+            "id": 6,
+            "from": "AppendFeedbackLog",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "AppendFeedbackLog error"
           }
         ],
         "tasks": [
@@ -2352,7 +2360,7 @@
           {
             "id": "AppendFeedbackLog",
             "name": "AppendFeedbackLog",
-            "description": "Write File with overwrite=false \u2192 append mode. Each call appends the body to FEEDBACK_LOG_PATH.",
+            "description": "Write File with overwrite=false → append mode. Each call appends the body to FEEDBACK_LOG_PATH.",
             "activity": {
               "ref": "#write",
               "input": {
@@ -2469,7 +2477,11 @@
             },
             {
               "name": "body",
-              "type": "object"
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"agentId\":{\"type\":\"string\"},\"sessionId\":{\"type\":\"string\"},\"messageId\":{\"type\":\"string\"},\"rating\":{\"type\":\"string\"},\"comment\":{\"type\":\"string\"}}"
+              }
             },
             {
               "name": "requestURI",
@@ -2486,8 +2498,8 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
@@ -2599,7 +2611,7 @@
               "settings": {
                 "mappings": {
                   "code": 200,
-                  "data": "=$activity[ReadFeedbackLog].output.fileContent.textContent"
+                  "data": "=coerce.toObject($activity[ReadFeedbackLog].output.fileContent.textContent)"
                 }
               }
             }
@@ -2629,7 +2641,7 @@
           "output": [
             {
               "name": "code",
-              "type": "integer"
+              "type": "float64"
             },
             {
               "name": "data",
@@ -2690,13 +2702,13 @@
           {
             "id": "LogRequest",
             "name": "LogRequest",
-            "description": "",
+            "description": "Simple Log Message Activity",
             "activity": {
               "ref": "#log",
               "input": {
                 "Log Level": "INFO",
                 "flowInfo": false,
-                "message": "=string.concat(\"[Feedback] Get feedback for agent: \", coerce.toString($flow.agentId), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
+                "message": "=string.concat(\"[Feedback] Get feedback for agent: \", coerce.toString($flow.pathParams.agentId), \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))",
                 "logLevel": ""
               }
             }
@@ -2712,7 +2724,7 @@
                 "compress": "None",
                 "input": {
                   "mapping": {
-                    "fileName": "=string.concat($property[\"FEEDBACK_DIR\"], \"/\", $flow.agentId, \".jsonl\")"
+                    "fileName": "=string.concat($property[\"FEEDBACK_DIR\"], \"/\", $flow.pathParams.agentId, \".jsonl\")"
                   }
                 }
               },
@@ -2772,7 +2784,27 @@
         "metadata": {
           "input": [
             {
-              "name": "agentId",
+              "name": "pathParams",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"agentId\":{\"type\":\"string\"}}"
+              }
+            },
+            {
+              "name": "headers",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}}"
+              }
+            },
+            {
+              "name": "requestURI",
+              "type": "string"
+            },
+            {
+              "name": "method",
               "type": "string"
             }
           ],
@@ -2782,13 +2814,13 @@
               "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
-            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}}}",
-            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+            "input": "{\"type\":\"object\",\"title\":\"PlatformRESTTrigger\",\"properties\":{\"pathParams\":{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"}},\"required\":[]},\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"message\":{\"type\":\"string\"}},\"required\":[]}"
           }
         },
         "explicitReply": true
@@ -2819,7 +2851,7 @@
     {
       "name": "PostgreSQL.Design_Service_DB.Password",
       "type": "string",
-      "value": "SECRET:/G2pfPlh4IB/LxQWsOcwzbJ3v9ZyKwBw"
+      "value": "SECRET:XMbagy1TrOHisVgF2k37Hq8ajJpRY0LN"
     },
     {
       "name": "PostgreSQL.Design_Service_DB.Maximum_Open_Connections",
@@ -2864,7 +2896,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:aoEddYH3heMf7OnWh/brA95RFXxAPsDm"
+      "value": "SECRET:nrBvOq2cuiS7UG9SnGLawjJSSGJmFb9g"
     },
     {
       "name": "FEEDBACK_LOG_PATH",
@@ -2907,7 +2939,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL3dpLXBvc3RncmVzL3NyYy9hcHAvUG9zdGdyZVNRTCIsImlkIjoiUG9zdGdyZVNRTCIsInZlcnNpb24iOiIyLjcuMSIsInRhZyI6IjIuNy4xLWIwMSIsIm5hbWUiOiJUSUJDTyBGbG9nbyBjb25uZWN0b3IgZm9yIFBvc3RncmVTUUwiLCJzM2xvY2F0aW9uIjoiVGliY28vUG9zdGdyZVNRTCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1maWxlcy9zcmMvYXBwL0ZpbGUiLCJpZCI6IkZpbGUiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMC1iMTQiLCJuYW1lIjoiVElCQ08gRmxvZ28gQ29ubmVjdG9yIGZvciBGaWxlIiwiczNsb2NhdGlvbiI6IlRpYmNvL0ZpbGUiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfV0=",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS90aWJjby93aS1wb3N0Z3Jlcy9zcmMvYXBwL1Bvc3RncmVTUUwiLCJpZCI6IlBvc3RncmVTUUwiLCJ2ZXJzaW9uIjoiMi43LjEiLCJ0YWciOiIyLjcuMS1iMDEiLCJuYW1lIjoiUG9zdGdyZVNRTCIsInMzbG9jYXRpb24iOiJUaWJjby9Qb3N0Z3JlU1FMIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLWZpbGVzL3NyYy9hcHAvRmlsZSIsImlkIjoiRmlsZSIsInZlcnNpb24iOiIxLjAuMCIsInRhZyI6IjEuMC4wLWIxNCIsIm5hbWUiOiJGaWxlIiwiczNsb2NhdGlvbiI6IlRpYmNvL0ZpbGUiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfV0=",
   "metadata": {
     "endpoints": [
       {
@@ -2923,7 +2955,7 @@
           "info": {
             "title": "platform-service",
             "version": "1.0.0",
-            "description": "REST trigger \u2014 design-service on port 7020"
+            "description": "REST trigger — design-service on port 7020"
           },
           "paths": {
             "/api/v1/agents": {
@@ -3123,7 +3155,7 @@
                     }
                   }
                 },
-                "description": "Hard-delete agent \u2014 permanently removes row from agents table.",
+                "description": "Hard-delete agent — permanently removes row from agents table.",
                 "consumes": [
                   "application/json"
                 ]
