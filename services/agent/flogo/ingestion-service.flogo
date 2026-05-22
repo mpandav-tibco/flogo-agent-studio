@@ -23,7 +23,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger — ingestion service on port 7002",
+      "description": "REST trigger \u2014 ingestion service on port 7002",
       "settings": {
         "port": 7002,
         "APISpecUpdate": false,
@@ -90,7 +90,7 @@
           "name": "ingest_documents"
         },
         {
-          "description": "Creates or verifies a VectorDB collection. Idempotent — safe to call if the collection already exists.",
+          "description": "Creates or verifies a VectorDB collection. Idempotent \u2014 safe to call if the collection already exists.",
           "settings": {
             "APISpecPath": "",
             "Method": "POST",
@@ -536,7 +536,7 @@
                   "code": 500,
                   "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }
@@ -574,7 +574,7 @@
       "id": "flow:ensure_collection",
       "data": {
         "name": "ensure_collection",
-        "description": "Creates or verifies a VectorDB collection. Idempotent — safe to call if the collection already exists.",
+        "description": "Creates or verifies a VectorDB collection. Idempotent \u2014 safe to call if the collection already exists.",
         "links": [
           {
             "id": 1,
@@ -631,7 +631,7 @@
           {
             "id": "EnsureCollection",
             "name": "EnsureCollection",
-            "description": "Create or verify VectorDB collection — idempotent",
+            "description": "Create or verify VectorDB collection \u2014 idempotent",
             "activity": {
               "ref": "#createCollection",
               "settings": {
@@ -676,7 +676,7 @@
                   "code": 500,
                   "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }
@@ -1016,7 +1016,7 @@
                   "code": 500,
                   "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }
@@ -1292,7 +1292,7 @@
                   "code": 500,
                   "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }
@@ -1564,7 +1564,7 @@
                   "code": 500,
                   "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }
@@ -1652,6 +1652,24 @@
             "to": "Return",
             "type": "label",
             "label": "IngestFileDirect to Return"
+          },
+          {
+            "id": 8,
+            "type": "error",
+            "from": "EnsureCollection",
+            "to": "ErrorReturn"
+          },
+          {
+            "id": 9,
+            "type": "error",
+            "from": "IngestFileDocling",
+            "to": "ErrorReturn"
+          },
+          {
+            "id": 10,
+            "type": "error",
+            "from": "IngestFileDirect",
+            "to": "ErrorReturn"
           }
         ],
         "tasks": [
@@ -1907,9 +1925,27 @@
                 }
               }
             }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return 500 on activity failure",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "code": 500,
+                  "data": {
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjQ1MCwieSI6MjUwfSwiRG9jbGluZ0V4dHJhY3QiOnsieCI6NjUwLCJ5IjozNTB9LCJJbmdlc3RGaWxlRG9jbGluZyI6eyJ4Ijo4NTAsInkiOjQ1MH0sIlJldHVybkRvY2xpbmciOnsieCI6MTA1MCwieSI6NTUwfSwiSW5nZXN0RmlsZURpcmVjdCI6eyJ4Ijo4NTAsInkiOjY1MH0sIlJldHVybiI6eyJ4IjoxMDUwLCJ5Ijo3NTB9fQ==",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjQ1MCwieSI6MjUwfSwiRG9jbGluZ0V4dHJhY3QiOnsieCI6NjUwLCJ5IjozNTB9LCJJbmdlc3RGaWxlRG9jbGluZyI6eyJ4Ijo4NTAsInkiOjQ1MH0sIlJldHVybkRvY2xpbmciOnsieCI6MTA1MCwieSI6NTUwfSwiSW5nZXN0RmlsZURpcmVjdCI6eyJ4Ijo4NTAsInkiOjY1MH0sIlJldHVybiI6eyJ4IjoxMDUwLCJ5Ijo3NTB9LCJFcnJvclJldHVybiI6eyJ4IjoxMjUwLCJ5Ijo2NTB9fQ==",
         "metadata": {
           "input": [
             {
@@ -2245,7 +2281,7 @@
           "info": {
             "title": "ingestion-service",
             "version": "1.0.0",
-            "description": "REST trigger — ingestion service on port 7002"
+            "description": "REST trigger \u2014 ingestion service on port 7002"
           },
           "paths": {
             "/api/ingest": {
@@ -2305,7 +2341,7 @@
                     }
                   }
                 },
-                "description": "Creates or verifies a VectorDB collection. Idempotent — safe to call if the collection already exists.",
+                "description": "Creates or verifies a VectorDB collection. Idempotent \u2014 safe to call if the collection already exists.",
                 "consumes": [
                   "application/json"
                 ]

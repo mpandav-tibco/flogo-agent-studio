@@ -21,7 +21,7 @@
     {
       "ref": "#mcpserver",
       "name": "flogo-mcp-mcpsever",
-      "description": "MCP Server — exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:7333/mcp.",
+      "description": "MCP Server \u2014 exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:7333/mcp.",
       "settings": {
         "serverName": "flogo-agent-studio-assist",
         "serverVersion": "1.0.0",
@@ -318,8 +318,8 @@
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}",
-                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}"
+                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}"
               }
             }
           },
@@ -630,9 +630,10 @@
               "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "response": {
+                  "code": 500,
+                  "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }
@@ -879,9 +880,10 @@
               "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "response": {
+                  "code": 500,
+                  "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }
@@ -1123,9 +1125,10 @@
               "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "response": {
+                  "code": 500,
+                  "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }
@@ -1377,9 +1380,10 @@
               "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "response": {
+                  "code": 500,
+                  "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }
@@ -1622,9 +1626,10 @@
               "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "response": {
+                  "code": 500,
+                  "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }
@@ -1866,9 +1871,10 @@
               "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "response": {
+                  "code": 500,
+                  "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }
@@ -2119,9 +2125,10 @@
               "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "response": {
+                  "code": 500,
+                  "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }
@@ -2379,9 +2386,10 @@
               "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "response": {
+                  "code": 500,
+                  "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }
@@ -2623,9 +2631,10 @@
               "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "response": {
+                  "code": 500,
+                  "data": {
                     "mapping": {
-                      "error": "Internal server error"
+                      "error": "=$error.message"
                     }
                   }
                 }

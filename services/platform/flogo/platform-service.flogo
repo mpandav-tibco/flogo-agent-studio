@@ -837,7 +837,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
                   }
                 }
               }
@@ -996,7 +998,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
                   }
                 }
               }
@@ -1132,7 +1136,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
                   }
                 }
               }
@@ -1279,7 +1285,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
                   }
                 }
               }
@@ -1431,7 +1439,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
                   }
                 }
               }
@@ -1579,7 +1589,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
                   }
                 }
               }
@@ -1640,6 +1652,20 @@
             "description": "",
             "activity": {
               "ref": "#noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "description": "Log list_templates entry",
+            "activity": {
+              "ref": "#act_general_log",
+              "input": {
+                "Log Level": "INFO",
+                "message": "[Design] list_templates",
+                "flowInfo": false,
+                "useExtLogger": false
+              }
             }
           },
           {
@@ -1964,20 +1990,6 @@
                 }
               }
             }
-          },
-          {
-            "id": "LogRequest",
-            "name": "LogRequest",
-            "description": "Log list_templates entry",
-            "activity": {
-              "ref": "#act_general_log",
-              "input": {
-                "Log Level": "INFO",
-                "message": "[Design] list_templates",
-                "flowInfo": false,
-                "useExtLogger": false
-              }
-            }
           }
         ],
         "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6MjUwLCJ5Ijo1MH19",
@@ -2230,7 +2242,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
                   }
                 }
               }
@@ -2433,7 +2447,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
                   }
                 }
               }
@@ -2598,7 +2614,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
                   }
                 }
               }
@@ -2741,7 +2759,9 @@
                 "mappings": {
                   "code": 500,
                   "data": {
-                    "error": "Internal server error"
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
                   }
                 }
               }
