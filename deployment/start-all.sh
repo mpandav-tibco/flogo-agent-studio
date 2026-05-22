@@ -188,6 +188,22 @@ cleanup_elastic_indexes
 # Stop any services already occupying our ports — prevents "address already in use".
 stop_existing_services
 
+# ── Clear log files ───────────────────────────────────────────────────────────
+echo "── Clearing log files ─────────────────────────────────────────────────────"
+mkdir -p "$PROJECT_ROOT/logs"
+log_count=0
+for f in "$PROJECT_ROOT/logs/"*.log; do
+  [[ -f "$f" ]] || continue
+  > "$f"   # truncate in place (preserves any open file handles)
+  (( log_count++ )) || true
+done
+if (( log_count > 0 )); then
+  echo "  Cleared ${log_count} log file(s) in logs/"
+else
+  echo "  No log files to clear."
+fi
+echo ""
+
 # ── Build Flogo service binaries ──────────────────────────────────────────────
 # Detects flogobuild from tools/flogobuild/<os>_<arch>/ (committed) or PATH.
 # Rebuilds any binary that is missing or older than its .flogo source file.
@@ -325,10 +341,10 @@ echo ""
 # The runtime-manager (deployment.py) starts a dedicated set per agent when
 # that agent is activated from the AgentForge UI.
 SERVICES=(
-  "services/bin/rule-engine-service:rule-engine:7097"      # shared Flogo analyser
-  "services/bin/platform-service:platform:7020"            # design + feedback (merged)
-  "services/bin/agent-builder-service:agent-builder:7010"  # LLM config generation
-  "services/bin/mcp-server:mcp-server:7333"                # MCP gateway
+  "bin/rule-engine-service:rule-engine:7097"      # shared Flogo analyser
+  "bin/platform-service:platform:7020"            # design + feedback (merged)
+  "bin/agent-builder-service:agent-builder:7010"  # LLM config generation
+  "bin/mcp-server:mcp-server:7333"                # MCP gateway
 )
 
 started=0
