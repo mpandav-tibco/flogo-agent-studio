@@ -27,11 +27,13 @@ interface AgentCardProps {
   agent: Agent;
   onToggleDeploy?: () => void;
   deployPending?: boolean;
+  /** "activating" | "deactivating" — explicit intent so labels/colours are correct before status flips */
+  deployIntent?: "activating" | "deactivating";
   /** True while deployment.py is still spinning up this agent's services. */
   isStarting?: boolean;
 }
 
-export default function AgentCard({ agent, onToggleDeploy, deployPending, isStarting }: AgentCardProps) {
+export default function AgentCard({ agent, onToggleDeploy, deployPending, deployIntent, isStarting }: AgentCardProps) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -70,10 +72,15 @@ export default function AgentCard({ agent, onToggleDeploy, deployPending, isStar
   const model = agent.config?.llmModel ?? "default model";
   const isActive = agent.status === "active";
 
-  // Optimistic display state while the toggle is in-flight
-  const pendingKey = deployPending ? (isActive ? "deactivating" : "activating") : null;
+  // Optimistic display state while the toggle is in-flight.
+  // deployIntent is the explicit intent passed from the parent — avoids relying
+  // on agent.status which hasn't flipped yet when the request just fired.
+  const pendingKey = deployPending ? (deployIntent ?? (isActive ? "deactivating" : "activating")) : null;
   const displayStatus = pendingKey ?? (isStarting ? "starting" : agent.status);
   const borderClass = STATUS_BORDER[pendingKey ?? agent.status] ?? STATUS_BORDER.draft;
+
+  // Button should reflect the intent, not the current status
+  const buttonIsDeactivating = deployPending ? deployIntent === "deactivating" : isActive;
 
   // chatUrl is only set once deployment.py has patched chatUiUrl into design-service
   // (which now happens only after all services are confirmed ready).
@@ -169,18 +176,17 @@ export default function AgentCard({ agent, onToggleDeploy, deployPending, isStar
           <button
             onClick={onToggleDeploy}
             disabled={deployPending || isStarting}
-            className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full transition-colors disabled:opacity-60 ${
-              isActive
+            className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full transition-colors disabled:opacity-60 ${buttonIsDeactivating
                 ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
                 : "bg-green-50 text-green-700 hover:bg-green-100"
-            }`}
+              }`}
           >
             {deployPending ? (
               <>
                 <Loader2 size={11} className="animate-spin" />
-                {isActive ? "Deactivating…" : "Activating…"}
+                {buttonIsDeactivating ? "Deactivating…" : "Activating…"}
               </>
-            ) : isActive ? (
+            ) : buttonIsDeactivating ? (
               <><Square size={11} /> Deactivate</>
             ) : (
               <><Play size={11} /> Activate</>

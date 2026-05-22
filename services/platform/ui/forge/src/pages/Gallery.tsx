@@ -24,20 +24,23 @@ export default function Gallery() {
 
   // Track agents whose toggle action just fired — keeps the in-flight UI visible
   // until the runtime poller confirms the agent is actually starting/ready/draft.
-  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
+  // Value is the intent so we clear at the right moment:
+  //   "activating"   → clear when runtimeStates[id] reaches starting/ready/degraded
+  //   "deactivating" → clear when agent.status flips back to non-active
+  const [togglingIds, setTogglingIds] = useState<Map<string, "activating" | "deactivating">>(new Map());
 
   const deployMutation = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
       active ? undeployAgent(id) : deployAgent(id),
-    onMutate: ({ id }) => {
-      setTogglingIds((prev) => new Set(prev).add(id));
+    onMutate: ({ id, active }) => {
+      setTogglingIds((prev) => new Map(prev).set(id, active ? "deactivating" : "activating"));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["agents"] });
     },
     onError: (_err, { id }) => {
       // Clear immediately on error so the button doesn't stay stuck
-      setTogglingIds((prev) => { const s = new Set(prev); s.delete(id); return s; });
+      setTogglingIds((prev) => { const s = new Map(prev); s.delete(id); return s; });
     },
   });
 
@@ -86,18 +89,22 @@ export default function Gallery() {
   }, [runtimeStates, qc]);
 
   // Clear the local toggling state once the agent has reached a stable state:
-  // • Activation path: runtime confirms "starting" or "ready"
-  // • Deactivation path: agent list shows status !== "active"
+  // • "activating":   runtime confirms starting/ready/degraded for this id
+  // • "deactivating": agent list shows status flipped away from active
   useEffect(() => {
     if (togglingIds.size === 0) return;
     setTogglingIds((prev) => {
-      const next = new Set(prev);
-      for (const id of prev) {
+      const next = new Map(prev);
+      for (const [id, intent] of prev) {
         const rt = runtimeStates?.[id];
         const agent = allAgents.find((a) => a.id === id);
-        const runtimeStarted = rt === "starting" || rt === "ready" || rt === "degraded";
-        const deactivated = agent && agent.status !== "active";
-        if (runtimeStarted || deactivated) next.delete(id);
+        if (intent === "activating") {
+          const runtimeStarted = rt === "starting" || rt === "ready" || rt === "degraded";
+          if (runtimeStarted) next.delete(id);
+        } else {
+          // deactivating: wait until the agent list confirms it's no longer active
+          if (agent && agent.status !== "active") next.delete(id);
+        }
       }
       return next.size === prev.size ? prev : next;
     });
@@ -239,6 +246,7 @@ export default function Gallery() {
                   deployMutation.mutate({ id: agent.id, active: agent.status === "active" })
                 }
                 deployPending={togglingIds.has(agent.id)}
+                  deployIntent={togglingIds.get(agent.id)}
                 isStarting={isAgentStarting(agent.id)}
               />
             ))}
