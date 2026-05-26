@@ -23,7 +23,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger \u2014 ingestion service on port 7002",
+      "description": "REST trigger — ingestion service on port 7002",
       "settings": {
         "port": 7002,
         "APISpecUpdate": false,
@@ -90,7 +90,7 @@
           "name": "ingest_documents"
         },
         {
-          "description": "Creates or verifies a VectorDB collection. Idempotent \u2014 safe to call if the collection already exists.",
+          "description": "Creates or verifies a VectorDB collection. Idempotent — safe to call if the collection already exists.",
           "settings": {
             "APISpecPath": "",
             "Method": "POST",
@@ -469,7 +469,7 @@
               },
               "input": {
                 "collectionName": "=$flow.body.collectionName",
-                "dimensions": 1536,
+                "dimensions": 768,
                 "distanceMetric": "cosine",
                 "onDisk": false,
                 "replicationFactor": 1
@@ -544,7 +544,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjQ1MCwieSI6MjUwfSwiSW5nZXN0RG9jdW1lbnRzIjp7IngiOjY1MCwieSI6MzUwfSwiUmV0dXJuIjp7IngiOjg1MCwieSI6NDUwfSwiRXJyb3JSZXR1cm4iOnsieCI6ODYwLCJ5IjoxOTR9fQ==",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjQ1MCwieSI6MjUwfSwiSW5nZXN0RG9jdW1lbnRzIjp7IngiOjY0OSwieSI6MzUwfSwiUmV0dXJuIjp7IngiOjg1MCwieSI6NDUwfSwiRXJyb3JSZXR1cm4iOnsieCI6ODYwLCJ5IjoxOTR9fQ==",
         "metadata": {
           "input": [
             {
@@ -574,7 +574,7 @@
       "id": "flow:ensure_collection",
       "data": {
         "name": "ensure_collection",
-        "description": "Creates or verifies a VectorDB collection. Idempotent \u2014 safe to call if the collection already exists.",
+        "description": "Creates or verifies a VectorDB collection. Idempotent — safe to call if the collection already exists.",
         "links": [
           {
             "id": 1,
@@ -631,7 +631,7 @@
           {
             "id": "EnsureCollection",
             "name": "EnsureCollection",
-            "description": "Create or verify VectorDB collection \u2014 idempotent",
+            "description": "Create or verify VectorDB collection — idempotent",
             "activity": {
               "ref": "#createCollection",
               "settings": {
@@ -639,7 +639,7 @@
               },
               "input": {
                 "collectionName": "=$flow.body.collectionName",
-                "dimensions": 1536,
+                "dimensions": 768,
                 "distanceMetric": "cosine",
                 "onDisk": false,
                 "replicationFactor": 1
@@ -940,7 +940,7 @@
               },
               "input": {
                 "collectionName": "=$flow.body.collectionName",
-                "dimensions": 1536,
+                "dimensions": 768,
                 "distanceMetric": "cosine",
                 "onDisk": false,
                 "replicationFactor": 1
@@ -1211,7 +1211,7 @@
               },
               "input": {
                 "collectionName": "=$flow.body.collectionName",
-                "dimensions": 1536,
+                "dimensions": 768,
                 "distanceMetric": "cosine",
                 "onDisk": false,
                 "replicationFactor": 1
@@ -1300,7 +1300,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJGZXRjaEdpdEh1YkNvbnRlbnQiOnsieCI6NDUwLCJ5IjoyNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjY1MCwieSI6MzUwfSwiSW5nZXN0Q29udGVudCI6eyJ4Ijo4NTAsInkiOjQ1MH0sIlJldHVybiI6eyJ4IjoxMDUwLCJ5Ijo1NTB9LCJFcnJvclJldHVybiI6eyJ4Ijo1NTAsInkiOjIwMH19",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJGZXRjaEdpdEh1YkNvbnRlbnQiOnsieCI6NDUwLCJ5IjoyNTB9LCJFbnN1cmVDb2xsZWN0aW9uIjp7IngiOjY1MCwieSI6MzUwfSwiSW5nZXN0Q29udGVudCI6eyJ4Ijo4NTAsInkiOjQ1MH0sIlJldHVybiI6eyJ4IjoxMDUwLCJ5Ijo1NTB9LCJFcnJvclJldHVybiI6eyJ4Ijo3MjAsInkiOjEyOX19",
         "metadata": {
           "input": [
             {
@@ -1487,7 +1487,7 @@
               },
               "input": {
                 "collectionName": "=$flow.body.collectionName",
-                "dimensions": 1536,
+                "dimensions": 768,
                 "distanceMetric": "cosine",
                 "onDisk": false,
                 "replicationFactor": 1
@@ -2017,37 +2017,12 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:/mDE2cXTYZROYcqemlrWvfRVvoEzvE2H"
+      "value": "SECRET:9BJ840oCPBNSsGEaFRqa9204vL5vQjyp"
     },
     {
       "name": "DOCLING_MARKDOWN_URL",
       "type": "string",
       "value": "http://localhost:8001/v0/markdown"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].API_Key",
-      "type": "string",
-      "value": "SECRET:Saynb1e8Wk0E3DvnE8jQDnTEEuwuomE1DUBhrJFtkzVEq1AFSV2yiGZy3CB0U6KFZMYbQjYZRDz7eXbUH08oJhU="
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].API_Key",
-      "type": "string",
-      "value": "SECRET:FPccWJ3ayBamab7VFfD7HsmEuFMbxgLWJk9Af5mKzByg2iHU/E4NsXJYC7QBAWH6C7pez2JTib42wbdNGJMtoCwsL7TfQMICL/BbNVZF/onMnOlBECwWPy55beoo+Cf57o7ISpNYfC1e"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
-      "type": "string",
-      "value": "SECRET:OZiuIAzOpwRjX2q4JP8XYUHKUtd9oDyadzT46nqmB9bxrLpClKtaEIlkLbeY/t1/o3tZDu5/W1T22wJzeD2Nvq5L9puMzoIBYfS8A1xkxbVXuIBJql7jXpNXdLZyInkQM/da++tC3jdQGrScGCfhO7BLRwg3P5JQTjAXNIayWG/UcUnJNWe8ZyCb2k+Fn0nC8A=="
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
-      "type": "string",
-      "value": "SECRET:DDYkra5YAYzHqOhBG/PkbXCz/TWbZ8uOczngy/IEHlGC4p2REC89rc3fIVGcPHO21rTFo4QjsFPWnV1TrGcJ87eW7MAiQPdiTqc/MgFLGp4s+8EAnJjuDC/Onhm6nkRxQUX3/qM2aEamo0UCzoH12+5idN5jvZ+ZY1fJHT/1EIFQqe0po0itItbFklHbaZrApNarL02pwK5qLK0zFZgFamItmwfWO5dOBz41LR1UC57vA0yG2/9AAa8="
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
-      "type": "string",
-      "value": "SECRET:DwIxg+ncE/ofCB4udSu9yOuCJ8guM28VXhNoh8teDaLxKsC6T4IwDHYi77CphkJtLdcX0QisC8A90Pdf4R0+fQv5HO3ERimDH6Dg4m1bUO5LCpkmhXE/irQ8KUHXT1FQeZ1k9ZFkTYYHBGgedGKX/46cR+ZANOSj91LDZ95ZfZIYWhHHrU+WmaO8LXTIgRWJI/tQsKXX2NaHWsLD229LdqhNo0tgpHWROc6W0IhcvPB8t+GOaacB91zEs+chXkugbenUZ24RKww62Gb7Nrjtr/aZ92mdI0f3Qo7v6oJw0Tht"
     },
     {
       "name": "VectorDB.vectordb-weaviate.Connection_Name",
@@ -2136,7 +2111,39 @@
       "ref": "#connector",
       "isGlobal": false,
       "settings": {
-        "name": "vectordb-weaviate",
+        "name": "=$property[\"VectorDB.vectordb-weaviate.Connection_Name\"]",
+        "dbType": "=$property[\"VectorDB.vectordb-weaviate.DB_Provider\"]",
+        "host": "=$property[\"VectorDB.vectordb-weaviate.Host\"]",
+        "port": "=$property[\"VectorDB.vectordb-weaviate.Port\"]",
+        "apiKey": "=$property[\"VectorDB.vectordb-weaviate.API_Key\"]",
+        "useTLS": "=$property[\"VectorDB.vectordb-weaviate.Secure_Connection\"]",
+        "tlsInsecureSkipVerify": false,
+        "tlsServerName": "",
+        "caCert": "",
+        "clientCert": "",
+        "clientKey": "",
+        "timeoutSeconds": "=$property[\"VectorDB.vectordb-weaviate.Timeout_(seconds)\"]",
+        "maxRetries": "=$property[\"VectorDB.vectordb-weaviate.Max_Retries\"]",
+        "retryBackoffMs": "=$property[\"VectorDB.vectordb-weaviate.Retry_Backoff_(ms)\"]",
+        "grpcPort": 50051,
+        "scheme": "=$property[\"VectorDB.vectordb-weaviate.HTTP_Scheme\"]",
+        "username": "",
+        "password": "",
+        "dbName": "default",
+        "defaultMetricType": "cosine",
+        "enableEmbedding": "=$property[\"VectorDB.vectordb-weaviate.Configure_Embedding_Provider\"]",
+        "embeddingProvider": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Provider\"]",
+        "embeddingAPIKey": "=$property[\"VectorDB.vectordb-weaviate.Embedding_API_Key\"]",
+        "embeddingBaseURL": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Base_URL\"]"
+      }
+    },
+    "a36435b2-56ac-43a7-9a96-729c3ef54cff": {
+      "id": "a36435b2-56ac-43a7-9a96-729c3ef54cff",
+      "name": "weaviate-1",
+      "ref": "#connector",
+      "isGlobal": false,
+      "settings": {
+        "name": "weaviate-1",
         "dbType": "weaviate",
         "host": "localhost",
         "port": 18080,
@@ -2150,16 +2157,16 @@
         "timeoutSeconds": 30,
         "maxRetries": 3,
         "retryBackoffMs": 500,
-        "grpcPort": 50051,
+        "grpcPort": 6334,
         "scheme": "http",
         "username": "",
         "password": "",
         "dbName": "default",
         "defaultMetricType": "cosine",
-        "enableEmbedding": true,
-        "embeddingProvider": "Ollama",
-        "embeddingAPIKey": "SECRET:m6+4DNBTALkaVqsDSTyROpdAMvbTv7WcDzuHzRcNjA3NEvbPlnoIvD5IOldDm1wozJ1TJ6/7/fpbFLeF4LTX6ISSRKW3N//MbGVK",
-        "embeddingBaseURL": "http://localhost:11434/v1"
+        "enableEmbedding": false,
+        "embeddingProvider": "OpenAI",
+        "embeddingAPIKey": "",
+        "embeddingBaseURL": ""
       }
     }
   },
@@ -2179,7 +2186,7 @@
           "info": {
             "title": "ingestion-service",
             "version": "1.0.0",
-            "description": "REST trigger \u2014 ingestion service on port 7002"
+            "description": "REST trigger — ingestion service on port 7002"
           },
           "paths": {
             "/api/ingest": {
@@ -2239,7 +2246,7 @@
                     }
                   }
                 },
-                "description": "Creates or verifies a VectorDB collection. Idempotent \u2014 safe to call if the collection already exists.",
+                "description": "Creates or verifies a VectorDB collection. Idempotent — safe to call if the collection already exists.",
                 "consumes": [
                   "application/json"
                 ]

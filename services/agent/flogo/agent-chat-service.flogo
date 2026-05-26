@@ -25,7 +25,7 @@
     {
       "ref": "#rest_1",
       "name": "tibco-wi-rest",
-      "description": "REST trigger \u2014 agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
+      "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)",
       "settings": {
         "port": 7001,
         "APISpecUpdate": false,
@@ -296,7 +296,7 @@
           "name": "health_check"
         },
         {
-          "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately \u2014 SSE clients receive tokens in real time.",
+          "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
           "settings": {
             "APISpecPath": "",
             "Method": "POST",
@@ -400,7 +400,7 @@
     {
       "ref": "#trigger",
       "name": "sse",
-      "description": "SSE event bus \u2014 clients connect to /events on port 7099 and receive streamed token events.",
+      "description": "SSE event bus — clients connect to /events on port 7099 and receive streamed token events.",
       "settings": {
         "port": 7099,
         "path": "/events",
@@ -494,13 +494,15 @@
           {
             "id": "RAGQuery",
             "name": "RAGQuery",
-            "description": "",
+            "description": "Retrieval-Augmented Generation: embed → search → format context",
             "activity": {
               "ref": "#ragQuery",
               "settings": {
                 "connection": "conn://vectordb-weaviate",
                 "useConnectorEmbedding": true,
                 "embeddingProvider": "OpenAI",
+                "embeddingAPIKey": "",
+                "embeddingBaseURL": "",
                 "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]",
                 "embeddingDimensions": 0,
                 "defaultCollection": "=$property[\"COLLECTION_NAME\"]",
@@ -561,7 +563,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUkFHUXVlcnkiOnsieCI6NDUwLCJ5IjoyNTB9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9LCJFcnJvclJldHVybiI6eyJ4IjozNTAsInkiOjIwMH19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUkFHUXVlcnkiOnsieCI6NDUwLCJ5IjoyNTB9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9LCJFcnJvclJldHVybiI6eyJ4Ijo2NDQsInkiOjEzMH19",
         "metadata": {
           "input": [
             {
@@ -651,13 +653,15 @@
           {
             "id": "RAGQuery",
             "name": "RAGQuery",
-            "description": "",
+            "description": "Retrieval-Augmented Generation: embed → search → format context",
             "activity": {
               "ref": "#ragQuery",
               "settings": {
                 "connection": "conn://vectordb-weaviate",
                 "useConnectorEmbedding": true,
                 "embeddingProvider": "OpenAI",
+                "embeddingAPIKey": "",
+                "embeddingBaseURL": "",
                 "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]",
                 "embeddingDimensions": 0,
                 "defaultCollection": "=$property[\"COLLECTION_NAME\"]",
@@ -671,6 +675,7 @@
                 "enableLLMGenerate": false,
                 "llmProvider": "Ollama",
                 "llmBaseURL": "http://localhost:11434",
+                "llmAPIKey": "",
                 "llmModel": "llama3.1:8b",
                 "systemPrompt": "You are a helpful assistant. Answer the question using only the provided context. If the context does not contain enough information, say so.",
                 "maxTokens": 1024,
@@ -820,13 +825,15 @@
           {
             "id": "RAGRetrieve",
             "name": "RAGRetrieve",
-            "description": "",
+            "description": "Retrieval-Augmented Generation: embed → search → format context",
             "activity": {
               "ref": "#ragQuery",
               "settings": {
                 "connection": "conn://vectordb-weaviate",
                 "useConnectorEmbedding": true,
                 "embeddingProvider": "OpenAI",
+                "embeddingAPIKey": "",
+                "embeddingBaseURL": "",
                 "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]",
                 "embeddingDimensions": 0,
                 "defaultCollection": "=$property[\"COLLECTION_NAME\"]",
@@ -840,6 +847,7 @@
                 "enableLLMGenerate": false,
                 "llmProvider": "Ollama",
                 "llmBaseURL": "http://localhost:11434",
+                "llmAPIKey": "",
                 "llmModel": "llama3.1:8b",
                 "systemPrompt": "You are a helpful assistant. Answer the question using only the provided context. If the context does not contain enough information, say so.",
                 "maxTokens": 1024,
@@ -848,7 +856,8 @@
               "input": {
                 "queryText": "=$flow.body.message",
                 "collectionName": "=$flow.body.collectionName",
-                "topK": "=$flow.body.topK"
+                "topK": "=$flow.body.topK",
+                "systemPrompt": ""
               }
             }
           },
@@ -912,7 +921,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdSZXRyaWV2ZSI6eyJ4Ijo0NTAsInkiOjUwfSwiQWdlbnRDaGF0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH0sIkVycm9yUmV0dXJuIjp7IngiOjQ1MCwieSI6MjAwfX0=",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdSZXRyaWV2ZSI6eyJ4Ijo0NTMsInkiOjQ3fSwiQWdlbnRDaGF0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH0sIkVycm9yUmV0dXJuIjp7IngiOjc0NSwieSI6MzAwfX0=",
         "metadata": {
           "input": [
             {
@@ -1011,7 +1020,7 @@
       "id": "flow:stream_chat",
       "data": {
         "name": "stream_chat",
-        "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately \u2014 SSE clients receive tokens in real time.",
+        "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
         "links": [
           {
             "id": 1,
@@ -1064,31 +1073,31 @@
           },
           {
             "id": 8,
-            "from": "CallRAG",
+            "from": "EmitDone",
             "to": "ErrorReturn",
             "type": "error",
-            "label": "CallRAG error"
+            "label": "EmitDone error"
           },
           {
             "id": 9,
-            "from": "RunLLM",
-            "to": "ErrorReturn",
-            "type": "error",
-            "label": "RunLLM error"
-          },
-          {
-            "id": 10,
             "from": "EmitAnswer",
             "to": "ErrorReturn",
             "type": "error",
             "label": "EmitAnswer error"
           },
           {
-            "id": 11,
-            "from": "EmitDone",
+            "id": 10,
+            "from": "RunLLM",
             "to": "ErrorReturn",
             "type": "error",
-            "label": "EmitDone error"
+            "label": "RunLLM error"
+          },
+          {
+            "id": 11,
+            "from": "CallRAG",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "CallRAG error"
           }
         ],
         "tasks": [
@@ -1158,6 +1167,7 @@
                 "enableASR": false,
                 "swagger": "",
                 "authorization": false,
+                "authorizationConn": "",
                 "serviceName": "",
                 "resourcePath": "",
                 "Method": "POST",
@@ -1326,7 +1336,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjQ3LCJ5IjoxNTB9LCJFbWl0U3RhcnQiOnsieCI6NDUwLCJ5IjoyNTB9LCJDYWxsUkFHIjp7IngiOjY1MCwieSI6MzUwfSwiUnVuTExNIjp7IngiOjg1MCwieSI6NDUwfSwiRW1pdEFuc3dlciI6eyJ4IjoxMDUwLCJ5Ijo1NTB9LCJFbWl0RG9uZSI6eyJ4IjoxMjUwLCJ5Ijo2NTB9LCJSZXR1cm4iOnsieCI6MTQ1MCwieSI6NzUwfX0=",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJFbWl0U3RhcnQiOnsieCI6NDUwLCJ5IjoyNTB9LCJDYWxsUkFHIjp7IngiOjY1MCwieSI6MzUwfSwiUnVuTExNIjp7IngiOjg1MCwieSI6NDUwfSwiRW1pdEFuc3dlciI6eyJ4IjoxMDUwLCJ5Ijo1NTB9LCJFbWl0RG9uZSI6eyJ4IjoxMjUwLCJ5Ijo2NTB9LCJSZXR1cm4iOnsieCI6MTQ1MCwieSI6NzUwfSwiRXJyb3JSZXR1cm4iOnsieCI6ODUwLCJ5IjoxMTUwfX0=",
         "metadata": {
           "input": [
             {
@@ -1611,7 +1621,7 @@
     {
       "name": "AgenticAI.llm-provider.API_Key",
       "type": "string",
-      "value": "SECRET:Fr2YwsQy2GpZBxudMxEOa9ndoJSVdWKfO66yUZ1QMNcc9vtbhxtDHMeYLP6Lr/Q6VLKjNAnF2n5csctevqd5Yzv9ppGDVKR6Yg=="
+      "value": "SECRET:QawKz1BJCI/4raEylzZEGlrgBjcxtXUmLP6o1IwejJHsrSe2moF4SyHYLtpfUsyqDd/CMIwduj9ISdGzgJlZFtCqLf5zTLHNIA=="
     },
     {
       "name": "AgenticAI.llm-provider.LLM_Base_URL",
@@ -1626,7 +1636,7 @@
     {
       "name": "AgenticAI.LLM_Provider.API_Key",
       "type": "string",
-      "value": "SECRET:yANVIkVeMQInHeKHUKWZUaXqeSGAiyFZ"
+      "value": "SECRET:X/NlDZhSGp7zwd6hcTYaI6VgFaV1xsTs"
     },
     {
       "name": "AgenticAI.LLM_Provider.LLM_Base_URL",
@@ -1681,7 +1691,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:qWauToD2QocP6QwFpQANgFuIw1AplsO2"
+      "value": "SECRET:Pg/F7Sf3fCOETJ4ddT8d1RVgylIOPEa5"
     },
     {
       "name": "API_AUTH_HEADER",
@@ -1699,107 +1709,72 @@
       "value": "http://localhost:7001/api/chat"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].API_Key",
-      "type": "string",
-      "value": "SECRET:Cp6KdyIXOOsfMFHByUriNbNeuaHQF92GwUgMbootT+F2N8EGRJjV9ObCM6V3A9qowhMs2Sjxv+KGDXiWQYTDM4Y="
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"].API_Key",
-      "type": "string",
-      "value": "SECRET:l2tU0NzNbN7cgyrTrSYXwHyYKVhXhFqd/eESULhlUOlNCXoin4G2LWDZedVgROUE5B64Ck4d7LbBtVN4SC22vIl2GVAs5riStbOqeA46Wku+LvaUKXqA++XlOkk7fPK6TEW/zD1mWV01"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
-      "type": "string",
-      "value": "SECRET:lpQGok8yDe2sHZv9vMfcimy6CMqwQBOw0y1bOnyA20VU+DJMWWGVzm3UULM4K9iFc7pGEmczqBbTXOZo63/2V58XoDXAMFFMdMVcUUEqj84Kka0EC0u0yhV3rV9iJrCRoGlcZOdkD2GWLuCltAw6eDvVCTO0hDRoOlGVo7jB0BorlkHZyX+qBNRgz7naVuHATQ=="
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
-      "type": "string",
-      "value": "SECRET:1oe0dinvFxi4UtwsZJBEX19cSrUKI868bf7e6OpgPLWYMgYGggC1h/d7/+VmTr5sCyolk+W/Msybkqvhwq7uQdPg2JThyPkQD3Rq9lhI2TmHbHQaEvZ2fU78SY3p8+yWPrtudoD/r7tkpz3twX9jOLN2eGgvh/YV2SAiHCE57xpuLLGnLDK9Os6cJRIG3y9mDuDp9+EdMR2DLRywNyvc3pccq0YpsxPcNjxRFBLYWjnWknCE5mNjzqQ="
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
-      "type": "string",
-      "value": "SECRET:F2KfeoWYu1sXMWRKxnqQ4ZuranNhsAGWWpvkqcech3X1CyIcOJ4hF3Bp6p4KCn3tvL6sIiT2VseCo8wglojLbo+br2067ONU5sFUWC6XLNVJg1ew5i1WVvZHU1XEqeMEKjw6H+WgXr0h4lkNFYu2mPckqbZTtWwnQVlNMW38VKzeVMuNQHIozpGWmthg6lvuW7WmkrHrW6t6Eh1HQkr6QxMSBv5yWTV04VGuoru2pBYfU+tcze8laXibpjCojw8ulBOSNLQipnIWH4ZLO3GNM5kG5/HGvS6LTbSazN6qM8Kt"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
-      "type": "string",
-      "value": "SECRET:bQP9h69G8ANCz1pBuL2632fOr68RpqkerJcphZnsZs0+UsK2vgNJdMFnat5GkUcHtYYNCfGT21wjQf1e7JYVHc4slV10IJuLHmc5DTfLMgw58B/kDgSgXvzcw3GGvWzDi+snFusX9cCz3G/8j/EzzTlCOigEQmbHYdOVDwYjYixYmDi5kCGg7fNx0r1KayNsa0vQvt4mcMoUXnIxv77q4OgZw753HaNy7Ym9bYf2YWeagI5lz3TmKW8Ks13cSmM2hcJWUjukMW2KrwCAq+yXzqPAvMDEB62GfDDI5YHU/YKY99LIjhaVMd3map3koDDTGxPdzVw/yNOehzHustSG6sKUclHCkSgiKg=="
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
-      "type": "string",
-      "value": "SECRET:vJA8e1J1ytBgZT5IOsOblwU07YcCjAx7J9k6cq+Suq5nd0BYZ8rUGSO47C78MlX9W1iEm1mA6ik2dVGGOvKoUr1lfXMnxWMM0Td5YbA+07s+KT21bc6FUW5mIh2zTUyrhZFeOQzU/2sOEvWCO1k9DSBXCveHqOSK6ksC324r8eqDzcTrBGvKDyyCqVRwOf3kfwaUvc1crvlIOKPYu9S75sbst1clVYtyCblZZYm5sS673QarSlSppsT4aGX/Z8tKD8dobSTCH2guANBSD1de9nXEe+lkbbiJZ7YS1KsLR21j83w9826/jKWJivuOQgxvV5qgOopwM4sNvi4W+tncH9Tm7vTFMC2kdzstM55pASFa3ucqKxENKX/ODzNwngIGixigH5KN1v1V4kZgTUJ523Y="
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_$property[\"VectorDB_vectordb-weaviate_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"]_Connection_Name\"].API_Key",
-      "type": "string",
-      "value": "SECRET:r69bXP0stKtaDo3VUVxWsnLYb+eiK+REIz5BvHhJfORy1T4Z89YaX0IKu7I4tHUPzg+BNPxkH1uRCjk36HrTJVIEqCt/B4HB7QfsJOqODtJCukgibJRJA3XU/X12jw0fkbXHVZFsrcGEoUvojTk0lUYAPw4haaMbOP3HaiIQu4Es0lN34pHp0S9YCTnVCI6NAAAJ+m72kJy/erAlRjZKt5S89DIYp5rqrjO25UkS+foAa22usA50Bo1rQCqFVeSSCeXIhHJSZF69isGDyDaPBpNdjC+mYgzsBNdRzcFOHCDWaEO5CTwMu0qmoFZlOXqG//Z0VFzmsa21QKBxBlMAn2dF/eY5RkQNqPmsZuAvjJOGKnRBbKuU8SWIIeqzj5G4feznQjcc8i5Fub0x2oNgc3+H2QuODiqJ2VMyDJlra8ykU0ejSFzGIqcllzlAF7klFrIpEnvI0ODk"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Connection_Name",
+      "name": "VectorDB.vectordb-weaviate.Connection_Name",
       "type": "string",
       "value": "vectordb-weaviate"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].DB_Provider",
+      "name": "VectorDB.vectordb-weaviate.DB_Provider",
       "type": "string",
       "value": "weaviate"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Host",
+      "name": "VectorDB.vectordb-weaviate.Host",
       "type": "string",
       "value": "localhost"
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Port",
+      "name": "VectorDB.vectordb-weaviate.Port",
       "type": "float64",
       "value": 18080
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Secure_Connection",
-      "type": "boolean",
-      "value": false
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Timeout_(seconds)",
-      "type": "float64",
-      "value": 30
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Max_Retries",
-      "type": "float64",
-      "value": 3
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Retry_Backoff_(ms)",
-      "type": "float64",
-      "value": 500
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].HTTP_Scheme",
-      "type": "string",
-      "value": "http"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Configure_Embedding_Provider",
-      "type": "boolean",
-      "value": true
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_Provider",
-      "type": "string",
-      "value": "Ollama"
-    },
-    {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_API_Key",
+      "name": "VectorDB.vectordb-weaviate.API_Key",
       "type": "string",
       "value": ""
     },
     {
-      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_Base_URL",
+      "name": "VectorDB.vectordb-weaviate.Secure_Connection",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Timeout_(seconds)",
+      "type": "float64",
+      "value": 30
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Max_Retries",
+      "type": "float64",
+      "value": 3
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Retry_Backoff_(ms)",
+      "type": "float64",
+      "value": 500
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.HTTP_Scheme",
+      "type": "string",
+      "value": "http"
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Configure_Embedding_Provider",
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Embedding_Provider",
+      "type": "string",
+      "value": "Ollama"
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Embedding_API_Key",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "name": "VectorDB.vectordb-weaviate.Embedding_Base_URL",
       "type": "string",
       "value": "http://localhost:11434/v1"
     }
@@ -1811,30 +1786,30 @@
       "ref": "#connector",
       "isGlobal": false,
       "settings": {
-        "name": "vectordb-weaviate",
-        "dbType": "weaviate",
-        "host": "localhost",
-        "port": 18080,
-        "apiKey": "",
-        "useTLS": false,
+        "name": "=$property[\"VectorDB.vectordb-weaviate.Connection_Name\"]",
+        "dbType": "=$property[\"VectorDB.vectordb-weaviate.DB_Provider\"]",
+        "host": "=$property[\"VectorDB.vectordb-weaviate.Host\"]",
+        "port": "=$property[\"VectorDB.vectordb-weaviate.Port\"]",
+        "apiKey": "=$property[\"VectorDB.vectordb-weaviate.API_Key\"]",
+        "useTLS": "=$property[\"VectorDB.vectordb-weaviate.Secure_Connection\"]",
         "tlsInsecureSkipVerify": false,
         "tlsServerName": "",
         "caCert": "",
         "clientCert": "",
         "clientKey": "",
-        "timeoutSeconds": 30,
-        "maxRetries": 3,
-        "retryBackoffMs": 500,
+        "timeoutSeconds": "=$property[\"VectorDB.vectordb-weaviate.Timeout_(seconds)\"]",
+        "maxRetries": "=$property[\"VectorDB.vectordb-weaviate.Max_Retries\"]",
+        "retryBackoffMs": "=$property[\"VectorDB.vectordb-weaviate.Retry_Backoff_(ms)\"]",
         "grpcPort": 50051,
-        "scheme": "http",
+        "scheme": "=$property[\"VectorDB.vectordb-weaviate.HTTP_Scheme\"]",
         "username": "",
         "password": "",
         "dbName": "default",
         "defaultMetricType": "cosine",
-        "enableEmbedding": true,
-        "embeddingProvider": "Ollama",
-        "embeddingAPIKey": "SECRET:rciDemmFbEwmDqFEOYmznqie+rXz5W8AnrNaSI6F8VsVR/OgQA0RV80rIgljZmF5JOceahBReFG6tMFoQlL/CP3hOuFfX06ufbT9",
-        "embeddingBaseURL": "http://localhost:11434/v1"
+        "enableEmbedding": "=$property[\"VectorDB.vectordb-weaviate.Configure_Embedding_Provider\"]",
+        "embeddingProvider": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Provider\"]",
+        "embeddingAPIKey": "=$property[\"VectorDB.vectordb-weaviate.Embedding_API_Key\"]",
+        "embeddingBaseURL": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Base_URL\"]"
       }
     },
     "llm-provider": {
@@ -1864,7 +1839,7 @@
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTIiLCJ0YWciOiIxLjYuMTItYjA2IiwibmFtZSI6IlRJQkNPIEZsb2dvIENvbm5lY3RvciBmb3IgR2VuZXJhbCIsInMzbG9jYXRpb24iOiJUaWJjby9HZW5lcmFsIiwiaXNVc2VyRXh0ZW5zaW9uIjpmYWxzZX0seyJyZWYiOiJnaXRodWIuYyIsImlkIjoiVmVjdG9yREIiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJWZWN0b3JEQiBSQUcgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tYWktYWdlbnQvc3JjL2FwcC9BZ2VudGljQUkiLCJpZCI6IkFnZW50aWNBSSIsInZlcnNpb24iOiIwLjkuMCIsInRhZyI6IjAuOS4wLWIwMyIsIm5hbWUiOiJUSUJDTyBGbG9nb8KuIENvbm5lY3RvciBmb3IgQWdlbnRpYyBBSSAoVGVjaCBQcmV2aWV3KSIsInMzbG9jYXRpb24iOiJUaWJjby9BZ2VudGljQUkiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfSx7InJlZiI6ImdpdGh1Yi5jb20vbXBhbmRhdi10aWJjby9mbG9nby1jdXN0b20tZXh0ZW5zaW9ucy9zc2UvYWN0aXZpdHkiLCJpZCI6IkRlZmF1bHQiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJSdWxlIEVuZ2luZSIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9TU0UvYWN0aXZpdHkiLCJpc1VzZXJFeHRlbnNpb24iOnRydWV9LHsicmVmIjoiZ2l0aHViLmNvbS9tcGFuZGF2LXRpYmNvL2Zsb2dvLWN1c3RvbS1leHRlbnNpb25zL3NzZS90cmlnZ2VyIiwiaWQiOiJEZWZhdWx0IiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiUnVsZSBFbmdpbmUiLCJzM2xvY2F0aW9uIjoie1VTRVJJRH0vU1NFL3RyaWdnZXIiLCJpc1VzZXJFeHRlbnNpb24iOnRydWV9XQ==",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmMiLCJpZCI6IlZlY3RvckRCIiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiVmVjdG9yREIgUkFHIENvbm5lY3RvciIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9WZWN0b3JEQiIsImlzVXNlckV4dGVuc2lvbiI6dHJ1ZX0seyJyZWYiOiJnaXRodWIuY29tL3RpYmNvL2Zsb2dvLWFpLWFnZW50L3NyYy9hcHAvQWdlbnRpY0FJIiwiaWQiOiJBZ2VudGljQUkiLCJ2ZXJzaW9uIjoiMC45LjEiLCJ0YWciOiIwLjkuMS1iMDIiLCJuYW1lIjoiQWdlbnRpYyBBSSAoVGVjaCBQcmV2aWV3KSIsInMzbG9jYXRpb24iOiJUaWJjby9BZ2VudGljQUkiLCJpc1VzZXJFeHRlbnNpb24iOmZhbHNlfSx7InJlZiI6ImdpdGh1Yi5jb20vbXBhbmRhdi10aWJjby9mbG9nby1jdXN0b20tZXh0ZW5zaW9ucy9zc2UvYWN0aXZpdHkiLCJpZCI6IkRlZmF1bHQiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJSdWxlIEVuZ2luZSIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9TU0UvYWN0aXZpdHkiLCJpc1VzZXJFeHRlbnNpb24iOnRydWV9LHsicmVmIjoiZ2l0aHViLmNvbS9tcGFuZGF2LXRpYmNvL2Zsb2dvLWN1c3RvbS1leHRlbnNpb25zL3NzZS90cmlnZ2VyIiwiaWQiOiJEZWZhdWx0IiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiUnVsZSBFbmdpbmUiLCJzM2xvY2F0aW9uIjoie1VTRVJJRH0vU1NFL3RyaWdnZXIiLCJpc1VzZXJFeHRlbnNpb24iOnRydWV9XQ==",
   "metadata": {
     "endpoints": [
       {
@@ -1880,7 +1855,7 @@
           "info": {
             "title": "agent-chat-service-AgentChatRESTTrigger",
             "version": "1.0.0",
-            "description": "REST trigger \u2014 agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
+            "description": "REST trigger — agent chat service on port 7001 (see flogo-agent-studio/ports.yaml)"
           },
           "paths": {
             "/api/chat": {
@@ -2141,7 +2116,7 @@
                     }
                   }
                 },
-                "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately \u2014 SSE clients receive tokens in real time.",
+                "description": "Retrieves context via RAG (agent-chat-service), calls LLM via AgentActivity, then pushes three SSE events: stream.start, stream.answer, stream.done. Returns 202 immediately — SSE clients receive tokens in real time.",
                 "consumes": [
                   "application/json"
                 ]

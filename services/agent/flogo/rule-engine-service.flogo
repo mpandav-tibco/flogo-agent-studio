@@ -201,6 +201,9 @@
                 "disabledRules": "=$flow.body.disabledRules",
                 "tags": "=$flow.body.tags"
               },
+              "output": {
+                "success": false
+              },
               "schemas": {
                 "input": {
                   "disabledRules": {
@@ -227,7 +230,7 @@
               "settings": {
                 "mappings": {
                   "code": 200,
-                  "message": "=coerce.toString($activity[RuleEngine1])"
+                  "data": "=$activity[RuleEngine1]"
                 }
               }
             }
@@ -285,13 +288,13 @@
               "type": "integer"
             },
             {
-              "name": "message",
-              "type": "string"
+              "name": "data",
+              "type": "object"
             }
           ],
           "fe_metadata": {
             "input": "{\"type\":\"object\",\"title\":\"RuleEngineRESTTrigger\",\"properties\":{\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"body\":{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"content\":{\"type\":\"string\"},\"fileName\":{\"type\":\"string\"},\"parserOverride\":{\"type\":\"string\"},\"disabledRules\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
-            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"message\":{\"type\":\"string\"}},\"required\":[]}"
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"data\":{\"type\":\"object\",\"properties\":{}}},\"required\":[]}"
           }
         },
         "explicitReply": true
@@ -377,7 +380,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:9ybM7x8cnvgQl65KV6DBTNOLZYn+uY4l"
+      "value": "SECRET:/BzVyU7JUY7X8/QtLtv4FtdygJLCX8h5"
     }
   ],
   "connections": {},
