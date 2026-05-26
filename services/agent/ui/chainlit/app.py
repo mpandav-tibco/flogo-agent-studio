@@ -40,6 +40,9 @@ SSE_SERVICE_URL = os.getenv("SSE_SERVICE_URL", "")   # e.g. http://localhost:700
 SSE_EVENTS_URL  = os.getenv("SSE_EVENTS_URL",  "")   # e.g. http://localhost:7099
 
 REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT", "60"))
+RULE_ENGINE_SERVICE_URL = os.getenv("RULE_ENGINE_SERVICE_URL", "").rstrip("/")
+ANALYZE_MAX_FILE_BYTES = int(os.getenv("ANALYZE_MAX_FILE_BYTES", "524288"))
+ANALYZE_ALLOWED_EXTS = {".yaml", ".yml", ".json", ".txt", ".log", ".flogo"}
 
 # Basic auth header — matches Flogo service default credentials
 _AUTH_HEADER = {"Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="}
@@ -192,7 +195,17 @@ async def stream_chat_sse(
     except asyncio.TimeoutError:
         log.warning("[req=%s session=%s] SSE stream timed out after %ss", request_id, session_id, REQUEST_TIMEOUT)
         if not answer:
-            answer = "⚠️ The request timed out before a response was received. Please try again."
+            # Fallback to synchronous chat path if SSE events are missed or delayed.
+            # This avoids dropping the user request when stream.answer/stream.done
+            # arrive before the client is fully subscribed.
+            try:
+                fallback = await post_chat(agent_id, query, session_id, request_id, collection_name, top_k)
+                answer = fallback.get("answer") or fallback.get("data", {}).get("answer", "")
+                formatted_ctx = fallback.get("formattedContext") or fallback.get("data", {}).get("formattedContext", "")
+                log.info("[req=%s session=%s] SSE timeout fallback succeeded via /api/chat", request_id, session_id)
+            except Exception as fallback_exc:
+                log.warning("[req=%s session=%s] SSE timeout fallback failed: %s", request_id, session_id, fallback_exc)
+                answer = "⚠️ The request timed out before a response was received. Please try again."
 
     # Format sources into a readable string (mirrors agent-chat formattedContext)
     formatted_ctx = ""
@@ -232,6 +245,111 @@ async def post_feedback(
         log.warning("[session=%s] Feedback HTTP error %s: %s", session_id, exc.response.status_code, exc.response.text)
     except (httpx.ConnectError, httpx.TimeoutException) as exc:
         log.warning("[session=%s] Feedback unreachable (%s): %s", session_id, FEEDBACK_URL, exc)
+
+
+def _is_analysis_intent(text: str) -> bool:
+    if not text:
+        return False
+    lowered = text.lower()
+    keywords = (
+        "analyze",
+        "analyse",
+        "scan",
+        "validate",
+        "kubernetes",
+        "k8s",
+        "manifest",
+        "yaml",
+        "policy",
+        "security",
+        "rule",
+    )
+    return any(k in lowered for k in keywords)
+
+
+def _chat_port() -> int | None:
+    parsed = urllib.parse.urlparse(CHAT_URL)
+    return parsed.port
+
+
+def _derive_rule_engine_base_url() -> str:
+    if RULE_ENGINE_SERVICE_URL:
+        return RULE_ENGINE_SERVICE_URL
+
+    parsed = urllib.parse.urlparse(CHAT_URL)
+    host = parsed.hostname or "localhost"
+    chat_port = _chat_port()
+    if chat_port and chat_port >= 7201:
+        return f"http://{host}:{chat_port + 5}"
+    return "http://localhost:7000"
+
+
+def _normalize_rule_engine_url(base_or_url: str) -> str:
+    base = base_or_url.rstrip("/")
+    if base.endswith("/api/analyze"):
+        return base
+    return f"{base}/api/analyze"
+
+
+def _extract_uploaded_text(message: cl.Message) -> tuple[str, str] | tuple[None, None]:
+    elements = getattr(message, "elements", None) or []
+    for element in elements:
+        path = getattr(element, "path", "")
+        if not path:
+            continue
+        name = getattr(element, "name", os.path.basename(path))
+        _, ext = os.path.splitext(name.lower())
+        if ext not in ANALYZE_ALLOWED_EXTS:
+            continue
+        try:
+            size = os.path.getsize(path)
+            if size > ANALYZE_MAX_FILE_BYTES:
+                continue
+            with open(path, "r", encoding="utf-8", errors="replace") as handle:
+                return name, handle.read()
+        except OSError:
+            continue
+    return None, None
+
+
+async def analyze_with_rule_engine(file_name: str, content: str, request_id: str) -> dict:
+    analyze_url = _normalize_rule_engine_url(_derive_rule_engine_base_url())
+    payload = {
+        "fileName": file_name,
+        "content": content,
+    }
+    log.info("[req=%s] Rule-engine analyze call: %s file=%s", request_id, analyze_url, file_name)
+    async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
+        resp = await client.post(analyze_url, json=payload, headers=_AUTH_HEADER)
+        resp.raise_for_status()
+        return resp.json()
+
+
+def _format_rule_engine_result(result: dict) -> str:
+    findings = result.get("findings", [])
+    error_count = result.get("errorCount", 0)
+    warning_count = result.get("warningCount", 0)
+    info_count = result.get("infoCount", 0)
+
+    lines = [
+        "Rule Engine Analysis",
+        "",
+        f"Errors: {error_count} | Warnings: {warning_count} | Info: {info_count}",
+    ]
+
+    if not findings:
+        lines.append("")
+        lines.append("No findings were reported for this input.")
+        return "\n".join(lines)
+
+    lines.append("")
+    lines.append("Top findings:")
+    for finding in findings[:12]:
+        severity = str(finding.get("severity", "info")).upper()
+        message = finding.get("message") or finding.get("issue") or "Issue detected"
+        location = finding.get("location") or finding.get("path") or "unknown"
+        lines.append(f"- [{severity}] {message} ({location})")
+    return "\n".join(lines)
 
 
 def agent_label(agent: dict) -> str:
@@ -446,12 +564,28 @@ async def on_message(message: cl.Message):
     cl.user_session.set("last_agent_id", agent_id)
     log.info("[req=%s session=%s agent=%s] on_message: %r", request_id, session_id, agent_id, message.content[:120])
 
+    uploaded_name, uploaded_text = _extract_uploaded_text(message)
+    should_analyze = bool(uploaded_text) or _is_analysis_intent(message.content)
+
     async with cl.Step(name=f"{agent_name} — thinking", show_input=False) as step:
         try:
-            if SSE_SERVICE_URL and SSE_EVENTS_URL:
-                result = await stream_chat_sse(agent_id, message.content, session_id, request_id, collection_name)
+            if should_analyze:
+                content_to_analyze = uploaded_text or message.content
+                name_to_analyze = uploaded_name or "inline-input.txt"
+                result = await analyze_with_rule_engine(name_to_analyze, content_to_analyze, request_id)
+                answer = _format_rule_engine_result(result)
+                formatted_ctx = ""
+                duration = ""
             else:
-                result = await post_chat(agent_id, message.content, session_id, request_id, collection_name)
+                if SSE_SERVICE_URL and SSE_EVENTS_URL:
+                    result = await stream_chat_sse(agent_id, message.content, session_id, request_id, collection_name)
+                else:
+                    result = await post_chat(agent_id, message.content, session_id, request_id, collection_name)
+
+                # agent-chat returns: {answer, formattedContext, duration, error}
+                answer = result.get("answer") or result.get("data", {}).get("answer", str(result))
+                formatted_ctx = result.get("formattedContext") or result.get("data", {}).get("formattedContext", "")
+                duration = result.get("duration") or result.get("data", {}).get("duration", "")
         except httpx.HTTPStatusError as exc:
             step.output = f"HTTP {exc.response.status_code}: {exc.response.text}"
             await cl.Message(
@@ -466,11 +600,6 @@ async def on_message(message: cl.Message):
                 author=agent_name,
             ).send()
             return
-
-        # agent-chat returns: {answer, formattedContext, duration, error}
-        answer          = result.get("answer") or result.get("data", {}).get("answer", str(result))
-        formatted_ctx   = result.get("formattedContext") or result.get("data", {}).get("formattedContext", "")
-        duration        = result.get("duration") or result.get("data", {}).get("duration", "")
 
         step.output = f"Done in {duration}" if duration else "Done"
 
