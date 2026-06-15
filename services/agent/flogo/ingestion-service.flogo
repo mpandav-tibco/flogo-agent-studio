@@ -501,6 +501,7 @@
               },
               "input": {
                 "collectionName": "=$flow.body.collectionName",
+                "fileName": "",
                 "documents": "=$flow.body.documents"
               }
             }
@@ -548,23 +549,43 @@
         "metadata": {
           "input": [
             {
+              "name": "headers",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}}"
+              }
+            },
+            {
               "name": "body",
-              "type": "object"
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"collectionName\":{\"type\":\"string\"},\"documents\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"content\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"properties\":{}}}}}}"
+              }
+            },
+            {
+              "name": "requestURI",
+              "type": "string"
+            },
+            {
+              "name": "method",
+              "type": "string"
             }
           ],
           "output": [
             {
               "name": "code",
-              "type": "float64"
+              "type": "integer"
             },
             {
-              "name": "data",
-              "type": "object"
+              "name": "message",
+              "type": "string"
             }
           ],
           "fe_metadata": {
-            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"object\",\"properties\":{}}}}",
-            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"data\":{\"type\":\"object\",\"properties\":{}}}}"
+            "input": "{\"type\":\"object\",\"title\":\"IngestionRESTTrigger\",\"properties\":{\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"body\":{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"collectionName\":{\"type\":\"string\"},\"documents\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"content\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"properties\":{}}}}}}},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\"},\"message\":{\"type\":\"string\"}},\"required\":[]}"
           }
         },
         "explicitReply": true
@@ -2017,7 +2038,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:9BJ840oCPBNSsGEaFRqa9204vL5vQjyp"
+      "value": "SECRET:vt1nUeF6NnnJ5ayRsYK8nQI4tUjwE82e"
     },
     {
       "name": "DOCLING_MARKDOWN_URL",
@@ -2025,72 +2046,72 @@
       "value": "http://localhost:8001/v0/markdown"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Connection_Name",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Connection_Name",
       "type": "string",
       "value": "vectordb-weaviate"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.DB_Provider",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].DB_Provider",
       "type": "string",
       "value": "weaviate"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Host",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Host",
       "type": "string",
       "value": "localhost"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Port",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Port",
       "type": "float64",
       "value": 18080
     },
     {
-      "name": "VectorDB.vectordb-weaviate.API_Key",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].API_Key",
       "type": "string",
       "value": ""
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Secure_Connection",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Secure_Connection",
       "type": "boolean",
       "value": false
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Timeout_(seconds)",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Timeout_(seconds)",
       "type": "float64",
       "value": 30
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Max_Retries",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Max_Retries",
       "type": "float64",
       "value": 3
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Retry_Backoff_(ms)",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Retry_Backoff_(ms)",
       "type": "float64",
       "value": 500
     },
     {
-      "name": "VectorDB.vectordb-weaviate.HTTP_Scheme",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].HTTP_Scheme",
       "type": "string",
       "value": "http"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Configure_Embedding_Provider",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Configure_Embedding_Provider",
       "type": "boolean",
       "value": true
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Embedding_Provider",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_Provider",
       "type": "string",
       "value": "Ollama"
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Embedding_API_Key",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_API_Key",
       "type": "string",
       "value": ""
     },
     {
-      "name": "VectorDB.vectordb-weaviate.Embedding_Base_URL",
+      "name": "VectorDB.=$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Embedding_Base_URL",
       "type": "string",
       "value": "http://localhost:11434/v1"
     }
@@ -2136,41 +2157,9 @@
         "embeddingAPIKey": "=$property[\"VectorDB.vectordb-weaviate.Embedding_API_Key\"]",
         "embeddingBaseURL": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Base_URL\"]"
       }
-    },
-    "a36435b2-56ac-43a7-9a96-729c3ef54cff": {
-      "id": "a36435b2-56ac-43a7-9a96-729c3ef54cff",
-      "name": "weaviate-1",
-      "ref": "#connector",
-      "isGlobal": false,
-      "settings": {
-        "name": "weaviate-1",
-        "dbType": "weaviate",
-        "host": "localhost",
-        "port": 18080,
-        "apiKey": "",
-        "useTLS": false,
-        "tlsInsecureSkipVerify": false,
-        "tlsServerName": "",
-        "caCert": "",
-        "clientCert": "",
-        "clientKey": "",
-        "timeoutSeconds": 30,
-        "maxRetries": 3,
-        "retryBackoffMs": 500,
-        "grpcPort": 6334,
-        "scheme": "http",
-        "username": "",
-        "password": "",
-        "dbName": "default",
-        "defaultMetricType": "cosine",
-        "enableEmbedding": false,
-        "embeddingProvider": "OpenAI",
-        "embeddingAPIKey": "",
-        "embeddingBaseURL": ""
-      }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmMiLCJpZCI6IlZlY3RvckRCIiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiVmVjdG9yREIgUkFHIENvbm5lY3RvciIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9WZWN0b3JEQiIsImlzVXNlckV4dGVuc2lvbiI6dHJ1ZX1d",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmMiLCJpZCI6IlZlY3RvckRCIiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiV2VhdmlhdGUgVmVjdG9yREIgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfV0=",
   "metadata": {
     "endpoints": [
       {

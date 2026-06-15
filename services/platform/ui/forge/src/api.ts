@@ -118,7 +118,9 @@ export const cloneAgent = async (id: string): Promise<Agent> => {
 };
 
 export const listTemplates = (): Promise<Template[]> =>
-  get(TEMPLATES_URL).then(json<Template[]>);
+  get(TEMPLATES_URL)
+    .then(json<{ templates: Template[] } | Template[]>)
+    .then((r) => (Array.isArray(r) ? r : (r as { templates: Template[] }).templates ?? []));
 
 // ── Deploy ────────────────────────────────────────────────────────────────────
 
@@ -283,9 +285,10 @@ export const ingestDocuments = async (
   serviceUrl?: string,
 ): Promise<string> => {
   const base = agentIngestBase(serviceUrl);
-  const res = await mutate(`${base}/api/ingest`, "POST", { collection, chunkStrategy, documents });
+  if (!base) throw new Error("Ingestion service URL not available — activate the agent first.");
+  const res = await mutate(`${base}/api/ingest`, "POST", { collectionName: collection, chunkStrategy, documents });
   const text = await res.text();
-  if (!res.ok) throw new Error(text || res.statusText);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
   return text;
 };
 
@@ -296,9 +299,10 @@ export const ingestUrl = async (
   serviceUrl?: string,
 ): Promise<string> => {
   const base = agentIngestBase(serviceUrl);
-  const res = await mutate(`${base}/api/ingest/url`, "POST", { collection, url, chunkStrategy });
+  if (!base) throw new Error("Ingestion service URL not available — activate the agent first.");
+  const res = await mutate(`${base}/api/ingest/url`, "POST", { collectionName: collection, url, chunkStrategy });
   const text = await res.text();
-  if (!res.ok) throw new Error(text || res.statusText);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
   return text;
 };
 
@@ -312,8 +316,9 @@ export const ingestGitHub = async (
   serviceUrl?: string,
 ): Promise<string> => {
   const base = agentIngestBase(serviceUrl);
+  if (!base) throw new Error("Ingestion service URL not available — activate the agent first.");
   const res = await mutate(`${base}/api/ingest/github`, "POST", {
-    collection,
+    collectionName: collection,
     owner,
     repo,
     path,
@@ -321,7 +326,7 @@ export const ingestGitHub = async (
     chunkStrategy,
   });
   const text = await res.text();
-  if (!res.ok) throw new Error(text || res.statusText);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
   return text;
 };
 
@@ -334,9 +339,10 @@ export const ingestConfluence = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<string> => {
   const base = agentIngestBase(serviceUrl);
-  const res = await mutate(`${base}/api/ingest/confluence`, "POST", { collection, spaceKey, baseUrl: confluenceBaseUrl, chunkStrategy });
+  if (!base) throw new Error("Ingestion service URL not available — activate the agent first.");
+  const res = await mutate(`${base}/api/ingest/confluence`, "POST", { collectionName: collection, spaceKey, baseUrl: confluenceBaseUrl, chunkStrategy });
   const text = await res.text();
-  if (!res.ok) throw new Error(text || res.statusText);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
   return text;
 };
 
@@ -346,13 +352,17 @@ export const ingestFile = async (
   serviceUrl?: string,
 ): Promise<string> => {
   const base = agentIngestBase(serviceUrl);
+  if (!base) throw new Error("Ingestion service URL not available — activate the agent first.");
   const res = await fetch(`${base}/api/ingest/file`, {
     method: "POST",
-    headers: { Authorization: "Basic " + btoa("flogo:" + (localStorage.getItem("forge_api_key") ?? "changeme")) },
+    headers: { Authorization: authHeader() },
     body: formData,
   });
   const text = await res.text();
-  if (!res.ok) throw new Error(text || res.statusText);
+  if (!res.ok) {
+    if (res.status === 401) throw new Error("Unauthorized (401) — API key mismatch. Check Settings.");
+    throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+  }
   return text;
 };
 
@@ -377,3 +387,29 @@ export const stopRuntimeAgent = (agentId: string): Promise<void> =>
 
 export const startRuntimeAgent = (agentId: string): Promise<void> =>
   fetch(`/api/runtime/agents/${agentId}/start`, { method: "POST", headers: headers(true) }).then(() => undefined);
+
+export const restartRuntimeAgent = (agentId: string): Promise<void> =>
+  fetch(`/api/runtime/agents/${agentId}/restart`, { method: "POST", headers: headers(true) }).then(() => undefined);
+
+export const stopPlatformService = (name: string): Promise<void> =>
+  fetch(`/api/admin/services/${name}/stop`, { method: "DELETE", headers: headers() }).then(() => undefined);
+
+export const startPlatformService = (name: string): Promise<void> =>
+  fetch(`/api/admin/services/${name}/start`, { method: "POST", headers: headers(true) }).then(() => undefined);
+
+export const restartPlatformService = (name: string): Promise<void> =>
+  fetch(`/api/admin/services/${name}/restart`, { method: "POST", headers: headers(true) }).then(() => undefined);
+
+export interface LogResponse { lines: string[]; exists: boolean; total: number; }
+
+export const getAgentLogs = async (agentId: string, service: string, lines = 100): Promise<LogResponse> => {
+  const res = await fetch(`/api/runtime/agents/${agentId}/logs/${service}?lines=${lines}`, { headers: headers() });
+  if (!res.ok) return { lines: [], exists: false, total: 0 };
+  return res.json() as Promise<LogResponse>;
+};
+
+export const getPlatformLogs = async (service: string, lines = 100): Promise<LogResponse> => {
+  const res = await fetch(`/api/runtime/platform-logs/${service}?lines=${lines}`, { headers: headers() });
+  if (!res.ok) return { lines: [], exists: false, total: 0 };
+  return res.json() as Promise<LogResponse>;
+};

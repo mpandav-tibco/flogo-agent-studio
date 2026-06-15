@@ -34,49 +34,48 @@ export default function TemplateModal({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
+      <div className="bg-zinc-900 rounded-2xl shadow-2xl shadow-zinc-950 w-full max-w-2xl max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-zinc-800">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Start from a template</h2>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <h2 className="text-lg font-bold text-zinc-100">Start from a template</h2>
+            <p className="text-sm text-zinc-500 mt-0.5">
               Pick a starting point — you can customise everything afterwards.
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
+          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-200 transition-colors">
             <X size={20} />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading && (
-            <p className="text-center text-gray-400 text-sm py-8">Loading templates…</p>
+            <p className="text-center text-zinc-500 text-sm py-8">Loading templates…</p>
           )}
           {!isLoading && templates.length === 0 && (
-            <p className="text-center text-gray-400 text-sm py-8">No templates available.</p>
+            <p className="text-center text-zinc-500 text-sm py-8">No templates available.</p>
           )}
           <div className="grid grid-cols-2 gap-3">
             {templates.map((tpl) => (
               <button
                 key={tpl.id}
                 onClick={() => setSelected(tpl)}
-                className={`text-left rounded-xl border-2 p-4 transition-all ${
-                  selected?.id === tpl.id
-                    ? "border-brand-500 bg-brand-50"
-                    : "border-gray-100 hover:border-gray-300 bg-gray-50 hover:bg-white"
-                }`}
+                className={`text-left rounded-xl border-2 p-4 transition-all ${selected?.id === tpl.id
+                    ? "border-brand-500 bg-brand-500/10"
+                    : "border-zinc-700 hover:border-zinc-500 bg-zinc-800 hover:bg-zinc-700"
+                  }`}
               >
-                <p className="font-semibold text-sm text-gray-900">{tpl.name}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{tpl.description}</p>
+                <p className="font-semibold text-sm text-zinc-100">{tpl.name}</p>
+                <p className="text-xs text-zinc-500 mt-0.5">{tpl.description}</p>
                 {tpl.config.llmProvider && (
-                  <p className="text-xs text-gray-400 mt-1">{tpl.config.llmProvider}</p>
+                  <p className="text-xs text-zinc-600 mt-1">{tpl.config.llmProvider}</p>
                 )}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100">
-          <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-zinc-800">
+          <button onClick={onClose} className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
             Cancel
           </button>
           <div className="flex items-center gap-3">

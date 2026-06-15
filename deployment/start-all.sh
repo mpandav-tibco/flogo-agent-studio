@@ -190,15 +190,15 @@ stop_existing_services
 
 # ── Clear log files ───────────────────────────────────────────────────────────
 echo "── Clearing log files ─────────────────────────────────────────────────────"
-mkdir -p "$PROJECT_ROOT/logs"
+mkdir -p "$PROJECT_ROOT/logs" "$PROJECT_ROOT/logs/agents"
 log_count=0
-for f in "$PROJECT_ROOT/logs/"*.log; do
+for f in "$PROJECT_ROOT/logs/"*.log "$PROJECT_ROOT/logs/agents/"*.log; do
   [[ -f "$f" ]] || continue
   > "$f"   # truncate in place (preserves any open file handles)
   (( log_count++ )) || true
 done
 if (( log_count > 0 )); then
-  echo "  Cleared ${log_count} log file(s) in logs/"
+  echo "  Cleared ${log_count} log file(s) in logs/ and logs/agents/"
 else
   echo "  No log files to clear."
 fi
@@ -235,6 +235,8 @@ _build_flogo_services() {
     for flogo in "$PROJECT_ROOT/$fdir/"*.flogo; do
       [[ -f "$flogo" ]] || continue
       local svc; svc=$(basename "$flogo" .flogo)
+      # Skip FDA meta-file — it has no triggers/resources and is not a service
+      [[ "$svc" == "flogo-project" ]] && continue
       local binf="$PROJECT_ROOT/bin/$svc"
       if [[ ! -f "$binf" ]] || [[ "$flogo" -nt "$binf" ]]; then
         need_build+=("$fdir/$(basename "$flogo"):$svc")
@@ -249,11 +251,16 @@ _build_flogo_services() {
 
   echo "  flogobuild: $fb  context: $ctx"
   mkdir -p "$PROJECT_ROOT/bin"
+  # Prepend go-wrapper so 'go mod tidy' is called with -e (skips test-only
+  # missing deps like wi-contrib/function/float that would abort the build).
+  local wrapper_dir="$PROJECT_ROOT/tools/go-wrapper"
+  local build_path="$PATH"
+  [[ -x "$wrapper_dir/go" ]] && build_path="$wrapper_dir:$PATH"
   local failed=()
   for entry in "${need_build[@]}"; do
     IFS=: read -r flogo_rel svc <<< "$entry"
     printf '  Compiling %-32s' "$svc ..."
-    if "$fb" build-exe \
+    if PATH="$build_path" "$fb" build-exe \
         -f "$PROJECT_ROOT/$flogo_rel" \
         -c "$ctx" \
         -n "$svc" \
@@ -315,7 +322,7 @@ else
   echo "OTel disabled (OTEL_ENABLED=false)"
 fi
 
-# ── Forge UI (AgentForge — port 7025) ───────────────────────────────────────
+# ── Forge UI (Flogents — port 7025) ───────────────────────────────────────
 if [[ -d "services/platform/ui/forge" ]] && command -v npm &>/dev/null; then
   if [[ ! -d "services/platform/ui/forge/node_modules" ]]; then
     echo "Installing Forge dependencies..."
@@ -339,7 +346,7 @@ echo ""
 # ── Platform services only ────────────────────────────────────────────────────
 # Agent services (chat+sse, ingestion, rule-engine, chainlit) are NOT started
 # here. The runtime-manager (deployment.py) starts a dedicated set per agent
-# when that agent is activated from the AgentForge UI.
+# when that agent is activated from the Flogents UI.
 SERVICES=(
   "bin/platform-service:platform:7020"            # design + feedback (merged)
   "bin/agent-builder-service:agent-builder:7010"  # LLM config generation
@@ -390,10 +397,10 @@ for entry in "${SERVICES[@]}"; do
 
   if [[ "$name" == "mcp-server" ]]; then
     OTEL_SERVICE_NAME="${name}" FLOGO_OTEL_TRACE="false" \
-      python3 services/launch.py "$SVC_ENV_FILE" "$exe" $APP_OVERRIDE > "logs/${name}.log" 2>&1 &
+      python3 services/launch.py "$SVC_ENV_FILE" "$exe" $APP_OVERRIDE < /dev/null > "logs/${name}.log" 2>&1 &
   else
     OTEL_SERVICE_NAME="${name}" \
-      python3 services/launch.py "$SVC_ENV_FILE" "$exe" $APP_OVERRIDE > "logs/${name}.log" 2>&1 &
+      python3 services/launch.py "$SVC_ENV_FILE" "$exe" $APP_OVERRIDE < /dev/null > "logs/${name}.log" 2>&1 &
   fi
   echo "START $name  (port $port, pid $!)"
   ((started++)) || true
@@ -409,7 +416,7 @@ echo "Agent services (chat+sse/ingestion/chainlit) will be started by runtime-ma
 # each deployed (active) agent gets its own chat+sse+ingestion+chainlit stack.
 # sse-stream-service is merged into agent-chat-service (single binary, 3 ports).
 if [[ -f "$SCRIPT_DIR/deployment.py" ]]; then
-  python3 "$SCRIPT_DIR/deployment.py" > logs/runtime-manager.log 2>&1 &
+  python3 "$SCRIPT_DIR/deployment.py" < /dev/null > logs/runtime-manager.log 2>&1 &
   echo "START runtime-manager  (port 7050, pid $!)"
 else
   echo "SKIP  runtime-manager  (deployment/deployment.py not found)"

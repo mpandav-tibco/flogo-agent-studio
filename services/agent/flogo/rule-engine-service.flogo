@@ -254,7 +254,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI0OCwieSI6MTE5fSwiUnVsZUVuZ2luZTEiOnsieCI6NDMxLCJ5IjoyNTN9LCJSZXR1cm4iOnsieCI6NjUwLCJ5IjozNTB9LCJFcnJvclJldHVybiI6eyJ4Ijo2NDksInkiOjE1NX19",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI0OCwieSI6MTE5fSwiUnVsZUVuZ2luZTEiOnsieCI6NDUwLCJ5IjoxMDh9LCJSZXR1cm4iOnsieCI6NzAwLCJ5IjoxOTR9LCJFcnJvclJldHVybiI6eyJ4Ijo2NzIsInkiOjZ9fQ==",
         "metadata": {
           "input": [
             {
@@ -380,7 +380,7 @@
     {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:/BzVyU7JUY7X8/QtLtv4FtdygJLCX8h5"
+      "value": "SECRET:FcTHbXC7bOO+XHCXt+o3bALyaYgy2CFj"
     }
   ],
   "connections": {},

@@ -1,0 +1,83 @@
+# ============================================================
+#  DEMO FILE — fixed version of payment-service
+#  Shows the diff after applying all rule recommendations.
+#  Expected findings: 0 ERRORS, 0 WARNINGS (all clear)
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: payments-prod                    # KUBE-007 fixed
+  labels:
+    app: payment-service
+    team: payments
+    env: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+        version: "2.1.4"
+    spec:
+      securityContext:
+        runAsNonRoot: true                    # KUBE-006 fixed (pod-level)
+        fsGroup: 1000
+      containers:
+        - name: payment-service
+          image: acme/payment-service:2.1.4  # KUBE-001 fixed: pinned tag
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: DB_HOST
+              value: "postgres-service.payments.svc.cluster.local"
+            - name: DB_PORT
+              value: "5432"
+            - name: APP_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+          resources:                          # KUBE-004/005 fixed
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:                     # KUBE-002 fixed
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:                      # KUBE-003 fixed
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false   # KUBE-006 fixed (container-level)
+            readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: payments-prod
+  labels:
+    app: payment-service
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  type: ClusterIP

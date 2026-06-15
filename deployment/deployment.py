@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AgentForge Runtime Manager  (port 7050)
+Flogents Runtime Manager  (port 7050)
 ========================================
 Manages per-agent process groups.  Each *deployed* (status=active) agent gets
 its own isolated set of three processes:
@@ -42,6 +42,8 @@ Usage:
 """
 
 import asyncio
+import base64
+import datetime
 import json
 import logging
 import os
@@ -69,7 +71,7 @@ _AUTH_HEADER = os.getenv("SERVICE_AUTH_HEADER", "Basic ZmxvZ286Y2hhbmdlbWU=")
 _THIS_FILE   = Path(__file__).resolve()
 PROJECT_ROOT = _THIS_FILE.parent.parent          # flogo-agent-studio/ (script is in deployment/)
 
-SERVICES_BIN          = PROJECT_ROOT / "services" / "bin"
+SERVICES_BIN          = PROJECT_ROOT / "bin"
 SERVICES_PLATFORM_APPS = PROJECT_ROOT / "services" / "platform" / "flogo"
 SERVICES_AGENT_APPS    = PROJECT_ROOT / "services" / "agent"   / "flogo"
 SERVICES_PLATFORM_ENV  = PROJECT_ROOT / "services" / "platform" / "env"
@@ -123,6 +125,19 @@ def _detect_flogobuild() -> Optional[str]:
     return found  # None if not found anywhere
 
 
+def _go_wrapped_env() -> dict:
+    """Return the current environment with tools/go-wrapper/ prepended to PATH.
+
+    The wrapper script at tools/go-wrapper/go intercepts 'go mod tidy' and appends
+    the -e flag so that test-only transitive imports that cannot be resolved (e.g.
+    github.com/tibco/wi-contrib/function/float) do not abort the build.
+    """
+    wrapper_dir = str(PROJECT_ROOT / "tools" / "go-wrapper")
+    env = dict(os.environ)
+    env["PATH"] = wrapper_dir + os.pathsep + env.get("PATH", "")
+    return env
+
+
 async def _ensure_binary(flogo_src: Path, svc_name: str) -> bool:
     """Rebuild the named service binary when flogo source is newer than the binary.
 
@@ -170,6 +185,7 @@ async def _ensure_binary(flogo_src: Path, svc_name: str) -> bool:
         "-o", str(PROJECT_ROOT / "bin"),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
+        env=_go_wrapped_env(),
     )
     out, _ = await proc.communicate()
     if proc.returncode == 0:
@@ -438,7 +454,7 @@ async def _patch_agent_urls(agent_id: str, record: dict):
                 headers={"Authorization": _AUTH_HEADER, "Content-Type": "application/json"},
             )
     except Exception as exc:
-        log.debug("patch_agent_urls %s: %s", agent_id[:8], exc)
+        log.warning("patch_agent_urls %s: %s", agent_id[:8], exc)
 
 
 # ── Agent runtime lifecycle ───────────────────────────────────────────────────
@@ -487,7 +503,11 @@ async def _start_runtime(agent: dict) -> dict:
     }
 
     def _open_log(name: str):
-        return open(LOGS_AGENT_DIR / f"{short}-{name}.log", "a")
+        path = LOGS_AGENT_DIR / f"{short}-{name}.log"
+        fh = open(path, "w")
+        fh.write(f"=== STARTED {datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')} [{short}] {name} ===\n")
+        fh.flush()
+        return fh
 
     # ── agent-chat-service (includes SSE streaming — merged) ──────────────────
     chat_src    = SERVICES_AGENT_APPS / "agent-chat-service.flogo"
@@ -523,8 +543,9 @@ async def _start_runtime(agent: dict) -> dict:
     chat_proc = subprocess.Popen(
         [sys.executable, str(LAUNCH_PY), str(chat_env),
          str(SERVICES_BIN / "agent-chat-service"), "-app", str(chat_flogo)],
-        stdout=_open_log("chat"), stderr=subprocess.STDOUT,
+        stdin=subprocess.DEVNULL, stdout=_open_log("chat"), stderr=subprocess.STDOUT,
         env={**base_env, "OTEL_SERVICE_NAME": f"agent-chat-{short}"},
+        start_new_session=True,
     )
     pids["chat"]       = chat_proc.pid
     pids["sse_rest"]   = chat_proc.pid   # same process — SSE REST trigger on port sse_rest
@@ -557,8 +578,9 @@ async def _start_runtime(agent: dict) -> dict:
     ing_proc = subprocess.Popen(
         [sys.executable, str(LAUNCH_PY), str(ing_env),
          str(SERVICES_BIN / "ingestion-service"), "-app", str(ing_flogo)],
-        stdout=_open_log("ingestion"), stderr=subprocess.STDOUT,
+        stdin=subprocess.DEVNULL, stdout=_open_log("ingestion"), stderr=subprocess.STDOUT,
         env={**base_env, "OTEL_SERVICE_NAME": f"ingestion-{short}"},
+        start_new_session=True,
     )
     pids["ingestion"] = ing_proc.pid
     log.info("  [%s] ingestion   pid=%-7s port=%s", short, ing_proc.pid, ports["ingestion"])
@@ -583,8 +605,9 @@ async def _start_runtime(agent: dict) -> dict:
     re_proc = subprocess.Popen(
         [sys.executable, str(LAUNCH_PY), str(re_env),
          str(SERVICES_BIN / "rule-engine-service"), "-app", str(re_flogo)],
-        stdout=_open_log("rule-engine"), stderr=subprocess.STDOUT,
+        stdin=subprocess.DEVNULL, stdout=_open_log("rule-engine"), stderr=subprocess.STDOUT,
         env={**base_env, "OTEL_SERVICE_NAME": f"rule-engine-{short}"},
+        start_new_session=True,
     )
     pids["rule_engine"] = re_proc.pid
     log.info("  [%s] rule-engine  pid=%-7s port=%s", short, re_proc.pid, ports["rule_engine"])
@@ -604,8 +627,9 @@ async def _start_runtime(agent: dict) -> dict:
         chainlit_proc = subprocess.Popen(
             cmd + ["--port", str(ports["chainlit"])],
             cwd=str(CHAINLIT_DIR),
-            stdout=_open_log("chainlit"), stderr=subprocess.STDOUT,
+            stdin=subprocess.DEVNULL, stdout=_open_log("chainlit"), stderr=subprocess.STDOUT,
             env=chainlit_env,
+            start_new_session=True,
         )
         pids["chainlit"] = chainlit_proc.pid
         log.info("  [%s] chainlit    pid=%-7s port=%s", short, chainlit_proc.pid, ports["chainlit"])
@@ -775,6 +799,78 @@ async def _restart_dead_processes(agent_id: str):
         await _start_runtime(agent)
 
 
+async def _reconcile_docker_agent(agent_id: str, compose_file: Path):
+    """
+    Called by the reconciler for docker-deployed agents not yet in _state.
+    Checks if their containers are running; if not, does 'docker compose up -d'.
+    Adds a lightweight entry to _state so the admin console shows the agent.
+    """
+    if not _docker_available():
+        log.debug("Reconcile docker [%s]: docker not available, skipping", agent_id[:8])
+        return
+
+    try:
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: subprocess.run(
+                ["docker", "compose", "-f", str(compose_file), "ps", "--format", "json"],
+                capture_output=True, text=True, timeout=15, stdin=subprocess.DEVNULL,
+            ),
+        )
+        containers = []
+        for line in result.stdout.strip().splitlines():
+            try:
+                containers.append(json.loads(line))
+            except Exception:
+                pass
+
+        all_running = containers and all(c.get("State") == "running" for c in containers)
+        any_running = any(c.get("State") == "running" for c in containers)
+
+        if not any_running:
+            log.info("Reconcile docker [%s]: containers stopped — running docker compose up -d", agent_id[:8])
+            up_result = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: subprocess.run(
+                    ["docker", "compose", "-f", str(compose_file), "up", "-d"],
+                    capture_output=True, text=True, timeout=120, stdin=subprocess.DEVNULL,
+                ),
+            )
+            if up_result.returncode != 0:
+                log.error("Reconcile docker [%s]: compose up failed: %s",
+                          agent_id[:8], up_result.stderr[-500:])
+                return
+            log.info("Reconcile docker [%s]: compose up succeeded", agent_id[:8])
+        elif not all_running:
+            log.info("Reconcile docker [%s]: some containers not running — docker compose up -d", agent_id[:8])
+            await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: subprocess.run(
+                    ["docker", "compose", "-f", str(compose_file), "up", "-d"],
+                    capture_output=True, text=True, timeout=120, stdin=subprocess.DEVNULL,
+                ),
+            )
+        else:
+            log.debug("Reconcile docker [%s]: all containers running", agent_id[:8])
+
+        # Register a lightweight docker-mode record in _state so the UI shows it
+        async with _state_lock:
+            if agent_id not in _state:
+                _state[agent_id] = {
+                    "agentId":        agent_id,
+                    "deploymentMode": "docker",
+                    "composeFile":    str(compose_file),
+                    "pids":           {},
+                    "ports":          {},
+                    "readiness":      "docker" if any_running else "starting",
+                    "startedAt":      time.time(),
+                }
+        await _save_state()
+
+    except Exception as exc:
+        log.warning("Reconcile docker [%s]: %s", agent_id[:8], exc)
+
+
 # ── Reconciliation loop ───────────────────────────────────────────────────────
 
 async def reconcile_loop():
@@ -795,15 +891,14 @@ async def _reconcile_once():
     active_ids  = {a["id"] for a in agents if a.get("status") == "active"}
     running_ids = set(_state.keys())
 
-    # Start runtimes for newly-active agents (skip docker-mode agents)
+    # Start runtimes for newly-active agents
     for agent in agents:
         aid = agent["id"]
         if agent.get("status") == "active" and aid not in running_ids:
-            # Don't auto-start as local process if a compose file exists for this agent
             compose_file = DOCKER_DEPLOY_DIR / aid / "docker-compose.yml"
             if compose_file.exists():
-                log.debug("Reconcile: skipping local start for [%s] — docker deployment present",
-                          aid[:8])
+                # Docker-deployed agent: check containers and restart if stopped
+                asyncio.ensure_future(_reconcile_docker_agent(aid, compose_file))
                 continue
             log.info("Reconcile: starting runtime for [%s] (%s)",
                      aid[:8], agent.get("name"))
@@ -926,52 +1021,59 @@ def _build_flogo_service_image(
     service_name: str,
     flogo_src: Path,
     dockerfile_dir: Path,
-    flogobuild_bin: str,
     image_tag: str,
 ) -> None:
     """
     Build a Docker image for a Flogo service:
-      1. Run flogobuild inside a linux/amd64 container (the binary is linux-only
-         and cannot execute directly on macOS / arm64 hosts).
-      2. docker build --platform linux/amd64 with the resulting binary.
+      1. Run flogobuild build-exe (native darwin/arm64) with the go-wrapper
+         injected via PATH.  The wrapper:
+           a) adds -e to 'go mod tidy' so test-only missing deps don't abort,
+           b) cross-compiles a linux/amd64 binary alongside the native one via
+              FLOGO_LINUX_OUTPUT_DIR (avoids -p linux/amd64 which requires the
+              private github.com/tibco/license-enforcement module).
+      2. docker build --platform linux/amd64 with the linux binary.
     """
     import tempfile, shutil as _shutil
 
     log.info("Building image %s from %s ...", image_tag, flogo_src.name)
 
+    fb = _detect_flogobuild()
+    if not fb:
+        raise RuntimeError("flogobuild not found — cannot build Docker image")
+
     with tempfile.TemporaryDirectory(prefix="flogo-docker-build-") as tmpdir:
         tmp = Path(tmpdir)
-        output_dir = tmp / "output"
-        output_dir.mkdir()
+        darwin_out = tmp / "darwin-out"
+        linux_out = tmp / "linux-out"
+        darwin_out.mkdir()
+        linux_out.mkdir()
 
-        # Step 1: compile .flogo → linux/amd64 binary via a throwaway container.
-        # Mounting the host flogobuild binary into an alpine container lets it run
-        # natively as linux/amd64 regardless of the host OS/arch.
+        # Step 1: build native binary; go-wrapper simultaneously cross-compiles
+        # linux/amd64 into linux_out via FLOGO_LINUX_OUTPUT_DIR.
+        env = _go_wrapped_env()
+        env["FLOGO_LINUX_OUTPUT_DIR"] = str(linux_out)
         result = subprocess.run(
             [
-                "docker", "run", "--rm",
-                "--platform", "linux/amd64",
-                "-v", f"{flogobuild_bin}:/usr/local/bin/flogobuild:ro",
-                "-v", f"{flogo_src}:/work/{flogo_src.name}:ro",
-                "-v", f"{output_dir}:/work/output",
-                "alpine:3.19",
-                "/usr/local/bin/flogobuild", "build-exe",
-                "-f", f"/work/{flogo_src.name}",
+                fb, "build-exe",
+                "-f", str(flogo_src),
                 "-c", "flogo-studio",
                 "-n", service_name,
-                "-o", "/work/output",
-                "-p", "linux/amd64",
+                "-o", str(darwin_out),
             ],
-            capture_output=True, text=True, timeout=180,
+            capture_output=True, text=True, timeout=600,
+            env=env,
         )
         if result.returncode != 0:
             raise RuntimeError(
-                f"flogobuild (container) failed for {service_name}:\n"
-                f"stdout: {result.stdout[-1000:]}\nstderr: {result.stderr[-1000:]}"
+                f"flogobuild failed for {service_name}:\n"
+                f"{result.stdout[-2000:]}"
             )
-        binary_path = output_dir / service_name
+        binary_path = linux_out / service_name
         if not binary_path.exists():
-            raise RuntimeError(f"flogobuild produced no output for {service_name}")
+            raise RuntimeError(
+                f"go-wrapper did not produce linux/amd64 binary for {service_name}; "
+                f"check /tmp/flogo-linux-build.log"
+            )
         binary_path.chmod(0o755)
         log.info("  flogobuild OK → %s (%d bytes)", service_name, binary_path.stat().st_size)
 
@@ -1018,13 +1120,6 @@ def build_docker_images(force: bool = False) -> dict:
     if not _docker_available():
         raise RuntimeError("docker not found on PATH — install Docker Desktop or Docker Engine")
 
-    flogobuild_bin = _detect_flogobuild_linux()
-    if not flogobuild_bin:
-        raise RuntimeError(
-            "tools/flogobuild/linux_amd64/flogobuild not found — "
-            "cannot build Linux Docker images on this host"
-        )
-
     cache = _load_build_cache()
     results = {}
 
@@ -1042,7 +1137,7 @@ def build_docker_images(force: bool = False) -> dict:
 
         reason = "forced" if force else ("new/changed source" if cached_hash != flogo_hash else "image missing")
         log.info("  %s — building (%s) ...", image_tag, reason)
-        _build_flogo_service_image(service_name, flogo_src, dockerfile_dir, flogobuild_bin, image_tag)
+        _build_flogo_service_image(service_name, flogo_src, dockerfile_dir, image_tag)
 
         cache[service_name] = {"flogo_sha256": flogo_hash, "image": image_tag}
         _save_build_cache(cache)
@@ -1111,7 +1206,7 @@ def _generate_compose_yaml(agent: dict) -> str:
     generated_at = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
     yaml = textwrap.dedent(f"""\
-        # AgentForge — {agent_name} ({short})
+        # Flogents — {agent_name} ({short})
         # Generated  : {generated_at}
         # Agent ID   : {agent_id}
         #
@@ -1514,6 +1609,16 @@ _PLATFORM_SERVICES = [
 # rule-engine-service is now per-agent (started by _start_runtime for each agent)
 _AGENT_SUPPORT_SERVICES: list = []
 
+# Services the API must NOT stop (killing them would break the admin console itself)
+_PLATFORM_SVC_UNMANAGED = {"runtime-manager", "forge-ui"}
+
+# Map service name → binary path relative to PROJECT_ROOT
+_PLATFORM_SVC_BIN: dict[str, str] = {
+    "platform-service": "bin/platform-service",
+    "agent-builder":    "bin/agent-builder-service",
+    "mcp-server":       "bin/mcp-server",
+}
+
 def _pid_on_port(port: int) -> Optional[int]:
     """Return the PID of the process listening on *port*, or None."""
     try:
@@ -1541,16 +1646,129 @@ async def _handle_admin_services(request: web.Request) -> web.Response:
         pid = _pid_on_port(port) if alive else None
         category = "platform" if svc in _PLATFORM_SERVICES else "agent-support"
         services.append({
-            "name":     svc["name"],
-            "port":     port,
-            "status":   "online" if alive else "offline",
-            "pid":      pid,
-            "category": category,
+            "name":        svc["name"],
+            "port":        port,
+            "status":      "online" if alive else "offline",
+            "pid":         pid,
+            "category":    category,
+            "controllable": svc["name"] not in _PLATFORM_SVC_UNMANAGED and svc["name"] in _PLATFORM_SVC_BIN,
         })
     return web.json_response(services)
 
 
 # ── REST API handlers ─────────────────────────────────────────────────────────
+
+# ── Platform service start/stop helpers ──────────────────────────────────────
+
+async def _stop_platform_svc(name: str) -> dict:
+    """SIGTERM the process owning a named platform service's port."""
+    svc = next((s for s in _PLATFORM_SERVICES + _AGENT_SUPPORT_SERVICES if s["name"] == name), None)
+    if not svc:
+        return {"error": f"unknown service: {name}"}
+    pid = _pid_on_port(svc["port"])
+    if not pid:
+        return {"message": "already stopped"}
+    try:
+        os.kill(pid, signal.SIGTERM)
+        log.info("Stopped platform service [%s] (PID %s)", name, pid)
+        return {"message": "stopped", "pid": pid}
+    except ProcessLookupError:
+        return {"message": "already stopped"}
+    except Exception as exc:
+        log.error("Failed to stop platform service [%s]: %s", name, exc)
+        return {"error": str(exc)}
+
+
+async def _start_platform_svc(name: str) -> dict:
+    """Launch a named platform service using its binary + env/flogo-app files."""
+    if name not in _PLATFORM_SVC_BIN:
+        return {"error": f"no binary configured for: {name}"}
+    svc = next((s for s in _PLATFORM_SERVICES + _AGENT_SUPPORT_SERVICES if s["name"] == name), None)
+    if not svc:
+        return {"error": f"unknown service: {name}"}
+    existing = _pid_on_port(svc["port"])
+    if existing:
+        return {"message": "already running", "pid": existing}
+    bin_path = PROJECT_ROOT / _PLATFORM_SVC_BIN[name]
+    if not bin_path.exists():
+        return {"error": f"binary not found: {bin_path}"}
+    if not os.access(bin_path, os.X_OK):
+        bin_path.chmod(bin_path.stat().st_mode | 0o111)
+    # Discover env file
+    env_file = ""
+    for edir in [PROJECT_ROOT / "services" / "platform" / "env",
+                 PROJECT_ROOT / "services" / "agent" / "env"]:
+        for stem in [f"{name}-service", name]:
+            p = edir / f"{stem}.env"
+            if p.exists():
+                env_file = str(p)
+                break
+        if env_file:
+            break
+    # Discover flogo app override
+    app_file = ""
+    for fdir in [PROJECT_ROOT / "services" / "platform" / "flogo",
+                 PROJECT_ROOT / "services" / "agent" / "flogo"]:
+        for stem in [f"{name}-service", name]:
+            p = fdir / f"{stem}.flogo"
+            if p.exists():
+                app_file = str(p)
+                break
+        if app_file:
+            break
+    launch_py = PROJECT_ROOT / "services" / "launch.py"
+    log_path  = PROJECT_ROOT / "logs" / f"{name}.log"
+    cmd = [sys.executable, str(launch_py), env_file, str(bin_path)]
+    if app_file:
+        cmd += ["-app", app_file]
+    env = os.environ.copy()
+    env["OTEL_SERVICE_NAME"] = name
+    if name == "mcp-server":
+        env["FLOGO_OTEL_TRACE"] = "false"
+    try:
+        with open(log_path, "w") as lf:
+            lf.write(f"=== STARTED {datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')} {name} ===\n")
+            lf.flush()
+            proc = subprocess.Popen(
+                cmd, stdout=lf, stderr=lf, env=env,
+                cwd=str(PROJECT_ROOT), start_new_session=True,
+            )
+        log.info("Started platform service [%s] PID %s", name, proc.pid)
+        return {"message": "started", "pid": proc.pid}
+    except Exception as exc:
+        log.error("Failed to start platform service [%s]: %s", name, exc)
+        return {"error": str(exc)}
+
+
+async def _handle_stop_platform_svc(request: web.Request) -> web.Response:
+    name = request.match_info["name"]
+    if name in _PLATFORM_SVC_UNMANAGED:
+        return web.json_response({"error": f"{name} cannot be controlled via API"}, status=400)
+    result = await _stop_platform_svc(name)
+    return web.json_response(result, status=500 if "error" in result else 200)
+
+
+async def _handle_start_platform_svc(request: web.Request) -> web.Response:
+    name = request.match_info["name"]
+    if name in _PLATFORM_SVC_UNMANAGED:
+        return web.json_response({"error": f"{name} cannot be controlled via API"}, status=400)
+    result = await _start_platform_svc(name)
+    code = 500 if "error" in result else (201 if result.get("message") == "started" else 200)
+    return web.json_response(result, status=code)
+
+
+async def _handle_restart_platform_svc(request: web.Request) -> web.Response:
+    name = request.match_info["name"]
+    if name in _PLATFORM_SVC_UNMANAGED:
+        return web.json_response({"error": f"{name} cannot be controlled via API"}, status=400)
+    stop_r = await _stop_platform_svc(name)
+    if "error" in stop_r:
+        return web.json_response(stop_r, status=500)
+    await asyncio.sleep(0.6)
+    start_r = await _start_platform_svc(name)
+    status = 500 if "error" in start_r else 200
+    return web.json_response({**stop_r, **start_r, "message": "restarted"}, status=status)
+
 
 async def _handle_health(request: web.Request) -> web.Response:
     return web.json_response({
@@ -1614,6 +1832,31 @@ async def _handle_stop_agent(request: web.Request) -> web.Response:
     return web.json_response({"message": "stopped"})
 
 
+async def _handle_restart_agent(request: web.Request) -> web.Response:
+    agent_id = request.match_info["agentId"]
+
+    async with _state_lock:
+        exists = agent_id in _state
+    if not exists:
+        return web.json_response({"error": "not running"}, status=404)
+
+    log.info("Restarting runtime for agent [%s]", agent_id[:8])
+    await _stop_runtime(agent_id)
+
+    agents = await _fetch_all_agents()
+    agent = next((a for a in agents if a["id"] == agent_id), None)
+    if not agent:
+        return web.json_response({"error": f"agent {agent_id} not found in design-service"}, status=404)
+
+    try:
+        record = await _start_runtime(agent)
+    except Exception as exc:
+        log.error("Failed to restart runtime for [%s]: %s", agent_id[:8], exc)
+        return web.json_response({"error": str(exc)}, status=500)
+
+    return web.json_response(record)
+
+
 async def _handle_ingestion_health(request: web.Request) -> web.Response:
     """
     GET /api/agents/{agentId}/ingestion-health
@@ -1647,9 +1890,18 @@ async def _handle_ingestion_health(request: web.Request) -> web.Response:
 
     healthy = False
     try:
+        # Read the API key from the env file; fall back to "changeme" for
+        # existing agents still carrying the old SECRET: encrypted value.
+        api_key = env_vals.get("API_KEY", "changeme")
+        if api_key.startswith("SECRET:"):
+            api_key = "changeme"
+        auth_value = base64.b64encode(f"flogo:{api_key}".encode()).decode()
         async with httpx.AsyncClient(timeout=3.0) as client:
-            r = await client.get(f"http://localhost:{ing_port}/api/health")
-            healthy = r.status_code in (200, 401)  # 401 = auth required = service is up
+            r = await client.get(
+                f"http://localhost:{ing_port}/api/health",
+                headers={"Authorization": f"Basic {auth_value}"},
+            )
+            healthy = r.status_code == 200
     except Exception:
         log.debug("Ingestion health check unreachable on port %s", ing_port)
         healthy = False
@@ -1691,6 +1943,9 @@ async def _handle_restart_ingestion(request: web.Request) -> web.Response:
         "EMBEDDING_PROVIDER": embedding_provider,
         "EMBEDDING_BASE_URL": embedding_base_url,
         "CHUNK_STRATEGY":     chunk_strategy,
+        # Migrate away from the Flogo-encrypted SECRET: value so the runtime
+        # manager and UI can authenticate with a known plaintext key.
+        "API_KEY":            "changeme",
     }
 
     base_proc_env = {
@@ -1720,7 +1975,10 @@ async def _handle_restart_ingestion(request: web.Request) -> web.Response:
         # Rewrite env with fresh config
         _generate_env_file(SERVICES_AGENT_ENV / "ingestion-service.env", ing_env, overrides)
 
-        log_f = open(LOGS_AGENT_DIR / f"{short}-ingestion.log", "a")
+        _ing_log = LOGS_AGENT_DIR / f"{short}-ingestion.log"
+        log_f = open(_ing_log, "w")
+        log_f.write(f"=== STARTED {datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')} [{short}] ingestion ===\n")
+        log_f.flush()
         new_proc = subprocess.Popen(
             [sys.executable, str(LAUNCH_PY), str(ing_env),
              str(SERVICES_BIN / "ingestion-service"), "-app", str(ing_flogo)],
@@ -1759,7 +2017,10 @@ async def _handle_restart_ingestion(request: web.Request) -> web.Response:
 
         await asyncio.sleep(1.5)  # let the port free up
 
-        log_f = open(PROJECT_ROOT / "logs" / "ingestion.log", "a")
+        _ing_log_path = PROJECT_ROOT / "logs" / "ingestion.log"
+        log_f = open(_ing_log_path, "w")
+        log_f.write(f"=== STARTED {datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')} ingestion ===\n")
+        log_f.flush()
         new_proc = subprocess.Popen(
             [sys.executable, str(LAUNCH_PY), str(ing_env),
              str(SERVICES_BIN / "ingestion-service"), "-app", str(ing_flogo)],
@@ -1963,6 +2224,69 @@ networks:
     return web.Response(text=yaml_text, content_type="text/plain")
 
 
+# ── Log tail helpers ──────────────────────────────────────────────────────────
+
+# Map platform-service names (from _PLATFORM_SERVICES) to their log filenames
+_PLATFORM_LOG_MAP: dict[str, str] = {
+    "platform-service": "platform.log",
+    "agent-builder":    "agent-builder.log",
+    "mcp-server":       "mcp-server.log",
+    "runtime-manager":  "runtime-manager.log",
+    "forge-ui":         "forge.log",
+}
+
+_AGENT_LOG_SERVICES = {"chat", "ingestion", "rule-engine", "chainlit", "sse"}
+
+
+def _tail_file(path: Path, n: int) -> list[str]:
+    """Return the last *n* lines of *path* without loading the whole file."""
+    try:
+        with open(path, "rb") as fh:
+            fh.seek(0, 2)
+            size = fh.tell()
+            read_size = min(size, max(n * 200, 65536))
+            fh.seek(max(0, size - read_size))
+            raw = fh.read().decode("utf-8", errors="replace")
+            lines = raw.splitlines()
+            return lines[-n:] if len(lines) > n else lines
+    except Exception as exc:
+        return [f"[error reading log: {exc}]"]
+
+
+async def _handle_agent_logs(request: web.Request) -> web.Response:
+    """GET /api/runtime/agents/{agentId}/logs/{service}?lines=100"""
+    agent_id = request.match_info["agentId"]
+    service  = request.match_info["service"]
+    if service not in _AGENT_LOG_SERVICES:
+        return web.Response(status=400, text=f"Unknown service '{service}'. Valid: {sorted(_AGENT_LOG_SERVICES)}")
+    try:
+        n = max(1, min(int(request.rel_url.query.get("lines", "100")), 500))
+    except ValueError:
+        n = 100
+    short    = agent_id[:8]
+    log_file = LOGS_AGENT_DIR / f"{short}-{service}.log"
+    if not log_file.exists():
+        return web.json_response({"lines": [], "exists": False, "total": 0})
+    lines = _tail_file(log_file, n)
+    return web.json_response({"lines": lines, "exists": True, "total": len(lines)})
+
+
+async def _handle_platform_logs(request: web.Request) -> web.Response:
+    """GET /api/runtime/platform-logs/{service}?lines=100"""
+    service = request.match_info["service"]
+    if service not in _PLATFORM_LOG_MAP:
+        return web.Response(status=400, text=f"Unknown service '{service}'. Valid: {sorted(_PLATFORM_LOG_MAP)}")
+    try:
+        n = max(1, min(int(request.rel_url.query.get("lines", "100")), 500))
+    except ValueError:
+        n = 100
+    log_file = PROJECT_ROOT / "logs" / _PLATFORM_LOG_MAP[service]
+    if not log_file.exists():
+        return web.json_response({"lines": [], "exists": False, "total": 0})
+    lines = _tail_file(log_file, n)
+    return web.json_response({"lines": lines, "exists": True, "total": len(lines)})
+
+
 # ── Server setup ──────────────────────────────────────────────────────────────
 
 def _build_app() -> web.Application:
@@ -1979,17 +2303,23 @@ def _build_app() -> web.Application:
     app.router.add_post("/api/runtime/docker-build",             _handle_docker_build)
     # /api/runtime prefix aliases (used by forge UI proxy)
     app.router.add_get("/api/admin/services",                              _handle_admin_services)
+    app.router.add_post("/api/admin/services/{name}/start",                _handle_start_platform_svc)
+    app.router.add_delete("/api/admin/services/{name}/stop",               _handle_stop_platform_svc)
+    app.router.add_post("/api/admin/services/{name}/restart",              _handle_restart_platform_svc)
     app.router.add_get("/api/runtime/admin/services",                     _handle_admin_services)
     app.router.add_get("/api/runtime/health",                              _handle_health)
     app.router.add_get("/api/runtime/agents",                              _handle_list_agents)
     app.router.add_get("/api/runtime/agents/{agentId}",                          _handle_get_agent)
     app.router.add_post("/api/runtime/agents/{agentId}/start",                   _handle_start_agent)
     app.router.add_delete("/api/runtime/agents/{agentId}/stop",                  _handle_stop_agent)
+    app.router.add_post("/api/runtime/agents/{agentId}/restart",                 _handle_restart_agent)
     app.router.add_post("/api/runtime/agents/{agentId}/docker-deploy",           _handle_docker_deploy)
     app.router.add_get("/api/runtime/agents/{agentId}/docker-deploy",            _handle_docker_status)
     app.router.add_delete("/api/runtime/agents/{agentId}/docker-deploy",         _handle_docker_stop)
     app.router.add_get("/api/runtime/agents/{agentId}/ingestion-health",         _handle_ingestion_health)
     app.router.add_post("/api/runtime/agents/{agentId}/restart-ingestion",       _handle_restart_ingestion)
+    app.router.add_get("/api/runtime/agents/{agentId}/logs/{service}",           _handle_agent_logs)
+    app.router.add_get("/api/runtime/platform-logs/{service}",                   _handle_platform_logs)
     # canonical /api/agents prefix aliases
     app.router.add_get("/api/agents/{agentId}/ingestion-health",                 _handle_ingestion_health)
     app.router.add_post("/api/agents/{agentId}/restart-ingestion",               _handle_restart_ingestion)
@@ -2023,6 +2353,11 @@ async def _startup(app: web.Application):
 
     if adopted:
         log.info("Re-adopted %d running agent runtime(s) from saved state", adopted)
+        # Refresh runtime URLs in design-service for all re-adopted agents.
+        # This ensures ingestionUrl / chatApiUrl are up-to-date even if a
+        # previous _patch_agent_urls call failed or the URLs were never written.
+        for agent_id, rec in list(_state.items()):
+            asyncio.ensure_future(_patch_agent_urls(agent_id, rec))
 
     # Start reconciliation loop
     asyncio.create_task(reconcile_loop())
@@ -2042,6 +2377,18 @@ def main():
     LOGS_AGENT_DIR.mkdir(parents=True, exist_ok=True)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     DOCKER_DEPLOY_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Truncate stale agent logs at startup so the log viewer shows only
+    # content from the current runtime-manager session.
+    _rm_start_ts = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    for _stale_log in LOGS_AGENT_DIR.glob("*.log"):
+        try:
+            _stale_log.write_text(
+                f"=== CLEARED AT STARTUP {_rm_start_ts} "
+                f"— activate an agent to see logs ===\n"
+            )
+        except OSError:
+            pass
 
     app = _build_app()
     app.on_startup.append(_startup)

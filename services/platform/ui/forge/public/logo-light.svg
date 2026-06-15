@@ -2,11 +2,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" role="img" aria-label="AgentForge Studio">
   <title>AgentForge Studio</title>
   <defs>
-    <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="hexGradL" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#3bbfbb"/>
       <stop offset="100%" stop-color="#2a9e9a"/>
     </linearGradient>
-    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="glowGradL" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#dcf2f0" stop-opacity="0.25"/>
       <stop offset="100%" stop-color="#3bbfbb" stop-opacity="0"/>
     </linearGradient>
@@ -14,10 +14,10 @@
 
   <!-- Hexagon icon background -->
   <polygon points="30,7 52,19.5 52,44.5 30,57 8,44.5 8,19.5"
-           fill="url(#hexGrad)"/>
+           fill="url(#hexGradL)"/>
   <!-- Subtle inner highlight -->
   <polygon points="30,7 52,19.5 52,44.5 30,57 8,44.5 8,19.5"
-           fill="url(#glowGrad)"/>
+           fill="url(#glowGradL)"/>
   <!-- Hexagon border -->
   <polygon points="30,7 52,19.5 52,44.5 30,57 8,44.5 8,19.5"
            fill="none" stroke="white" stroke-width="0.8" stroke-opacity="0.35"/>
@@ -34,16 +34,16 @@
   <circle cx="49" cy="20" r="5" fill="#f9ea35"/>
   <circle cx="49" cy="20" r="3" fill="#ffce2d"/>
 
-  <!-- Wordmark: "Agent" light + "Forge" bold teal -->
+  <!-- Wordmark: "Agent" dark + "Forge" bold teal -->
   <text x="68" y="38"
         font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
         font-size="27">
-    <tspan font-weight="300" fill="#e8e5e1">Agent</tspan><tspan font-weight="700" fill="#3bbfbb">Forge</tspan>
+    <tspan font-weight="300" fill="#2d2a26">Agent</tspan><tspan font-weight="700" fill="#3bbfbb">Forge</tspan>
   </text>
 
   <!-- Tagline -->
   <text x="69" y="54"
         font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
         font-size="10" letter-spacing="0.4"
-        fill="#96d9d5">powered by Flogo</text>
+        fill="#3bbfbb">powered by Flogo</text>
 </svg>

@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { Activity, LayoutTemplate, Plus, Search } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { deployAgent, getAgentRuntime, listAgents, undeployAgent } from "../api";
+import { deployAgent, dockerDeploy, getAgentRuntime, listAgents, undeployAgent } from "../api";
 import AgentCard from "../components/AgentCard";
 import TemplateModal from "../components/TemplateModal";
+import ThemeToggle from "../components/ThemeToggle";
+import { useTheme } from "../contexts/ThemeContext";
 
 const STATUS_TABS = ["All", "active", "draft", "archived"] as const;
 type StatusTab = typeof STATUS_TABS[number];
@@ -12,6 +14,7 @@ type StatusTab = typeof STATUS_TABS[number];
 export default function Gallery() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { theme } = useTheme();
   const [showTemplates, setShowTemplates] = useState(false);
   const [activeTab, setActiveTab] = useState<StatusTab>("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,6 +43,19 @@ export default function Gallery() {
     },
     onError: (_err, { id }) => {
       // Clear immediately on error so the button doesn't stay stuck
+      setTogglingIds((prev) => { const s = new Map(prev); s.delete(id); return s; });
+    },
+  });
+
+  const dockerDeployMutation = useMutation({
+    mutationFn: ({ id }: { id: string }) => dockerDeploy(id),
+    onMutate: ({ id }) => {
+      setTogglingIds((prev) => new Map(prev).set(id, "activating"));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["agents"] });
+    },
+    onError: (_err, { id }) => {
       setTogglingIds((prev) => { const s = new Map(prev); s.delete(id); return s; });
     },
   });
@@ -132,21 +148,28 @@ export default function Gallery() {
     : agentsByTab[activeTab];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="min-h-screen bg-zinc-950">
+      <header className="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <img src="/logo.svg" alt="AgentForge Studio" className="h-14" />
+          <img src={theme === "light" ? "/logo-light.svg" : "/logo.svg"} alt="Flogents Studio" className="h-14" />
+          {!isLoading && agentsByTab.active.length > 0 && (
+            <div className="flex items-center gap-1.5 ml-3 px-2.5 py-1 rounded-full bg-green-950/50 border border-green-800 text-xs font-medium text-green-400">
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              {agentsByTab.active.length} live
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate("/admin")}
-              className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-400 px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-zinc-100 border border-zinc-700 hover:border-zinc-500 px-4 py-2 rounded-lg transition-colors"
             >
               <Activity size={15} />
               Admin
             </button>
+            <ThemeToggle />
             <button
               onClick={() => setShowTemplates(true)}
-              className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-400 px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-zinc-100 border border-zinc-700 hover:border-zinc-500 px-4 py-2 rounded-lg transition-colors"
             >
               <LayoutTemplate size={15} />
               Templates
@@ -170,12 +193,12 @@ export default function Gallery() {
                 onClick={() => setActiveTab(tab)}
                 className={`flex items-center gap-1.5 text-sm px-3 py-1 rounded-md capitalize transition-colors ${activeTab === tab
                   ? "bg-brand-500 text-white"
-                  : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                  : "text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800"
                   }`}
               >
                 {tab}
                 {!isLoading && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full leading-none ${activeTab === tab ? "bg-white/25 text-white" : "bg-gray-200 text-gray-500"
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full leading-none ${activeTab === tab ? "bg-white/25 text-white" : "bg-zinc-700 text-zinc-400"
                     }`}>
                     {agentsByTab[tab].length}
                   </span>
@@ -191,7 +214,7 @@ export default function Gallery() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search agents…"
-              className="text-sm border border-gray-200 rounded-lg pl-7 pr-3 py-1 focus:outline-none focus:ring-2 focus:ring-brand-500 w-44 bg-white"
+              className="text-sm border border-zinc-700 rounded-lg pl-7 pr-3 py-1 focus:outline-none focus:ring-2 focus:ring-brand-500 w-44 bg-zinc-800 text-zinc-100 placeholder-zinc-500"
             />
           </div>
         </div>
@@ -199,7 +222,7 @@ export default function Gallery() {
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         {isLoading && (
-          <div className="text-center text-gray-400 py-16">Loading agents…</div>
+          <div className="text-center text-zinc-500 py-16">Loading agents…</div>
         )}
 
         {error && (
@@ -211,16 +234,16 @@ export default function Gallery() {
         {!isLoading && !error && visible.length === 0 && (
           <div className="text-center py-24">
             <div className="text-5xl mb-4">🤖</div>
-            <h2 className="text-xl font-semibold text-gray-700 mb-2">
+            <h2 className="text-xl font-semibold text-zinc-200 mb-2">
               {searchQuery ? `No results for "${searchQuery}"` : activeTab === "All" ? "No agents yet" : `No ${activeTab} agents`}
             </h2>
-            <p className="text-gray-500 mb-6">
+            <p className="text-zinc-500 mb-6">
               {searchQuery ? "Try a different search term." : activeTab === "All" ? "Create your first agent or start from a template." : activeTab === "active" ? "Activate an agent from the Draft tab to see it here." : activeTab === "archived" ? "Archived agents will appear here." : "Create your first agent or start from a template."}
             </p>
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={() => setShowTemplates(true)}
-                className="inline-flex items-center gap-2 border border-gray-300 hover:border-gray-400 text-gray-700 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors"
+                className="inline-flex items-center gap-2 border border-zinc-700 hover:border-zinc-500 text-zinc-200 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors"
               >
                 <LayoutTemplate size={15} />
                 Browse Templates
@@ -244,6 +267,12 @@ export default function Gallery() {
                 agent={agent}
                 onToggleDeploy={() =>
                   deployMutation.mutate({ id: agent.id, active: agent.status === "active" })
+                }
+                onActivateLocal={() =>
+                  deployMutation.mutate({ id: agent.id, active: false })
+                }
+                onActivateDocker={() =>
+                  dockerDeployMutation.mutate({ id: agent.id })
                 }
                 deployPending={togglingIds.has(agent.id)}
                 deployIntent={togglingIds.get(agent.id)}

@@ -1,0 +1,60 @@
+#!/bin/bash
+# go wrapper for flogobuild:
+#
+# 1. "go mod tidy" → runs with -e (continue past test-only missing deps like
+#    github.com/tibco/wi-contrib/function/float which only appears in tests).
+#
+# 2. "go build" + FLOGO_LINUX_OUTPUT_DIR set → after building the native binary,
+#    also cross-compiles linux/amd64 to $FLOGO_LINUX_OUTPUT_DIR/<svc-name>.
+#    This lets _build_flogo_service_image avoid the -p linux/amd64 path that
+#    requires the private github.com/tibco/license-enforcement module.
+
+REAL_GO=/opt/homebrew/bin/go
+
+# ── go mod tidy → add -e ──────────────────────────────────────────────────────
+if [ "$1" = "mod" ] && [ "$2" = "tidy" ]; then
+    has_e=false
+    for arg in "${@:3}"; do [ "$arg" = "-e" ] && has_e=true && break; done
+    if $has_e; then exec "$REAL_GO" "$@"; fi
+    exec "$REAL_GO" mod tidy -e "${@:3}"
+fi
+
+# ── go build → also produce linux/amd64 binary when requested ─────────────────
+if [ "$1" = "build" ] && [ -n "$FLOGO_LINUX_OUTPUT_DIR" ]; then
+    "$REAL_GO" "$@"
+    BUILD_EXIT=$?
+    if [ $BUILD_EXIT -eq 0 ]; then
+        # Parse the -o value (binary name as passed by flogobuild, e.g. "svc-name")
+        output=""
+        args=("$@")
+        i=1
+        while [ $i -lt ${#args[@]} ]; do
+            if [ "${args[$i]}" = "-o" ]; then
+                i=$((i+1))
+                output="${args[$i]}"
+            fi
+            i=$((i+1))
+        done
+        if [ -n "$output" ]; then
+            bin_name=$(basename "$output")
+            linux_bin="$FLOGO_LINUX_OUTPUT_DIR/$bin_name"
+            # Rebuild args without -o so we can set our own destination
+            new_args=()
+            skip_next=false
+            for arg in "${args[@]}"; do
+                if $skip_next; then skip_next=false; continue; fi
+                if [ "$arg" = "-o" ]; then skip_next=true; continue; fi
+                new_args+=("$arg")
+            done
+            mkdir -p "$FLOGO_LINUX_OUTPUT_DIR"
+            GOOS=linux GOARCH=amd64 "$REAL_GO" "${new_args[@]}" -o "$linux_bin" \
+                2>&1 | tee /tmp/flogo-linux-build.log >&2
+            if [ ${PIPESTATUS[0]} -ne 0 ]; then
+                echo "WARN: linux/amd64 cross-compile failed; see /tmp/flogo-linux-build.log" >&2
+            fi
+        fi
+    fi
+    exit $BUILD_EXIT
+fi
+
+exec "$REAL_GO" "$@"

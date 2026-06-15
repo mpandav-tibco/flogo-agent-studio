@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, Save, Play, Square, Download, Sparkles, MessageSquare, Container, CircleStop, RefreshCw, ChevronDown, Monitor } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Save, Play, Square, Download, Sparkles, MessageSquare, Container, CircleStop, RefreshCw, Monitor, ExternalLink, CheckCircle, XCircle } from "lucide-react";
+import ThemeToggle from "../components/ThemeToggle";
+import ActivationModeModal from "../components/ActivationModeModal";
 import {
   createAgent,
   deployAgent,
@@ -14,6 +16,7 @@ import {
   generateAgentConfig,
   getAgent,
   getAgentFeedback,
+  getAgentRuntime,
   getDeployStatus,
   getIngestionHealth,
   improveAgentConfig,
@@ -25,7 +28,7 @@ import {
   undeployAgent,
   updateAgent,
 } from "../api";
-import type { Agent, AgentConfig, DockerDeployResult, DockerDeployStatus, FeedbackRecord, GeneratedConfig } from "../types";
+import type { Agent, AgentConfig, AgentRuntime, DockerDeployResult, DockerDeployStatus, FeedbackRecord, GeneratedConfig } from "../types";
 
 const PROVIDER_OPTIONS = ["Ollama", "OpenAI", "Anthropic", "Groq", "Custom"];
 
@@ -139,17 +142,18 @@ function applyGenerated(form: FormState, gen: GeneratedConfig): FormState {
   };
 }
 
+
 // ── Export modal ──────────────────────────────────────────────────────────────
 
 function ExportModal({ title, content, onClose }: { title: string; content: string; onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[80vh]">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
-          <h3 className="font-semibold text-gray-900">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
+      <div className="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[80vh]">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-700">
+          <h3 className="font-semibold text-zinc-100">{title}</h3>
+          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-200 text-xl leading-none">&times;</button>
         </div>
-        <pre className="flex-1 overflow-auto p-5 text-xs font-mono bg-gray-50 rounded-b-xl whitespace-pre-wrap">{content}</pre>
+        <pre className="flex-1 overflow-auto p-5 text-xs font-mono bg-zinc-800 rounded-b-xl whitespace-pre-wrap text-zinc-300">{content}</pre>
       </div>
     </div>
   );
@@ -159,7 +163,7 @@ function ExportModal({ title, content, onClose }: { title: string; content: stri
 
 type IngestSubTab = "text" | "file" | "url" | "github" | "api";
 
-function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvider, embeddingBaseUrl, ingestionUrl, agentId }: {
+function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvider, embeddingBaseUrl, ingestionUrl, agentId, onApplyRestart }: {
   collection: string;
   chunkStrategy: string;
   embeddingModel: string;
@@ -167,6 +171,7 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
   embeddingBaseUrl: string;
   ingestionUrl?: string;
   agentId?: string;
+  onApplyRestart?: () => Promise<void>;
 }) {
   const [tab, setTab] = useState<IngestSubTab>("text");
   const [pasteText, setPasteText] = useState("");
@@ -190,7 +195,15 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
   });
 
   const restartMut = useMutation({
-    mutationFn: () => restartIngestion(agentId!),
+    mutationFn: async () => {
+      if (onApplyRestart) {
+        // Save current form config first so the backend restarts with the
+        // latest settings, not the stale DB values.
+        await onApplyRestart();
+      } else {
+        await restartIngestion(agentId!);
+      }
+    },
     onSuccess: () => {
       // Give the service ~4 s to bind the port then re-check health
       setTimeout(() => refetchHealth(), 4000);
@@ -340,17 +353,17 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
   ];
 
   return (
-    <section className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+    <section className="bg-zinc-900 rounded-xl border border-zinc-700 p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">Ingest Documents</h3>
+        <h3 className="text-sm font-semibold text-zinc-100">Ingest Documents</h3>
         <div className="flex items-center gap-2">
           {/* Health badge */}
           {agentId && (
-            <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${!healthData ? "bg-gray-100 text-gray-400"
-              : healthData.healthy ? "bg-green-50 text-green-700 border border-green-200"
-                : "bg-red-50 text-red-600 border border-red-200"
+            <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${!healthData ? "bg-zinc-800 text-zinc-500"
+              : healthData.healthy ? "bg-green-950 text-green-400 border border-green-800"
+                : "bg-red-950 text-red-400 border border-red-800"
               }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${!healthData ? "bg-gray-300 animate-pulse"
+              <span className={`w-1.5 h-1.5 rounded-full ${!healthData ? "bg-zinc-600 animate-pulse"
                 : healthData.healthy ? "bg-green-500"
                   : "bg-red-500 animate-pulse"
                 }`} />
@@ -363,8 +376,8 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
           )}
           <span
             className={`text-xs px-2 py-0.5 rounded font-mono ${collection
-              ? "bg-green-50 text-green-700 border border-green-200"
-              : "bg-amber-50 text-amber-700 border border-amber-200"
+              ? "bg-green-950 text-green-400 border border-green-800"
+              : "bg-amber-950 text-amber-400 border border-amber-800"
               }`}
           >
             {collection || "no collection set"}
@@ -374,7 +387,7 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
 
       {/* Service offline banner */}
       {agentId && healthData && !healthData.healthy && (
-        <div className="flex items-start gap-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+        <div className="flex items-start gap-3 text-xs text-red-400 bg-red-950 border border-red-900 rounded-lg p-3">
           <svg className="w-4 h-4 shrink-0 mt-0.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -398,7 +411,7 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
 
       {/* Config drift banner */}
       {hasDrift && (
-        <div className="flex items-start gap-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+        <div className="flex items-start gap-3 text-xs text-amber-400 bg-amber-950 border border-amber-900 rounded-lg p-3">
           <svg className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -408,10 +421,10 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
             <p className="text-amber-600 mt-0.5">
               Running with{" "}
               {configuredWith!.chunkStrategy !== chunkStrategy && (
-                <><code className="font-mono bg-amber-100 px-1 rounded">strategy={configuredWith!.chunkStrategy}</code> (agent: <code className="font-mono bg-amber-100 px-1 rounded">{chunkStrategy}</code>){" "}</>
+                <><code className="font-mono bg-amber-900/50 px-1 rounded">strategy={configuredWith!.chunkStrategy}</code> (agent: <code className="font-mono bg-amber-900/50 px-1 rounded">{chunkStrategy}</code>){" "}</>
               )}
               {configuredWith!.embeddingModel !== embeddingModel && (
-                <><code className="font-mono bg-amber-100 px-1 rounded">model={configuredWith!.embeddingModel}</code> (agent: <code className="font-mono bg-amber-100 px-1 rounded">{embeddingModel}</code>)</>
+                <><code className="font-mono bg-amber-900/50 px-1 rounded">model={configuredWith!.embeddingModel}</code> (agent: <code className="font-mono bg-amber-900/50 px-1 rounded">{embeddingModel}</code>)</>
               )}
               . Newly ingested documents will use the <strong>old</strong> settings until you apply.
             </p>
@@ -434,20 +447,20 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
       )}
 
       {!collection && (
-        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+        <div className="text-xs text-amber-400 bg-amber-950 border border-amber-900 rounded-lg p-3">
           Set a collection name in <strong>Retrieval</strong> above and save the agent before ingesting documents.
         </div>
       )}
 
       {/* Sub-tab bar */}
-      <div className="flex gap-0 border-b border-gray-100">
+      <div className="flex gap-0 border-b border-zinc-700">
         {TABS.map(({ id, label }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
             className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors -mb-px ${tab === id
               ? "border-brand-500 text-brand-600"
-              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200"
+              : "border-transparent text-zinc-500 hover:text-zinc-300 hover:border-zinc-600"
               }`}
           >
             {label}
@@ -501,7 +514,7 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
       {tab === "file" && (
         <div className="space-y-3">
           <div
-            className="relative flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-brand-400 transition-colors cursor-pointer"
+            className="relative flex flex-col items-center justify-center gap-2 border-2 border-dashed border-zinc-700 rounded-xl p-6 text-center hover:border-brand-400 transition-colors cursor-pointer"
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
@@ -510,12 +523,12 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
             }}
             onClick={() => document.getElementById("forge-file-input")?.click()}
           >
-            <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                 d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
             </svg>
-            <p className="text-sm text-gray-500">Drag & drop files here, or <span className="text-brand-600 font-medium">browse</span></p>
-            <p className="text-xs text-gray-400">.txt · .md · .json · .yaml · .csv · .html · .xml · .pdf · .docx</p>
+            <p className="text-sm text-zinc-400">Drag & drop files here, or <span className="text-brand-400 font-medium">browse</span></p>
+            <p className="text-xs text-zinc-600">.txt · .md · .json · .yaml · .csv · .html · .xml · .pdf · .docx</p>
             <input
               id="forge-file-input"
               type="file"
@@ -532,12 +545,12 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
           {fileList.length > 0 && (
             <ul className="space-y-1">
               {fileList.map((f, i) => (
-                <li key={i} className="flex items-center justify-between text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5">
-                  <span className="font-mono text-gray-700 truncate">{f.name}</span>
-                  <span className="text-gray-400 ml-3 shrink-0">{(f.size / 1024).toFixed(1)} KB</span>
+                <li key={i} className="flex items-center justify-between text-xs bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5">
+                  <span className="font-mono text-zinc-300 truncate">{f.name}</span>
+                  <span className="text-zinc-500 ml-3 shrink-0">{(f.size / 1024).toFixed(1)} KB</span>
                   <button
                     onClick={() => setFileList((prev) => prev.filter((_, j) => j !== i))}
-                    className="ml-3 text-gray-400 hover:text-red-500 shrink-0"
+                    className="ml-3 text-zinc-500 hover:text-red-400 shrink-0"
                   >✕</button>
                 </li>
               ))}
@@ -579,7 +592,7 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
               placeholder="https://docs.example.com/page"
               className="input"
             />
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-zinc-500 mt-1">
               The page will be fetched via HTTP GET and its content split into chunks.
             </p>
           </Field>
@@ -624,7 +637,7 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
               <input value={ghBranch} onChange={(e) => setGhBranch(e.target.value)} placeholder="main" className="input" />
             </Field>
           </div>
-          <p className="text-xs text-gray-400">Recursively ingests all Markdown and text files at the given path.</p>
+          <p className="text-xs text-zinc-500">Recursively ingests all Markdown and text files at the given path.</p>
           <div className="flex items-center gap-3">
             <button
               onClick={() => githubMut.mutate()}
@@ -650,16 +663,16 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
       {/* API Reference */}
       {tab === "api" && (
         <div className="space-y-5">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-zinc-400">
             Call these endpoints directly from scripts, CI/CD pipelines, or external tools.
             The ingestion service runs on{" "}
-            <code className="font-mono bg-gray-100 px-1 rounded">http://localhost:7002</code>.
+            <code className="font-mono bg-zinc-800 px-1 rounded">http://localhost:7002</code>.
           </p>
           {API_EXAMPLES.map(({ label, endpoint, body }) => (
             <div key={endpoint}>
               <div className="flex items-baseline gap-2 mb-1.5">
-                <code className="text-xs font-semibold text-gray-700">POST {endpoint}</code>
-                <span className="text-xs text-gray-400">— {label}</span>
+                <code className="text-xs font-semibold text-zinc-300">POST {endpoint}</code>
+                <span className="text-xs text-zinc-500">— {label}</span>
               </div>
               <pre className="bg-gray-900 text-green-300 rounded-lg p-3 overflow-x-auto font-mono text-[11px] leading-relaxed whitespace-pre">{`curl -X POST ${INGEST_HOST}${endpoint} \\\n  -H "Authorization: ${AUTH_HEADER}" \\\n  -H "Content-Type: application/json" \\\n  -d '${body}'`}</pre>
             </div>
@@ -669,16 +682,104 @@ function IngestPanel({ collection, chunkStrategy, embeddingModel, embeddingProvi
 
       {/* Result / error feedback */}
       {result && (
-        <div className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg p-3 font-mono whitespace-pre-wrap">
+        <div className="text-xs text-green-400 bg-green-950 border border-green-800 rounded-lg p-3 font-mono whitespace-pre-wrap">
           {result}
         </div>
       )}
       {mutError && (
-        <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+        <div className="text-xs text-red-400 bg-red-950 border border-red-900 rounded-lg p-3">
           {String(mutError)}
         </div>
       )}
     </section>
+  );
+}
+
+// ── Runtime health panel (Deploy tab) ────────────────────────────────────────
+
+function uptime(startedAt: number): string {
+  const s = Math.floor(Date.now() / 1000 - startedAt);
+  if (s < 60) return `${s}s`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s`;
+  return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+}
+
+const RUNTIME_SERVICES: { key: string; label: string; urlKey: keyof AgentRuntime }[] = [
+  { key: "chat", label: "Chat API", urlKey: "chatApiUrl" },
+  { key: "ingestion", label: "Ingestion", urlKey: "ingestionUrl" },
+  { key: "sse_rest", label: "SSE", urlKey: "sseUrl" },
+  { key: "chainlit", label: "Chat UI", urlKey: "chatUiUrl" },
+];
+
+function RuntimePanel({ agentId }: { agentId: string }) {
+  const { data: rt, isLoading } = useQuery<AgentRuntime | null>({
+    queryKey: ["agent-runtime-deploy", agentId],
+    queryFn: () => getAgentRuntime(agentId),
+    refetchInterval: 5000,
+    enabled: !!agentId,
+  });
+
+  if (isLoading) return (
+    <div className="flex items-center gap-2 text-xs text-zinc-500 py-2">
+      <div className="w-3 h-3 rounded-full border-2 border-zinc-700 border-t-brand-500 animate-spin" />
+      Connecting to runtime…
+    </div>
+  );
+
+  if (!rt) return (
+    <div className="text-xs text-amber-400 bg-amber-950 border border-amber-900 rounded-lg p-3">
+      Runtime not found — agent may still be starting or may have stopped.
+    </div>
+  );
+
+  const readinessColor =
+    rt.readiness === "ready" ? "bg-green-950 text-green-400" :
+      rt.readiness === "degraded" ? "bg-red-950 text-red-400" :
+        "bg-yellow-950 text-yellow-400";
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between text-xs text-zinc-500">
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium ${readinessColor}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${rt.readiness === "ready" ? "bg-green-500 animate-pulse" : rt.readiness === "degraded" ? "bg-red-500" : "bg-yellow-500 animate-pulse"}`} />
+          {rt.readiness}
+        </span>
+        <span>slot {rt.slot} · up {uptime(rt.startedAt)}</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        {RUNTIME_SERVICES.filter(({ key }) => rt.ports?.[key]).map(({ key, label, urlKey }) => {
+          const health = rt.health?.[key];
+          const url = rt[urlKey] as string | undefined;
+          const running = health === "running";
+          return (
+            <div
+              key={key}
+              className={`rounded-xl border p-3 transition-colors ${running ? "border-green-800 bg-green-950/30" : "border-red-900 bg-red-950/30"}`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-semibold text-zinc-300">{label}</span>
+                {running
+                  ? <CheckCircle size={12} className="text-green-500" />
+                  : <XCircle size={12} className="text-red-400" />}
+              </div>
+              <p className="text-xs text-zinc-500 font-mono">:{rt.ports[key]}</p>
+              {url && running && (
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 flex items-center gap-0.5 text-[11px] text-brand-600 hover:underline truncate"
+                >
+                  <ExternalLink size={9} className="shrink-0" />
+                  {url.replace(/^https?:\/\//, "")}
+                </a>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -691,7 +792,6 @@ export default function Editor() {
   const qc = useQueryClient();
 
   const [form, setForm] = useState<FormState>(DEFAULTS);
-  const [savedFeedback, setSavedFeedback] = useState(false);
   const [activeTab, setActiveTab] = useState<"config" | "kb" | "feedback" | "deploy">("config");
 
   // AI Generate state
@@ -704,8 +804,9 @@ export default function Editor() {
   // Deactivate confirmation
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
 
-  // Activation mode picker: null = closed, "local" | "docker" = chosen
-  const [activateMenuOpen, setActivateMenuOpen] = useState(false);
+  // Activation mode modal
+  const [activateModeOpen, setActivateModeOpen] = useState(false);
+  const [activatingMode, setActivatingMode] = useState<"local" | "docker" | null>(null);
 
   // Improve state (feedback loaded via query on tab activation)
   const [improveResult, setImproveResult] = useState<GeneratedConfig | null>(null);
@@ -720,6 +821,15 @@ export default function Editor() {
     queryKey: ["deploy", id],
     queryFn: () => getDeployStatus(id!),
     enabled: !isNew,
+  });
+
+  // Live runtime state — used for ingestion routing so we always have the
+  // correct per-agent service URL even when agent.config hasn't been patched yet.
+  const { data: agentRuntime } = useQuery<AgentRuntime | null>({
+    queryKey: ["agent-runtime", id],
+    queryFn: () => getAgentRuntime(id!),
+    enabled: !isNew,
+    refetchInterval: 10_000,
   });
 
   // Auto-loads when user opens the Feedback tab; cached for 1 min
@@ -764,9 +874,7 @@ export default function Editor() {
     onSuccess: (saved) => {
       qc.invalidateQueries({ queryKey: ["agents"] });
       qc.invalidateQueries({ queryKey: ["agent", saved.id] });
-      setSavedFeedback(true);
-      setTimeout(() => setSavedFeedback(false), 2500);
-      if (isNew) navigate(`/agents/${saved.id}`, { replace: true });
+      navigate(isNew ? `/agents/${saved.id}` : "/", { replace: true });
     },
   });
 
@@ -775,6 +883,9 @@ export default function Editor() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["agents"] });
       refetchDeploy();
+      // Auto-close the activation modal when local-process activation succeeds
+      setActivateModeOpen(false);
+      setActivatingMode(null);
     },
   });
 
@@ -811,7 +922,12 @@ export default function Editor() {
   const dockerDeployMutation = useMutation<DockerDeployResult, Error>({
     mutationFn: () => dockerDeploy(id!),
     // 202 "deploying" means the job was accepted — start polling status
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["docker-status", id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["docker-status", id] });
+      // Auto-close the activation modal when docker deployment is accepted
+      setActivateModeOpen(false);
+      setActivatingMode(null);
+    },
   });
 
   const dockerStopMutation = useMutation<DockerDeployResult, Error>({
@@ -835,6 +951,18 @@ export default function Editor() {
   // agent?.status is the canonical source of truth; deployRecord is stale historical data
   const currentStatus = agent?.status ?? "draft";
 
+  // Save current form config to DB then restart the per-agent ingestion service.
+  // Called by IngestPanel's "Apply & Restart" button so that the backend picks up
+  // the latest (possibly unsaved) chunk-strategy / embedding settings.
+  const applyAndRestartIngestion = async () => {
+    if (!id) return;
+    const config = toConfig(form);
+    await updateAgent(id, { name: form.name.trim(), description: form.description.trim(), config });
+    qc.invalidateQueries({ queryKey: ["agent", id] });
+    qc.invalidateQueries({ queryKey: ["agents"] });
+    await restartIngestion(id);
+  };
+
   // Normalise mixed rating formats: numeric 1–5 or string "thumbsUp"/"thumbsDown"
   const normalizeRating = (raw: unknown): number | null => {
     if (raw === "thumbsUp") return 5;
@@ -849,39 +977,40 @@ export default function Editor() {
     : null;
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div className="h-screen flex flex-col bg-zinc-950 overflow-hidden">
       {/* Header */}
-      <header className="shrink-0 bg-white border-b border-gray-200 px-6 py-3">
+      <header className="shrink-0 bg-zinc-900 border-b border-zinc-800 px-6 py-3">
         <div className="max-w-full flex items-center gap-4">
           <button
             onClick={() => navigate("/")}
-            className="text-gray-400 hover:text-gray-700 transition-colors"
+            className="text-zinc-500 hover:text-zinc-200 transition-colors"
           >
             <ArrowLeft size={20} />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-gray-900 truncate">
+            <h1 className="text-lg font-bold text-zinc-100 truncate">
               {isNew ? "New Agent" : (agent?.name ?? "Edit Agent")}
             </h1>
             {!isNew && agent && (
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-zinc-500">
                 ID: {agent.id} · v{agent.version} ·{" "}
-                <span className={currentStatus === "active" ? "text-green-600 font-medium" : "text-gray-400"}>
+                <span className={currentStatus === "active" ? "text-green-500 font-medium" : "text-zinc-500"}>
                   {currentStatus}
                 </span>
               </p>
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <ThemeToggle />
             {/* Status + deploy + chat live in the header so they're always visible */}
             {!isNew && (
               <>
                 <span
                   className={`text-xs font-medium px-2.5 py-1 rounded-full ${currentStatus === "active"
-                    ? "bg-green-100 text-green-800"
+                    ? "bg-green-950 text-green-400"
                     : currentStatus === "archived"
-                      ? "bg-red-50 text-red-600"
-                      : "bg-gray-100 text-gray-600"
+                      ? "bg-red-950 text-red-400"
+                      : "bg-zinc-800 text-zinc-400"
                     }`}
                 >
                   {currentStatus}
@@ -891,47 +1020,18 @@ export default function Editor() {
                   <button
                     onClick={() => setConfirmDeactivate(true)}
                     disabled={deployMutation.isPending}
-                    className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 bg-amber-100 hover:bg-amber-200 text-amber-800"
+                    className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 bg-amber-950 hover:bg-amber-900 text-amber-400"
                   >
                     <Square size={13} /> {deployMutation.isPending ? "Deactivating…" : "Deactivate"}
                   </button>
                 ) : (
-                  <div className="relative flex">
-                    <button
-                      onClick={() => deployMutation.mutate()}
-                      disabled={deployMutation.isPending || dockerDeployMutation.isPending}
-                      className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-l-lg transition-colors disabled:opacity-50 bg-green-500 hover:bg-green-600 text-white"
-                    >
-                      <Monitor size={13} /> {deployMutation.isPending ? "Activating…" : "Activate"}
-                    </button>
-                    <button
-                      onClick={() => setActivateMenuOpen(v => !v)}
-                      disabled={deployMutation.isPending || dockerDeployMutation.isPending}
-                      className="flex items-center px-1.5 py-1.5 rounded-r-lg transition-colors disabled:opacity-50 bg-green-600 hover:bg-green-700 text-white border-l border-green-400"
-                      title="More activation options"
-                    >
-                      <ChevronDown size={13} />
-                    </button>
-                    {activateMenuOpen && (
-                      <div
-                        className="absolute right-0 top-full mt-1 w-52 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
-                        onBlur={() => setActivateMenuOpen(false)}
-                      >
-                        <button
-                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-50 text-gray-700"
-                          onClick={() => { setActivateMenuOpen(false); deployMutation.mutate(); }}
-                        >
-                          <Monitor size={13} /> Local Process
-                        </button>
-                        <button
-                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-50 text-gray-700"
-                          onClick={() => { setActivateMenuOpen(false); dockerDeployMutation.mutate(); }}
-                        >
-                          <Container size={13} /> Docker Container
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    onClick={() => setActivateModeOpen(true)}
+                    disabled={deployMutation.isPending || dockerDeployMutation.isPending}
+                    className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 bg-green-500 hover:bg-green-600 text-white"
+                  >
+                    <Monitor size={13} /> {deployMutation.isPending || dockerDeployMutation.isPending ? "Activating…" : "Activate"}
+                  </button>
                 )}
 
                 {currentStatus === "active" && (
@@ -946,7 +1046,7 @@ export default function Editor() {
                   </a>
                 )}
 
-                <div className="w-px h-5 bg-gray-200" />
+                <div className="w-px h-5 bg-zinc-700" />
               </>
             )}
 
@@ -956,14 +1056,14 @@ export default function Editor() {
               className="flex items-center gap-1.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
             >
               <Save size={14} />
-              {saveMutation.isPending ? "Saving…" : savedFeedback ? "Saved ✓" : "Save"}
+              {saveMutation.isPending ? "Saving…" : "Save"}
             </button>
           </div>
         </div>
       </header>
 
       {/* ── Tab bar ─────────────────────────────────────────────────────── */}
-      <div className="shrink-0 bg-white border-b border-gray-200 px-6 flex items-end">
+      <div className="shrink-0 bg-zinc-900 border-b border-zinc-800 px-6 flex items-end">
         {(["config", ...(!isNew ? ["kb", "feedback", "deploy"] : [])] as const).map((tab) => {
           const labels: Record<string, string> = {
             config: "Config",
@@ -977,12 +1077,12 @@ export default function Editor() {
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab
                 ? "border-brand-500 text-brand-600"
-                : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300"
+                : "border-transparent text-zinc-500 hover:text-zinc-200 hover:border-zinc-600"
                 }`}
             >
               {labels[tab]}
               {tab === "feedback" && feedbackData.length > 0 && (
-                <span className="ml-1.5 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full">
+                <span className="ml-1.5 text-xs bg-zinc-700 text-zinc-400 px-1.5 py-0.5 rounded-full">
                   {feedbackData.length}
                 </span>
               )}
@@ -1002,7 +1102,7 @@ export default function Editor() {
             <div className="flex-1 min-w-0 flex flex-col gap-4 p-6 overflow-y-auto">
 
               {isNew && (
-                <section className="shrink-0 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200 p-4 space-y-3">
+                <section className="shrink-0 bg-gradient-to-br from-purple-950/40 to-indigo-950/40 rounded-xl border border-purple-800 p-4 space-y-3">
                   <h2 className="text-xs font-semibold uppercase tracking-wider text-purple-600 flex items-center gap-1.5">
                     <Sparkles size={13} /> AI Generate
                   </h2>
@@ -1035,7 +1135,7 @@ export default function Editor() {
               </div>
 
               <div className="flex flex-col flex-1 min-h-0 space-y-1">
-                <label className="block text-xs font-medium text-gray-600">System Prompt</label>
+                <label className="block text-xs font-medium text-zinc-400">System Prompt</label>
                 <textarea
                   value={form.systemPrompt}
                   onChange={set("systemPrompt")}
@@ -1050,9 +1150,9 @@ export default function Editor() {
             </div>
 
             {/* Right: LLM settings */}
-            <div className="w-72 shrink-0 border-l border-gray-200 bg-gray-50 overflow-y-auto p-5 space-y-4">
-              <section className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">LLM</h2>
+            <div className="w-72 shrink-0 border-l border-zinc-800 bg-zinc-900 overflow-y-auto p-5 space-y-4">
+              <section className="bg-zinc-800 rounded-xl border border-zinc-700 p-4 space-y-3">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">LLM</h2>
                 <Field label="Provider">
                   <select value={form.llmProvider} onChange={set("llmProvider")} className="input">
                     {PROVIDER_OPTIONS.map((p) => (<option key={p} value={p}>{p}</option>))}
@@ -1075,9 +1175,9 @@ export default function Editor() {
               </section>
 
               {!isNew && agent && (
-                <section className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
-                  <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Info</h2>
-                  <dl className="text-xs text-gray-400 space-y-1">
+                <section className="bg-zinc-800 rounded-xl border border-zinc-700 p-4 space-y-2">
+                  <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Info</h2>
+                  <dl className="text-xs text-zinc-500 space-y-1">
                     <Row label="ID"><span className="font-mono text-[10px] break-all">{agent.id}</span></Row>
                     <Row label="Version">v{agent.version}</Row>
                     <Row label="Updated">{new Date(agent.updated_at).toLocaleDateString()}</Row>
@@ -1093,14 +1193,14 @@ export default function Editor() {
           <div className="flex-1 overflow-y-auto p-8">
             <div className="max-w-2xl mx-auto space-y-5">
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Knowledge Base</h2>
-                <p className="text-sm text-gray-500 mt-1">
+                <h2 className="text-base font-semibold text-zinc-100">Knowledge Base</h2>
+                <p className="text-sm text-zinc-400 mt-1">
                   Configure retrieval settings and ingest documents into the vector store.
                 </p>
               </div>
 
-              <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Retrieval</h3>
+              <section className="bg-zinc-900 rounded-xl border border-zinc-700 p-6 space-y-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Retrieval</h3>
                 <Field label="Weaviate Collection">
                   <div className="relative">
                     <input
@@ -1114,13 +1214,13 @@ export default function Editor() {
                         type="button"
                         title="Reset to auto-generated name"
                         onClick={() => setForm((f) => ({ ...f, collectionName: deriveCollectionName(id) }))}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-brand-500 transition-colors"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-brand-400 transition-colors"
                       >
                         ↺
                       </button>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-zinc-500 mt-1">
                     Auto-generated from the agent ID. You can override this, but it must match the collection used during ingestion.
                   </p>
                 </Field>
@@ -1131,7 +1231,7 @@ export default function Editor() {
                     value={form.topK} onChange={set("topK")}
                     className="input w-28"
                   />
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-zinc-500 mt-1">
                     Number of nearest-neighbour chunks to retrieve per query (1–50).
                   </p>
                 </Field>
@@ -1142,14 +1242,14 @@ export default function Editor() {
                       <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </select>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-zinc-500 mt-1">
                     Applied at ingest time — changing this only affects newly ingested documents.
                   </p>
                 </Field>
 
                 {/* ── Embedding ── */}
-                <div className="border-t border-gray-100 pt-5 space-y-4">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Embedding</h4>
+                <div className="border-t border-zinc-700 pt-5 space-y-4">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Embedding</h4>
 
                   <Field label="Embedding Provider">
                     <select value={form.embeddingProvider} onChange={set("embeddingProvider")} className="input">
@@ -1166,7 +1266,7 @@ export default function Editor() {
                       placeholder="e.g. nomic-embed-text"
                       className="input"
                     />
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-zinc-500 mt-1">
                       Must match the model used when documents were ingested. Default: <code>nomic-embed-text</code>.
                     </p>
                   </Field>
@@ -1178,7 +1278,7 @@ export default function Editor() {
                       placeholder="e.g. http://localhost:11434/v1"
                       className="input"
                     />
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-zinc-500 mt-1">
                       Leave blank to use the default Ollama endpoint (<code>http://ollama:11434/v1</code>).
                     </p>
                   </Field>
@@ -1191,8 +1291,9 @@ export default function Editor() {
                 embeddingModel={form.embeddingModel}
                 embeddingProvider={form.embeddingProvider}
                 embeddingBaseUrl={form.embeddingBaseUrl}
-                ingestionUrl={agent?.config?.ingestionUrl}
+                ingestionUrl={agentRuntime?.ingestionUrl ?? agent?.config?.ingestionUrl}
                 agentId={id}
+                onApplyRestart={!isNew ? applyAndRestartIngestion : undefined}
               />
             </div>
           </div>
@@ -1203,16 +1304,16 @@ export default function Editor() {
           <div className="flex-1 overflow-y-auto p-6">
             <div className="max-w-2xl mx-auto space-y-5">
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Feedback & Improve</h2>
-                <p className="text-sm text-gray-500 mt-1">
+                <h2 className="text-base font-semibold text-zinc-100">Feedback & Improve</h2>
+                <p className="text-sm text-zinc-400 mt-1">
                   Users rate agent responses in the Chainlit chat. Use those ratings to generate an improved system prompt.
                 </p>
               </div>
 
               {/* How to collect feedback */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-                <MessageSquare size={16} className="text-blue-500 shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-800">
+              <div className="bg-blue-950 border border-blue-800 rounded-xl p-4 flex items-start gap-3">
+                <MessageSquare size={16} className="text-blue-400 shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-300">
                   <span className="font-medium">How feedback is collected:</span> After each chat response in Chainlit, users can give a thumbs up/down or a star rating. Those ratings are stored automatically and appear here.
                   {currentStatus === "active" && (
                     <a
@@ -1228,14 +1329,14 @@ export default function Editor() {
               </div>
 
               {feedbackLoading && (
-                <div className="text-center py-12 text-gray-400 text-sm">Loading feedback…</div>
+                <div className="text-center py-12 text-zinc-500 text-sm">Loading feedback…</div>
               )}
 
               {!feedbackLoading && feedbackData.length === 0 && (
                 <div className="text-center py-16">
-                  <MessageSquare size={36} className="mx-auto mb-3 text-gray-300" />
-                  <p className="text-gray-500 font-medium">No feedback yet</p>
-                  <p className="text-gray-400 text-sm mt-1">Activate this agent and share it with users to collect ratings.</p>
+                  <MessageSquare size={36} className="mx-auto mb-3 text-zinc-700" />
+                  <p className="text-zinc-400 font-medium">No feedback yet</p>
+                  <p className="text-zinc-600 text-sm mt-1">Activate this agent and share it with users to collect ratings.</p>
                 </div>
               )}
 
@@ -1248,41 +1349,41 @@ export default function Editor() {
                       { label: "% Positive", value: pctPositive !== null ? `${pctPositive}%` : "—" },
                       { label: "👍 Positive", value: ratedData.filter((n) => n >= 4).length + " / " + ratedData.length },
                     ].map(({ label, value }) => (
-                      <div key={label} className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-                        <div className="text-xl font-bold text-gray-900">{value}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">{label}</div>
+                      <div key={label} className="bg-zinc-900 rounded-xl border border-zinc-700 p-4 text-center">
+                        <div className="text-xl font-bold text-zinc-100">{value}</div>
+                        <div className="text-xs text-zinc-500 mt-0.5">{label}</div>
                       </div>
                     ))}
                   </div>
 
                   {/* Refresh */}
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-gray-400">{feedbackData.length} response{feedbackData.length !== 1 ? "s" : ""}</p>
+                    <p className="text-xs text-zinc-500">{feedbackData.length} response{feedbackData.length !== 1 ? "s" : ""}</p>
                     <button
                       onClick={() => refetchFeedback()}
-                      className="text-xs text-gray-500 hover:text-gray-800 flex items-center gap-1 border border-gray-200 px-2 py-1 rounded-lg hover:border-gray-400 transition-colors"
+                      className="text-xs text-zinc-500 hover:text-zinc-200 flex items-center gap-1 border border-zinc-700 px-2 py-1 rounded-lg hover:border-zinc-500 transition-colors"
                     >
                       ↻ Refresh
                     </button>
                   </div>
 
                   {/* Records list */}
-                  <section className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+                  <section className="bg-zinc-900 rounded-xl border border-zinc-700 divide-y divide-zinc-800">
                     {feedbackData.map((r, i) => (
                       <div key={i} className="flex items-start gap-3 px-4 py-3">
                         <span className="shrink-0 text-base">
                           {r.rating === "thumbsUp" ? "👍" : r.rating === "thumbsDown" ? "👎" : `★${r.rating}`}
                         </span>
-                        <p className="text-sm text-gray-700 flex-1">{r.comment || <span className="text-gray-400 italic">no comment</span>}</p>
-                        <span className="text-xs text-gray-400 shrink-0 font-mono">{r.sessionId.slice(0, 8)}</span>
+                        <p className="text-sm text-zinc-300 flex-1">{r.comment || <span className="text-zinc-600 italic">no comment</span>}</p>
+                        <span className="text-xs text-zinc-600 shrink-0 font-mono">{r.sessionId.slice(0, 8)}</span>
                       </div>
                     ))}
                   </section>
 
                   {/* Improve with AI */}
-                  <section className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
-                    <h3 className="text-sm font-semibold text-gray-900">Improve with AI</h3>
-                    <p className="text-xs text-gray-500">
+                  <section className="bg-zinc-900 rounded-xl border border-zinc-700 p-5 space-y-3">
+                    <h3 className="text-sm font-semibold text-zinc-100">Improve with AI</h3>
+                    <p className="text-xs text-zinc-400">
                       Send all feedback to the agent-builder service to generate an improved system prompt and config.
                     </p>
                     <button
@@ -1297,9 +1398,9 @@ export default function Editor() {
                       <p className="text-xs text-red-500">{String(improveMutation.error)}</p>
                     )}
                     {improveResult && (
-                      <div className="border border-indigo-200 rounded-lg p-4 bg-indigo-50 space-y-3">
-                        <p className="text-sm font-medium text-indigo-800">Suggested improvements ready</p>
-                        <pre className="text-xs text-gray-700 whitespace-pre-wrap max-h-40 overflow-y-auto font-mono bg-white rounded-lg p-3 border border-indigo-100">
+                      <div className="border border-indigo-800 rounded-lg p-4 bg-indigo-950/50 space-y-3">
+                        <p className="text-sm font-medium text-indigo-300">Suggested improvements ready</p>
+                        <pre className="text-xs text-zinc-300 whitespace-pre-wrap max-h-40 overflow-y-auto font-mono bg-zinc-900 rounded-lg p-3 border border-indigo-900">
                           {JSON.stringify(improveResult.config, null, 2)}
                         </pre>
                         <div className="flex gap-2">
@@ -1311,7 +1412,7 @@ export default function Editor() {
                           </button>
                           <button
                             onClick={() => setImproveResult(null)}
-                            className="text-sm text-gray-500 hover:text-gray-800 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-400 transition-colors"
+                            className="text-sm text-zinc-400 hover:text-zinc-200 px-3 py-1.5 rounded-lg border border-zinc-700 hover:border-zinc-500 transition-colors"
                           >
                             Dismiss
                           </button>
@@ -1330,105 +1431,83 @@ export default function Editor() {
           <div className="flex-1 overflow-y-auto p-6">
             <div className="max-w-lg mx-auto space-y-5">
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Deploy</h2>
-                <p className="text-sm text-gray-500 mt-1">
+                <h2 className="text-base font-semibold text-zinc-100">Deploy</h2>
+                <p className="text-sm text-zinc-400 mt-1">
                   Activate this agent to make it available in Chainlit, or export it to run anywhere.
                 </p>
               </div>
 
-              {/* Status card */}
-              <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Agent Status</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {currentStatus === "active"
-                        ? "Running — users can chat with this agent via Chainlit."
-                        : "Inactive — activate to allow chat sessions."}
-                    </p>
+              {/* ── Runtime health (shown when active) ── */}
+              {currentStatus === "active" && !isNew && id && (
+                <section className="bg-zinc-900 rounded-xl border border-green-800 p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                      Live Runtime
+                    </h3>
+                    <button
+                      onClick={() => setConfirmDeactivate(true)}
+                      disabled={deployMutation.isPending}
+                      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 bg-amber-950 hover:bg-amber-900 text-amber-400"
+                    >
+                      <Square size={11} /> {deployMutation.isPending ? "Deactivating…" : "Deactivate"}
+                    </button>
                   </div>
-                  <span className={`text-sm font-semibold px-3 py-1 rounded-full ${currentStatus === "active" ? "bg-green-100 text-green-800"
-                    : currentStatus === "archived" ? "bg-red-50 text-red-600"
-                      : "bg-gray-100 text-gray-600"
-                    }`}>
-                    {currentStatus}
-                  </span>
-                </div>
+                  <RuntimePanel agentId={id} />
+                  {agent?.config?.chatUiUrl && (
+                    <a
+                      href={`${agent.config.chatUiUrl}?agent_id=${agent.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-medium text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-400 transition-colors"
+                    >
+                      <MessageSquare size={14} /> Open Chainlit Chat
+                    </a>
+                  )}
+                </section>
+              )}
 
-                {currentStatus === "active" ? (
+              {/* ── Activate (shown when NOT active) ── */}
+              {currentStatus !== "active" && (
+                <section className="bg-zinc-900 rounded-xl border border-zinc-700 p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-zinc-100">Agent Status</p>
+                      <p className="text-xs text-zinc-500 mt-0.5">Inactive — activate to allow chat sessions.</p>
+                    </div>
+                    <span className={`text-sm font-semibold px-3 py-1 rounded-full ${currentStatus === "archived" ? "bg-red-950 text-red-400" : "bg-zinc-800 text-zinc-400"
+                      }`}>
+                      {currentStatus}
+                    </span>
+                  </div>
                   <button
-                    onClick={() => setConfirmDeactivate(true)}
-                    disabled={deployMutation.isPending}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 bg-amber-100 hover:bg-amber-200 text-amber-800"
+                    onClick={() => setActivateModeOpen(true)}
+                    disabled={deployMutation.isPending || dockerDeployMutation.isPending}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 bg-green-500 hover:bg-green-600 text-white"
                   >
-                    <Square size={15} /> {deployMutation.isPending ? "Deactivating…" : "Deactivate Agent"}
+                    <Monitor size={15} /> {deployMutation.isPending || dockerDeployMutation.isPending ? "Activating…" : "Activate Agent"}
                   </button>
-                ) : (
-                  <div className="relative flex w-full">
-                    <button
-                      onClick={() => deployMutation.mutate()}
-                      disabled={deployMutation.isPending || dockerDeployMutation.isPending}
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-l-lg text-sm font-semibold transition-colors disabled:opacity-50 bg-green-500 hover:bg-green-600 text-white"
-                    >
-                      <Monitor size={15} /> {deployMutation.isPending ? "Activating…" : "Activate Agent"}
-                    </button>
-                    <button
-                      onClick={() => setActivateMenuOpen(v => !v)}
-                      disabled={deployMutation.isPending || dockerDeployMutation.isPending}
-                      className="flex items-center px-2 py-2.5 rounded-r-lg transition-colors disabled:opacity-50 bg-green-600 hover:bg-green-700 text-white border-l border-green-400"
-                      title="More activation options"
-                    >
-                      <ChevronDown size={15} />
-                    </button>
-                    {activateMenuOpen && (
-                      <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                        <button
-                          className="flex items-center gap-2 w-full px-3 py-2.5 text-sm hover:bg-gray-50 text-gray-700"
-                          onClick={() => { setActivateMenuOpen(false); deployMutation.mutate(); }}
-                        >
-                          <Monitor size={14} /> Local Process
-                        </button>
-                        <button
-                          className="flex items-center gap-2 w-full px-3 py-2.5 text-sm hover:bg-gray-50 text-gray-700"
-                          onClick={() => { setActivateMenuOpen(false); dockerDeployMutation.mutate(); }}
-                        >
-                          <Container size={14} /> Docker Container
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {currentStatus === "active" && (
-                  <a
-                    href={`${agent?.config?.chatUiUrl || import.meta.env.VITE_CHAINLIT_URL || "http://localhost:7080"}?agent_id=${agent?.id ?? ""}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-medium text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-400 transition-colors"
-                  >
-                    <MessageSquare size={15} /> Open Chainlit Chat
-                  </a>
-                )}
-              </section>
+                </section>
+              )}
 
               {/* Export */}
-              <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+              <section className="bg-zinc-900 rounded-xl border border-zinc-700 p-6 space-y-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">Export</h3>
-                  <p className="text-xs text-gray-500 mt-1">Download deployment manifests to run this agent on your own infrastructure.</p>
+                  <h3 className="text-sm font-semibold text-zinc-100">Export</h3>
+                  <p className="text-xs text-zinc-400 mt-1">Download deployment manifests to run this agent on your own infrastructure.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => exportMutation.mutate({ format: "kubernetes" })}
                     disabled={exportMutation.isPending}
-                    className="flex items-center justify-center gap-1.5 text-sm text-gray-700 hover:text-gray-900 border border-gray-200 hover:border-gray-400 px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50"
+                    className="flex items-center justify-center gap-1.5 text-sm text-zinc-300 hover:text-zinc-100 border border-zinc-700 hover:border-zinc-500 px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50"
                   >
                     <Download size={14} /> Kubernetes YAML
                   </button>
                   <button
                     onClick={() => exportMutation.mutate({ format: "docker-compose" })}
                     disabled={exportMutation.isPending}
-                    className="flex items-center justify-center gap-1.5 text-sm text-gray-700 hover:text-gray-900 border border-gray-200 hover:border-gray-400 px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50"
+                    className="flex items-center justify-center gap-1.5 text-sm text-zinc-300 hover:text-zinc-100 border border-zinc-700 hover:border-zinc-500 px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50"
                   >
                     <Download size={14} /> Docker Compose
                   </button>
@@ -1438,54 +1517,49 @@ export default function Editor() {
                 )}
               </section>
 
-              {/* Docker Compose Deploy */}
-              <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+              {/* Docker Compose Management */}
+              <section className="bg-zinc-900 rounded-xl border border-zinc-700 p-6 space-y-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900">Docker Deployment</h3>
-                    <p className="text-xs text-gray-500 mt-1">Run this agent locally with Docker Compose (requires Docker).</p>
+                    <h3 className="text-sm font-semibold text-zinc-100">Docker Containers</h3>
+                    <p className="text-xs text-zinc-400 mt-1">
+                      Manage a running Docker Compose deployment.
+                      {currentStatus !== "active" && <span className="text-zinc-600"> Activate via header → choose Docker to start.</span>}
+                    </p>
                   </div>
-                  {/* status badge */}
                   {dockerStatusQuery.data && (
                     <span className={[
                       "shrink-0 text-xs font-medium px-2 py-0.5 rounded-full",
                       dockerStatusQuery.data.status === "running"
-                        ? "bg-green-100 text-green-700"
+                        ? "bg-green-950 text-green-400"
                         : dockerStatusQuery.data.status === "stopped"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-gray-100 text-gray-500",
+                          ? "bg-yellow-950 text-yellow-400"
+                          : "bg-zinc-800 text-zinc-500",
                     ].join(" ")}>
                       {dockerStatusQuery.data.status}
                     </span>
                   )}
                 </div>
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => dockerDeployMutation.mutate()}
-                    disabled={isDockerDeploying}
-                    className="flex items-center gap-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {isDockerDeploying
-                      ? <RefreshCw size={14} className="animate-spin" />
-                      : <Container size={14} />}
-                    {isDockerDeploying ? "Building & deploying…" : "Deploy with Docker"}
-                  </button>
-
+                <div className="flex items-center gap-2">
                   {dockerStatusQuery.data?.status === "running" && (
                     <button
                       onClick={() => dockerStopMutation.mutate()}
                       disabled={dockerStopMutation.isPending}
-                      className="flex items-center gap-1.5 text-sm font-medium text-red-600 border border-red-200 hover:border-red-400 px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1.5 text-sm font-medium text-red-400 border border-red-900 hover:border-red-700 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                     >
                       <CircleStop size={14} />
-                      {dockerStopMutation.isPending ? "Stopping…" : "Stop"}
+                      {dockerStopMutation.isPending ? "Stopping…" : "Stop Containers"}
                     </button>
                   )}
-
+                  {isDockerDeploying && (
+                    <span className="flex items-center gap-1.5 text-xs text-brand-600 font-medium">
+                      <RefreshCw size={12} className="animate-spin" /> Deploying…
+                    </span>
+                  )}
                   <button
                     onClick={() => qc.invalidateQueries({ queryKey: ["docker-status", id] })}
-                    className="ml-auto text-gray-400 hover:text-gray-600 transition-colors"
+                    className="ml-auto text-zinc-500 hover:text-zinc-300 transition-colors"
                     title="Refresh status"
                   >
                     <RefreshCw size={14} />
@@ -1497,7 +1571,7 @@ export default function Editor() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-left text-gray-500 border-b border-gray-100">
+                        <tr className="text-left text-zinc-500 border-b border-zinc-700">
                           <th className="pb-1 pr-4 font-medium">Container</th>
                           <th className="pb-1 pr-4 font-medium">State</th>
                           <th className="pb-1 font-medium">Status</th>
@@ -1505,12 +1579,12 @@ export default function Editor() {
                       </thead>
                       <tbody>
                         {dockerStatusQuery.data.containers.map((c, i) => (
-                          <tr key={i} className="border-b border-gray-50">
-                            <td className="py-1 pr-4 font-mono text-gray-700 truncate max-w-[140px]">{c.Name}</td>
+                          <tr key={i} className="border-b border-zinc-800">
+                            <td className="py-1 pr-4 font-mono text-zinc-300 truncate max-w-[140px]">{c.Name}</td>
                             <td className="py-1 pr-4">
-                              <span className={c.State === "running" ? "text-green-600" : "text-yellow-600"}>{c.State}</span>
+                              <span className={c.State === "running" ? "text-green-400" : "text-yellow-400"}>{c.State}</span>
                             </td>
-                            <td className="py-1 text-gray-500">{c.Status}</td>
+                            <td className="py-1 text-zinc-500">{c.Status}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1546,17 +1620,31 @@ export default function Editor() {
         />
       )}
 
+      {activateModeOpen && (
+        <ActivationModeModal
+          onLocal={() => { setActivatingMode("local"); deployMutation.mutate(); }}
+          onDocker={() => { setActivatingMode("docker"); dockerDeployMutation.mutate(); }}
+          onClose={() => { setActivateModeOpen(false); setActivatingMode(null); }}
+          activatingMode={activatingMode}
+          error={
+            activatingMode === "local" && deployMutation.isError ? String(deployMutation.error) :
+              activatingMode === "docker" && dockerDeployMutation.isError ? String(dockerDeployMutation.error) :
+                undefined
+          }
+        />
+      )}
+
       {confirmDeactivate && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+          <div className="bg-zinc-900 rounded-xl shadow-2xl w-full max-w-sm p-6 space-y-4">
             <div className="flex items-start gap-3">
-              <div className="shrink-0 bg-amber-100 rounded-full p-2">
-                <AlertTriangle size={20} className="text-amber-600" />
+              <div className="shrink-0 bg-amber-950 rounded-full p-2">
+                <AlertTriangle size={20} className="text-amber-500" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Deactivate agent?</h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  This will stop all running services for <span className="font-medium text-gray-700">{agent?.name}</span>.
+                <h3 className="font-semibold text-zinc-100">Deactivate agent?</h3>
+                <p className="text-sm text-zinc-400 mt-1">
+                  This will stop all running services for <span className="font-medium text-zinc-200">{agent?.name}</span>.
                   Active chat sessions will be disconnected.
                 </p>
               </div>
@@ -1564,7 +1652,7 @@ export default function Editor() {
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setConfirmDeactivate(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -1585,7 +1673,7 @@ export default function Editor() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <label className="block text-xs font-medium text-gray-600">{label}</label>
+      <label className="block text-xs font-medium text-zinc-400">{label}</label>
       {children}
     </div>
   );

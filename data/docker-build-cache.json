@@ -1,0 +1,14 @@
+{
+  "agent-chat-service": {
+    "flogo_sha256": "183c58e752296809",
+    "image": "flogo-agent-studio/agent-chat-service:latest"
+  },
+  "ingestion-service": {
+    "flogo_sha256": "ea01ceca0d6fb74d",
+    "image": "flogo-agent-studio/ingestion-service:latest"
+  },
+  "rule-engine-service": {
+    "flogo_sha256": "b9502ac896d1227f",
+    "image": "flogo-agent-studio/rule-engine-service:latest"
+  }
+}

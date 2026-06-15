@@ -254,15 +254,23 @@ def _is_analysis_intent(text: str) -> bool:
     keywords = (
         "analyze",
         "analyse",
+        "analysis",
         "scan",
         "validate",
+        "check",
+        "review",
+        "inspect",
         "kubernetes",
         "k8s",
         "manifest",
         "yaml",
+        "deployment",
         "policy",
         "security",
         "rule",
+        "error",
+        "issue",
+        "find",
     )
     return any(k in lowered for k in keywords)
 
@@ -291,24 +299,74 @@ def _normalize_rule_engine_url(base_or_url: str) -> str:
     return f"{base}/api/analyze"
 
 
+def _looks_like_yaml(text: str) -> bool:
+    if not text:
+        return False
+    snippet = text.strip()
+    if not snippet:
+        return False
+    yaml_markers = (
+        "apiVersion:",
+        "kind:",
+        "metadata:",
+        "spec:",
+        "---",
+    )
+    return any(marker in snippet for marker in yaml_markers)
+
+
+def _looks_like_json(text: str) -> bool:
+    if not text:
+        return False
+    snippet = text.strip()
+    if not snippet:
+        return False
+    return (snippet.startswith("{") and snippet.endswith("}")) or (
+        snippet.startswith("[") and snippet.endswith("]")
+    )
+
+
+def _looks_like_document_payload(text: str) -> bool:
+    return _looks_like_yaml(text) or _looks_like_json(text)
+
+
 def _extract_uploaded_text(message: cl.Message) -> tuple[str, str] | tuple[None, None]:
     elements = getattr(message, "elements", None) or []
     for element in elements:
         path = getattr(element, "path", "")
-        if not path:
-            continue
-        name = getattr(element, "name", os.path.basename(path))
-        _, ext = os.path.splitext(name.lower())
-        if ext not in ANALYZE_ALLOWED_EXTS:
-            continue
-        try:
-            size = os.path.getsize(path)
-            if size > ANALYZE_MAX_FILE_BYTES:
+        name = getattr(element, "name", "")
+
+        if path:
+            if not name:
+                name = os.path.basename(path)
+            _, ext = os.path.splitext(name.lower())
+            if ext not in ANALYZE_ALLOWED_EXTS:
                 continue
-            with open(path, "r", encoding="utf-8", errors="replace") as handle:
-                return name, handle.read()
-        except OSError:
-            continue
+            try:
+                size = os.path.getsize(path)
+                if size > ANALYZE_MAX_FILE_BYTES:
+                    continue
+                with open(path, "r", encoding="utf-8", errors="replace") as handle:
+                    return name, handle.read()
+            except OSError:
+                continue
+
+        # Some Chainlit uploads may surface content without a stable temp file path.
+        content = getattr(element, "content", None)
+        if isinstance(content, str) and content.strip():
+            if not name:
+                name = "inline-upload.yaml" if _looks_like_yaml(content) else "inline-upload.txt"
+            _, ext = os.path.splitext(name.lower())
+            if ext in ANALYZE_ALLOWED_EXTS:
+                return name, content
+
+        text = getattr(element, "text", None)
+        if isinstance(text, str) and text.strip():
+            if not name:
+                name = "inline-upload.yaml" if _looks_like_yaml(text) else "inline-upload.txt"
+            _, ext = os.path.splitext(name.lower())
+            if ext in ANALYZE_ALLOWED_EXTS:
+                return name, text
     return None, None
 
 
@@ -323,6 +381,82 @@ async def analyze_with_rule_engine(file_name: str, content: str, request_id: str
         resp = await client.post(analyze_url, json=payload, headers=_AUTH_HEADER)
         resp.raise_for_status()
         return resp.json()
+
+
+async def _prompt_for_analysis_upload(request_id: str) -> tuple[str, str] | tuple[None, None]:
+    max_size_mb = max(1, ANALYZE_MAX_FILE_BYTES // (1024 * 1024))
+    files = await cl.AskFileMessage(
+        content=(
+            "Please upload the file you want to analyse.\n\n"
+            "Accepted formats: `.yaml`, `.yml`, `.json`, `.txt`, `.log`, `.flogo`"
+        ),
+        accept=["text/plain", "application/json", "text/x-yaml", "text/yaml",
+                "application/x-yaml", "application/octet-stream", "text/xml",
+                "application/xml", "*/*"],
+        max_size_mb=max_size_mb,
+        timeout=180,
+    ).send()
+
+    if not files:
+        log.info("[req=%s] No file provided in AskFileMessage fallback", request_id)
+        return None, None
+
+    uploaded = files[0]
+    path = getattr(uploaded, "path", "")
+    name = getattr(uploaded, "name", "") or (os.path.basename(path) if path else "uploaded-file.txt")
+    log.info("[req=%s] AskFileMessage got file: name=%s path=%s", request_id, name, path or "(no path)")
+
+    if path and os.path.exists(path):
+        # Force .yaml extension if file looks like YAML but was uploaded as generic binary
+        _, ext = os.path.splitext(name.lower())
+        if ext not in ANALYZE_ALLOWED_EXTS:
+            name = name + ".txt"  # safe fallback; content-sniff below may override
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as handle:
+                raw = handle.read()
+            if _looks_like_yaml(raw) and not name.lower().endswith((".yaml", ".yml")):
+                name = os.path.splitext(name)[0] + ".yaml"
+            log.info("[req=%s] AskFileMessage read %d bytes as %s", request_id, len(raw), name)
+            return name, raw
+        except OSError as exc:
+            log.warning("[req=%s] AskFileMessage file read error: %s", request_id, exc)
+            return None, None
+
+    # No filesystem path — try in-memory attributes Chainlit may provide
+    for attr in ("content", "text", "data"):
+        value = getattr(uploaded, attr, None)
+        if isinstance(value, (str, bytes)):
+            if isinstance(value, bytes):
+                value = value.decode("utf-8", errors="replace")
+            if value.strip():
+                if _looks_like_yaml(value) and not name.lower().endswith((".yaml", ".yml")):
+                    name = os.path.splitext(name)[0] + ".yaml"
+                log.info("[req=%s] AskFileMessage read %d bytes from attr=%s as %s", request_id, len(value), attr, name)
+                return name, value
+
+    log.warning("[req=%s] AskFileMessage: file object has no readable content. attrs=%s",
+                request_id, [a for a in dir(uploaded) if not a.startswith("_")])
+    return None, None
+
+
+async def _run_rule_engine_analysis(agent_name: str, file_name: str, content: str, request_id: str) -> None:
+    try:
+        result = await analyze_with_rule_engine(file_name, content, request_id)
+        answer = _format_rule_engine_result(result)
+    except httpx.HTTPStatusError as exc:
+        await cl.Message(
+            content=f"Service error ({exc.response.status_code}). Please try again.",
+            author=agent_name,
+        ).send()
+        return
+    except Exception as exc:
+        await cl.Message(
+            content=f"Could not reach rule-engine service: {exc}",
+            author=agent_name,
+        ).send()
+        return
+
+    await cl.Message(content=answer, author=agent_name).send()
 
 
 def _format_rule_engine_result(result: dict) -> str:
@@ -443,8 +577,9 @@ async def on_chat_start():
             content=(
                 f"**{agent.get('name', 'Agent')}**\n\n"
                 + (agent.get('description', '') + "\n\n" if agent.get('description') else "")
-                + "Type a message to start chatting."
+                + "Type a message to start chatting, or use the upload action below for rule analysis."
             ),
+            actions=[cl.Action(name="upload_for_analysis", payload={}, label="Upload file for analysis")],
             author="System",
         ).send()
         return
@@ -502,11 +637,16 @@ async def on_chat_start():
     welcome = (
         f"**{default_agent.get('name', 'Default Agent')}**\n\n"
         f"{default_agent.get('description', '')}\n\n"
-        f"Type a message to start chatting."
+        f"Type a message to start chatting, or use the upload action below for rule analysis."
         + ("\n\nSwitch agent:" if switch_options else "")
     )
 
-    await cl.Message(content=welcome, actions=switch_options, author="System").send()
+    welcome_actions = [
+        cl.Action(name="upload_for_analysis", payload={}, label="Upload file for analysis"),
+        *switch_options,
+    ]
+
+    await cl.Message(content=welcome, actions=welcome_actions, author="System").send()
 
 
 @cl.action_callback("select_agent")
@@ -540,15 +680,45 @@ async def thumbs_down(action: cl.Action):
     await _record_feedback("thumbsDown", action)
 
 
+@cl.action_callback("upload_for_analysis")
+async def upload_for_analysis(action: cl.Action):
+    agent_name = cl.user_session.get("agent_name", "Agent")
+    request_id = str(uuid.uuid4())
+    file_name, content = await _prompt_for_analysis_upload(request_id)
+    if not content:
+        await cl.Message(
+            content="No file was uploaded. Please try again and select a YAML/JSON file.",
+            author=agent_name,
+        ).send()
+        await action.remove()
+        return
+
+    await _run_rule_engine_analysis(agent_name, file_name, content, request_id)
+    await action.remove()
+
+
 async def _record_feedback(rating: str, action: cl.Action):
     session_id = cl.user_session.get("session_id", "unknown")
     agent_id   = cl.user_session.get("last_agent_id") or cl.user_session.get("agent_id", "default")
     message_id = action.payload.get("messageId") or cl.user_session.get("last_message_id", "unknown")
-
-    await post_feedback(agent_id, session_id, message_id, rating)
     emoji = "👍" if rating == "thumbsUp" else "👎"
-    await cl.Message(content=f"{emoji} Feedback recorded.", author="System").send()
+
     await action.remove()
+
+    # Prompt for an optional comment
+    try:
+        reply = await cl.AskUserMessage(
+            content=f"{emoji} Thanks for your feedback! Add a comment? _(type your comment or press **Skip**)_",
+            timeout=60,
+            raise_on_timeout=False,
+        ).send()
+        comment = reply["output"].strip() if reply and reply.get("output", "").strip().lower() not in ("skip", "") else ""
+    except Exception:
+        comment = ""
+
+    await post_feedback(agent_id, session_id, message_id, rating, comment)
+    confirmation = f"{emoji} Feedback recorded." if not comment else f"{emoji} Feedback recorded with comment: _{comment}_"
+    await cl.Message(content=confirmation, author="System").send()
 
 
 @cl.on_message
@@ -565,13 +735,44 @@ async def on_message(message: cl.Message):
     log.info("[req=%s session=%s agent=%s] on_message: %r", request_id, session_id, agent_id, message.content[:120])
 
     uploaded_name, uploaded_text = _extract_uploaded_text(message)
-    should_analyze = bool(uploaded_text) or _is_analysis_intent(message.content)
+    elements = getattr(message, "elements", None) or []
+    log.info(
+        "[req=%s] analyze-input summary: elements=%d uploaded_name=%s extracted_text=%s",
+        request_id,
+        len(elements),
+        uploaded_name or "none",
+        "yes" if uploaded_text else "no",
+    )
+    is_analysis_intent = _is_analysis_intent(message.content)
+    has_inline_payload = _looks_like_document_payload(message.content) or len(message.content.strip()) > 200
+
+    if is_analysis_intent and not uploaded_text and not has_inline_payload:
+        prompted_name, prompted_text = await _prompt_for_analysis_upload(request_id)
+        if prompted_text:
+            uploaded_name, uploaded_text = prompted_name, prompted_text
+        else:
+            await cl.Message(
+                content=(
+                    "No file was received.\n\n"
+                    "**Options:**\n"
+                    "- Click **Upload file for analysis** below to try again\n"
+                    "- Or paste the YAML/JSON content directly in the message box"
+                ),
+                author=agent_name,
+                actions=[cl.Action(name="upload_for_analysis", payload={}, label="Upload file for analysis")],
+            ).send()
+            return
+
+    should_analyze = bool(uploaded_text) or has_inline_payload
 
     async with cl.Step(name=f"{agent_name} — thinking", show_input=False) as step:
         try:
             if should_analyze:
                 content_to_analyze = uploaded_text or message.content
-                name_to_analyze = uploaded_name or "inline-input.txt"
+                if uploaded_name:
+                    name_to_analyze = uploaded_name
+                else:
+                    name_to_analyze = "inline-input.yaml" if _looks_like_yaml(content_to_analyze) else "inline-input.txt"
                 result = await analyze_with_rule_engine(name_to_analyze, content_to_analyze, request_id)
                 answer = _format_rule_engine_result(result)
                 formatted_ctx = ""

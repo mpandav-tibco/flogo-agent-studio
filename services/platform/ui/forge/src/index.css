@@ -4,15 +4,286 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-zinc-950 text-zinc-100 antialiased;
   }
 }
 
 @layer components {
   .input {
-    @apply w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900
-      placeholder-gray-400 shadow-sm
-      focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
-      disabled:bg-gray-100 disabled:text-gray-400;
+    @apply w-full rounded-lg border border-zinc-600 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:bg-zinc-900 disabled:text-zinc-500;
   }
+}
+
+/* ── Light theme overrides ──────────────────────────────────────────────────
+   Applied when <html class="light"> is set by ThemeContext.
+   Uses !important to override Tailwind utility classes.
+   -------------------------------------------------------------------------- */
+html.light {
+  color-scheme: light;
+}
+
+html.light body {
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+/* Backgrounds */
+html.light .bg-zinc-950 {
+  background-color: #f9fafb !important;
+}
+
+html.light .bg-zinc-900 {
+  background-color: #ffffff !important;
+}
+
+html.light .bg-zinc-800 {
+  background-color: #f3f4f6 !important;
+}
+
+html.light .bg-zinc-700 {
+  background-color: #e5e7eb !important;
+}
+
+/* Opacity background variants */
+html.light .bg-zinc-950\/40 {
+  background-color: rgb(249 250 251 / 0.5) !important;
+}
+
+html.light .bg-green-950\/50 {
+  background-color: rgb(240 253 244 / 0.7) !important;
+}
+
+html.light .bg-green-950\/30 {
+  background-color: rgb(240 253 244 / 0.5) !important;
+}
+
+html.light .bg-red-950\/30 {
+  background-color: rgb(254 242 242 / 0.5) !important;
+}
+
+/* Text */
+html.light .text-zinc-100 {
+  color: #111827 !important;
+}
+
+html.light .text-zinc-200 {
+  color: #1f2937 !important;
+}
+
+html.light .text-zinc-300 {
+  color: #374151 !important;
+}
+
+html.light .text-zinc-400 {
+  color: #6b7280 !important;
+}
+
+html.light .text-zinc-500 {
+  color: #9ca3af !important;
+}
+
+html.light .text-zinc-600 {
+  color: #d1d5db !important;
+}
+
+/* Borders */
+html.light .border-zinc-800 {
+  border-color: #e5e7eb !important;
+}
+
+html.light .border-zinc-700 {
+  border-color: #d1d5db !important;
+}
+
+html.light .border-zinc-600 {
+  border-color: #9ca3af !important;
+}
+
+/* Hover: background */
+html.light .hover\:bg-zinc-900:hover {
+  background-color: #f9fafb !important;
+}
+
+html.light .hover\:bg-zinc-800:hover {
+  background-color: #f3f4f6 !important;
+}
+
+html.light .hover\:bg-zinc-700:hover {
+  background-color: #e5e7eb !important;
+}
+
+/* Hover: text */
+html.light .hover\:text-zinc-100:hover {
+  color: #111827 !important;
+}
+
+html.light .hover\:text-zinc-200:hover {
+  color: #1f2937 !important;
+}
+
+html.light .hover\:text-zinc-300:hover {
+  color: #374151 !important;
+}
+
+/* Hover: borders */
+html.light .hover\:border-zinc-600:hover {
+  border-color: #d1d5db !important;
+}
+
+html.light .hover\:border-zinc-500:hover {
+  border-color: #9ca3af !important;
+}
+
+/* Divide (table row separators) */
+html.light .divide-zinc-800> :not([hidden])~ :not([hidden]) {
+  border-color: #e5e7eb !important;
+}
+
+/* Ring offset */
+html.light .ring-offset-zinc-950 {
+  --tw-ring-offset-color: #f9fafb !important;
+}
+
+/* Placeholder text */
+html.light .placeholder-zinc-500::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Status: green */
+html.light .bg-green-950 {
+  background-color: #f0fdf4 !important;
+}
+
+html.light .text-green-400 {
+  color: #15803d !important;
+}
+
+html.light .border-green-800 {
+  border-color: #86efac !important;
+}
+
+html.light .border-green-700 {
+  border-color: #4ade80 !important;
+}
+
+html.light .hover\:bg-green-900:hover {
+  background-color: #dcfce7 !important;
+}
+
+html.light .hover\:bg-green-950:hover {
+  background-color: #f0fdf4 !important;
+}
+
+/* Status: red */
+html.light .bg-red-950 {
+  background-color: #fef2f2 !important;
+}
+
+html.light .text-red-400 {
+  color: #dc2626 !important;
+}
+
+html.light .border-red-900 {
+  border-color: #fca5a5 !important;
+}
+
+html.light .border-red-800 {
+  border-color: #fca5a5 !important;
+}
+
+html.light .hover\:bg-red-950:hover {
+  background-color: #fef2f2 !important;
+}
+
+/* Status: amber */
+html.light .bg-amber-950 {
+  background-color: #fffbeb !important;
+}
+
+html.light .text-amber-400 {
+  color: #d97706 !important;
+}
+
+html.light .border-amber-900 {
+  border-color: #fde68a !important;
+}
+
+html.light .border-amber-800 {
+  border-color: #fcd34d !important;
+}
+
+html.light .hover\:bg-amber-950:hover {
+  background-color: #fffbeb !important;
+}
+
+/* Status: yellow */
+html.light .bg-yellow-950 {
+  background-color: #fefce8 !important;
+}
+
+html.light .text-yellow-400 {
+  color: #a16207 !important;
+}
+
+/* Status: blue */
+html.light .bg-blue-950 {
+  background-color: #eff6ff !important;
+}
+
+html.light .border-blue-800 {
+  border-color: #93c5fd !important;
+}
+
+html.light .text-blue-400 {
+  color: #2563eb !important;
+}
+
+html.light .text-blue-300 {
+  color: #1d4ed8 !important;
+}
+
+/* Status: purple / indigo gradient (AI section) */
+html.light .bg-purple-950\/40 {
+  background-color: rgb(250 245 255 / 0.8) !important;
+}
+
+html.light .bg-indigo-950\/40 {
+  background-color: rgb(238 242 255 / 0.8) !important;
+}
+
+html.light .border-purple-800 {
+  border-color: #c4b5fd !important;
+}
+
+/* Brand token overrides */
+html.light .bg-brand-50 {
+  background-color: #eef0ff !important;
+}
+
+html.light .bg-brand-100 {
+  background-color: #e0e4ff !important;
+}
+
+html.light .border-brand-100 {
+  border-color: #c7cfff !important;
+}
+
+html.light .text-brand-400 {
+  color: #3b56e8 !important;
+}
+
+/* Input component in light mode */
+html.light .input {
+  border-color: #d1d5db !important;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+html.light .input::placeholder {
+  color: #9ca3af !important;
+}
+
+html.light .input:disabled {
+  background-color: #f9fafb !important;
+  color: #9ca3af !important;
 }

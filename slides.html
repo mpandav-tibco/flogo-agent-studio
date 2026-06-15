@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AgentForge Studio — Demo Deck</title>
+<title>Flogents Studio — Demo Deck</title>
 <style>
   :root {
     --teal:   #3bbfbb;
@@ -219,7 +219,7 @@
 
   <h1>Build · Deploy · Chat<br/>with AI Agents</h1>
   <p class="sub">A production-grade multi-agent AI platform built entirely<br/>on TIBCO Flogo 2.26.3 compiled Go services.</p>
-  <div class="tagline">AgentForge Studio · Demo Deck · 2026</div>
+  <div class="tagline">Flogents Studio · Demo Deck · 2026</div>
   <span class="slide-num" style="color:rgba(255,255,255,0.2)">1</span>
 </div>
 
@@ -263,7 +263,7 @@
 <!-- ═══════════════════ SLIDE 3 — THE SOLUTION ═══════════════════ -->
 <div class="slide teal-slide">
   <div class="slide-label" style="color:rgba(255,255,255,0.6)">The Solution</div>
-  <h2>AgentForge Studio</h2>
+  <h2>Flogents Studio</h2>
   <p style="font-size:16px; opacity:0.9; max-width:680px; margin-bottom:28px;">
     A complete AI agent platform built on two powerful pillars: <strong>RAG-grounded conversational AI</strong> and <strong>declarative rule-based document analysis</strong> — every microservice a compiled Flogo flow, no runtime dependencies, native Go speed.
   </p>
@@ -271,7 +271,7 @@
     <div class="col">
       <ul>
         <li>RAG-grounded answers from your own knowledge base</li>
-        <li>Visual agent design portal (AgentForge UI)</li>
+        <li>Visual agent design portal (Flogents UI)</li>
         <li>LLM-generated agent configuration</li>
         <li>Real-time streaming chat (SSE)</li>
       </ul>
@@ -302,7 +302,7 @@
     <div class="col">
       <h2>Platform Overview</h2>
       <pre class="arch"> ┌────────────┐  ┌────────────┐  ┌────────────┐
- │ AgentForge │  │  Chainlit  │  │ Claude /   │
+ │ Flogents │  │  Chainlit  │  │ Claude /   │
  │ UI :7025   │  │ Chat :7080 │  │ Cursor IDE │
  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘
        │               │               │ MCP
@@ -477,10 +477,10 @@
   <span class="slide-num">7</span>
 </div>
 
-<!-- ═══════════════════ SLIDE 8 — AGENTFORGE UI ═══════════════════ -->
+<!-- ═══════════════════ SLIDE 8 — FLOGENTS UI ═══════════════════ -->
 <div class="slide light-slide">
   <div class="slide-label">Design Portal</div>
-  <h2>AgentForge UI <span style="color:var(--teal); font-size:18px; font-weight:400">localhost:7025</span></h2>
+  <h2>Flogents UI <span style="color:var(--teal); font-size:18px; font-weight:400">localhost:7025</span></h2>
   <div class="cols">
     <div class="col">
       <div class="hbox">
@@ -520,10 +520,10 @@
   <div class="cols">
     <div class="col">
       <h2>Your AI IDE<br/>gets 9 new tools</h2>
-      <p style="opacity:0.7; margin-bottom:20px; font-size:14px;">Add one line to <code style="color:var(--teal)">.mcp.json</code> and Claude Code, Cursor, and VS Code Copilot can call every AgentForge capability natively.</p>
+      <p style="opacity:0.7; margin-bottom:20px; font-size:14px;">Add one line to <code style="color:var(--teal)">.mcp.json</code> and Claude Code, Cursor, and VS Code Copilot can call every Flogents capability natively.</p>
       <pre>{
   <span class="k">"mcpServers"</span>: {
-    <span class="k">"agentforge"</span>: {
+    <span class="k">"flogents"</span>: {
       <span class="k">"type"</span>: <span class="s">"http"</span>,
       <span class="k">"url"</span>: <span class="s">"http://localhost:7333/mcp"</span>
     }
@@ -584,7 +584,7 @@
   <div class="cols">
     <div class="col">
       <ul style="font-size:14px;">
-        <li style="margin-bottom:10px"><strong>1. Open AgentForge</strong> → localhost:7025 · browse existing agents</li>
+        <li style="margin-bottom:10px"><strong>1. Open Flogents</strong> → localhost:7025 · browse existing agents</li>
         <li style="margin-bottom:10px"><strong>2. Create agent</strong> → pick template or AI-generate config from a prompt</li>
         <li style="margin-bottom:10px"><strong>3. Ingest docs</strong> → paste a URL or upload text · watch ingestion-service embed & store</li>
         <li style="margin-bottom:10px"><strong>4. Deploy agent</strong> → one click · status goes draft → active</li>
@@ -624,7 +624,7 @@ ollama pull llama3.2:3b
     <div class="col narrow">
       <h2>&nbsp;</h2>
       <div style="margin-top:8px;">
-        <p style="font-size:13px; opacity:0.7; margin-bottom:16px;"><strong style="color:var(--teal)">AgentForge Portal</strong><br/>http://localhost:7025</p>
+        <p style="font-size:13px; opacity:0.7; margin-bottom:16px;"><strong style="color:var(--teal)">Flogents Portal</strong><br/>http://localhost:7025</p>
         <p style="font-size:13px; opacity:0.7; margin-bottom:16px;"><strong style="color:var(--teal)">Chainlit Chat</strong><br/>http://localhost:7080</p>
         <p style="font-size:13px; opacity:0.7; margin-bottom:16px;"><strong style="color:var(--teal)">MCP Server</strong><br/>http://localhost:7333/mcp</p>
         <p style="font-size:13px; opacity:0.7; margin-bottom:16px;"><strong style="color:var(--teal)">Run E2E tests</strong><br/>python3 tests/e2e_journey.py</p>
@@ -645,7 +645,7 @@ graph LR
     IDE(["🤖 AI IDE\nClaude / Cursor / Copilot"])
 
     subgraph UI ["User Interfaces"]
-        FORGE["AgentForge UI\n:7025"]
+        FORGE["Flogents UI\n:7025"]
         CHAINLIT["Chainlit Chat\n:7080"]
     end
 
@@ -704,7 +704,7 @@ graph LR
 sequenceDiagram
     autonumber
     actor User
-    participant Forge as AgentForge UI
+    participant Forge as Flogents UI
     participant AB as agent-builder :7010
     participant DS as design-service :7020
     participant IN as ingestion :7002

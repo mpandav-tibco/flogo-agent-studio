@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rule Builder — Flogo Agent Studio</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #5b6af0;
+    --accent-hover: #7080ff;
+    --good: #34d399;
+    --warn: #fbbf24;
+    --error: #f87171;
+    --info: #60a5fa;
+    --text: #e2e8f0;
+    --muted: #8892b0;
+    --input-bg: #13151f;
+    --tag-bg: #2a2f4a;
+    --radius: 8px;
+    --font: 'Segoe UI', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-logo {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  .header h1 { font-size: 16px; font-weight: 600; color: var(--text); }
+  .header p  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .header-actions { margin-left: auto; display: flex; gap: 8px; }
+
+  /* ── Buttons ── */
+  .btn {
+    padding: 7px 16px; border-radius: 6px; border: none;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-outline { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .btn-outline:hover { background: rgba(91,106,240,0.1); }
+  .btn-danger { background: rgba(248,113,113,0.15); color: var(--error); border: 1px solid rgba(248,113,113,0.3); }
+  .btn-danger:hover { background: rgba(248,113,113,0.25); }
+
+  /* ── Main layout ── */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 0;
+    height: calc(100vh - 57px);
+  }
+
+  /* ── Form panel ── */
+  .form-panel {
+    overflow-y: auto;
+    padding: 24px;
+    border-right: 1px solid var(--border);
+  }
+
+  /* ── Preview panel ── */
+  .preview-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--input-bg);
+    overflow: hidden;
+  }
+  .preview-header {
+    padding: 12px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .preview-header span { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .preview-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* YAML syntax coloring */
+  .yaml-key   { color: #7dd3fc; }
+  .yaml-str   { color: #a5f3a5; }
+  .yaml-num   { color: #fbbf24; }
+  .yaml-bool  { color: #c084fc; }
+  .yaml-null  { color: #f87171; }
+  .yaml-comment { color: #4b5563; font-style: italic; }
+  .yaml-anchor { color: #fb923c; }
+
+  /* ── Sections ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .section-header {
+    padding: 12px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; user-select: none;
+  }
+  .section-header:hover { background: var(--border); }
+  .section-header .section-title { font-weight: 600; font-size: 13px; }
+  .section-header .section-badge {
+    font-size: 11px; padding: 2px 8px; border-radius: 99px;
+    background: rgba(91,106,240,0.2); color: var(--accent);
+  }
+  .section-chevron { margin-left: auto; color: var(--muted); transition: transform 0.2s; font-size: 10px; }
+  .section-chevron.open { transform: rotate(180deg); }
+  .section-body { padding: 16px; }
+  .section-body.hidden { display: none; }
+
+  /* ── Form fields ── */
+  .form-row { margin-bottom: 14px; }
+  .form-row:last-child { margin-bottom: 0; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  label .req { color: var(--error); margin-left: 2px; }
+  label .hint { font-weight: 400; text-transform: none; letter-spacing: 0; color: #5a6280; font-size: 11px; margin-left: 6px; }
+
+  input[type=text], input[type=number], select, textarea {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(91,106,240,0.15);
+  }
+  input::placeholder, textarea::placeholder { color: #3d4468; }
+  textarea { resize: vertical; min-height: 80px; font-family: var(--font); line-height: 1.6; }
+  textarea.mono { font-family: var(--mono); font-size: 12px; }
+
+  select option { background: var(--surface); }
+
+  /* ── Toggle ── */
+  .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+  .toggle {
+    position: relative; width: 40px; height: 22px;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track {
+    position: absolute; inset: 0;
+    background: var(--border);
+    border-radius: 99px;
+    transition: background 0.2s;
+  }
+  .toggle input:checked ~ .toggle-track { background: var(--accent); }
+  .toggle-thumb {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 16px; height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .toggle input:checked ~ .toggle-track .toggle-thumb { transform: translateX(18px); }
+  .toggle-label { font-size: 13px; color: var(--text); }
+
+  /* ── Severity chips ── */
+  .severity-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .severity-chip {
+    padding: 6px 14px; border-radius: 99px; border: 2px solid transparent;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all 0.15s; letter-spacing: 0.05em;
+  }
+  .severity-chip[data-sev="ERROR"]   { color: var(--error);  background: rgba(248,113,113,0.1);  border-color: transparent; }
+  .severity-chip[data-sev="WARNING"] { color: var(--warn);   background: rgba(251,191,36,0.1);   border-color: transparent; }
+  .severity-chip[data-sev="INFO"]    { color: var(--info);   background: rgba(96,165,250,0.1);   border-color: transparent; }
+  .severity-chip[data-sev="GOOD"]    { color: var(--good);   background: rgba(52,211,153,0.1);   border-color: transparent; }
+  .severity-chip[data-sev="ERROR"].active   { border-color: var(--error);  box-shadow: 0 0 0 3px rgba(248,113,113,0.2); }
+  .severity-chip[data-sev="WARNING"].active { border-color: var(--warn);   box-shadow: 0 0 0 3px rgba(251,191,36,0.2); }
+  .severity-chip[data-sev="INFO"].active    { border-color: var(--info);   box-shadow: 0 0 0 3px rgba(96,165,250,0.2); }
+  .severity-chip[data-sev="GOOD"].active    { border-color: var(--good);   box-shadow: 0 0 0 3px rgba(52,211,153,0.2); }
+
+  /* ── Tag input ── */
+  .tag-input-wrap {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    display: flex; flex-wrap: wrap; gap: 5px;
+    cursor: text;
+    min-height: 38px; align-items: center;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .tag-input-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(91,106,240,0.15);
+  }
+  .tag {
+    background: var(--tag-bg); color: var(--accent);
+    padding: 2px 8px; border-radius: 99px;
+    font-size: 12px; display: flex; align-items: center; gap: 4px;
+  }
+  .tag-remove { cursor: pointer; color: var(--muted); font-size: 14px; line-height: 1; }
+  .tag-remove:hover { color: var(--error); }
+  .tag-input-inner {
+    background: transparent; border: none; outline: none;
+    color: var(--text); font-size: 13px; flex: 1; min-width: 80px;
+    font-family: var(--font);
+  }
+
+  /* ── Patterns list ── */
+  .patterns-list { display: flex; flex-direction: column; gap: 6px; }
+  .pattern-item { display: flex; gap: 6px; align-items: center; }
+  .pattern-item input { flex: 1; }
+  .add-pattern-btn {
+    width: 100%; padding: 7px; border-radius: 6px; border: 1px dashed var(--border);
+    background: transparent; color: var(--muted); font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    transition: all 0.15s; margin-top: 4px;
+  }
+  .add-pattern-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(91,106,240,0.05); }
+
+  /* ── File extension pills ── */
+  .ext-group { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ext-pill {
+    padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border);
+    background: var(--input-bg); color: var(--muted); font-size: 12px;
+    cursor: pointer; font-family: var(--mono); transition: all 0.15s;
+  }
+  .ext-pill.active { background: rgba(91,106,240,0.15); border-color: var(--accent); color: var(--accent); }
+  .ext-pill:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+  .ext-custom-wrap { display: flex; gap: 6px; margin-top: 6px; }
+  .ext-custom-wrap input { flex: 1; }
+
+  /* ── Presets ── */
+  .presets-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .preset-card {
+    padding: 10px 12px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--input-bg);
+    cursor: pointer; transition: all 0.15s;
+    text-align: left;
+  }
+  .preset-card:hover { border-color: var(--accent); background: rgba(91,106,240,0.05); }
+  .preset-card .preset-name { font-size: 12px; font-weight: 600; color: var(--text); }
+  .preset-card .preset-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .preset-card .preset-badge {
+    display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 99px;
+    margin-bottom: 4px; font-weight: 600;
+  }
+
+  /* ── Info callout ── */
+  .callout {
+    padding: 10px 14px; border-radius: 6px; font-size: 12px;
+    display: flex; gap: 8px; align-items: flex-start;
+    border-left: 3px solid var(--accent);
+    background: rgba(91,106,240,0.08);
+    color: var(--muted);
+    margin-top: 10px;
+  }
+
+  /* ── Copy toast ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 18px; border-radius: 8px;
+    font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    transform: translateY(60px); opacity: 0;
+    transition: all 0.25s; z-index: 999;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-icon { color: var(--good); font-size: 16px; }
+
+  /* ── Scrollbars ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">⚡</div>
+  <div>
+    <h1>Rule Builder</h1>
+    <p>Create YAML rules for the Flogo Agent Studio rule engine</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-secondary" onclick="resetForm()">↺ Reset</button>
+    <button class="btn btn-outline" onclick="copyYAML()">⎘ Copy YAML</button>
+    <button class="btn btn-primary" onclick="downloadYAML()">⬇ Save Rule</button>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="main">
+
+  <!-- ══════════════════ FORM PANEL ══════════════════ -->
+  <div class="form-panel">
+
+    <!-- Presets -->
+    <div class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span>⚡</span>
+        <span class="section-title">Quick-Start Presets</span>
+        <span class="section-badge">optional</span>
+        <span class="section-chevron open">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="presets-grid" id="presetsGrid"></div>
+        <div class="callout" style="margin-top:10px">💡 Click a preset to pre-fill the form. You can then customise every field before saving.</div>
+      </div>
+    </div>
+
+    <!-- Identity -->
+    <div class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span>🪪</span>
+        <span class="section-title">Identity</span>
+        <span class="section-chevron open">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Rule ID <span class="req">*</span> <span class="hint">e.g. CODE-001, FLOGO-P002</span></label>
+            <input type="text" id="ruleId" placeholder="FLOGO-001" oninput="onInput()">
+          </div>
+          <div class="form-row">
+            <label>Category <span class="req">*</span></label>
+            <input type="text" id="category" placeholder="security" list="categoryList" oninput="onInput()">
+            <datalist id="categoryList">
+              <option value="security">
+              <option value="error-handling">
+              <option value="resilience">
+              <option value="maintainability">
+              <option value="governance">
+              <option value="compliance">
+              <option value="performance">
+              <option value="documentation">
+              <option value="best-practice">
+              <option value="observability">
+            </datalist>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Title <span class="req">*</span></label>
+          <input type="text" id="ruleTitle" placeholder="Brief human-readable rule title" oninput="onInput()">
+        </div>
+        <div class="form-row">
+          <label>Description <span class="req">*</span> <span class="hint">supports {{.Scope.name}} template</span></label>
+          <textarea id="description" rows="3" placeholder="Explain what this rule detects and why it matters..." oninput="onInput()"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Tags <span class="hint">press Enter or comma to add</span></label>
+          <div class="tag-input-wrap" id="tagWrap" onclick="focusTagInput()">
+            <input type="text" class="tag-input-inner" id="tagInput" placeholder="e.g. security, owasp" onkeydown="handleTagKey(event)">
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:14px">
+          <label>Severity <span class="req">*</span></label>
+          <div class="severity-group">
+            <div class="severity-chip active" data-sev="ERROR"   onclick="setSeverity('ERROR')">ERROR</div>
+            <div class="severity-chip"        data-sev="WARNING" onclick="setSeverity('WARNING')">WARNING</div>
+            <div class="severity-chip"        data-sev="INFO"    onclick="setSeverity('INFO')">INFO</div>
+            <div class="severity-chip"        data-sev="GOOD"    onclick="setSeverity('GOOD')">GOOD</div>
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:14px">
+          <div class="toggle-wrap">
+            <label class="toggle">
+              <input type="checkbox" id="enabled" checked onchange="onInput()">
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </label>
+            <span class="toggle-label">Rule enabled</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Target files -->
+    <div class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span>📂</span>
+        <span class="section-title">Target Files</span>
+        <span class="section-chevron open">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="form-row">
+          <label>Applies To <span class="req">*</span> <span class="hint">click to toggle, or type custom extension below</span></label>
+          <div class="ext-group" id="extGroup">
+            <!-- built by JS -->
+          </div>
+          <div class="ext-custom-wrap">
+            <input type="text" id="extCustom" placeholder=".myext" style="max-width:140px">
+            <button class="btn btn-secondary" onclick="addCustomExt()">+ Add</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Parser <span class="req">*</span></label>
+          <select id="parser" onchange="onInput()">
+            <option value="text">text — line-by-line regex</option>
+            <option value="json">json — JSONPath expressions</option>
+            <option value="yaml">yaml — JSONPath on parsed YAML</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Match -->
+    <div class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span>🔍</span>
+        <span class="section-title">Match Condition</span>
+        <span class="section-chevron open">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="form-row">
+          <label>Scope <span class="req">*</span> <span class="hint">JSONPath or "line" for text parser</span></label>
+          <input type="text" id="scope" placeholder="line" list="scopeList" oninput="onInput()">
+          <datalist id="scopeList">
+            <option value="line">
+            <option value="$.">
+            <option value="$.resources[*].data">
+            <option value="$.paths[*][*]">
+            <option value="$.paths[*]">
+          </datalist>
+        </div>
+        <div class="form-row">
+          <label>Match Type <span class="req">*</span></label>
+          <select id="matchType" onchange="onMatchTypeChange()">
+            <option value="regex_match">regex_match — pattern found in content</option>
+            <option value="missing">missing — JSONPath node is absent</option>
+            <option value="all_missing">all_missing — all regex patterns absent</option>
+            <option value="not_empty">not_empty — JSONPath node exists &amp; non-empty</option>
+          </select>
+        </div>
+
+        <!-- regex_match fields -->
+        <div id="fields-regex_match">
+          <div class="form-row">
+            <label>Regex Pattern <span class="req">*</span> <span class="hint">Go regex syntax</span></label>
+            <input type="text" id="matchPattern" class="mono" placeholder="(?i)(password|secret)\s*=\s*[&quot;'][^&quot;']{8,}[&quot;']" oninput="onInput()">
+          </div>
+          <div class="form-row">
+            <label>Path <span class="hint">optional — JSONPath field to match against</span></label>
+            <input type="text" id="matchPath_regex" placeholder="content" oninput="onInput()">
+          </div>
+        </div>
+
+        <!-- missing fields -->
+        <div id="fields-missing" style="display:none">
+          <div class="form-row">
+            <label>JSONPath <span class="req">*</span> <span class="hint">node that must exist</span></label>
+            <input type="text" id="matchPath_missing" class="mono" placeholder="errorHandler.tasks" oninput="onInput()">
+          </div>
+        </div>
+
+        <!-- all_missing fields -->
+        <div id="fields-all_missing" style="display:none">
+          <div class="form-row">
+            <label>Patterns <span class="req">*</span> <span class="hint">flagged if ALL are absent — add one per line</span></label>
+            <div class="patterns-list" id="patternsList"></div>
+            <button class="add-pattern-btn" onclick="addPattern()">＋ Add Pattern</button>
+          </div>
+        </div>
+
+        <!-- not_empty fields -->
+        <div id="fields-not_empty" style="display:none">
+          <div class="form-row">
+            <label>JSONPath <span class="req">*</span> <span class="hint">node that must be non-empty</span></label>
+            <input type="text" id="matchPath_notempty" class="mono" placeholder="description" oninput="onInput()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Output -->
+    <div class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span>📤</span>
+        <span class="section-title">Output</span>
+        <span class="section-chevron open">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="form-row">
+          <label>Location Template <span class="hint">template context vars: .Scope.name, .Parent.name</span></label>
+          <input type="text" id="location" placeholder="flow:{{.Scope.name}}" oninput="onInput()">
+        </div>
+        <div class="form-row">
+          <label>Recommendation <span class="req">*</span></label>
+          <textarea id="recommendation" rows="5" placeholder="Explain exactly how to fix this issue, with code examples where helpful..." oninput="onInput()"></textarea>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /form-panel -->
+
+  <!-- ══════════════════ PREVIEW PANEL ══════════════════ -->
+  <div class="preview-panel">
+    <div class="preview-header">
+      <span>YAML Preview</span>
+      <div style="display:flex;gap:6px">
+        <span id="validationBadge" style="font-size:11px;padding:2px 8px;border-radius:99px;background:rgba(52,211,153,0.15);color:var(--good);">● Valid</span>
+      </div>
+    </div>
+    <div class="preview-body" id="yamlPreview"></div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✓</span>
+  <span id="toastMsg">Copied!</span>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let state = {
+  severity: 'ERROR',
+  tags: [],
+  extensions: [],
+  patterns: ['']
+};
+
+// ══════════════════════════════════════════════
+//  PRESETS
+// ══════════════════════════════════════════════
+const PRESETS = [
+  {
+    name: 'Hardcoded Secret', badge: 'ERROR', badgeColor: 'rgba(248,113,113,0.2)', badgeText: '#f87171',
+    desc: 'Detect password/key literals in code',
+    data: {
+      id: 'CODE-001', category: 'security', title: 'Hardcoded Secret or API Key',
+      description: 'A potential hardcoded credential was detected in source code. Secrets in code are committed to version control and visible to anyone with repo access.',
+      tags: ['security','secrets','owasp','hardcoded'],
+      severity: 'ERROR', enabled: true,
+      extensions: ['.py','.js','.ts','.java','.go','.sh','.env'],
+      parser: 'text', scope: 'line',
+      matchType: 'regex_match',
+      matchPattern: '(?i)(password|passwd|secret|api_key|apikey|access_key|auth_token)\\s*[=:]+\\s*["\'][^"\'${}\\s]{8,}["\']',
+      matchPath: 'content',
+      location: 'code:{{.Scope.name}}',
+      recommendation: 'Replace hardcoded credentials with environment variable references:\n- Python: os.environ["SECRET_NAME"]\n- Node.js: process.env.SECRET_NAME\n- Go: os.Getenv("SECRET_NAME")\n\nUse a secrets manager (AWS Secrets Manager, HashiCorp Vault, Azure Key Vault) for production.'
+    }
+  },
+  {
+    name: 'Missing Error Handler', badge: 'ERROR', badgeColor: 'rgba(248,113,113,0.2)', badgeText: '#f87171',
+    desc: 'Flogo flow has no error branch',
+    data: {
+      id: 'FLOGO-001', category: 'error-handling', title: 'Missing Error Handler in Flow',
+      description: 'Flow "{{.Scope.name}}" has no error handler branch. Uncaught exceptions will surface as HTTP 500 with no diagnostic information.',
+      tags: ['flogo','error-handler','resilience'],
+      severity: 'ERROR', enabled: true,
+      extensions: ['.flogo','.json'],
+      parser: 'json', scope: '$.resources[*].data',
+      matchType: 'missing',
+      matchPath: 'errorHandler.tasks',
+      location: 'flow:{{.Scope.name}}',
+      recommendation: 'Add an errorHandler branch to flow "{{.Scope.name}}" with at minimum a Return activity that maps the error message to the response.'
+    }
+  },
+  {
+    name: 'No Authentication', badge: 'ERROR', badgeColor: 'rgba(248,113,113,0.2)', badgeText: '#f87171',
+    desc: 'API endpoint missing security scheme',
+    data: {
+      id: 'API-001', category: 'security', title: 'API Endpoint Missing Authentication',
+      description: 'One or more paths in the OpenAPI spec do not define a security scheme. Unauthenticated endpoints are accessible to anyone on the internet.',
+      tags: ['api','security','authentication','openapi','owasp'],
+      severity: 'ERROR', enabled: true,
+      extensions: ['.yaml','.yml','.json'],
+      parser: 'yaml', scope: '$.paths[*][*]',
+      matchType: 'all_missing',
+      patterns: ['security','x-auth-required'],
+      location: 'api:{{.Parent.name}}.{{.Scope.name}}',
+      recommendation: 'Add a security requirement to each operation or at the global level:\n\nGlobal:\n  security:\n    - bearerAuth: []\n\nPer-operation to make public:\n  security: []'
+    }
+  },
+  {
+    name: 'App Has Description', badge: 'GOOD', badgeColor: 'rgba(52,211,153,0.15)', badgeText: '#34d399',
+    desc: 'Positive: project has description',
+    data: {
+      id: 'FLOGO-P001', category: 'maintainability', title: 'App Has a Description',
+      description: 'Project "{{.Scope.name}}" has a non-empty description, making it easier for teams to understand its purpose at a glance.',
+      tags: ['documentation','maintainability','best-practice'],
+      severity: 'GOOD', enabled: true,
+      extensions: ['.flogo','.json'],
+      parser: 'json', scope: '$.',
+      matchType: 'not_empty',
+      matchPath: 'description',
+      location: 'project:{{.Scope.name}}',
+      recommendation: 'Keep the description concise (1–2 sentences): what the app does, which team owns it, and any operational notes.'
+    }
+  },
+  {
+    name: 'Container Runs as Root', badge: 'ERROR', badgeColor: 'rgba(248,113,113,0.2)', badgeText: '#f87171',
+    desc: 'Dockerfile missing non-root USER',
+    data: {
+      id: 'DOCKER-001', category: 'security', title: 'Container Running as Root User',
+      description: 'The Dockerfile does not set a non-root USER. Containers running as root pose a critical security risk.',
+      tags: ['docker','security','root','container','cis-benchmark'],
+      severity: 'ERROR', enabled: true,
+      extensions: ['Dockerfile','.dockerfile'],
+      parser: 'text', scope: 'line',
+      matchType: 'all_missing',
+      patterns: ['(?i)^USER\\s+(?!root|0\\b)[a-zA-Z0-9_-]+'],
+      location: 'dockerfile:{{.Scope.name}}',
+      recommendation: 'Add a USER instruction before ENTRYPOINT/CMD:\n\nRUN groupadd --gid 1001 appgroup && \\\n    useradd --uid 1001 --gid appgroup --shell /bin/sh appuser\nUSER appuser'
+    }
+  },
+  {
+    name: 'HR Missing Review Date', badge: 'WARNING', badgeColor: 'rgba(251,191,36,0.1)', badgeText: '#fbbf24',
+    desc: 'Policy doc lacks review schedule',
+    data: {
+      id: 'HR-001', category: 'governance', title: 'HR Policy Missing Review Date',
+      description: 'The HR policy document does not include a review date or next review schedule. Outdated policies create legal and compliance risk.',
+      tags: ['hr','policy','governance','compliance','review'],
+      severity: 'WARNING', enabled: true,
+      extensions: ['.txt','.md','.pdf','.docx'],
+      parser: 'text', scope: 'line',
+      matchType: 'all_missing',
+      patterns: ['(?i)(review.{0,20}date|next.{0,20}review|last.{0,20}review|reviewed.{0,20}(annually|by|on))'],
+      location: 'policy:{{.Scope.name}}',
+      recommendation: 'Add a policy metadata header to every HR policy document including Last Review Date, Next Review Date, and Policy Owner.'
+    }
+  }
+];
+
+function buildPresets() {
+  const grid = document.getElementById('presetsGrid');
+  grid.innerHTML = PRESETS.map((p, i) => `
+    <button class="preset-card" onclick="applyPreset(${i})">
+      <div class="preset-badge" style="background:${p.badgeColor};color:${p.badgeText}">${p.badge}</div>
+      <div class="preset-name">${p.name}</div>
+      <div class="preset-desc">${p.desc}</div>
+    </button>
+  `).join('');
+}
+
+function applyPreset(i) {
+  const d = PRESETS[i].data;
+  v('ruleId', d.id);
+  v('category', d.category);
+  v('ruleTitle', d.title);
+  v('description', d.description);
+  v('recommendation', d.recommendation);
+  v('location', d.location || '');
+  v('parser', d.parser);
+  v('scope', d.scope);
+  v('matchType', d.matchType);
+
+  setSeverity(d.severity);
+  state.tags = [...(d.tags || [])];
+  renderTags();
+
+  // extensions
+  state.extensions = [...(d.extensions || [])];
+  renderExtPills();
+
+  // match type specific
+  if (d.matchType === 'regex_match') {
+    v('matchPattern', d.matchPattern || '');
+    v('matchPath_regex', d.matchPath || '');
+  } else if (d.matchType === 'missing') {
+    v('matchPath_missing', d.matchPath || '');
+  } else if (d.matchType === 'all_missing') {
+    state.patterns = d.patterns ? [...d.patterns] : [''];
+    renderPatterns();
+  } else if (d.matchType === 'not_empty') {
+    v('matchPath_notempty', d.matchPath || '');
+  }
+
+  onMatchTypeChange();
+  showToast('Preset loaded!', '📋');
+}
+
+// ══════════════════════════════════════════════
+//  EXTENSIONS
+// ══════════════════════════════════════════════
+const EXT_OPTIONS = [
+  '.py', '.js', '.ts', '.java', '.go', '.cs', '.rb', '.php', '.sh',
+  '.env', '.yaml', '.yml', '.json', '.flogo', '.xml', '.sql',
+  '.txt', '.md', '.pdf', '.docx', 'Dockerfile', '.dockerfile'
+];
+
+function buildExtPills() {
+  const g = document.getElementById('extGroup');
+  g.innerHTML = EXT_OPTIONS.map(e => `
+    <div class="ext-pill" data-ext="${e}" onclick="toggleExt('${e}')">${e}</div>
+  `).join('');
+}
+
+function renderExtPills() {
+  document.querySelectorAll('.ext-pill').forEach(p => {
+    p.classList.toggle('active', state.extensions.includes(p.dataset.ext));
+  });
+  // render any custom extensions not in the preset list
+  state.extensions.forEach(e => {
+    if (!EXT_OPTIONS.includes(e)) {
+      const existing = document.querySelector(`.ext-pill[data-ext="${e}"]`);
+      if (!existing) {
+        const g = document.getElementById('extGroup');
+        const pill = document.createElement('div');
+        pill.className = 'ext-pill active';
+        pill.dataset.ext = e;
+        pill.textContent = e;
+        pill.onclick = () => toggleExt(e);
+        g.appendChild(pill);
+      } else {
+        existing.classList.add('active');
+      }
+    }
+  });
+  onInput();
+}
+
+function toggleExt(e) {
+  const idx = state.extensions.indexOf(e);
+  if (idx === -1) state.extensions.push(e);
+  else state.extensions.splice(idx, 1);
+  renderExtPills();
+}
+
+function addCustomExt() {
+  let val = document.getElementById('extCustom').value.trim();
+  if (!val) return;
+  if (!val.startsWith('.') && val !== 'Dockerfile') val = '.' + val;
+  if (!state.extensions.includes(val)) {
+    state.extensions.push(val);
+    if (!EXT_OPTIONS.includes(val)) {
+      const g = document.getElementById('extGroup');
+      const pill = document.createElement('div');
+      pill.className = 'ext-pill active';
+      pill.dataset.ext = val;
+      pill.textContent = val;
+      pill.onclick = () => toggleExt(val);
+      g.appendChild(pill);
+    }
+    renderExtPills();
+  }
+  document.getElementById('extCustom').value = '';
+}
+
+// ══════════════════════════════════════════════
+//  TAGS
+// ══════════════════════════════════════════════
+function handleTagKey(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const raw = e.target.value.replace(/,/g, '').trim();
+    if (raw && !state.tags.includes(raw)) {
+      state.tags.push(raw);
+      renderTags();
+    }
+    e.target.value = '';
+    onInput();
+  } else if (e.key === 'Backspace' && e.target.value === '' && state.tags.length) {
+    state.tags.pop();
+    renderTags();
+    onInput();
+  }
+}
+
+function removeTag(t) {
+  state.tags = state.tags.filter(x => x !== t);
+  renderTags();
+  onInput();
+}
+
+function renderTags() {
+  const wrap = document.getElementById('tagWrap');
+  const input = document.getElementById('tagInput');
+  wrap.innerHTML = '';
+  state.tags.forEach(t => {
+    const span = document.createElement('span');
+    span.className = 'tag';
+    span.innerHTML = `${t}<span class="tag-remove" onclick="removeTag('${t}')">×</span>`;
+    wrap.appendChild(span);
+  });
+  wrap.appendChild(input);
+}
+
+function focusTagInput() { document.getElementById('tagInput').focus(); }
+
+// ══════════════════════════════════════════════
+//  PATTERNS LIST
+// ══════════════════════════════════════════════
+function renderPatterns() {
+  const list = document.getElementById('patternsList');
+  list.innerHTML = '';
+  state.patterns.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'pattern-item';
+    row.innerHTML = `
+      <input type="text" class="mono" value="${escAttr(p)}" placeholder="(?i)pattern_here"
+             oninput="state.patterns[${i}]=this.value;onInput()">
+      <button class="btn btn-danger" onclick="removePattern(${i})" style="padding:7px 10px;font-size:11px;" ${state.patterns.length === 1 ? 'disabled' : ''}>✕</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function addPattern() {
+  state.patterns.push('');
+  renderPatterns();
+  const inputs = document.querySelectorAll('#patternsList input');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function removePattern(i) {
+  if (state.patterns.length === 1) return;
+  state.patterns.splice(i, 1);
+  renderPatterns();
+  onInput();
+}
+
+// ══════════════════════════════════════════════
+//  SEVERITY
+// ══════════════════════════════════════════════
+function setSeverity(sev) {
+  state.severity = sev;
+  document.querySelectorAll('.severity-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.sev === sev);
+  });
+  onInput();
+}
+
+// ══════════════════════════════════════════════
+//  MATCH TYPE toggle
+// ══════════════════════════════════════════════
+function onMatchTypeChange() {
+  const mt = g('matchType');
+  ['regex_match','missing','all_missing','not_empty'].forEach(t => {
+    document.getElementById('fields-' + t).style.display = (t === mt) ? '' : 'none';
+  });
+
+  // auto-set scope hint for text parser
+  if (mt === 'regex_match' || mt === 'all_missing') {
+    if (!g('scope')) v('scope', 'line');
+  }
+
+  onInput();
+}
+
+// ══════════════════════════════════════════════
+//  SECTION collapse
+// ══════════════════════════════════════════════
+function toggleSection(header) {
+  const body = header.nextElementSibling;
+  const chevron = header.querySelector('.section-chevron');
+  const hidden = body.classList.toggle('hidden');
+  chevron.classList.toggle('open', !hidden);
+}
+
+// ══════════════════════════════════════════════
+//  YAML GENERATION
+// ══════════════════════════════════════════════
+function buildYAML() {
+  const id          = g('ruleId') || 'RULE-000';
+  const category    = g('category') || 'general';
+  const title       = g('ruleTitle') || 'Untitled Rule';
+  const description = g('description') || '';
+  const tags        = state.tags;
+  const severity    = state.severity;
+  const enabled     = document.getElementById('enabled').checked;
+  const extensions  = state.extensions;
+  const parser      = g('parser') || 'text';
+  const scope       = g('scope') || 'line';
+  const matchType   = g('matchType');
+  const location    = g('location') || '';
+  const recommendation = g('recommendation') || '';
+
+  let lines = [];
+
+  lines.push('rule:');
+  lines.push(`  id: ${id}`);
+  lines.push(`  enabled: ${enabled}`);
+  lines.push(`  severity: ${severity}`);
+  lines.push(`  category: ${category}`);
+  lines.push(`  title: ${title}`);
+
+  // description — block scalar
+  lines.push('  description: >');
+  if (description) {
+    description.split('\n').forEach(l => lines.push(`    ${l}`));
+  } else {
+    lines.push('    (no description)');
+  }
+
+  // tags
+  if (tags.length) {
+    lines.push(`  tags: [${tags.join(', ')}]`);
+  } else {
+    lines.push('  tags: []');
+  }
+  lines.push('');
+
+  // applies_to
+  if (extensions.length) {
+    const exts = extensions.map(e => e).join(', ');
+    lines.push(`  applies_to: [${exts}]`);
+  } else {
+    lines.push('  applies_to: []');
+  }
+
+  lines.push(`  parser: ${parser}`);
+  lines.push('');
+  lines.push(`  scope: ${scope}`);
+  lines.push('');
+
+  // match block
+  lines.push('  match:');
+  lines.push(`    type: ${matchType}`);
+
+  if (matchType === 'regex_match') {
+    const path    = g('matchPath_regex');
+    const pattern = g('matchPattern') || '';
+    if (path) lines.push(`    path: ${path}`);
+    lines.push(`    pattern: "${pattern.replace(/"/g, '\\"')}"`);
+
+  } else if (matchType === 'missing') {
+    const path = g('matchPath_missing') || 'path.to.field';
+    lines.push(`    path: ${path}`);
+
+  } else if (matchType === 'all_missing') {
+    lines.push('    patterns:');
+    state.patterns.forEach(p => {
+      lines.push(`      - "${(p || '').replace(/"/g, '\\"')}"`);
+    });
+
+  } else if (matchType === 'not_empty') {
+    const path = g('matchPath_notempty') || 'description';
+    lines.push(`    path: ${path}`);
+  }
+
+  lines.push('');
+
+  if (location) {
+    lines.push(`  location: "${location}"`);
+  }
+
+  // recommendation — block scalar
+  lines.push('  recommendation: >');
+  if (recommendation) {
+    recommendation.split('\n').forEach(l => lines.push(`    ${l}`));
+  } else {
+    lines.push('    (no recommendation provided)');
+  }
+
+  return lines.join('\n');
+}
+
+// ══════════════════════════════════════════════
+//  YAML HIGHLIGHT
+// ══════════════════════════════════════════════
+function highlightYAML(yaml) {
+  // Escape HTML first
+  const esc = yaml
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+
+  return esc.split('\n').map(line => {
+    // comment
+    if (/^\s*#/.test(line)) return `<span class="yaml-comment">${line}</span>`;
+    // key: value
+    return line.replace(/^(\s*)([\w_\-$][^:#]*)(:)(.*)$/, (_, indent, key, colon, rest) => {
+      let rhs = rest;
+      // string values (quoted or plain)
+      rhs = rhs.replace(/("[^"]*"|'[^']*')/g, m => `<span class="yaml-str">${m}</span>`);
+      // booleans
+      rhs = rhs.replace(/\b(true|false)\b/g, m => `<span class="yaml-bool">${m}</span>`);
+      // numbers
+      rhs = rhs.replace(/\b(\d+)\b/g, m => `<span class="yaml-num">${m}</span>`);
+      // null
+      rhs = rhs.replace(/\bnull\b/g, m => `<span class="yaml-null">${m}</span>`);
+      return `${indent}<span class="yaml-key">${key}</span>${colon}${rhs}`;
+    });
+  }).join('\n');
+}
+
+// ══════════════════════════════════════════════
+//  VALIDATION
+// ══════════════════════════════════════════════
+function validate() {
+  const issues = [];
+  if (!g('ruleId'))     issues.push('Rule ID required');
+  if (!g('ruleTitle'))  issues.push('Title required');
+  if (!g('category'))   issues.push('Category required');
+  if (!g('description')) issues.push('Description required');
+  if (!g('recommendation')) issues.push('Recommendation required');
+  if (state.extensions.length === 0) issues.push('Select at least one file extension');
+  if (!g('scope')) issues.push('Scope required');
+
+  const mt = g('matchType');
+  if (mt === 'regex_match' && !g('matchPattern')) issues.push('Pattern required for regex_match');
+  if (mt === 'missing' && !g('matchPath_missing')) issues.push('JSONPath required for missing');
+  if (mt === 'all_missing' && state.patterns.every(p => !p.trim())) issues.push('At least one pattern required for all_missing');
+  if (mt === 'not_empty' && !g('matchPath_notempty')) issues.push('JSONPath required for not_empty');
+
+  return issues;
+}
+
+// ══════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════
+function onInput() {
+  const yaml = buildYAML();
+  document.getElementById('yamlPreview').innerHTML = highlightYAML(yaml);
+
+  const issues = validate();
+  const badge = document.getElementById('validationBadge');
+  if (issues.length === 0) {
+    badge.style.background = 'rgba(52,211,153,0.15)';
+    badge.style.color = 'var(--good)';
+    badge.textContent = '● Valid';
+  } else {
+    badge.style.background = 'rgba(251,191,36,0.1)';
+    badge.style.color = 'var(--warn)';
+    badge.textContent = `⚠ ${issues.length} issue${issues.length > 1 ? 's' : ''}`;
+    badge.title = issues.join('\n');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════════
+function downloadYAML() {
+  const issues = validate();
+  if (issues.length) {
+    showToast(issues[0], '⚠');
+    return;
+  }
+  const yaml = buildYAML();
+  const id = (g('ruleId') || 'rule').toUpperCase().replace(/\s+/g, '-');
+  const filename = `${id}.yaml`;
+  const blob = new Blob([yaml], { type: 'text/yaml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+  showToast(`Saved as ${filename}`, '⬇');
+}
+
+function copyYAML() {
+  const yaml = buildYAML();
+  navigator.clipboard.writeText(yaml)
+    .then(() => showToast('Copied to clipboard!', '⎘'))
+    .catch(() => {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = yaml; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('Copied!', '⎘');
+    });
+}
+
+function resetForm() {
+  document.querySelectorAll('input[type=text], input[type=number], textarea').forEach(el => { el.value = ''; });
+  document.getElementById('enabled').checked = true;
+  document.getElementById('parser').value = 'text';
+  document.getElementById('matchType').value = 'regex_match';
+  setSeverity('ERROR');
+  state.tags = []; renderTags();
+  state.extensions = []; renderExtPills();
+  state.patterns = ['']; renderPatterns();
+  onMatchTypeChange();
+  showToast('Form reset', '↺');
+}
+
+function showToast(msg, icon = '✓') {
+  const t = document.getElementById('toast');
+  const i = document.getElementById('toastMsg');
+  i.textContent = msg;
+  t.querySelector('.toast-icon').textContent = icon;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function g(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function v(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
+function escAttr(s) { return (s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  buildPresets();
+  buildExtPills();
+  renderPatterns();
+  v('scope', 'line');
+
+  // initial YAML render
+  onInput();
+});
+</script>
+</body>
+</html>

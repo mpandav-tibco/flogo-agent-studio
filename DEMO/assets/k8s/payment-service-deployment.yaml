@@ -1,0 +1,64 @@
+# ============================================================
+#  DEMO FILE — intentionally contains rule violations
+#  Expected findings from Flogents Rule Engine:
+#    KUBE-001 ERROR  — image uses :latest tag
+#    KUBE-002 WARNING — no readinessProbe
+#    KUBE-003 WARNING — no livenessProbe
+#    KUBE-004 ERROR  — no resource limits (cpu/memory)
+#    KUBE-005 WARNING — no resource requests
+#    KUBE-006 ERROR  — no securityContext.runAsNonRoot
+#    KUBE-007 WARNING — no namespace (defaults to "default")
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  labels:
+    app: payment-service
+    team: payments
+    env: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+        version: "1.0"
+    spec:
+      containers:
+        - name: payment-service
+          image: acme/payment-service:latest     # KUBE-001: pin to a version tag
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: DB_HOST
+              value: "postgres-service.payments.svc.cluster.local"
+            - name: DB_PORT
+              value: "5432"
+            - name: APP_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+          # No readinessProbe   → KUBE-002
+          # No livenessProbe    → KUBE-003
+          # No resources block  → KUBE-004, KUBE-005
+          # No securityContext  → KUBE-006
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  labels:
+    app: payment-service
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
