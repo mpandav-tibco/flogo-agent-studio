@@ -778,16 +778,9 @@
           {
             "id": 3,
             "from": "RAGRetrieve",
-            "to": "AgentChat",
+            "to": "SaveUserTurn",
             "type": "label",
             "label": "RAGRetrieve to AgentChat"
-          },
-          {
-            "id": 4,
-            "from": "AgentChat",
-            "to": "Return",
-            "type": "label",
-            "label": "AgentChat to Return"
           },
           {
             "id": 5,
@@ -802,6 +795,21 @@
             "to": "ErrorReturn",
             "type": "error",
             "label": "RAGRetrieve error"
+          },
+          {
+            "id": 7,
+            "from": "SaveUserTurn",
+            "to": "AgentChat"
+          },
+          {
+            "id": 8,
+            "from": "AgentChat",
+            "to": "SaveAssistantTurn"
+          },
+          {
+            "id": 9,
+            "from": "SaveAssistantTurn",
+            "to": "Return"
           }
         ],
         "tasks": [
@@ -923,9 +931,101 @@
                 }
               }
             }
+          },
+          {
+            "id": "SaveUserTurn",
+            "name": "SaveUserTurn",
+            "description": "Persist user message to chat_history (Phase 2.2)",
+            "activity": {
+              "ref": "#rest",
+              "input": {
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
+                "Method": "POST",
+                "Uri": "=string.concat($property[\"HISTORY_SERVICE_URL\"], \"/\", $flow.body.sessionId)",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 10,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json"
+                  }
+                },
+                "body": {
+                  "mapping": {
+                    "agentId": "=$flow.body.agentId",
+                    "role": "user",
+                    "content": "=$flow.body.message",
+                    "metadata": {}
+                  }
+                }
+              },
+              "schemas": {
+                "input": {
+                  "body": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"},\"role\":{\"type\":\"string\"},\"content\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\"}}}"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "SaveAssistantTurn",
+            "name": "SaveAssistantTurn",
+            "description": "Persist assistant answer to chat_history (Phase 2.2)",
+            "activity": {
+              "ref": "#rest",
+              "input": {
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
+                "Method": "POST",
+                "Uri": "=string.concat($property[\"HISTORY_SERVICE_URL\"], \"/\", $flow.body.sessionId)",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 10,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json"
+                  }
+                },
+                "body": {
+                  "mapping": {
+                    "agentId": "=$flow.body.agentId",
+                    "role": "assistant",
+                    "content": "=$activity[AgentChat].response",
+                    "metadata": {}
+                  }
+                }
+              },
+              "schemas": {
+                "input": {
+                  "body": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"},\"role\":{\"type\":\"string\"},\"content\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\"}}}"
+                  }
+                }
+              }
+            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdSZXRyaWV2ZSI6eyJ4Ijo0NTMsInkiOjQ3fSwiQWdlbnRDaGF0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH0sIkVycm9yUmV0dXJuIjp7IngiOjc0NSwieSI6MzAwfX0=",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdSZXRyaWV2ZSI6eyJ4Ijo0NTMsInkiOjQ3fSwiQWdlbnRDaGF0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH0sIkVycm9yUmV0dXJuIjp7IngiOjc0NSwieSI6MzAwfSwiU2F2ZVVzZXJUdXJuIjp7IngiOjEwNTAsInkiOjUwfSwiU2F2ZUFzc2lzdGFudFR1cm4iOnsieCI6MTI1MCwieSI6NTB9fQ==",
         "metadata": {
           "input": [
             {
@@ -1780,6 +1880,11 @@
       "name": "VectorDB.vectordb-weaviate.Embedding_Base_URL",
       "type": "string",
       "value": "http://localhost:11434/v1"
+    },
+    {
+      "name": "HISTORY_SERVICE_URL",
+      "type": "string",
+      "value": "http://localhost:7050/api/sessions"
     }
   ],
   "connections": {
@@ -1822,10 +1927,10 @@
       "isGlobal": false,
       "settings": {
         "name": "llm-provider",
-        "llmProvider": "=$property[\"AgenticAI.llm-provider.LLM_Provider\"]",
+        "llmProvider": "=$property[\"LLM_PROVIDER\"]",
         "anthropicProvider": "Default",
-        "apiKey": "=$property[\"AgenticAI.llm-provider.API_Key\"]",
-        "llmProviderUrl": "=$property[\"AgenticAI.llm-provider.LLM_Base_URL\"]"
+        "apiKey": "=$property[\"LLM_API_KEY\"]",
+        "llmProviderUrl": "=$property[\"LLM_BASE_URL\"]"
       }
     },
     "llm_provider": {
@@ -1835,10 +1940,10 @@
       "isGlobal": false,
       "settings": {
         "name": "LLM Provider",
-        "llmProvider": "=$property[\"AgenticAI.LLM_Provider.LLM_Provider\"]",
+        "llmProvider": "=$property[\"LLM_PROVIDER\"]",
         "anthropicProvider": "Default",
-        "apiKey": "=$property[\"AgenticAI.LLM_Provider.API_Key\"]",
-        "llmProviderUrl": "=$property[\"AgenticAI.LLM_Provider.LLM_Base_URL\"]"
+        "apiKey": "=$property[\"LLM_API_KEY\"]",
+        "llmProviderUrl": "=$property[\"LLM_BASE_URL\"]"
       }
     }
   },

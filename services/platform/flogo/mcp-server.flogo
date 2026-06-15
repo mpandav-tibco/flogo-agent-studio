@@ -21,7 +21,7 @@
     {
       "ref": "#mcpserver",
       "name": "flogo-mcp-mcpsever",
-      "description": "MCP Server — exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:7333/mcp.",
+      "description": "MCP Server \u2014 exposes Flogo Agent Studio as a tool suite. Registered in .mcp.json at localhost:7333/mcp.",
       "settings": {
         "serverName": "flogo-agent-studio-assist",
         "serverVersion": "1.0.0",
@@ -318,8 +318,8 @@
             "output": {
               "arguments": {
                 "type": "json",
-                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}",
-                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 – 2.0\"}},\"required\":[\"name\"]}"
+                "value": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}",
+                "fe_metadata": "{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\",\"description\":\"Agent name\"},\"description\":{\"type\":\"string\",\"description\":\"Short description\"},\"systemPrompt\":{\"type\":\"string\",\"description\":\"System prompt / persona\"},\"collectionName\":{\"type\":\"string\",\"description\":\"Weaviate collection to query\"},\"topK\":{\"type\":\"integer\",\"description\":\"RAG results to retrieve (default: 5)\"},\"llmProvider\":{\"type\":\"string\",\"description\":\"Ollama | OpenAI | Anthropic | Groq\"},\"llmModel\":{\"type\":\"string\",\"description\":\"e.g. nemotron-3-nano:30b\"},\"llmBaseUrl\":{\"type\":\"string\",\"description\":\"Base URL for Ollama / custom provider\"},\"temperature\":{\"type\":\"number\",\"description\":\"0.0 \u2013 2.0\"}},\"required\":[\"name\"]}"
               }
             }
           },
@@ -405,6 +405,65 @@
             }
           },
           "name": "list_templates_tool"
+        },
+        {
+          "name": "ingest_document",
+          "description": "Ingest one or more text documents into a Weaviate collection",
+          "settings": {
+            "toolName": "ingest_document",
+            "toolDescription": "Embed and store documents in a named knowledge-base collection"
+          },
+          "action": {
+            "ref": "github.com/tibco/flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:ingest_document"
+            }
+          },
+          "schemas": {
+            "input": {
+              "body": {
+                "type": "json",
+                "value": "{\"type\": \"object\", \"properties\": {\"collectionName\": {\"type\": \"string\", \"description\": \"Weaviate collection name\"}, \"chunkStrategy\": {\"type\": \"string\", \"description\": \"sentence|paragraph|heading|fixed|none\"}, \"documents\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"text\": {\"type\": \"string\"}, \"metadata\": {\"type\": \"object\"}}}, \"description\": \"Array of text documents to ingest\"}}, \"required\": [\"collectionName\", \"documents\"]}"
+              }
+            }
+          }
+        },
+        {
+          "name": "list_collections",
+          "description": "List all Weaviate vector collections with object counts",
+          "settings": {
+            "toolName": "list_collections",
+            "toolDescription": "List all knowledge-base collections and their document counts"
+          },
+          "action": {
+            "ref": "github.com/tibco/flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:list_collections"
+            }
+          },
+          "schemas": {}
+        },
+        {
+          "name": "delete_collection",
+          "description": "Delete a Weaviate vector collection and all its documents",
+          "settings": {
+            "toolName": "delete_collection",
+            "toolDescription": "Permanently delete a knowledge-base collection"
+          },
+          "action": {
+            "ref": "github.com/tibco/flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:delete_collection"
+            }
+          },
+          "schemas": {
+            "input": {
+              "body": {
+                "type": "json",
+                "value": "{\"type\": \"object\", \"properties\": {\"collectionName\": {\"type\": \"string\", \"description\": \"Collection to delete\"}}, \"required\": [\"collectionName\"]}"
+              }
+            }
+          }
         }
       ]
     }
@@ -2656,6 +2715,484 @@
           }
         }
       }
+    },
+    {
+      "id": "flow:ingest_document",
+      "data": {
+        "id": "ingest_document",
+        "name": "ingest_document",
+        "description": "MCP tool: ingest_document (Phase 3.2)",
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[MCP] ingest_document\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
+              }
+            }
+          },
+          {
+            "id": "CallService",
+            "name": "CallService",
+            "activity": {
+              "ref": "#rest",
+              "input": {
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
+                "Method": "POST",
+                "Uri": "=$property[\"INGESTION_SERVICE_URL\"]",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 30,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
+                  }
+                },
+                "dynamicRequestHeaders": {
+                  "mapping": {
+                    "Header": [
+                      {
+                        "name": "Authorization",
+                        "value": "=$property[\"API_AUTH_HEADER\"]"
+                      }
+                    ]
+                  }
+                },
+                "body": {
+                  "mapping": {
+                    "collectionName": "=$flow.body.collectionName",
+                    "documents": "=$flow.body.documents",
+                    "chunkStrategy": "=$flow.body.chunkStrategy"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "MapResult",
+            "name": "MapResult",
+            "activity": {
+              "ref": "#mapper",
+              "input": {
+                "input": {
+                  "mapping": {
+                    "data": "=$activity[CallService].responseBody"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "LogResult",
+            "name": "LogResult",
+            "activity": {
+              "ref": "#log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[MCP] ingest_document done | traceId=\", coerce.toString($flowctx[\"TraceId\"]))"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].output"
+                }
+              }
+            }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "CallService"
+          },
+          {
+            "id": 3,
+            "from": "CallService",
+            "to": "MapResult"
+          },
+          {
+            "id": 4,
+            "from": "MapResult",
+            "to": "LogResult"
+          },
+          {
+            "id": 5,
+            "from": "LogResult",
+            "to": "Return"
+          },
+          {
+            "id": 6,
+            "from": "CallService",
+            "to": "ErrorReturn",
+            "type": "error"
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4IjowLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MTUwLCJ5Ijo1MH0sIkNhbGxTZXJ2aWNlIjp7IngiOjMwMCwieSI6NTB9LCJNYXBSZXN1bHQiOnsieCI6NDUwLCJ5Ijo1MH0sIkxvZ1Jlc3VsdCI6eyJ4Ijo2MDAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjc1MCwieSI6NTB9LCJFcnJvclJldHVybiI6eyJ4Ijo5MDAsInkiOjUwfX0="
+      }
+    },
+    {
+      "id": "flow:list_collections",
+      "data": {
+        "id": "list_collections",
+        "name": "list_collections",
+        "description": "MCP tool: list_collections (Phase 3.2)",
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[MCP] list_collections\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
+              }
+            }
+          },
+          {
+            "id": "CallService",
+            "name": "CallService",
+            "activity": {
+              "ref": "#rest",
+              "input": {
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
+                "Method": "GET",
+                "Uri": "=string.concat($property[\"RUNTIME_MANAGER_URL\"], \"/api/kb/collections\")",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 30,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
+                  }
+                },
+                "dynamicRequestHeaders": {
+                  "mapping": {
+                    "Header": [
+                      {
+                        "name": "Authorization",
+                        "value": "=$property[\"API_AUTH_HEADER\"]"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "MapResult",
+            "name": "MapResult",
+            "activity": {
+              "ref": "#mapper",
+              "input": {
+                "input": {
+                  "mapping": {
+                    "data": "=$activity[CallService].responseBody"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "LogResult",
+            "name": "LogResult",
+            "activity": {
+              "ref": "#log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[MCP] list_collections done | traceId=\", coerce.toString($flowctx[\"TraceId\"]))"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].output"
+                }
+              }
+            }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "CallService"
+          },
+          {
+            "id": 3,
+            "from": "CallService",
+            "to": "MapResult"
+          },
+          {
+            "id": 4,
+            "from": "MapResult",
+            "to": "LogResult"
+          },
+          {
+            "id": 5,
+            "from": "LogResult",
+            "to": "Return"
+          },
+          {
+            "id": 6,
+            "from": "CallService",
+            "to": "ErrorReturn",
+            "type": "error"
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4IjowLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MTUwLCJ5Ijo1MH0sIkNhbGxTZXJ2aWNlIjp7IngiOjMwMCwieSI6NTB9LCJNYXBSZXN1bHQiOnsieCI6NDUwLCJ5Ijo1MH0sIkxvZ1Jlc3VsdCI6eyJ4Ijo2MDAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjc1MCwieSI6NTB9LCJFcnJvclJldHVybiI6eyJ4Ijo5MDAsInkiOjUwfX0="
+      }
+    },
+    {
+      "id": "flow:delete_collection",
+      "data": {
+        "id": "delete_collection",
+        "name": "delete_collection",
+        "description": "MCP tool: delete_collection (Phase 3.2)",
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "LogRequest",
+            "name": "LogRequest",
+            "activity": {
+              "ref": "#log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[MCP] delete_collection\", \" | traceId=\", coerce.toString($flowctx[\"TraceId\"]), \" flowId=\", coerce.toString($flowctx[\"FlowId\"]))"
+              }
+            }
+          },
+          {
+            "id": "CallService",
+            "name": "CallService",
+            "activity": {
+              "ref": "#rest",
+              "input": {
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "authorizationConn": "",
+                "serviceName": "",
+                "resourcePath": "",
+                "Method": "DELETE",
+                "Uri": "=string.concat($property[\"RUNTIME_MANAGER_URL\"], \"/api/kb/collections/\", $flow.body.collectionName)",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 30,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "=$property[\"API_AUTH_HEADER\"]"
+                  }
+                },
+                "dynamicRequestHeaders": {
+                  "mapping": {
+                    "Header": [
+                      {
+                        "name": "Authorization",
+                        "value": "=$property[\"API_AUTH_HEADER\"]"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "MapResult",
+            "name": "MapResult",
+            "activity": {
+              "ref": "#mapper",
+              "input": {
+                "input": {
+                  "mapping": {
+                    "data": "=$activity[CallService].responseBody"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "LogResult",
+            "name": "LogResult",
+            "activity": {
+              "ref": "#log",
+              "input": {
+                "Log Level": "INFO",
+                "flowInfo": false,
+                "message": "=string.concat(\"[MCP] delete_collection done | traceId=\", coerce.toString($flowctx[\"TraceId\"]))"
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": "=$activity[MapResult].output"
+                }
+              }
+            }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "mapping": {
+                      "error": "=$error.message"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "LogRequest"
+          },
+          {
+            "id": 2,
+            "from": "LogRequest",
+            "to": "CallService"
+          },
+          {
+            "id": 3,
+            "from": "CallService",
+            "to": "MapResult"
+          },
+          {
+            "id": 4,
+            "from": "MapResult",
+            "to": "LogResult"
+          },
+          {
+            "id": 5,
+            "from": "LogResult",
+            "to": "Return"
+          },
+          {
+            "id": 6,
+            "from": "CallService",
+            "to": "ErrorReturn",
+            "type": "error"
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4IjowLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MTUwLCJ5Ijo1MH0sIkNhbGxTZXJ2aWNlIjp7IngiOjMwMCwieSI6NTB9LCJNYXBSZXN1bHQiOnsieCI6NDUwLCJ5Ijo1MH0sIkxvZ1Jlc3VsdCI6eyJ4Ijo2MDAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjc1MCwieSI6NTB9LCJFcnJvclJldHVybiI6eyJ4Ijo5MDAsInkiOjUwfX0="
+      }
     }
   ],
   "properties": [
@@ -2728,6 +3265,21 @@
       "name": "DEPLOY_AGENT_BASE_URL",
       "type": "string",
       "value": "http://localhost:7030/api/v1/agents/{agentId}/deploy"
+    },
+    {
+      "name": "INGESTION_SERVICE_URL",
+      "type": "string",
+      "value": "http://localhost:7002/api/ingest"
+    },
+    {
+      "name": "WEAVIATE_URL",
+      "type": "string",
+      "value": "http://localhost:7050/api/kb"
+    },
+    {
+      "name": "RUNTIME_MANAGER_URL",
+      "type": "string",
+      "value": "http://localhost:7050"
     }
   ],
   "schemas": {

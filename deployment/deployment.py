@@ -55,6 +55,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
+import asyncpg
 import httpx
 from aiohttp import web
 
@@ -97,7 +98,25 @@ _PORT_OFFSETS = {
     "ingestion":   4,
     "chainlit":    5,
     "rule_engine": 6,
+    "mcp":         7,   # per-agent MCPServer trigger (Phase 2.4)
 }
+
+# ── PostgreSQL connection pool (conversation history + KB queries) ─────────────
+
+_DB_DSN     = os.getenv("DB_DSN",
+    "postgresql://flogo:changeme@localhost:5432/flogo_agent_studio")
+_WEAVIATE_URL = os.getenv("WEAVIATE_URL", "http://localhost:18080")
+_db_pool: asyncpg.Pool | None = None
+
+async def _get_db() -> asyncpg.Pool:
+    global _db_pool
+    if _db_pool is None:
+        try:
+            _db_pool = await asyncpg.create_pool(_DB_DSN, min_size=1, max_size=5)
+        except Exception as exc:
+            log.warning("DB pool not available: %s", exc)
+            raise
+    return _db_pool
 
 
 def slot_ports(slot: int) -> dict[str, int]:
@@ -526,6 +545,7 @@ async def _start_runtime(agent: dict) -> dict:
         "AgentChatRESTTrigger": ports["chat"],
         "SSEStreamRESTTrigger": ports["sse_rest"],
         "SSEEventBus":          ports["sse_events"],
+        # AgentMCPTrigger removed (Phase 2.4 deferred — module conflict with flogo-agentic-ai)
     })
     _generate_env_file(
         SERVICES_AGENT_ENV / "agent-chat-service.env",
@@ -536,8 +556,10 @@ async def _start_runtime(agent: dict) -> dict:
             "LLM_MODEL":         llm_model,
             "LLM_PROVIDER":      llm_provider,
             "LLM_BASE_URL":      llm_base_url,
+            "LLM_API_KEY":       os.getenv("LLM_API_KEY", ""),
             # CHAT_SERVICE_URL is used by the SSE stream_chat flow (loopback within same process)
             "CHAT_SERVICE_URL":  f"http://localhost:{ports['chat']}/api/chat",
+            "HISTORY_SERVICE_URL": f"http://localhost:{PORT}/api/sessions",
         },
     )
     chat_proc = subprocess.Popen(
@@ -550,6 +572,7 @@ async def _start_runtime(agent: dict) -> dict:
     pids["chat"]       = chat_proc.pid
     pids["sse_rest"]   = chat_proc.pid   # same process — SSE REST trigger on port sse_rest
     pids["sse_events"] = chat_proc.pid   # same process — SSE events trigger on port sse_events
+    # pids["mcp"] reserved for Phase 2.4 (per-agent MCPServer trigger, deferred)
     log.info("  [%s] agent-chat+sse  pid=%-7s ports=%s/%s/%s",
              short, chat_proc.pid, ports["chat"], ports["sse_rest"], ports["sse_events"])
 
@@ -650,6 +673,7 @@ async def _start_runtime(agent: dict) -> dict:
         "sseUrl":       f"http://localhost:{ports['sse_rest']}",
         "ingestionUrl": f"http://localhost:{ports['ingestion']}",
         "ruleEngineUrl": f"http://localhost:{ports['rule_engine']}",
+        "historyUrl":   f"http://localhost:{PORT}/api/sessions",
         "startedAt":    time.time(),
         "readiness":    "starting",
     }
@@ -2271,6 +2295,150 @@ async def _handle_agent_logs(request: web.Request) -> web.Response:
     return web.json_response({"lines": lines, "exists": True, "total": len(lines)})
 
 
+# ── Session history handlers (Phase 2.2 — persistent conversation memory) ────
+
+async def _handle_get_session_history(request: web.Request) -> web.Response:
+    """GET /api/sessions/{sessionId} — return ordered chat turns."""
+    session_id = request.match_info["sessionId"]
+    limit = int(request.rel_url.query.get("limit", "50"))
+    try:
+        db = await _get_db()
+        rows = await db.fetch(
+            "SELECT id, agent_id, role, content, metadata, created_at"
+            " FROM chat_history WHERE session_id = $1"
+            " ORDER BY created_at ASC LIMIT $2",
+            session_id, limit,
+        )
+        turns = [
+            {"id": r["id"], "agentId": r["agent_id"], "role": r["role"],
+             "content": r["content"], "metadata": r["metadata"] or {},
+             "createdAt": r["created_at"].isoformat()}
+            for r in rows
+        ]
+        return web.json_response({"sessionId": session_id, "turns": turns, "count": len(turns)})
+    except Exception as exc:
+        return web.json_response({"error": str(exc), "turns": []}, status=500)
+
+
+async def _handle_save_session_turn(request: web.Request) -> web.Response:
+    """POST /api/sessions/{sessionId} — append a chat turn to history."""
+    session_id = request.match_info["sessionId"]
+    try:
+        body = await request.json()
+    except Exception:
+        return web.json_response({"error": "invalid JSON"}, status=400)
+    agent_id = body.get("agentId", "")
+    role     = body.get("role", "user")
+    content  = body.get("content", "")
+    metadata = body.get("metadata", {})
+    if role not in ("user", "assistant"):
+        return web.json_response({"error": "role must be 'user' or 'assistant'"}, status=400)
+    if not content:
+        return web.json_response({"error": "content required"}, status=400)
+    try:
+        db = await _get_db()
+        row = await db.fetchrow(
+            "INSERT INTO chat_history (session_id, agent_id, role, content, metadata)"
+            " VALUES ($1, $2, $3, $4, $5::jsonb)"
+            " RETURNING id, created_at",
+            session_id, agent_id, role, content, json.dumps(metadata),
+        )
+        return web.json_response(
+            {"id": row["id"], "sessionId": session_id, "createdAt": row["created_at"].isoformat()},
+            status=201,
+        )
+    except Exception as exc:
+        return web.json_response({"error": str(exc)}, status=500)
+
+
+async def _handle_delete_session_history(request: web.Request) -> web.Response:
+    """DELETE /api/sessions/{sessionId} — purge all turns for a session."""
+    session_id = request.match_info["sessionId"]
+    try:
+        db = await _get_db()
+        result = await db.execute(
+            "DELETE FROM chat_history WHERE session_id = $1", session_id
+        )
+        deleted = int(result.split()[-1]) if result else 0
+        return web.json_response({"deleted": deleted})
+    except Exception as exc:
+        return web.json_response({"error": str(exc)}, status=500)
+
+
+# ── Knowledge Base proxy handlers (Phase 3.1 + 3.2 — Weaviate collection mgmt) ─
+
+async def _handle_kb_list_collections(request: web.Request) -> web.Response:
+    """GET /api/kb/collections — list all Weaviate collections with stats."""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(f"{_WEAVIATE_URL}/v1/schema")
+            schema = r.json()
+        classes = schema.get("classes", [])
+        result = []
+        for cls in classes:
+            name = cls["class"]
+            # Get object count via aggregate
+            count = 0
+            try:
+                async with httpx.AsyncClient(timeout=5) as client:
+                    gr = await client.post(
+                        f"{_WEAVIATE_URL}/v1/graphql",
+                        json={"query": f'{{ Aggregate {{ {name} {{ meta {{ count }} }} }} }}'},
+                    )
+                    gd = gr.json()
+                    count = (gd.get("data", {}).get("Aggregate", {})
+                             .get(name, [{}])[0].get("meta", {}).get("count", 0))
+            except Exception:
+                pass
+            props = [p["name"] for p in cls.get("properties", [])]
+            result.append({"name": name, "objectCount": count, "properties": props})
+        return web.json_response({"collections": result, "count": len(result)})
+    except Exception as exc:
+        return web.json_response({"error": str(exc)}, status=500)
+
+
+async def _handle_kb_get_collection(request: web.Request) -> web.Response:
+    """GET /api/kb/collections/{name} — get collection details."""
+    name = request.match_info["name"]
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(f"{_WEAVIATE_URL}/v1/schema/{name}")
+            if r.status_code == 404:
+                return web.json_response({"error": f"collection '{name}' not found"}, status=404)
+            cls = r.json()
+        count = 0
+        try:
+            async with httpx.AsyncClient(timeout=5) as client:
+                gr = await client.post(
+                    f"{_WEAVIATE_URL}/v1/graphql",
+                    json={"query": f'{{ Aggregate {{ {name} {{ meta {{ count }} }} }} }}'},
+                )
+                gd = gr.json()
+                count = (gd.get("data", {}).get("Aggregate", {})
+                         .get(name, [{}])[0].get("meta", {}).get("count", 0))
+        except Exception:
+            pass
+        cls["objectCount"] = count
+        return web.json_response(cls)
+    except Exception as exc:
+        return web.json_response({"error": str(exc)}, status=500)
+
+
+async def _handle_kb_delete_collection(request: web.Request) -> web.Response:
+    """DELETE /api/kb/collections/{name} — delete a Weaviate collection."""
+    name = request.match_info["name"]
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.delete(f"{_WEAVIATE_URL}/v1/schema/{name}")
+            if r.status_code == 404:
+                return web.json_response({"error": f"collection '{name}' not found"}, status=404)
+            if r.status_code not in (200, 204):
+                return web.json_response({"error": r.text}, status=r.status_code)
+        return web.json_response({"deleted": name})
+    except Exception as exc:
+        return web.json_response({"error": str(exc)}, status=500)
+
+
 async def _handle_platform_logs(request: web.Request) -> web.Response:
     """GET /api/runtime/platform-logs/{service}?lines=100"""
     service = request.match_info["service"]
@@ -2329,10 +2497,25 @@ def _build_app() -> web.Application:
     app.router.add_get("/api/v1/agents/{agentId}/deploy",                        _handle_v1_deploy_status)
     app.router.add_get("/api/v1/agents/{agentId}/export/kubernetes",             _handle_export_kubernetes)
     app.router.add_get("/api/v1/agents/{agentId}/export/docker-compose",         _handle_export_compose)
+    # ── Session history (Phase 2.2 — persistent conversation memory) ─────────
+    app.router.add_get("/api/sessions/{sessionId}",    _handle_get_session_history)
+    app.router.add_post("/api/sessions/{sessionId}",   _handle_save_session_turn)
+    app.router.add_delete("/api/sessions/{sessionId}", _handle_delete_session_history)
+    # ── Knowledge Base proxy (Phase 3.1 + 3.2) ───────────────────────────────
+    app.router.add_get("/api/kb/collections",           _handle_kb_list_collections)
+    app.router.add_get("/api/kb/collections/{name}",    _handle_kb_get_collection)
+    app.router.add_delete("/api/kb/collections/{name}", _handle_kb_delete_collection)
     return app
 
 
 async def _startup(app: web.Application):
+    # Initialise DB pool (for session history + KB queries)
+    try:
+        await _get_db()
+        log.info("DB pool connected to %s", _DB_DSN.split("@")[-1])
+    except Exception as exc:
+        log.warning("DB pool unavailable at startup (%s) — history endpoints disabled", exc)
+
     # Load persisted state and re-adopt still-running processes
     global _state
     saved = _load_state()

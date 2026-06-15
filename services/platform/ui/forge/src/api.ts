@@ -413,3 +413,34 @@ export const getPlatformLogs = async (service: string, lines = 100): Promise<Log
   if (!res.ok) return { lines: [], exists: false, total: 0 };
   return res.json() as Promise<LogResponse>;
 };
+
+// ── Knowledge Base management (Phase 3.1) ─────────────────────────────────────
+
+export interface KBCollection {
+  name: string;
+  objectCount: number;
+  properties?: string[];
+}
+
+export const listKBCollections = async (): Promise<KBCollection[]> => {
+  const res = await fetch("/api/kb/collections", { headers: headers() });
+  if (!res.ok) return [];
+  return res.json() as Promise<KBCollection[]>;
+};
+
+export const getKBCollection = async (name: string): Promise<KBCollection | null> => {
+  const res = await fetch(`/api/kb/collections/${encodeURIComponent(name)}`, { headers: headers() });
+  if (!res.ok) return null;
+  return res.json() as Promise<KBCollection>;
+};
+
+export const deleteKBCollection = async (name: string): Promise<void> => {
+  const res = await fetch(`/api/kb/collections/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+    headers: headers(),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+};

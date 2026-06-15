@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Activity, LayoutTemplate, Plus, Search } from "lucide-react";
+import { Activity, Database, LayoutTemplate, Plus, Search } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { deployAgent, dockerDeploy, getAgentRuntime, listAgents, undeployAgent } from "../api";
@@ -159,6 +159,13 @@ export default function Gallery() {
             </div>
           )}
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate("/kb")}
+              className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-zinc-100 border border-zinc-700 hover:border-zinc-500 px-4 py-2 rounded-lg transition-colors"
+            >
+              <Database size={15} />
+              Knowledge Base
+            </button>
             <button
               onClick={() => navigate("/admin")}
               className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-zinc-100 border border-zinc-700 hover:border-zinc-500 px-4 py-2 rounded-lg transition-colors"
