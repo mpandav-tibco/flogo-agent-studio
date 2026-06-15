@@ -36,7 +36,8 @@ INGEST_URL  = "http://localhost:7002"          # ingestion-service (per-agent; u
 CHAT_URL    = "http://localhost:7001"          # agent-chat-service (per-agent; updated post-deploy)
 FEEDBACK_URL= "http://localhost:7020"          # platform-service (feedback merged at 7020)
 SSE_URL     = "http://localhost:7005"          # agent-chat-service (SSE REST; updated post-deploy)
-RULE_URL    = "http://localhost:7097"          # rule-engine-service (port 7097; 7000 taken by macOS AirPlay)
+SSE_EVENTS_URL = "http://localhost:7099"       # SSE event bus (updated post-deploy)
+RULE_URL    = "http://localhost:7097"          # rule-engine-service (per-agent; updated post-deploy)
 MCP_URL     = "http://localhost:7333/mcp"      # mcp-server
 
 AGENT_NAME    = f"E2E-Functional-Agent-{datetime.date.today()}"
@@ -133,7 +134,7 @@ phase("FORGE UI — Template Discovery & Agent Creation")
 # Step 1.1: List templates (what Forge shows on "New Agent" screen)
 step_header("List agent templates", f"GET {FORGE_URL}/api/v1/templates")
 sc, body, ms, err = http(f"{FORGE_URL}/api/v1/templates")
-templates = body if isinstance(body, list) else body.get("records", []) if isinstance(body, dict) else []
+templates = body if isinstance(body, list) else body.get("templates", body.get("records", [])) if isinstance(body, dict) else []
 row("HTTP status", sc); row("Templates found", len(templates))
 for t in templates[:3]:
     row(f"  • {t.get('name','?')}", t.get("description","")[:60])
@@ -247,11 +248,10 @@ _emit(f"  NOTE: ingestion-service is per-agent (dynamic port). Actual POST /api/
 _emit(f"        Document prepared: {len(KNOWLEDGE_DOC)} chars, collection={COLLECTION}")
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# PHASE 4 — RULE ENGINE: Quality analysis
+# PHASE 4 — RULE ENGINE: payload prepared here; actual call deferred to Phase 5
+# after port discovery so RULE_URL resolves to the correct per-agent port.
 # ═══════════════════════════════════════════════════════════════════════════════
-phase("RULE ENGINE — Flogo App Quality Analysis")
-
-step_header("Analyze Flogo app against rules", f"POST {RULE_URL}/api/analyze")
+phase("RULE ENGINE — Flogo App Quality Analysis (runs post-deploy)")
 rule_payload = {
     "fileName": "agent-studio-functional-test.flogo",
     "tags": ["production", "ai-agent", "rag"],
@@ -264,19 +264,7 @@ rule_payload = {
         "resources": [{"id": "flow:chat", "data": {"name": "chat", "tasks": []}}]
     })
 }
-sc, body, ms, err = http(f"{RULE_URL}/api/analyze", method="POST", body=rule_payload)
-row("HTTP status", sc)
-if isinstance(body, dict):
-    row("Success", body.get("success","?"))
-    row("Rules run", body.get("rules_run", body.get("rulesRun","?")))
-    row("Errors", body.get("errorCount",0))
-    row("Warnings", body.get("warningCount",0))
-    row("Info", body.get("infoCount",0))
-    findings = body.get("findings","")
-    row("Findings", str(findings)[:80] if findings else "none (clean)")
-ok = sc == 200 and isinstance(body, dict)
-record("Rule Analysis", "POST /api/analyze — app quality gate", ok, ms,
-       f"rules_run={body.get('rules_run','?') if isinstance(body,dict) else '?'}", err)
+_emit(f"  NOTE: rule-engine-service is per-agent (dynamic port). Actual POST /api/analyze runs in Phase 5 after port discovery.")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PHASE 5 — FORGE UI: Deploy (activate) agent
@@ -324,26 +312,35 @@ if agent_id:
     # Step 5.4: Discover agent runtime ports via runtime-manager
     # Agent services are per-agent on dynamic ports (7200+); query runtime-manager for actuals.
     step_header("Discover agent runtime ports", f"GET http://localhost:7050/api/agents/{agent_id}")
-    _chat_url = CHAT_URL
-    _ingest_url = INGEST_URL
-    _sse_url = SSE_URL
+    _chat_url      = CHAT_URL
+    _ingest_url    = INGEST_URL
+    _sse_url       = SSE_URL
+    _rule_url      = RULE_URL
+    _sse_events_url = f"http://localhost:7099"
     for _attempt in range(1, 13):   # up to ~60s for runtime-manager to start services
         _sc, _body, _ms, _err = http(f"http://localhost:7050/api/agents/{agent_id}", timeout=5)
         if _sc == 200 and isinstance(_body, dict):
-            _chat_url   = _body.get("chatApiUrl",   CHAT_URL)
-            _ingest_url = _body.get("ingestionUrl", INGEST_URL)
-            _sse_url    = _body.get("sseUrl",       SSE_URL)
+            _chat_url      = _body.get("chatApiUrl",    CHAT_URL)
+            _ingest_url    = _body.get("ingestionUrl",  INGEST_URL)
+            _sse_url       = _body.get("sseUrl",        SSE_URL)
+            _rule_url      = _body.get("ruleEngineUrl", RULE_URL)
+            _ports         = _body.get("ports", {})
+            _sse_events_url = f"http://localhost:{_ports.get('sse_events', 7203)}"
             if _chat_url != CHAT_URL:   # runtime-manager has started the agent
                 break
         import time as _time; _time.sleep(5)
-    CHAT_URL   = _chat_url
-    INGEST_URL = _ingest_url
-    SSE_URL    = _sse_url
-    row("Chat API URL",   CHAT_URL)
-    row("Ingestion URL",  INGEST_URL)
-    row("SSE URL",        SSE_URL)
+    CHAT_URL       = _chat_url
+    INGEST_URL     = _ingest_url
+    SSE_URL        = _sse_url
+    RULE_URL       = _rule_url
+    SSE_EVENTS_URL = _sse_events_url
+    row("Chat API URL",    CHAT_URL)
+    row("Ingestion URL",   INGEST_URL)
+    row("SSE URL",         SSE_URL)
+    row("Rule Engine URL", RULE_URL)
+    row("SSE Events URL",  SSE_EVENTS_URL)
     ok = CHAT_URL != "http://localhost:7001"   # confirms dynamic URL was resolved
-    record("Discover Agent Ports", "GET /api/agents/{id} — resolve actual chat/ingest/sse ports", ok, ms,
+    record("Discover Agent Ports", "GET /api/agents/{id} — resolve actual chat/ingest/sse/rule ports", ok, ms,
            f"chat={CHAT_URL}", "" if ok else "runtime-manager did not return agent ports (agent not yet started?)")
 
     # Readiness gate: wait until ALL per-agent services are confirmed ready.
@@ -367,6 +364,22 @@ if agent_id:
             _time2.sleep(2)
         if not _ready:
             _emit("  WARNING: per-agent services did not become ready within 60s; proceeding anyway")
+
+    # Step 5.5a: Rule Engine analysis (now that RULE_URL is resolved to per-agent port)
+    step_header("Analyze Flogo app against rules", f"POST {RULE_URL}/api/analyze")
+    sc, body, ms, err = http(f"{RULE_URL}/api/analyze", method="POST", body=rule_payload)
+    row("HTTP status", sc)
+    if isinstance(body, dict):
+        row("Success", body.get("success","?"))
+        row("Rules run", body.get("rules_run", body.get("rulesRun","?")))
+        row("Errors", body.get("errorCount",0))
+        row("Warnings", body.get("warningCount",0))
+        row("Info", body.get("infoCount",0))
+        findings = body.get("findings","")
+        row("Findings", str(findings)[:80] if findings else "none (clean)")
+    ok = sc == 200 and isinstance(body, dict)
+    record("Rule Analysis", "POST /api/analyze — app quality gate", ok, ms,
+           f"rules_run={body.get('rules_run','?') if isinstance(body,dict) else '?'}", err)
 
     # Step 5.5: Ingest knowledge (now that INGEST_URL is resolved to per-agent port)
     step_header("Ingest knowledge document", f"POST {INGEST_URL}/api/ingest")
@@ -932,11 +945,11 @@ md_lines += [
     f"| Service | Port | Role | Tested Via |",
     f"|---------|------|------|------------|",
     f"| platform-service | 7020 | Agent registry + Feedback (PostgreSQL + JSONL) | Forge CRUD + MCP tools + feedback |",
-    f"| ingestion-service | 7002 | Knowledge ingestion → Weaviate | Direct POST /api/ingest |",
-    f"| agent-chat-service | 7001 | RAG chat + SSE streaming (merged) | Chainlit chat + MCP rag_chat + SSE |",
+    f"| ingestion-service | 72xx+4 | Knowledge ingestion → Weaviate | Direct POST /api/ingest (per-agent dynamic port) |",
+    f"| agent-chat-service | 72xx+1/+2/+3 | RAG chat + SSE streaming (merged) | Chainlit chat + MCP rag_chat + SSE |",
     f"| (feedback merged → platform-service:7020) | — | — | see platform-service |",
     f"| agent-builder-service | 7010 | LLM config generation + improvement | Forge AI features |",
-    f"| rule-engine-service | 7097 | YAML rule quality analysis | Direct POST /api/analyze |",
+    f"| rule-engine-service | 72xx+6 | YAML rule quality analysis | Direct POST /api/analyze (per-agent dynamic port) |",
     f"| mcp-server | 7333 | JSON-RPC gateway (9 tools) | All 9 tools exercised |",
     f"| config-service | 7004 | File-based agent registry (legacy) | Not tested (not in critical path) |",
     f"",

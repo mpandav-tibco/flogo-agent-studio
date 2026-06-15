@@ -1,102 +1,148 @@
 ---
 name: flogo-agent-studio
 description: >
-  Work with the Flogo Agent Studio project — a production-grade multi-agent AI platform built
-  on TIBCO Flogo 2.26.3. Use for: understanding service architecture; making flow changes via
-  the Flogo Design Assistant (FDA); building, starting, and testing Flogo services; running
-  integration tests; debugging flow mappings and SSE streaming; adding/modifying activities,
-  triggers, connections, and properties in .flogo apps.
+  Work with the Flogents (Flogo Agent Studio) project — a production-grade multi-agent AI
+  platform built on TIBCO Flogo 2.26.3. Use for: understanding service architecture; making
+  flow changes via the Flogo Design Assistant (FDA); building, starting, and testing Flogo
+  services; running integration tests; debugging flow mappings and SSE streaming;
+  adding/modifying activities, triggers, connections, and properties in .flogo apps.
 ---
 
-# Flogo Agent Studio — Working Guide
+# Flogents (Flogo Agent Studio) — Working Guide
 
 ## Project Location
 `/Users/milindpandav/git/flogo-agent-studio`
 
-## Architecture: 10 Flogo Services
+## Architecture: Platform Services + Per-Agent Runtime
 
-| Service | Port | App file | Description |
+### Platform Services (static ports, always running)
+
+| Service | Port | Flogo file | Description |
 |---|---|---|---|
-| rule-engine | 7000 | `apps/rule-engine-service.flogo` | YAML rule evaluation — POST /api/analyze |
-| agent-chat | 7001 | `apps/agent-chat-service.flogo` | RAG + LLM chat — POST /api/chat |
-| ingestion | 7002 | `apps/ingestion-service.flogo` | KB ingest (text, URL, GitHub, Confluence) |
-| feedback | 7003 | `apps/feedback-service.flogo` | JSONL feedback — POST/GET /api/feedback |
-| ~~config~~ | ~~7004~~ | ~~deprecated~~ | **Removed** — superseded by design-service |
-| sse-stream | 7005 | `apps/sse-stream-service.flogo` | SSE streaming — POST /api/stream/chat |
-| agent-builder | 7010 | `apps/agent-builder-service.flogo` | LLM-generate agent configs |
-| design | 7020 | `apps/design-service.flogo` | PostgreSQL-backed agent CRUD |
-| deploy | 7030 | `apps/deploy-service.flogo` | K8s/Docker-Compose manifest generation |
-| mcp-server | 3333 | `apps/mcp-server.flogo` | MCP server for AI IDE integration |
-| sse-eventbus | 7099 | (part of sse-stream) | SSE event bus — GET /events (no auth) |
+| platform-service | 7020 | `services/platform/flogo/platform-service.flogo` | Agent CRUD, templates, feedback — `/api/v1/agents/*`, `/api/feedback/*` |
+| agent-builder | 7010 | `services/platform/flogo/agent-builder-service.flogo` | LLM-generated agent configs — POST `/api/agent-builder/generate\|improve\|validate` |
+| mcp-server | 7333 | `services/platform/flogo/mcp-server.flogo` | MCP server at `/mcp` — `analyze_flogo`, `rag_chat`, `list_agents`, `get_agent`, `submit_feedback`, `get_feedback`, `create_agent`, `list_templates`, `deploy_agent` |
+| forge-ui | 7025 | `services/platform/ui/forge` | Flogents React UI |
+| runtime-manager | 7050 | `deployment/deployment.py` | Manages per-agent process groups — Python aiohttp |
 
-## Key Environment Variables
+### Per-Agent Services (dynamic ports, one set per deployed agent)
+
+Each deployed (active) agent gets a slot N → base port `7200 + N×10`. Up to 10 concurrent agents.
+
+| Role | Offset | Service binary | Description |
+|---|---|---|---|
+| chat | base+1 | `bin/agent-chat-service` | RAG chat — POST `/api/chat` |
+| sse-rest | base+2 | `bin/agent-chat-service` | SSE REST trigger (same binary, different port) |
+| sse-events | base+3 | `bin/agent-chat-service` | SSE event bus — GET `/events` (merged binary) |
+| ingestion | base+4 | `bin/ingestion-service` | KB ingest — POST `/api/ingest` |
+| chainlit | base+5 | `chainlit run` | Per-agent Chainlit UI with baked-in AGENT_ID |
+| rule-engine | base+6 | `bin/rule-engine-service` | YAML rule evaluation — POST `/api/analyze` |
+
+**Slot 0 example**: chat=7201, sse-rest=7202, sse-events=7203, ingest=7204, chainlit=7205, rule-engine=7206
+
+Resolve actual ports: `GET http://localhost:7050/api/agents/{id}` → fields `chatApiUrl`, `sseUrl`, `ingestionUrl`, `ruleEngineUrl`
+
+## Key Paths
 
 ```bash
+PROJECT=/Users/milindpandav/git/flogo-agent-studio
 EXT=/Users/milindpandav/.vscode/extensions/tibco.flogo-2.26.3-2442
-APPS=/Users/milindpandav/git/flogo-agent-studio/apps
-BIN=/Users/milindpandav/git/flogo-agent-studio/bin
+FLOGOBUILD=$PROJECT/tools/flogobuild/darwin_arm64/flogobuild
 UEXT=/Users/milindpandav/git/flogo-custom-extensions
-LOGDIR=/tmp/flogo-studio-logs
 ```
 
 ## Auth
-- All services: Basic auth `flogo:changeme` → `Basic ZmxvZ286Y2hhbmdlbWU=`
+- All Flogo services: Basic auth `flogo:changeme` → `Basic ZmxvZ286Y2hhbmdlbWU=`
 - Header: `-u flogo:changeme` or `-H "Authorization: Basic ZmxvZ286Y2hhbmdlbWU="`
-- SSE event bus (7099): **no auth** — public SSE stream
+- SSE event bus (base+3): **no auth** — public SSE stream
+- Runtime manager (7050): no auth
 
 ## Infrastructure Dependencies
 
 | Service | Port | Notes |
 |---|---|---|
-| Weaviate | 18080 | VectorDB, class `KnowledgeBase`, Ollama embeddings |
-| Ollama | 11434 | Models: `llama3.1:8b`, `nomic-embed-text` |
-| PostgreSQL | 5432 | Container `flogo-studio-postgres`, DB `flogo_agent_studio`, user `flogo` / `changeme` |
+| Weaviate | 18080 | VectorDB, Ollama embeddings (nomic-embed-text 768-dim) |
+| Ollama | 11434 | Models: `llama3.1:8b`, `nomic-embed-text`; start with `ollama serve` |
+| PostgreSQL | 5432 | Container `flogo-studio-postgres`, DB `flogo_agent_studio`, user `flogo`/`changeme` |
 
-## Build a Service
+## Build a Service (flogobuild)
 
 ```bash
-EXT=/Users/milindpandav/.vscode/extensions/tibco.flogo-2.26.3-2442
-APPS=/Users/milindpandav/git/flogo-agent-studio/apps
-BIN=/Users/milindpandav/git/flogo-agent-studio/bin
-UEXT=/Users/milindpandav/git/flogo-custom-extensions
+cd /Users/milindpandav/git/flogo-agent-studio
 
-"$EXT/bin/flogo-vscode-cli" app build \
-  -b "$EXT/media/flogo-runtime" \
-  -c "$EXT/media/flogo-contributions/wistudio/v1/contributions" \
-  -e "$UEXT" \
-  -f "$APPS/<service-name>.flogo" \
-  -o "$BIN"
+# Build any platform service
+PATH="tools/go-wrapper:$PATH" ./tools/flogobuild/darwin_arm64/flogobuild build-exe \
+  -f services/platform/flogo/<service-name>.flogo \
+  -c flogo-studio \
+  -n <service-name> \
+  -o bin/
+
+# Build any per-agent service
+PATH="tools/go-wrapper:$PATH" ./tools/flogobuild/darwin_arm64/flogobuild build-exe \
+  -f services/agent/flogo/<service-name>.flogo \
+  -c flogo-studio \
+  -n <service-name> \
+  -o bin/
+```
+
+**IMPORTANT**: The `tools/go-wrapper/go` shim is required — without it, `go mod tidy` fails on private TIBCO dependencies. Always prepend `tools/go-wrapper` to `PATH`.
+
+**After building**: If macOS shows "killed" (exit 137) or `codesign -v` reports "invalid signature", re-sign:
+```bash
+codesign --remove-signature bin/<service-name>
+codesign --sign - bin/<service-name>
 ```
 
 ## Start/Restart All Services
 
 ```bash
-bash /tmp/start-svcs.sh
+cd /Users/milindpandav/git/flogo-agent-studio
+bash deployment/start-all.sh
 ```
 
-If `/tmp/start-svcs.sh` is missing, start services manually:
+This starts: Docker infra (Weaviate, PostgreSQL), platform Flogo services, forge-ui, and the runtime manager. Logs go to `logs/`.
 
+**Start runtime manager only** (after it dies):
 ```bash
-LOGDIR=/tmp/flogo-studio-logs && mkdir -p $LOGDIR && BIN=/Users/milindpandav/git/flogo-agent-studio/bin
-
-# Kill existing
-kill $(lsof -ti :7000 -ti :7001 -ti :7002 -ti :7003 -ti :7005 -ti :7010 -ti :7020 -ti :7030 2>/dev/null) 2>/dev/null
-
-# Start each service
-for svc in rule-engine-service agent-chat-service ingestion-service feedback-service sse-stream-service agent-builder-service design-service deploy-service; do
-  "$BIN/$svc" > "$LOGDIR/${svc}.log" 2>&1 &
-  echo "$svc PID=$!"
-done
-sleep 2
+pkill -f "deployment.py"
+python3 deployment/deployment.py --port 7050 >> logs/runtime-manager.log 2>&1 &
 ```
+
+## Runtime Manager API (port 7050)
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/health` | Runtime manager health |
+| GET | `/api/agents` | List all agent runtimes with ports and readiness |
+| GET | `/api/agents/{id}` | Get single agent runtime — includes `chatApiUrl`, `sseUrl`, `ingestionUrl`, `ruleEngineUrl` |
+| POST | `/api/agents/{id}/start` | Start per-agent services |
+| DELETE | `/api/agents/{id}/stop` | Stop per-agent services |
+| GET | `/api/runtime/agents/{id}/logs/{service}` | Stream logs for a per-agent service (`chat`, `ingestion`, `rule-engine`, `chainlit`) |
+| GET | `/api/runtime/platform-logs/{service}` | Stream logs for a platform service (`platform-service`, `agent-builder`, `mcp-server`) |
+| GET | `/api/admin/services` | List platform service status |
+| POST | `/api/admin/services/{name}/start` | Start a platform service |
+| POST | `/api/admin/services/{name}/restart` | Restart a platform service |
+| DELETE | `/api/admin/services/{name}/stop` | Stop a platform service |
+
+Agent `readiness` field: `pending` → `starting` → `ready` (poll until `ready` before calling per-agent APIs).
 
 ## Check All Services Are Healthy
 
 ```bash
-for port in 7000 7001 7002 7003 7005 7010 7020 7030; do
+# Platform services
+for port in 7020 7010 7333; do
   echo -n "Port $port: "
-  curl -s -u flogo:changeme http://localhost:$port/api/health | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('status','?'))"
+  curl -s -u flogo:changeme http://localhost:$port/api/health | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('status','?'))" 2>/dev/null || echo "DOWN"
 done
+
+# Per-agent services (slot 0)
+for port in 7201 7204 7206; do
+  echo -n "Port $port: "
+  curl -s -u flogo:changeme http://localhost:$port/api/health 2>/dev/null || echo "DOWN"
+done
+
+# Runtime manager
+curl -s http://localhost:7050/api/agents | python3 -c "import json,sys; [print(a['agentName'], a['readiness']) for a in json.load(sys.stdin)]"
 ```
 
 ## FDA (Flogo Design Assistant) — MCP Server
@@ -105,9 +151,11 @@ FDA runs as an MCP server. It provides tools for reading and modifying `.flogo` 
 
 **Starting FDA:**
 ```bash
-cd /Users/milindpandav/git/flogo-agent-studio/apps
+cd /Users/milindpandav/git/flogo-agent-studio/services
 flogodesign-cli mcp http 3333 --multiFileMode true
 ```
+
+The FDA server at `http://localhost:3333/mcp` supports multi-file mode covering all `.flogo` files under `services/`.
 
 **All .flogo app changes MUST go through FDA tools** — never direct JSON edits for flow logic.
 
@@ -205,7 +253,7 @@ lsof -i :<port> | grep LISTEN
 
 ## Agent Config Format
 
-Agents are stored in PostgreSQL (design-service). The `config` column holds a JSONB object:
+Agents are stored in PostgreSQL (platform-service). The `config` column holds a JSONB object:
 ```json
 {
   "id": "my-agent",
@@ -213,11 +261,16 @@ Agents are stored in PostgreSQL (design-service). The `config` column holds a JS
   "description": "...",
   "systemPrompt": "You are...",
   "collectionName": "KnowledgeBase",
-  "llmProvider": "ollama",
-  "model": "llama3.1:8b",
+  "llmProvider": "Ollama",
+  "llmModel": "llama3.1:8b",
+  "llmBaseUrl": "http://localhost:11434/v1",
+  "embeddingModel": "nomic-embed-text",
+  "embeddingProvider": "Ollama",
+  "embeddingBaseUrl": "http://localhost:11434/v1",
   "temperature": 0.7,
   "maxTokens": 2048,
   "topK": 5,
+  "chunkStrategy": "sentence",
   "tools": ["ragQuery"],
   "tags": ["general"],
   "version": "1.0.0",
@@ -225,17 +278,17 @@ Agents are stored in PostgreSQL (design-service). The `config` column holds a JS
 }
 ```
 
-POST /api/v1/agents (design-service) expects: `{ "name": "...", "description": "...", "config": {...} }`
+POST `/api/v1/agents` (platform-service) expects: `{ "name": "...", "description": "...", "config": {...} }`
 
-## Test Agent ID
-`0c82e85b-708f-43a8-9b79-acd618474b51` — default test agent in design-service (PostgreSQL)
+Activate a deployed agent: `PUT /api/v1/agents/{id}` with `{ "status": "active" }` — this triggers the runtime manager to start per-agent services.
 
 ## Custom Extensions Location
 `/Users/milindpandav/git/flogo-custom-extensions`
 
 Key extensions:
-- `connectors/SSE/trigger/` — SSE event bus trigger (port 7099)
+- `connectors/SSE/trigger/` — SSE event bus trigger (merged into agent-chat-service, port base+3)
 - `connectors/SSE/activity/` — emit SSE events; valid types: `message, notification, update, alert, status, data, event, error, warning, info, heartbeat, custom`
+- `connectors/VectorDB/` — Weaviate VectorDB connection (vectordb-weaviate)
 - `activity/schema-transform/` — JSON schema transformation
 - `activity/templateengine/` — Mustache-style templates
 
