@@ -419,12 +419,16 @@ function sendFeedback(msgId, rating) {
   const bubble = document.getElementById(`${msgId}-content`);
   if (!bubble) { _postFeedback(msgId, rating, ""); return; }
 
-  const label = rating === "up" ? "What did you like?" : "How can we improve?";
+  const label    = rating === "up" ? "What did you like?" : "How can we improve?";
+  const lblColor = rating === "up" ? "#4ade80" : "#fbbf24";
   const wrap = document.createElement("div");
   wrap.id = `fb-wrap-${msgId}`;
   wrap.style.cssText = "margin-top:10px;padding:8px 10px;background:#0d0e1a;border:1px solid #2a2b3d;border-radius:8px;border-left:3px solid " + (rating === "up" ? "#22c55e" : "#f59e0b");
   wrap.innerHTML = `
-    <div style="font-size:11px;color:#64748b;margin-bottom:5px">${label} <span style="color:#475569">(optional)</span></div>
+    <div style="font-size:12px;margin-bottom:6px">
+      <span style="color:${lblColor};font-weight:600">${label}</span>
+      <span style="color:#475569;font-size:11px"> (optional)</span>
+    </div>
     <div style="display:flex;gap:6px;align-items:center">
       <input id="fb-comment-${msgId}" type="text" maxlength="280"
         placeholder="Add a short comment…"
