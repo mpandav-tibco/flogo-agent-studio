@@ -5,6 +5,20 @@ on:
     branches: ["main", "develop", "release/**"]
   pull_request:
     branches: ["main", "develop"]
+  workflow_dispatch:
+    inputs:
+      chat_url:
+        description: "Agent /api/chat URL to evaluate (overrides repo var EVAL_CHAT_URL)"
+        required: false
+      rageval_url:
+        description: "rageval base URL (overrides repo var EVAL_RAGEVAL_URL)"
+        required: false
+      goldenset:
+        description: "Path to the golden-set file"
+        required: false
+        default: "tests/eval/goldenset.devops.json"
+  schedule:
+    - cron: "0 6 * * *"   # nightly 06:00 UTC — agent quality eval (no-ops if no target configured)
 
 env:
   FLOGO_IMAGE: tibco/flogo-agent-studio
@@ -168,7 +182,7 @@ jobs:
       - name: Create DB schema
         run: |
           PGPASSWORD=changeme psql -h localhost -U flogo -d flogo_agent_studio \
-            -f docker/postgres/init.sql
+            -f deployment/docker/postgres/init.sql
 
       - name: Run functional tests (offline subset)
         run: |
@@ -179,6 +193,25 @@ jobs:
             2>/dev/null || true
         env:
           DB_DSN: postgresql://flogo:changeme@localhost:5432/flogo_agent_studio
+
+      - name: Validate eval harness (compile + goldenset + graceful-skip)
+        run: |
+          # 1) harness compiles and the golden set is valid JSON
+          python3 -m py_compile tests/eval/eval_harness.py
+          python3 -c "import json; json.load(open('tests/eval/goldenset.devops.json'))"
+          # 2) with rageval unreachable the harness must exit gracefully (code 2), not crash.
+          #    This proves the wiring on every PR without needing the full Ollama/Weaviate stack.
+          set +e
+          python3 tests/eval/eval_harness.py \
+            -g tests/eval/goldenset.devops.json \
+            --rageval-url http://127.0.0.1:1 --timeout 5
+          rc=$?
+          set -e
+          if [ "$rc" != "2" ]; then
+            echo "::error::eval harness should exit 2 when rageval is unreachable, got $rc"
+            exit 1
+          fi
+          echo "eval harness self-test passed (graceful skip on unreachable rageval)"
 
   # ── Job 4: Docker build & push (main branch only) ─────────────────────────
   docker:
@@ -227,7 +260,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: docker/agent-chat-service/Dockerfile
+          file: deployment/docker/agent-chat-service/Dockerfile
           push: true
           tags: |
             ${{ env.FLOGO_IMAGE }}:agent-chat-latest
@@ -238,7 +271,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: docker/ingestion-service/Dockerfile
+          file: deployment/docker/ingestion-service/Dockerfile
           push: true
           tags: |
             ${{ env.FLOGO_IMAGE }}:ingestion-latest
@@ -249,7 +282,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: docker/rule-engine-service/Dockerfile
+          file: deployment/docker/rule-engine-service/Dockerfile
           push: true
           tags: |
             ${{ env.FLOGO_IMAGE }}:rule-engine-latest
@@ -257,11 +290,11 @@ jobs:
           platforms: linux/amd64
 
       - name: Build and push platform-service
-        if: hashFiles('docker/platform-service/Dockerfile') != ''
+        if: hashFiles('deployment/docker/platform-service/Dockerfile') != ''
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: docker/platform-service/Dockerfile
+          file: deployment/docker/platform-service/Dockerfile
           push: true
           tags: |
             ${{ env.FLOGO_IMAGE }}:platform-service-latest
@@ -269,11 +302,11 @@ jobs:
           platforms: linux/amd64
 
       - name: Build and push mcp-server
-        if: hashFiles('docker/mcp-server/Dockerfile') != ''
+        if: hashFiles('deployment/docker/mcp-server/Dockerfile') != ''
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: docker/mcp-server/Dockerfile
+          file: deployment/docker/mcp-server/Dockerfile
           push: true
           tags: |
             ${{ env.FLOGO_IMAGE }}:mcp-server-latest
@@ -288,3 +321,58 @@ jobs:
           for svc in agent-chat ingestion rule-engine platform-service mcp-server; do
             echo "| $svc | ${{ steps.version.outputs.tag }} |" >> $GITHUB_STEP_SUMMARY
           done
+
+  # ── Job 5: Agent RAG quality eval (rageval) ───────────────────────────────
+  # The full eval stack (Ollama models, Weaviate collections, a deployed agent,
+  # rageval) is too heavy for ephemeral CI, so this job evaluates a REACHABLE
+  # deployed/staging environment instead. It runs on demand (workflow_dispatch)
+  # and nightly (schedule), and no-ops cleanly when no target is configured.
+  #
+  # To enable: set repository Variables EVAL_CHAT_URL and EVAL_RAGEVAL_URL
+  # (Settings → Secrets and variables → Actions → Variables), or pass them as
+  # workflow_dispatch inputs. The job fails if the agent's quality gate fails.
+  agent-eval:
+    name: Agent RAG Quality Eval
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run agent quality eval against target environment
+        id: eval
+        env:
+          IN_CHAT:      ${{ github.event.inputs.chat_url }}
+          IN_RAGEVAL:   ${{ github.event.inputs.rageval_url }}
+          IN_GOLDENSET: ${{ github.event.inputs.goldenset }}
+          VAR_CHAT:     ${{ vars.EVAL_CHAT_URL }}
+          VAR_RAGEVAL:  ${{ vars.EVAL_RAGEVAL_URL }}
+        run: |
+          CHAT="${IN_CHAT:-$VAR_CHAT}"
+          RAGEVAL="${IN_RAGEVAL:-$VAR_RAGEVAL}"
+          GOLDENSET="${IN_GOLDENSET:-tests/eval/goldenset.devops.json}"
+          if [ -z "$CHAT" ] || [ -z "$RAGEVAL" ]; then
+            echo "::warning::No eval target configured — set repo Variables EVAL_CHAT_URL and EVAL_RAGEVAL_URL (or provide workflow_dispatch inputs) to enable live quality eval. Skipping."
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          python3 tests/eval/eval_harness.py \
+            -g "$GOLDENSET" \
+            --chat-url "$CHAT" \
+            --rageval-url "$RAGEVAL" \
+            --json-out eval-report.json
+
+      - name: Upload eval report
+        if: always() && steps.eval.outputs.skipped != 'true' && hashFiles('eval-report.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-eval-report-${{ github.run_id }}
+          path: eval-report.json
+          retention-days: 30

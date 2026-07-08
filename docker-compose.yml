@@ -267,7 +267,7 @@ services:
       POSTGRES_PASSWORD: changeme
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./deployment/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - agent-studio
     healthcheck:
