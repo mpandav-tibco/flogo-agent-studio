@@ -395,35 +395,8 @@ function scrollToBottom() {
 
 // ── Feedback ──────────────────────────────────────────────────────────────────
 const _feedbackState = {};
-async function sendFeedback(msgId, rating) {
-  if (_feedbackState[msgId] === rating) return;
-  _feedbackState[msgId] = rating;
-  document.getElementById(`${msgId}-up`)?.classList.toggle("active-up",   rating === "up");
-  document.getElementById(`${msgId}-down`)?.classList.toggle("active-down", rating === "down");
 
-  // Ask for optional comment (inline, non-blocking)
-  let comment = "";
-  const bubble = document.getElementById(`${msgId}-content`);
-  if (bubble) {
-    const commentBox = document.createElement("div");
-    commentBox.style.cssText = "margin-top:8px;display:flex;gap:6px;align-items:center";
-    commentBox.innerHTML = `
-      <input id="fb-comment-${msgId}" type="text" placeholder="Add a comment (optional)…"
-        style="flex:1;background:#0d0e1a;border:1px solid #2a2b3d;border-radius:6px;color:#e2e8f0;
-               padding:5px 10px;font-size:12px;outline:none;font-family:inherit">
-      <button onclick="submitFeedbackComment('${msgId}','${rating}')" style="background:#1e2030;border:1px solid #2a2b3d;
-              color:#94a3b8;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">Send</button>
-      <button onclick="document.getElementById('fb-wrap-${msgId}').remove()" style="background:none;border:none;
-              color:#475569;cursor:pointer;font-size:14px">✕</button>`;
-    const wrap = document.createElement("div");
-    wrap.id = `fb-wrap-${msgId}`;
-    wrap.appendChild(commentBox);
-    bubble.appendChild(wrap);
-    document.getElementById(`fb-comment-${msgId}`)?.focus();
-    // Auto-dismiss after 30s if user ignores it
-    setTimeout(() => wrap.remove(), 30000);
-  }
-
+async function _postFeedback(msgId, rating, comment) {
   try {
     await fetch("/proxy/feedback", {
       method: "POST",
@@ -433,19 +406,56 @@ async function sendFeedback(msgId, rating) {
   } catch (_) { /* fire-and-forget */ }
 }
 
+function sendFeedback(msgId, rating) {
+  if (_feedbackState[msgId] === rating) return;
+  _feedbackState[msgId] = rating;
+  document.getElementById(`${msgId}-up`)?.classList.toggle("active-up",   rating === "up");
+  document.getElementById(`${msgId}-down`)?.classList.toggle("active-down", rating === "down");
+
+  // Remove any existing comment box for this message (e.g. user changed rating)
+  document.getElementById(`fb-wrap-${msgId}`)?.remove();
+
+  // Show inline comment box — feedback is NOT posted until user submits or dismisses
+  const bubble = document.getElementById(`${msgId}-content`);
+  if (!bubble) { _postFeedback(msgId, rating, ""); return; }
+
+  const label = rating === "up" ? "What did you like?" : "How can we improve?";
+  const wrap = document.createElement("div");
+  wrap.id = `fb-wrap-${msgId}`;
+  wrap.style.cssText = "margin-top:10px;padding:8px 10px;background:#0d0e1a;border:1px solid #2a2b3d;border-radius:8px;border-left:3px solid " + (rating === "up" ? "#22c55e" : "#f59e0b");
+  wrap.innerHTML = `
+    <div style="font-size:11px;color:#64748b;margin-bottom:5px">${label} <span style="color:#475569">(optional)</span></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <input id="fb-comment-${msgId}" type="text" maxlength="280"
+        placeholder="Add a short comment…"
+        style="flex:1;background:#131525;border:1px solid #2a2b3d;border-radius:6px;color:#e2e8f0;
+               padding:5px 10px;font-size:12px;outline:none;font-family:inherit"
+        onkeydown="if(event.key==='Enter'){submitFeedbackComment('${msgId}','${rating}');}"
+      >
+      <button onclick="submitFeedbackComment('${msgId}','${rating}')"
+        style="background:#1e2030;border:1px solid #2a2b3d;color:#94a3b8;border-radius:6px;
+               padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap">Submit</button>
+      <button onclick="dismissFeedback('${msgId}','${rating}')"
+        style="background:none;border:none;color:#475569;cursor:pointer;font-size:16px;line-height:1;padding:0 2px"
+        title="Skip comment">✕</button>
+    </div>`;
+  bubble.appendChild(wrap);
+  document.getElementById(`fb-comment-${msgId}`)?.focus();
+  // Auto-dismiss (submit with no comment) after 60s if user ignores it
+  setTimeout(() => { if (document.getElementById(`fb-wrap-${msgId}`)) dismissFeedback(msgId, rating); }, 60000);
+}
+
 async function submitFeedbackComment(msgId, rating) {
   const input = document.getElementById(`fb-comment-${msgId}`);
   const comment = input?.value?.trim() || "";
   document.getElementById(`fb-wrap-${msgId}`)?.remove();
-  if (!comment) return;
-  try {
-    await fetch("/proxy/feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ agentId: CFG.agentId, sessionId, messageId: msgId, rating, comment }),
-    });
-    showToast("Feedback saved with comment");
-  } catch (_) {}
+  await _postFeedback(msgId, rating, comment);
+  showToast(comment ? "Feedback saved — thanks!" : "Feedback recorded");
+}
+
+async function dismissFeedback(msgId, rating) {
+  document.getElementById(`fb-wrap-${msgId}`)?.remove();
+  await _postFeedback(msgId, rating, "");
 }
 
 // ── Rule Engine analysis ──────────────────────────────────────────────────────
