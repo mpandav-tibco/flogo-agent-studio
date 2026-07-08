@@ -1,8 +1,83 @@
-# Flogents Studio
+# Flogents
 
-**Flogents Studio** is a production-grade multi-agent AI platform built on **TIBCO Flogo**. It follows a two-tier architecture: a **Platform Layer** of always-on services (agent registry, LLM config builder, MCP gateway) and an **Agent Layer** of isolated per-agent process groups spawned on demand by the **Runtime Manager**. Each agent gets its own RAG pipeline, ingestion service, and **Rule Engine** — a YAML-driven static analysis service that continuously validates agent behaviour, configuration, and the artefacts agents work with. The **Flogents** React portal and per-agent **Chainlit** chat UIs round out the full-stack experience.
+> **Enterprise multi-agent AI — grounded in your knowledge, governed by your rules, built on TIBCO Flogo.**
 
-The **Rule Engine** is a first-class citizen of every agent runtime. Powered by a configurable YAML rule set, it analyses Flogo apps, Kubernetes manifests, integration configs, and any structured file your agents handle. It surfaces errors, warnings, and policy violations as structured findings — giving every agent the ability to reason over its own work products and enforce governance without calling an external LLM.
+---
+
+## Why Flogents Exists
+
+Most AI agent frameworks give you a chat interface and an LLM call. That works for demos. It breaks down when you try to deploy AI agents for serious enterprise use:
+
+- **Knowledge isolation** — A single shared vector store mixes Security documents with Finance reports with DevOps runbooks. Context bleed degrades answer quality across every domain.
+- **No deterministic governance** — AI answers are probabilistic. There is no built-in mechanism to validate them against your schemas, configurations, or compliance rules without calling the LLM again — adding cost, latency, and more non-determinism.
+- **No audit trail** — Regulated environments need structured findings with rule codes, file references, and severity levels — not a paragraph that "might" mention a violation.
+- **The prototype-to-production gap** — AI services that start as notebooks require enormous infrastructure work before they are observable, restartable, and safe to put in front of real users.
+
+Flogents was built to solve all four problems in one platform.
+
+---
+
+## What Flogents Is
+
+**Flogents** is an enterprise multi-agent AI platform built on **TIBCO Flogo** — a high-performance Golang integration runtime. Every service runs as a compiled native binary: sub-millisecond request overhead, native OpenTelemetry tracing, and structured JSON logging without extra instrumentation work.
+
+The platform follows a **two-tier architecture**:
+
+- A **Platform Layer** of always-on shared services — agent registry, LLM config builder, MCP gateway, and the Runtime Manager that orchestrates the agent lifecycle.
+- An **Agent Layer** of isolated per-agent process groups spawned on demand. Every active agent gets its own private knowledge base, RAG pipeline, ingestion service, Rule Engine, and dedicated chat UI.
+
+---
+
+## The Rule Engine — Deterministic Governance for Every Agent
+
+The Rule Engine is a first-class citizen of every agent's process group — not a shared platform service. It is the answer to a question LLMs cannot reliably answer: **"Does this artefact actually conform to your standards?"**
+
+Every agent domain has its own governance requirements: a DevOps agent needs to validate Kubernetes manifests; a TIBCO migration agent needs to flag deprecated BW5 patterns; a code review agent needs to check for OWASP vulnerabilities. The Rule Engine provides domain-specific, deterministic validation for each — configured via YAML rule sets in `config/rules/`, one set per domain.
+
+### Why it complements the LLM rather than replacing it
+
+| | LLM reasoning | Rule Engine |
+|---|---|---|
+| **Determinism** | Non-deterministic — same input, different output each run | 100% deterministic — same file, same findings, every time |
+| **Speed** | 2–30 s per evaluation | Milliseconds — pure Go evaluation, zero inference cost |
+| **Output format** | Freeform text | Structured JSON: rule code, file path, line number, severity, remediation |
+| **Coverage** | Probabilistic — may miss violations depending on context window | Exhaustive — evaluates every node in the structured file |
+| **Cost** | Per-token LLM cost for every analysis | Zero — no model inference required |
+
+### Example finding
+
+```json
+{
+  "ruleCode": "K8S-SEC-003",
+  "severity": "error",
+  "file": "deployment.yaml",
+  "line": 42,
+  "message": "Container 'api' has no resource limits — runaway process will starve other pods",
+  "remediation": "Set resources.limits.cpu and resources.limits.memory"
+}
+```
+
+### Built-in domain rule sets
+
+| Agent domain | What the Rule Engine validates |
+|---|---|
+| **DevOps / SRE** | Kubernetes manifests — missing resource limits, privileged containers, deprecated API versions, missing liveness/readiness probes |
+| **TIBCO / Integration** | BW5/BW6 archives — deprecated activities, unsupported EMS patterns, performance anti-patterns, hard migration blockers |
+| **Code review** | Source files — OWASP Top 10 patterns, banned APIs, missing error handling, style violations against your team standards |
+| **Flogo app analysis** | `.flogo` files — unreachable activities, missing error handlers, deprecated references, property naming violations |
+| **Security / Compliance** | Infrastructure configs — open ports, weak ciphers, missing encryption, control gaps against SOC 2 / ISO 27001 |
+| **Data quality** | Schemas and datasets — PII field exposure, missing required fields, type mismatches, naming convention violations |
+
+### Where the Rule Engine is called from
+
+| Caller | How |
+|--------|-----|
+| **Flogents UI** | "Analyze" button submits a selected file; findings render inline in the portal |
+| **Chainlit agent chat** | Agent invokes Rule Engine analysis as a reasoning step before answering ("let me validate this manifest first") |
+| **MCP tool** | `analyze_flogo` MCP tool calls the Rule Engine from Copilot / Claude / Cursor |
+| **CI/CD pipeline** | Any pipeline calls `POST /api/rules/analyze` directly for shift-left governance |
+
+This turns each agent from "an LLM that might notice something looks wrong" into **"a governed service that provably validates artefacts against your exact standards."**
 
 ---
 
@@ -31,7 +106,6 @@ Most AI agent frameworks give you a chat interface and an LLM call. Flogents goe
 
 | Domain | Example agent | How Flogents helps |
 |--------|---------------|----------------------|
-| TIBCO / Integration | BW6 → Cloud migration advisor; Flogo app analyser | Ingest your BW5/BW6 process archives, EMS configs, and migration guides. The Rule Engine flags deprecated activities, unsupported patterns, and hard migration blockers before you touch a single line of code. The agent then answers "can this be automated?" and outputs an ordered migration sequence. |
 | DevOps / SRE | Incident responder; K8s config validator; release notes generator | Feed it your runbooks, known-error database, and Kubernetes manifests. The Rule Engine validates manifests against security and reliability rules (missing resource limits, privileged containers, etc.) and the RAG chat matches live incident symptoms to runbook remediation steps — structured output, not freeform prose. |
 | Engineering | Code review assistant; API documentation generator | Ingest your team's coding standards, security rules, and OpenAPI specs. The agent reviews submitted code against those exact standards (not generic LLM opinions), returns findings by severity, and answers developer questions about endpoints with working code examples grounded in your actual API docs. |
 | Finance | Financial insights analyst; procurement assistant | Ingest quarterly reports, budgets, and vendor proposals. The agent retrieves exact figures with source citations (no rounding, no hallucination) and flags deviations from procurement policy. Deterministic temperature settings ensure consistent, auditable analysis every time. |
@@ -43,59 +117,76 @@ Most AI agent frameworks give you a chat interface and an LLM call. Flogents goe
 
 ## Architecture
 
+Flogents is built around a clear two-tier separation. **Platform services** are shared and always running — they manage the agent registry, generate configs, and expose the MCP gateway. **Agent services** are spawned in isolated groups on demand — one complete group per active agent — and torn down when the agent is deactivated.
+
 ```mermaid
 graph TD
-  subgraph UI["🖥️  UI Layer"]
-    FORGE["Flogents UI · port 7025\nReact + Vite design portal"]
-    CHAINLIT["Chainlit Chat · port 72xx\nPython — one instance per active agent"]
-  end
-
-  subgraph PLATFORM["🏗️  Platform Layer — always-on"]
-    PS["platform-service · :7020\nAgent CRUD · feedback · templates\n(design + feedback merged)"]
-    AB["agent-builder-service · :7010\nLLM config generation\n& feedback-driven improvement"]
-    MCP["mcp-server · :7333\nMCP Streamable HTTP gateway\n9 AI-IDE tools"]
-    RM["runtime-manager · :7050\ndeploy / stop / reconcile\nper-agent process groups"]
-  end
-
-  subgraph AGENTS["🤖  Agent Layer — dynamic, one slot per active agent  (pool 7200 – 7299)"]
+  subgraph UILAYER["🖥️  User Interfaces"]
     direction LR
-    AC["agent-chat-service\n:base+1  RAG chat REST\n:base+2  SSE REST trigger\n:base+3  SSE event bus"]
-    ING["ingestion-service\n:base+4\nURL · GitHub · file · text"]
-    RE["rule-engine-service · :7097\nYAML rule evaluation\nstatic analysis"]
-    CUI["chainlit-ui · :base+5\nDedicated chat UI\nAGENT_ID baked in"]
+    FLOGUI["Flogents UI  ·  :7025\nReact + Vite design portal"]
+    CL["Chainlit Chat  ·  :72x5\nDedicated per-agent chat UI"]
+  end
+
+  subgraph PLATFORM["🏗️  PLATFORM LAYER  —  shared services, always running"]
+    direction LR
+    PS["platform-service  ·  :7020\nAgent CRUD · registry\nfeedback · templates"]
+    AB["agent-builder  ·  :7010\nLLM config generation\n& feedback-driven improvement"]
+    MCP["mcp-server  ·  :7333\nMCP Streamable HTTP gateway\n9 AI-IDE tools"]
+    RM["runtime-manager  ·  :7050\nAgent lifecycle manager\nspawn · reconcile · stop"]
+  end
+
+  subgraph AGENTLAYER["🤖  AGENT LAYER  —  one isolated group per active agent  (port pool 7200 – 7299)"]
+    direction LR
+    subgraph SLOT["Agent instance  (example: slot 0 → base port 7200)"]
+      direction LR
+      AC["agent-chat-service\n:base+1  RAG chat API\n:base+2  SSE REST\n:base+3  SSE event bus"]
+      ING["ingestion-service  ·  :base+4\nURL · GitHub · file · text\nchunk → embed → store"]
+      RE["rule-engine-service  ·  :base+6\nYAML rule evaluation\nstatic analysis of artefacts"]
+      CUI["chainlit-ui  ·  :base+5\nChat UI — AGENT_ID\nbaked in at spawn"]
+    end
   end
 
   subgraph INFRA["⚙️  Infrastructure"]
     direction LR
-    WV[("Weaviate\n:8080 / :50051\nhybrid BM25 + vector")]
-    PG[("PostgreSQL\n:5432\nagent registry")]
-    OL["Ollama\n:11434\nLLM + embeddings"]
-    OTEL["OTel Collector\n:4317\ndistributed tracing"]
+    WV[("Weaviate  ·  :8080\nhybrid BM25 + vector")]
+    PG[("PostgreSQL  ·  :5432\nagent registry")]
+    OL["Ollama  ·  :11434\nLLM + embeddings"]
+    OTEL["OTel Collector  ·  :4317\ndistributed tracing"]
   end
 
-  FORGE -->|REST| PS & AB & RM
-  CHAINLIT -->|"REST / SSE"| AC
-  PS -->|agent CRUD| PG
-  PS -->|OTel| OTEL
-  AB -->|LLM prompts| OL
-  AB -->|OTel| OTEL
-  MCP -->|REST| PS & AB
-  RM -->|"spawn · stop · reconcile"| AC & ING & CUI
-  RM -->|"docker compose"| AC & ING & CUI
-  AC -->|hybrid search| WV
-  AC -->|LLM completion| OL
-  ING -->|"embed + store"| WV & OL
+  %% UI → Platform
+  FLOGUI -->|REST API| PS & AB & RM
+  CL -->|"chat / SSE"| AC
 
-  classDef ui      fill:#e8f5f4,stroke:#3bbfbb,color:#111
+  %% Platform internal
+  PS -->|CRUD| PG
+  PS & AB -->|traces| OTEL
+  AB -->|prompts| OL
+  MCP -->|REST| PS & AB & AC & ING & RE
+
+  %% Runtime Manager spawns the entire agent group
+  RM -->|"spawn / stop / reconcile"| AC & ING & RE & CUI
+
+  %% Agent → Infrastructure
+  AC -->|"hybrid search"| WV
+  AC -->|"LLM completion"| OL
+  ING -->|"embed + upsert"| WV & OL
+
+  classDef ui       fill:#e8f5f4,stroke:#3bbfbb,color:#111
   classDef platform fill:#eef2ff,stroke:#6366f1,color:#111
-  classDef agent   fill:#fefce8,stroke:#f59e0b,color:#111
-  classDef infra   fill:#f1f5f9,stroke:#64748b,color:#111
+  classDef agent    fill:#fefce8,stroke:#f59e0b,color:#111
+  classDef infra    fill:#f1f5f9,stroke:#64748b,color:#111
 
-  class FORGE,CHAINLIT ui
+  class FLOGUI,CL ui
   class PS,AB,MCP,RM platform
   class AC,ING,RE,CUI agent
   class WV,PG,OL,OTEL infra
 ```
+
+**Key separation**:
+- Every box in the **Platform Layer** is started once at `./start-all.sh` and stays up regardless of how many agents are active.
+- Every box in the **Agent Layer** is started and stopped by the Runtime Manager when an agent is activated or deactivated. Multiple agent instances run concurrently, each in its own port slot.
+- The Rule Engine (`rule-engine-service`) is an **Agent Layer service**, not Platform — because governance rules are domain-specific. Each agent gets its own instance configured with its domain's YAML rule set.
 
 ---
 
@@ -210,7 +301,7 @@ ollama pull llama3.2:3b          # or any model of your choice
 1. Stops any existing processes on managed ports (7025, 7010, 7020, 7050, 7333, 7200–7299)
 2. Clears log files and (optionally) Elasticsearch indexes
 3. **Auto-builds** any Flogo binary that is missing or older than its `.flogo` source — no manual compile step needed (uses bundled `flogobuild` in `tools/`)
-4. Starts **Forge UI** (port 7025) and waits for it to be ready
+4. Starts **Flogents UI** (port 7025) and waits for it to be ready
 5. Starts the three **Platform Layer** Flogo services (platform-service, agent-builder, mcp-server)
 6. Starts the **Runtime Manager** (deployment.py, port 7050)
 
