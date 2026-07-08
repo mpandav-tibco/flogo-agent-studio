@@ -732,6 +732,7 @@ async def _start_runtime(agent: dict) -> dict:
             "SSE_EVENTS_URL":          f"http://localhost:{ports['sse_events']}",
             "RULE_ENGINE_SERVICE_URL": f"http://localhost:{ports['rule_engine']}",
             "FEEDBACK_SERVICE_URL":    FEEDBACK_URL,
+            "REQUEST_TIMEOUT":         os.getenv("REQUEST_TIMEOUT", "300"),
         }
         chat_srv_proc = subprocess.Popen(
             [sys.executable, str(chat_server_py)],

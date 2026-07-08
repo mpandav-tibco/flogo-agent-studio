@@ -20,6 +20,7 @@ Environment variables:
     AGENT_NAME              Display name               (default: Flogents Agent)
     AGENT_DESCRIPTION       One-line description       (default: "")
     AUTH_HEADER             Basic auth value           (default: Basic ZmxvZ286Y2hhbmdlbWU=)
+    REQUEST_TIMEOUT         LLM proxy timeout seconds  (default: 300)
 """
 
 import http.server
@@ -42,6 +43,9 @@ AGENT_ID         = os.getenv("AGENT_ID",                "")
 AGENT_NAME       = os.getenv("AGENT_NAME",              "Flogents Agent")
 AGENT_DESCRIPTION= os.getenv("AGENT_DESCRIPTION",       "")
 AUTH_HEADER      = os.getenv("AUTH_HEADER",             "Basic ZmxvZ286Y2hhbmdlbWU=")
+# How long to wait for upstream LLM responses. Large local models (32B+) can
+# take several minutes on CPU/low-VRAM hardware — default 300s.
+REQUEST_TIMEOUT  = int(os.getenv("REQUEST_TIMEOUT", "300"))
 
 HTML_FILE = Path(__file__).parent / "index.html"
 
@@ -130,7 +134,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         try:
             req = urllib.request.Request(url, data=body or None,
                                          headers=_AUTH, method=method)
-            with urllib.request.urlopen(req, timeout=90) as resp:
+            with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
                 data = resp.read()
                 ct   = resp.headers.get("Content-Type", "application/json")
                 self._respond(resp.status, data, ct)
@@ -146,7 +150,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
             url += "?" + query_string
         try:
             req = urllib.request.Request(url, headers={"Authorization": AUTH_HEADER})
-            with urllib.request.urlopen(req, timeout=120) as resp:
+            with urllib.request.urlopen(req, timeout=max(120, REQUEST_TIMEOUT)) as resp:
                 self.send_response(200)
                 self.send_header("Content-Type", "text/event-stream")
                 self.send_header("Cache-Control", "no-cache")

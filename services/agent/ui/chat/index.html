@@ -563,7 +563,7 @@ async function sendChatSSE(message) {
         // Fallback to sync path
         sendChatSync(message).then(resolve);
       }
-    }, 60000);
+    }, 300000);  // 300s — generous for large local models (32B+ can take 3-5 min)
 
     const es = new EventSource(`/proxy/events?topic=${encodeURIComponent(sessionId)}`);
     activeES = es;
