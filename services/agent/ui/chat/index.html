@@ -104,6 +104,7 @@ body { background: #0f1117; color: #e2e8f0; display: flex; flex-direction: colum
 .finding.info .severity-badge { background: #0c1a3a; color: #93c5fd; }
 .finding-text { flex: 1; line-height: 1.5; }
 .finding-rule { font-size: 10px; color: #475569; margin-top: 3px; font-family: monospace; }
+.finding-recommendation { font-size: 12px; color: #67e8f9; background: #0a1a2a; border-left: 2px solid #0e7490; padding: 5px 8px; margin-top: 6px; border-radius: 4px; line-height: 1.5; white-space: pre-wrap; }
 
 /* Typing indicator */
 .typing { display: flex; align-items: center; gap: 5px; padding: 12px 16px; }
@@ -465,12 +466,14 @@ function renderFindings(result) {
       const sev = (f.severity || "info").toLowerCase();
       const msg = escHtml(f.message || f.issue || "Issue detected");
       const loc = f.location || f.path || "";
-      const code = f.ruleCode || f.rule || "";
+      const code = f.ruleCode || f.rule_id || f.rule || "";
+      const rec = f.recommendation ? f.recommendation.trim() : "";
       html += `<div class="finding ${sev}">
         <span class="severity-badge">${sev.toUpperCase()}</span>
         <div class="finding-text">
           ${msg}
           ${loc || code ? `<div class="finding-rule">${code ? code + "  " : ""}${loc ? "@ " + escHtml(loc) : ""}</div>` : ""}
+          ${rec ? `<div class="finding-recommendation">💡 ${escHtml(rec)}</div>` : ""}
         </div>
       </div>`;
     });
