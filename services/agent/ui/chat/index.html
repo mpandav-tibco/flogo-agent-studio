@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flogents</title>
+<style>
+/* ── Reset & base ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+body { background: #0f1117; color: #e2e8f0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* ── Layout ─────────────────────────────────────────────────────────────────── */
+#header { flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #1e2030; background: #13141f; }
+#header .agent-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #7c3aed); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+#header .agent-info { flex: 1; min-width: 0; }
+#header .agent-name { font-weight: 600; font-size: 15px; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#header .agent-desc { font-size: 12px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+#header .header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+#header button { background: #1e2030; border: 1px solid #2a2b3d; color: #94a3b8; padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 5px; }
+#header button:hover { background: #252640; color: #e2e8f0; border-color: #3a3b52; }
+
+#messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
+#messages::-webkit-scrollbar { width: 5px; }
+#messages::-webkit-scrollbar-track { background: transparent; }
+#messages::-webkit-scrollbar-thumb { background: #2a2b3d; border-radius: 3px; }
+
+#input-area { flex-shrink: 0; padding: 16px 20px 20px; border-top: 1px solid #1e2030; background: #13141f; }
+#input-row { display: flex; gap: 10px; align-items: flex-end; }
+#msg-input { flex: 1; background: #1a1b2e; border: 1px solid #2a2b3d; border-radius: 12px; color: #e2e8f0; padding: 12px 16px; font-size: 14px; resize: none; outline: none; max-height: 160px; line-height: 1.5; transition: border-color .15s; font-family: inherit; }
+#msg-input:focus { border-color: #4f46e5; }
+#msg-input::placeholder { color: #475569; }
+#input-actions { display: flex; gap: 8px; align-items: flex-end; }
+.icon-btn { width: 42px; height: 42px; border-radius: 10px; border: 1px solid #2a2b3d; background: #1a1b2e; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; flex-shrink: 0; }
+.icon-btn:hover:not(:disabled) { background: #252640; color: #e2e8f0; border-color: #4f46e5; }
+.icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+#send-btn { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+#send-btn:hover:not(:disabled) { background: #4338ca; border-color: #4338ca; color: #fff; }
+#send-btn:disabled { background: #312e81; border-color: #312e81; }
+#file-input { display: none; }
+#upload-indicator { font-size: 12px; color: #6366f1; margin-top: 8px; display: none; align-items: center; gap: 6px; }
+
+/* ── Messages ────────────────────────────────────────────────────────────────── */
+.msg { display: flex; gap: 10px; max-width: 820px; animation: fadeIn .2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.msg.user { align-self: flex-end; flex-direction: row-reverse; }
+.msg.assistant { align-self: flex-start; }
+
+.avatar { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; margin-top: 2px; }
+.msg.user .avatar { background: #3730a3; }
+.msg.assistant .avatar { background: linear-gradient(135deg, #1e40af, #4f46e5); }
+
+.bubble { max-width: calc(100% - 42px); }
+.msg.user .bubble { text-align: right; }
+
+.bubble-content { padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.6; word-break: break-word; }
+.msg.user .bubble-content { background: #3730a3; border-bottom-right-radius: 4px; color: #e0e7ff; }
+.msg.assistant .bubble-content { background: #1a1b2e; border: 1px solid #2a2b3d; border-bottom-left-radius: 4px; color: #e2e8f0; }
+.bubble-content.streaming { border-color: #4f46e5; }
+
+/* Markdown styles inside bubbles */
+.bubble-content h1, .bubble-content h2, .bubble-content h3 { margin: 12px 0 6px; color: #f1f5f9; font-weight: 600; }
+.bubble-content h1 { font-size: 18px; } .bubble-content h2 { font-size: 16px; } .bubble-content h3 { font-size: 14px; }
+.bubble-content p { margin: 6px 0; }
+.bubble-content p:first-child { margin-top: 0; }
+.bubble-content p:last-child { margin-bottom: 0; }
+.bubble-content ul, .bubble-content ol { margin: 6px 0 6px 20px; }
+.bubble-content li { margin: 3px 0; }
+.bubble-content code { background: #0d0e1a; border: 1px solid #2a2b3d; padding: 1px 5px; border-radius: 4px; font-family: "SF Mono", "Fira Code", monospace; font-size: 12.5px; color: #a5b4fc; }
+.bubble-content pre { background: #0d0e1a; border: 1px solid #2a2b3d; border-radius: 8px; padding: 12px; margin: 8px 0; overflow-x: auto; }
+.bubble-content pre code { background: none; border: none; padding: 0; font-size: 13px; color: #c4b5fd; }
+.bubble-content strong { color: #f1f5f9; }
+.bubble-content hr { border: none; border-top: 1px solid #2a2b3d; margin: 10px 0; }
+.bubble-content a { color: #818cf8; text-decoration: none; }
+.bubble-content a:hover { text-decoration: underline; }
+.bubble-content blockquote { border-left: 3px solid #4f46e5; padding-left: 12px; margin: 8px 0; color: #94a3b8; }
+
+.msg-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.msg.user .msg-meta { justify-content: flex-end; }
+.msg-time { font-size: 11px; color: #475569; }
+.feedback-btns { display: flex; gap: 4px; }
+.fb-btn { background: none; border: 1px solid #2a2b3d; border-radius: 6px; padding: 2px 7px; font-size: 12px; cursor: pointer; color: #475569; transition: all .15s; }
+.fb-btn:hover { border-color: #4f46e5; color: #818cf8; }
+.fb-btn.active-up { border-color: #22c55e; color: #22c55e; background: #052e16; }
+.fb-btn.active-down { border-color: #ef4444; color: #ef4444; background: #2d0d0d; }
+
+/* Sources accordion */
+.sources-toggle { background: none; border: none; color: #6366f1; font-size: 12px; cursor: pointer; padding: 0; margin-top: 8px; display: flex; align-items: center; gap: 4px; transition: color .15s; }
+.sources-toggle:hover { color: #818cf8; }
+.sources-body { display: none; margin-top: 8px; border-left: 2px solid #2a2b3d; padding-left: 12px; }
+.sources-body.open { display: block; }
+.source-item { font-size: 12px; color: #64748b; margin-bottom: 8px; line-height: 1.5; }
+.source-num { color: #6366f1; font-weight: 600; margin-right: 4px; }
+
+/* Findings */
+.findings-header { font-size: 13px; font-weight: 600; color: #94a3b8; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.finding { display: flex; gap-0: 0; font-size: 13px; margin-bottom: 6px; padding: 8px 10px; background: #0d0e1a; border-radius: 8px; border-left: 3px solid #374151; }
+.finding.error { border-left-color: #ef4444; }
+.finding.warning { border-left-color: #f59e0b; }
+.finding.info { border-left-color: #3b82f6; }
+.severity-badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-right: 8px; flex-shrink: 0; align-self: flex-start; margin-top: 1px; }
+.finding.error .severity-badge { background: #450a0a; color: #fca5a5; }
+.finding.warning .severity-badge { background: #451a03; color: #fcd34d; }
+.finding.info .severity-badge { background: #0c1a3a; color: #93c5fd; }
+.finding-text { flex: 1; line-height: 1.5; }
+.finding-rule { font-size: 10px; color: #475569; margin-top: 3px; font-family: monospace; }
+
+/* Typing indicator */
+.typing { display: flex; align-items: center; gap: 5px; padding: 12px 16px; }
+.dot { width: 7px; height: 7px; background: #4f46e5; border-radius: 50%; animation: bounce .9s infinite; }
+.dot:nth-child(2) { animation-delay: .15s; }
+.dot:nth-child(3) { animation-delay: .3s; }
+@keyframes bounce { 0%, 80%, 100% { transform: translateY(0); opacity: .5; } 40% { transform: translateY(-6px); opacity: 1; } }
+
+/* Empty state */
+#empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #475569; padding: 40px; text-align: center; }
+#empty-state .icon { font-size: 40px; margin-bottom: 4px; }
+#empty-state h2 { color: #94a3b8; font-size: 18px; font-weight: 600; }
+#empty-state p { font-size: 14px; max-width: 360px; line-height: 1.6; }
+.suggestion-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+.chip { background: #1a1b2e; border: 1px solid #2a2b3d; border-radius: 20px; padding: 6px 14px; font-size: 13px; color: #94a3b8; cursor: pointer; transition: all .15s; }
+.chip:hover { background: #252640; border-color: #4f46e5; color: #a5b4fc; }
+
+/* Toast */
+#toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #1e2030; border: 1px solid #2a2b3d; color: #e2e8f0; padding: 10px 18px; border-radius: 10px; font-size: 13px; display: none; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,.5); }
+#toast.error { border-color: #ef4444; color: #fca5a5; }
+
+/* Scrollbar for code blocks */
+pre::-webkit-scrollbar { height: 4px; }
+pre::-webkit-scrollbar-track { background: transparent; }
+pre::-webkit-scrollbar-thumb { background: #2a2b3d; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="header">
+  <div class="agent-avatar">🤖</div>
+  <div class="agent-info">
+    <div class="agent-name" id="agent-name">Flogents Agent</div>
+    <div class="agent-desc" id="agent-desc">AI assistant powered by Flogo</div>
+  </div>
+  <div class="header-actions">
+    <button id="upload-btn" title="Analyze a file with the Rule Engine">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Analyze file
+    </button>
+    <button id="new-chat-btn" title="Start a new conversation">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      New chat
+    </button>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept=".yaml,.yml,.json,.txt,.log,.flogo">
+
+<!-- Message list -->
+<div id="messages">
+  <div id="empty-state">
+    <div class="icon">💬</div>
+    <h2 id="empty-name">Ask me anything</h2>
+    <p id="empty-desc">I can answer questions, analyse files, and help with your work.</p>
+    <div class="suggestion-chips" id="chips"></div>
+  </div>
+</div>
+
+<!-- Input area -->
+<div id="input-area">
+  <div id="upload-indicator" id="upload-bar">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <span id="upload-filename"></span>
+    <button onclick="clearUpload()" style="background:none;border:none;color:#ef4444;cursor:pointer;padding:0 2px;font-size:14px;" title="Remove">✕</button>
+  </div>
+  <div id="input-row">
+    <textarea id="msg-input" rows="1" placeholder="Type a message…" maxlength="16000"></textarea>
+    <div id="input-actions">
+      <button class="icon-btn" id="send-btn" title="Send (Enter)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Config injected by server.py ─────────────────────────────────────────────
+const CFG = window.FLOGENTS_CONFIG || { agentId: "", agentName: "Flogents Agent", agentDescription: "" };
+
+// ── State ────────────────────────────────────────────────────────────────────
+let sessionId     = crypto.randomUUID();
+let messageCount  = 0;
+let isBusy        = false;
+let pendingFile   = null;   // { name, content } for rule engine upload
+let activeES      = null;   // active EventSource for SSE
+
+// ── DOM refs ─────────────────────────────────────────────────────────────────
+const $messages  = document.getElementById("messages");
+const $input     = document.getElementById("msg-input");
+const $sendBtn   = document.getElementById("send-btn");
+const $emptyState= document.getElementById("empty-state");
+const $fileInput = document.getElementById("file-input");
+const $uploadInd = document.getElementById("upload-indicator");
+const $uploadName= document.getElementById("upload-filename");
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.getElementById("agent-name").textContent  = CFG.agentName;
+document.getElementById("agent-desc").textContent  = CFG.agentDescription || "AI assistant powered by Flogo";
+document.getElementById("empty-name").textContent  = CFG.agentName;
+document.getElementById("empty-desc").textContent  = CFG.agentDescription || "Ask me anything. I can also analyse files using the Rule Engine — click 'Analyze file' above.";
+document.title = CFG.agentName || "Flogents";
+
+// Suggestion chips keyed by agent name keywords
+const CHIP_SETS = {
+  devops:   ["How do I debug a crashlooping pod?", "Review this Kubernetes manifest", "What's the best way to set resource limits?"],
+  support:  ["How do I reset my password?", "My order hasn't arrived", "I need help with billing"],
+  product:  ["Write a user story for authentication", "Prioritise these features", "Draft a release note"],
+  default:  ["What can you help me with?", "Analyse a file", "Explain your capabilities"],
+};
+const nameL = (CFG.agentName || "").toLowerCase();
+const chips = nameL.includes("devops") || nameL.includes("sre") ? CHIP_SETS.devops
+            : nameL.includes("support") || nameL.includes("customer") ? CHIP_SETS.support
+            : nameL.includes("product") || nameL.includes("manager") ? CHIP_SETS.product
+            : CHIP_SETS.default;
+const $chips = document.getElementById("chips");
+chips.forEach(c => {
+  const el = document.createElement("button");
+  el.className = "chip";
+  el.textContent = c;
+  el.onclick = () => { $input.value = c; autoResize(); $input.focus(); };
+  $chips.appendChild(el);
+});
+
+// ── Minimal Markdown renderer ─────────────────────────────────────────────────
+function escHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function renderMarkdown(raw) {
+  if (!raw) return "";
+  // Extract code blocks first to protect them from other transforms
+  const codeBlocks = [];
+  let s = raw.replace(/```([\w]*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const idx = codeBlocks.length;
+    codeBlocks.push(`<pre><code class="lang-${lang || "text"}">${escHtml(code.trimEnd())}</code></pre>`);
+    return `\x00CB${idx}\x00`;
+  });
+
+  // Inline code
+  s = s.replace(/`([^`\n]+)`/g, (_, c) => `<code>${escHtml(c)}</code>`);
+  // Headers
+  s = s.replace(/^#{3}\s+(.+)$/gm, "<h3>$1</h3>");
+  s = s.replace(/^#{2}\s+(.+)$/gm, "<h2>$1</h2>");
+  s = s.replace(/^#\s+(.+)$/gm, "<h1>$1</h1>");
+  // Horizontal rule
+  s = s.replace(/^---+$/gm, "<hr>");
+  // Bold & italic
+  s = s.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
+  s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/\*(.+?)\*/g, "<em>$1</em>");
+  // Blockquote
+  s = s.replace(/^>\s+(.+)$/gm, "<blockquote>$1</blockquote>");
+  // Lists — gather consecutive li lines and wrap in ul/ol
+  s = s.replace(/^(\d+)\.\s+(.+)$/gm, "<li data-ol>$2</li>");
+  s = s.replace(/^[\*\-]\s+(.+)$/gm, "<li>$2</li>"); // note: $2 is wrong, fix:
+  s = s.replace(/^[\*\-]\s+(.+)$/gm, "<li>$1</li>");
+  // Wrap ol li blocks
+  s = s.replace(/(<li data-ol>[^]*?<\/li>\n?)+/g, m => `<ol>${m.replace(/ data-ol/g,"")}</ol>`);
+  // Wrap ul li blocks
+  s = s.replace(/(<li>[^]*?<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
+  // Links
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  // Paragraphs (double newline)
+  s = s.split(/\n{2,}/).map(para => {
+    para = para.trim();
+    if (!para) return "";
+    if (/^<(h[1-3]|hr|ul|ol|pre|blockquote)/.test(para)) return para;
+    return `<p>${para.replace(/\n/g, "<br>")}</p>`;
+  }).join("\n");
+  // Restore code blocks
+  s = s.replace(/\x00CB(\d+)\x00/g, (_, i) => codeBlocks[+i]);
+  return s;
+}
+
+// ── Timestamp helper ──────────────────────────────────────────────────────────
+function nowStr() {
+  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let _toastTimer;
+function showToast(msg, isError = false) {
+  const $t = document.getElementById("toast");
+  $t.textContent = msg;
+  $t.className = isError ? "error" : "";
+  $t.style.display = "block";
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { $t.style.display = "none"; }, 3500);
+}
+
+// ── Message rendering ─────────────────────────────────────────────────────────
+function addMessage(role, htmlContent, opts = {}) {
+  messageCount++;
+  const id = `msg-${messageCount}`;
+  if ($emptyState) $emptyState.style.display = "none";
+
+  const avatar  = role === "user" ? "🧑" : "🤖";
+  const timeStr = opts.time || nowStr();
+
+  const msgEl = document.createElement("div");
+  msgEl.className = `msg ${role}`;
+  msgEl.id = id;
+  msgEl.innerHTML = `
+    <div class="avatar">${avatar}</div>
+    <div class="bubble">
+      <div class="bubble-content${opts.streaming ? " streaming" : ""}" id="${id}-content">${htmlContent}</div>
+      <div class="msg-meta">
+        <span class="msg-time">${timeStr}</span>
+        ${role === "assistant" ? `
+          <div class="feedback-btns">
+            <button class="fb-btn" id="${id}-up"   onclick="sendFeedback('${id}','up')"   title="Good response">👍</button>
+            <button class="fb-btn" id="${id}-down" onclick="sendFeedback('${id}','down')" title="Poor response">👎</button>
+          </div>` : ""}
+      </div>
+    </div>`;
+  $messages.appendChild(msgEl);
+  scrollToBottom();
+  return id;
+}
+
+function appendToMessage(id, html) {
+  const el = document.getElementById(`${id}-content`);
+  if (el) el.innerHTML = html;
+  scrollToBottom();
+}
+
+function finaliseMessage(id) {
+  const el = document.getElementById(`${id}-content`);
+  if (el) el.classList.remove("streaming");
+}
+
+function addSources(msgId, formattedContext) {
+  if (!formattedContext || !formattedContext.trim()) return;
+  const parts  = formattedContext.split(/\n\n/).filter(p => p.trim());
+  if (!parts.length) return;
+
+  const bubble = document.getElementById(`${msgId}-content`);
+  if (!bubble) return;
+
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = `
+    <button class="sources-toggle" onclick="toggleSources('${msgId}-sources')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      View sources (${parts.length})
+    </button>
+    <div class="sources-body" id="${msgId}-sources">
+      ${parts.map((p, i) => `<div class="source-item"><span class="source-num">[${i+1}]</span>${escHtml(p.replace(/^\d+\.\s*/, "").substring(0, 400))}${p.length > 400 ? "…" : ""}</div>`).join("")}
+    </div>`;
+  bubble.appendChild(wrapper);
+}
+
+function toggleSources(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle("open");
+}
+
+function addTypingIndicator() {
+  const id = `typing-${Date.now()}`;
+  const el = document.createElement("div");
+  el.className = "msg assistant";
+  el.id = id;
+  el.innerHTML = `
+    <div class="avatar">🤖</div>
+    <div class="bubble">
+      <div class="bubble-content">
+        <div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>
+    </div>`;
+  $messages.appendChild(el);
+  scrollToBottom();
+  return id;
+}
+
+function removeElement(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function scrollToBottom() {
+  requestAnimationFrame(() => { $messages.scrollTop = $messages.scrollHeight; });
+}
+
+// ── Feedback ──────────────────────────────────────────────────────────────────
+const _feedbackState = {};
+async function sendFeedback(msgId, rating) {
+  if (_feedbackState[msgId] === rating) return;
+  _feedbackState[msgId] = rating;
+  document.getElementById(`${msgId}-up`)?.classList.toggle("active-up",   rating === "up");
+  document.getElementById(`${msgId}-down`)?.classList.toggle("active-down", rating === "down");
+  try {
+    await fetch("/proxy/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ agentId: CFG.agentId, sessionId, messageId: msgId, rating }),
+    });
+  } catch (_) { /* fire-and-forget */ }
+}
+
+// ── Rule Engine analysis ──────────────────────────────────────────────────────
+function renderFindings(result) {
+  const findings = result.findings || [];
+  const ec = result.errorCount || 0, wc = result.warningCount || 0, ic = result.infoCount || 0;
+  let html = `<div class="findings-header">
+    🔍 Rule Engine Analysis &nbsp;
+    ${ec ? `<span style="color:#ef4444">✗ ${ec} error${ec>1?"s":""}</span>` : ""}
+    ${wc ? `<span style="color:#f59e0b">⚠ ${wc} warning${wc>1?"s":""}</span>` : ""}
+    ${ic ? `<span style="color:#3b82f6">ℹ ${ic} info</span>` : ""}
+    ${(!ec && !wc && !ic) ? '<span style="color:#22c55e">✓ All clear</span>' : ""}
+  </div>`;
+  if (!findings.length) {
+    html += `<p style="font-size:13px;color:#64748b">No issues found.</p>`;
+  } else {
+    findings.slice(0, 20).forEach(f => {
+      const sev = (f.severity || "info").toLowerCase();
+      const msg = escHtml(f.message || f.issue || "Issue detected");
+      const loc = f.location || f.path || "";
+      const code = f.ruleCode || f.rule || "";
+      html += `<div class="finding ${sev}">
+        <span class="severity-badge">${sev.toUpperCase()}</span>
+        <div class="finding-text">
+          ${msg}
+          ${loc || code ? `<div class="finding-rule">${code ? code + "  " : ""}${loc ? "@ " + escHtml(loc) : ""}</div>` : ""}
+        </div>
+      </div>`;
+    });
+    if (findings.length > 20) {
+      html += `<p style="font-size:12px;color:#475569;margin-top:6px">… and ${findings.length - 20} more findings.</p>`;
+    }
+  }
+  return html;
+}
+
+async function analyzeFile(name, content) {
+  const typingId = addTypingIndicator();
+  try {
+    const resp = await fetch("/proxy/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fileName: name, content }),
+    });
+    removeElement(typingId);
+    if (!resp.ok) throw new Error(`Service error ${resp.status}`);
+    const result = await resp.json();
+    const msgId = addMessage("assistant", renderFindings(result));
+    if (result.markdown) {
+      // Also show the markdown summary as additional context if present and non-trivial
+    }
+    return msgId;
+  } catch (err) {
+    removeElement(typingId);
+    addMessage("assistant", `<p style="color:#fca5a5">⚠ Rule Engine error: ${escHtml(err.message)}</p>`);
+  }
+}
+
+// ── Chat — sync path ──────────────────────────────────────────────────────────
+async function sendChatSync(message) {
+  const requestId = crypto.randomUUID();
+  const typingId  = addTypingIndicator();
+  try {
+    const resp = await fetch("/proxy/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        agentId:    CFG.agentId,
+        sessionId,
+        requestId,
+        topK: 5,
+      }),
+    });
+    removeElement(typingId);
+    if (!resp.ok) {
+      const txt = await resp.text().catch(() => resp.statusText);
+      throw new Error(`${resp.status}: ${txt.substring(0, 120)}`);
+    }
+    const data = await resp.json();
+    const answer = data.answer || data.data?.answer || "(no response)";
+    const ctx    = data.formattedContext || data.data?.formattedContext || "";
+    const msgId  = addMessage("assistant", renderMarkdown(answer));
+    addSources(msgId, ctx);
+    return msgId;
+  } catch (err) {
+    removeElement(typingId);
+    addMessage("assistant", `<p style="color:#fca5a5">⚠ Error: ${escHtml(err.message)}</p>`);
+  }
+}
+
+// ── Chat — SSE streaming path ─────────────────────────────────────────────────
+async function sendChatSSE(message) {
+  const requestId = crypto.randomUUID();
+
+  // 1. Trigger the pipeline (fire-and-forget POST)
+  try {
+    await fetch("/proxy/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, agentId: CFG.agentId, sessionId, requestId, topK: 5 }),
+    });
+  } catch (_) { /* pipeline trigger error — fall through to sync fallback */ }
+
+  // 2. Show typing indicator and open SSE event bus
+  const typingId = addTypingIndicator();
+  let   msgId    = null;
+  let   resolved = false;
+
+  return new Promise(resolve => {
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        if (activeES) { activeES.close(); activeES = null; }
+        removeElement(typingId);
+        // Fallback to sync path
+        sendChatSync(message).then(resolve);
+      }
+    }, 60000);
+
+    const es = new EventSource(`/proxy/events?topic=${encodeURIComponent(sessionId)}`);
+    activeES = es;
+
+    es.addEventListener("stream.answer", e => {
+      try {
+        const d = JSON.parse(e.data);
+        if (d.sessionId !== sessionId) return;
+        removeElement(typingId);
+        const answer = d.answer || "";
+        const ctx    = d.sources ? d.sources.map((s, i) =>
+          `${i+1}. ${(s.content || s.pageContent || "").substring(0, 400)}`).join("\n\n") : "";
+        msgId = addMessage("assistant", renderMarkdown(answer));
+        addSources(msgId, ctx);
+      } catch (_) {}
+    });
+
+    es.addEventListener("stream.done", e => {
+      try {
+        const d = JSON.parse(e.data);
+        if (d.sessionId !== sessionId) return;
+        resolved = true;
+        clearTimeout(timeout);
+        es.close(); activeES = null;
+        removeElement(typingId);
+        resolve(msgId);
+      } catch (_) {}
+    });
+
+    es.onerror = () => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        es.close(); activeES = null;
+        removeElement(typingId);
+        // Fallback to sync if SSE errors before we get an answer
+        if (!msgId) {
+          sendChatSync(message).then(resolve);
+        } else {
+          resolve(msgId);
+        }
+      }
+    };
+  });
+}
+
+// ── Main send handler ─────────────────────────────────────────────────────────
+async function handleSend() {
+  if (isBusy) return;
+  const text = $input.value.trim();
+
+  // Handle pending file upload (rule engine analysis)
+  if (pendingFile && (!text || isAnalysisIntent(text))) {
+    isBusy = true;
+    setBusy(true);
+    const userMsg = text || `Analyse: ${pendingFile.name}`;
+    addMessage("user", escHtml(userMsg));
+    $input.value = "";
+    autoResize();
+    const { name, content } = pendingFile;
+    clearUpload();
+    await analyzeFile(name, content);
+    isBusy = false;
+    setBusy(false);
+    return;
+  }
+
+  if (!text) return;
+  isBusy = true;
+  setBusy(true);
+  addMessage("user", escHtml(text));
+  $input.value = "";
+  autoResize();
+
+  // Use SSE path — falls back to sync on timeout/error
+  await sendChatSSE(text);
+
+  isBusy = false;
+  setBusy(false);
+  $input.focus();
+}
+
+function isAnalysisIntent(text) {
+  const kw = ["analyz","analys","scan","review","check","inspect","validate","findings","issues","errors","warnings","rule"];
+  return kw.some(k => text.toLowerCase().includes(k));
+}
+
+function setBusy(on) {
+  $sendBtn.disabled = on;
+  $input.disabled   = on;
+}
+
+// ── File upload ───────────────────────────────────────────────────────────────
+document.getElementById("upload-btn").onclick = () => $fileInput.click();
+$fileInput.onchange = async () => {
+  const file = $fileInput.files[0];
+  if (!file) return;
+  $fileInput.value = "";
+  const ALLOWED = new Set([".yaml",".yml",".json",".txt",".log",".flogo"]);
+  const ext = "." + file.name.split(".").pop().toLowerCase();
+  if (!ALLOWED.has(ext)) { showToast(`File type '${ext}' not supported. Use: yaml, yml, json, txt, log, flogo`, true); return; }
+  if (file.size > 512 * 1024) { showToast("File too large (max 512 KB)", true); return; }
+  try {
+    const content = await file.text();
+    pendingFile = { name: file.name, content };
+    $uploadName.textContent = file.name;
+    $uploadInd.style.display = "flex";
+    $input.placeholder = `Ask about ${file.name} or press Send to analyse…`;
+    $input.focus();
+  } catch (e) {
+    showToast("Could not read file: " + e.message, true);
+  }
+};
+
+function clearUpload() {
+  pendingFile = null;
+  $uploadInd.style.display = "none";
+  $input.placeholder = "Type a message…";
+}
+
+// ── Input auto-resize ─────────────────────────────────────────────────────────
+function autoResize() {
+  $input.style.height = "auto";
+  $input.style.height = Math.min($input.scrollHeight, 160) + "px";
+}
+$input.addEventListener("input", autoResize);
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────────
+$input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+$sendBtn.onclick = handleSend;
+document.getElementById("new-chat-btn").onclick = () => {
+  if (activeES) { activeES.close(); activeES = null; }
+  sessionId = crypto.randomUUID();
+  messageCount = 0;
+  isBusy = false;
+  setBusy(false);
+  clearUpload();
+  $input.value = "";
+  autoResize();
+  while ($messages.firstChild) $messages.removeChild($messages.firstChild);
+  $messages.appendChild($emptyState);
+  $emptyState.style.display = "";
+};
+
+// Drag & drop files anywhere on the page
+document.addEventListener("dragover", e => e.preventDefault());
+document.addEventListener("drop", async e => {
+  e.preventDefault();
+  const file = e.dataTransfer?.files?.[0];
+  if (!file) return;
+  const ALLOWED = new Set([".yaml",".yml",".json",".txt",".log",".flogo"]);
+  const ext = "." + file.name.split(".").pop().toLowerCase();
+  if (!ALLOWED.has(ext)) { showToast(`File type '${ext}' not supported`, true); return; }
+  const content = await file.text().catch(() => null);
+  if (!content) { showToast("Could not read file", true); return; }
+  pendingFile = { name: file.name, content };
+  $uploadName.textContent = file.name;
+  $uploadInd.style.display = "flex";
+  $input.placeholder = `Ask about ${file.name} or press Send to analyse…`;
+  showToast(`📎 ${file.name} ready — press Send to analyse`);
+});
+
+// Focus input on load
+$input.focus();
+</script>
+</body>
+</html>
