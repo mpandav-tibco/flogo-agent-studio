@@ -44,6 +44,7 @@ Usage:
 import asyncio
 import base64
 import datetime
+import hashlib
 import json
 import logging
 import os
@@ -521,6 +522,24 @@ async def _patch_agent_urls(agent_id: str, record: dict):
         log.warning("patch_agent_urls %s: %s", agent_id[:8], exc)
 
 
+# ── Config-change detection ───────────────────────────────────────────────────
+
+# Fields baked into env files at startup — changing them requires a process restart.
+_CONFIG_HASH_KEYS = (
+    "llmModel", "llmProvider", "llmBaseUrl",
+    "embeddingModel", "embeddingProvider", "embeddingBaseUrl",
+    "systemPrompt", "collectionName", "chunkStrategy",
+    "enableGuardrails", "redactSensitiveData",
+    "rateLimit", "tokenLimit", "reasoningEffort",
+    "specialistAgentUrl",
+)
+
+def _config_hash(cfg: dict) -> str:
+    """Stable MD5 fingerprint of config fields that affect running processes."""
+    snapshot = {k: cfg.get(k, "") for k in _CONFIG_HASH_KEYS}
+    return hashlib.md5(json.dumps(snapshot, sort_keys=True).encode()).hexdigest()
+
+
 # ── Agent runtime lifecycle ───────────────────────────────────────────────────
 
 async def _start_runtime(agent: dict) -> dict:
@@ -742,6 +761,7 @@ async def _start_runtime(agent: dict) -> dict:
         "historyUrl":   f"http://localhost:{PORT}/api/sessions",
         "startedAt":    time.time(),
         "readiness":    "starting",
+        "configHash":   _config_hash(cfg),
     }
 
     async with _state_lock:
@@ -1017,6 +1037,26 @@ async def _reconcile_once():
     # Health-check running agents and restart crashed processes
     for agent_id in list(_state.keys()):
         await _restart_dead_processes(agent_id)
+
+    # Detect config changes for running agents and restart them
+    # (env files are written once at startup; changes in the UI won't take
+    #  effect until the Flogo process is restarted with the new config).
+    for agent in agents:
+        aid = agent["id"]
+        if aid not in _state:
+            continue
+        if _state[aid].get("readiness") != "ready":
+            continue   # still starting — check next cycle
+        current_hash = _config_hash(agent.get("_cfg", {}))
+        stored_hash  = _state[aid].get("configHash", "")
+        if stored_hash and current_hash != stored_hash:
+            log.info("Reconcile: config changed for [%s] (%s) — restarting",
+                     aid[:8], agent.get("name"))
+            try:
+                await _stop_runtime(aid)
+                await _start_runtime(agent)
+            except Exception as exc:
+                log.error("Failed to restart [%s] on config change: %s", aid[:8], exc)
 
 
 # ── Docker Compose deployment ────────────────────────────────────────────────
