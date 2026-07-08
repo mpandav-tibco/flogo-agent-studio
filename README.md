@@ -277,6 +277,61 @@ graph LR
 
 ---
 
+## Dependencies
+
+### Runtime infrastructure
+
+| Dependency | Version | How to get it | Purpose |
+|------------|---------|---------------|---------|
+| **Weaviate** | 1.24.6+ | `docker compose up weaviate -d` | Vector database — hybrid BM25 + vector search |
+| **PostgreSQL** | 16+ | `docker compose up postgres -d` | Agent registry persistence |
+| **Ollama** (or OpenAI-compatible endpoint) | latest | [ollama.com](https://ollama.com) or `docker compose up ollama -d` | LLM inference + embedding models |
+| **Docker Engine + Compose v2** | 24+ / 2.20+ | [docs.docker.com](https://docs.docker.com/get-docker/) | Required for container activation mode; also used to run Weaviate + PostgreSQL |
+
+### Python runtime
+
+The Runtime Manager (`deployment/deployment.py`) requires **Python 3.9+** and three third-party packages:
+
+```bash
+pip install asyncpg httpx aiohttp
+```
+
+| Package | Purpose |
+|---------|--------|
+| `asyncpg` | Async PostgreSQL driver — agent registry reads/writes |
+| `httpx` | Async HTTP client — health checks and service calls |
+| `aiohttp` | Async HTTP server — Runtime Manager REST API on port 7050 |
+
+All other Python scripts in the repo (`services/launch.py`, `services/agent/ui/chat/server.py`) use the standard library only — no additional packages needed.
+
+### Ollama models
+
+At minimum you need one embedding model. LLM is configurable per agent.
+
+```bash
+ollama pull nomic-embed-text     # embedding model (required — 768-dim vectors)
+ollama pull llama3.1:8b          # example LLM — any model works
+```
+
+Alternatively configure any OpenAI-compatible endpoint (`llmProvider`, `llmBaseUrl`) per agent — no Ollama required in that case, though you still need an embedding model.
+
+### Build-time (only if rebuilding Flogo binaries from source)
+
+| Dependency | Where to get it | Notes |
+|------------|-----------------|-------|
+| `flogobuild` CLI | Bundled in `tools/flogobuild/` | macOS arm64 and linux amd64 included. No separate download needed for supported platforms. |
+| TIBCO Flogo VS Code extension VSIX | TIBCO download portal | Required to create the `flogobuild` context (`flogobuild create-context`). Only needed when building from source. |
+
+Pre-built binaries for macOS (Apple Silicon) are included in `bin/`. For Linux builds use the `.devcontainer` — see `.devcontainer/devcontainer.json`.
+
+### What you do NOT need
+
+- **Node.js / npm** — the Flogents UI (`services/platform/ui/forge/`) is pre-built; static assets are served directly by the platform-service binary.
+- **Go toolchain** — Flogo binaries are pre-compiled; Go is only needed if you modify `.flogo` source files and rebuild.
+- **Redis / Kafka / any message broker** — the platform has no external messaging dependency.
+
+---
+
 ## Quick Start
 
 ### Prerequisites
@@ -502,7 +557,7 @@ OTEL_ENABLED=false ./start-all.sh
 | Embeddings | any of your choice|
 | Agent persistence | PostgreSQL |
 | Design portal | React 18 + Vite + Tailwind CSS v3 |
-| Agent Chat UI | Chainlit 1.3+ |
+| Agent Chat UI | stdlib-only Python HTTP server (`services/agent/ui/chat/server.py`) |
 | Deployment Management | Python asyncio (`deployment.py`) |
 | Containerisation | Docker Compose (per-agent generated manifests) |
 | MCP transport | Streamable HTTP / SSE (JSON-RPC 2.0) |
