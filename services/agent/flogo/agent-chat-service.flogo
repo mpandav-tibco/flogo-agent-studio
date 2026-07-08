@@ -5,15 +5,19 @@
     "github.com/tibco/flogo-general/src/app/General/activity/log",
     "github.com/mpandav-tibco/flogo-extensions/vectordb/activity/ragQuery",
     "github.com/project-flogo/contrib/activity/actreturn",
-    "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/activity/agentactivity",
-    "github.com/mpandav-tibco/flogo-custom-extensions/sse/activity",
+    "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/activity/callagent",
     "github.com/tibco/flogo-general/src/app/General/activity/rest",
+    "github.com/mpandav-tibco/flogo-custom-extensions/sse/activity",
     "rest_1 github.com/tibco/flogo-general/src/app/General/trigger/rest",
     "github.com/mpandav-tibco/flogo-custom-extensions/sse/trigger",
+    "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/trigger/agent",
     "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/string",
+    "git.tibco.com/git/product/ipaas/wi-contrib.git/function/boolean",
+    "github.com/project-flogo/contrib/function/array",
     "github.com/mpandav-tibco/flogo-extensions/vectordb/connector",
-    "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/connector/llmprovider"
+    "github.com/tibco/flogo-ai-agent/src/app/AgenticAI/connector/llmprovider",
+    "restff github.com/mpandav-tibco/flogo-custom-extensions/activity/rest-fire-forget"
   ],
   "name": "agent-chat-service",
   "description": "Agent chat + SSE streaming service (merged)",
@@ -431,6 +435,219 @@
           "name": "sse_connect"
         }
       ]
+    },
+    {
+      "ref": "#agent",
+      "name": "flogo-agenticai-agent",
+      "description": "Healthcare Patient Support Agent \u2014 HIPAA-aware, with custom PHI guardrail, file-based conversation store, and 3 patient-service tools.",
+      "settings": {
+        "llmProviderConnection": "conn://llm-provider",
+        "agentName": "ChatAgent",
+        "agentDescription": "RAG chat agent with durable PostgreSQL conversation store",
+        "agentType": "Local",
+        "agentPort": 8081,
+        "agentUrl": "http://localhost:9898",
+        "agentAuthMode": "None",
+        "agentToken": "",
+        "model": "=$property[\"LLM_MODEL\"]",
+        "reasoning": "=$property[\"REASONING_EFFORT\"]",
+        "temperature": 0.1,
+        "enableGuardrails": "=$property[\"ENABLE_GUARDRAILS\"]",
+        "rateLimit": "=$property[\"RATE_LIMIT\"]",
+        "tokenLimit": "=$property[\"TOKEN_LIMIT\"]",
+        "redactSensitiveData": "=$property[\"REDACT_SENSITIVE_DATA\"]",
+        "mcpServers": [],
+        "conversationStoreType": "Custom Store",
+        "memoryMaxSize": 30,
+        "systemPrompt": "You are a helpful assistant. Answer the question using only the provided context. If the context does not contain enough information, say so clearly."
+      },
+      "id": "ChatAgentTrigger",
+      "handlers": [
+        {
+          "description": "Agent tool flow backing the search_knowledge_base tool. Runs retrieve-only hybrid RAG against the vector DB for the agent-supplied query and returns formattedContext as the tool result. In-process; reuses the vectordb-weaviate connection. No external MCP server.",
+          "settings": {
+            "handlerType": "Tool",
+            "agentToolName": "search_knowledge_base",
+            "agentToolDescription": "Search this agent's knowledge base for information relevant to a query. Use this only when the conversation so far does not already contain the facts needed to answer, or when the user explicitly asks you to look something up. Input: a focused natural-language search query. Returns the most relevant passages.",
+            "agentSkillTags": "rag,search,knowledge-base",
+            "agentSkillExamples": "",
+            "customGuardrailType": "BOTH",
+            "customConversationStoreOperation": "STORE"
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:tool_search_kb"
+            },
+            "input": {
+              "toolParams": "=$.toolParams"
+            },
+            "output": {
+              "response": "=$.response"
+            }
+          },
+          "schemas": {
+            "reply": {
+              "response": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"data\":{\"type\":\"string\"},\"error\":{\"type\":\"string\"}}}",
+                "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"data\":{\"type\":\"string\"},\"error\":{\"type\":\"string\"}}}"
+              }
+            },
+            "output": {
+              "toolParams": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\",\"description\":\"The search query to look up in the agent's knowledge base\"}},\"required\":[\"query\"]}",
+                "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\",\"description\":\"The search query to look up in the agent's knowledge base\"}},\"required\":[\"query\"]}"
+              }
+            }
+          },
+          "name": "tool_search_kb"
+        },
+        {
+          "description": "Agent tool flow backing the ask_specialist tool (agent-to-agent handoff). If SPECIALIST_AGENT_URL is set, POSTs the agent-supplied question to that remote agent's chat endpoint via #rest and returns its answer; if unset, returns a graceful 'not configured' message and makes NO network call. In-process; opt-in; zero boot coupling.",
+          "settings": {
+            "handlerType": "Tool",
+            "agentToolName": "ask_specialist",
+            "agentToolDescription": "Delegate a question to a specialist agent when it falls outside your own knowledge base or expertise. Input: a self-contained question to ask the specialist. Returns the specialist's answer. Use this only for questions you cannot answer yourself or from your knowledge base.",
+            "agentSkillTags": "delegation,a2a,handoff",
+            "agentSkillExamples": "",
+            "customGuardrailType": "BOTH",
+            "customConversationStoreOperation": "STORE"
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:tool_ask_specialist"
+            },
+            "input": {
+              "toolParams": "=$.toolParams"
+            },
+            "output": {
+              "response": "=$.response"
+            }
+          },
+          "schemas": {
+            "reply": {
+              "response": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"data\":{\"type\":\"string\"},\"error\":{\"type\":\"string\"}}}",
+                "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"data\":{\"type\":\"string\"},\"error\":{\"type\":\"string\"}}}"
+              }
+            },
+            "output": {
+              "toolParams": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"question\":{\"type\":\"string\",\"description\":\"A self-contained question to delegate to the specialist agent\"}},\"required\":[\"question\"]}",
+                "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"question\":{\"type\":\"string\",\"description\":\"A self-contained question to delegate to the specialist agent\"}},\"required\":[\"question\"]}"
+              }
+            }
+          },
+          "name": "tool_ask_specialist"
+        },
+        {
+          "description": "Custom Conversation Store STORE handler: persists one conversation turn (role, content, metadata) for the agent's conversationId by POSTing it to the durable session store (runtime-manager /api/sessions backed by PostgreSQL chat_history). Best-effort \u2014 an error link still returns success so a transient store outage never fails the user's chat.",
+          "settings": {
+            "handlerType": "Custom Conversation Store",
+            "agentToolName": "",
+            "agentToolDescription": "",
+            "agentSkillTags": "",
+            "agentSkillExamples": "",
+            "customGuardrailType": "BOTH",
+            "customConversationStoreOperation": "STORE"
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:store_conversation_flow"
+            },
+            "input": {
+              "customConversationStoreOpInput": "=$.customConversationStoreOpInput"
+            },
+            "output": {
+              "customConversationStoreOpOutput": "=$.customConversationStoreOpOutput"
+            }
+          },
+          "schemas": {
+            "reply": {
+              "response": {
+                "type": "json",
+                "value": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n  }\r\n}",
+                "fe_metadata": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n  }\r\n}"
+              },
+              "customConversationStoreOpOutput": {
+                "type": "json",
+                "value": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"success\": {\r\n      \"type\": \"boolean\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n  },\r\n  \"required\": [\r\n    \"success\"\r\n  ]\r\n}",
+                "fe_metadata": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"success\": {\r\n      \"type\": \"boolean\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n  },\r\n  \"required\": [\r\n    \"success\"\r\n  ]\r\n}"
+              }
+            },
+            "output": {
+              "customGuardrailInput": {
+                "type": "json",
+                "value": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"isRequest\": {\r\n      \"type\": \"boolean\"\r\n    }\r\n  },\r\n  \"required\": [\r\n    \"data\",\"isRequest\"\r\n ]\r\n}",
+                "fe_metadata": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"isRequest\": {\r\n      \"type\": \"boolean\"\r\n    }\r\n  },\r\n  \"required\": [\r\n    \"data\",\"isRequest\"\r\n ]\r\n}"
+              },
+              "customConversationStoreOpInput": {
+                "type": "json",
+                "value": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"conversationId\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"message\": {\r\n      \"type\": \"object\",\r\n      \"properties\": {\r\n        \"role\": {\r\n          \"type\": \"string\",\r\n          \"enum\":[\"user\", \"assistant\", \"system\", \"tool\"]\r\n        },\r\n        \"content\": {\r\n          \"type\": \"string\"\r\n        },\r\n        \"metadata\": {\r\n          \"type\": \"object\"\r\n        }\r\n      },\r\n      \"required\": [\r\n        \"role\",\r\n        \"content\",\r\n        \"metadata\"\r\n      ]\r\n    }\r\n  },\r\n  \"required\": [\r\n    \"conversationId\",\r\n    \"message\"\r\n  ]\r\n}",
+                "fe_metadata": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"conversationId\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"message\": {\r\n      \"type\": \"object\",\r\n      \"properties\": {\r\n        \"role\": {\r\n          \"type\": \"string\",\r\n          \"enum\":[\"user\", \"assistant\", \"system\", \"tool\"]\r\n        },\r\n        \"content\": {\r\n          \"type\": \"string\"\r\n        },\r\n        \"metadata\": {\r\n          \"type\": \"object\"\r\n        }\r\n      },\r\n      \"required\": [\r\n        \"role\",\r\n        \"content\",\r\n        \"metadata\"\r\n      ]\r\n    }\r\n  },\r\n  \"required\": [\r\n    \"conversationId\",\r\n    \"message\"\r\n  ]\r\n}"
+              }
+            }
+          },
+          "name": "store_conversation_flow"
+        },
+        {
+          "description": "Custom Conversation Store FETCH handler: loads the prior conversation turns for the agent's conversationId from the durable session store (runtime-manager /api/sessions backed by PostgreSQL chat_history) and returns them as role/content messages, giving the agent memory across requests and restarts. Returns an empty history gracefully when the session is new or the store is unreachable.",
+          "settings": {
+            "handlerType": "Custom Conversation Store",
+            "agentToolName": "",
+            "agentToolDescription": "",
+            "agentSkillTags": "",
+            "agentSkillExamples": "",
+            "customGuardrailType": "BOTH",
+            "customConversationStoreOperation": "FETCH"
+          },
+          "action": {
+            "ref": "github.com/project-flogo/flow",
+            "settings": {
+              "flowURI": "res://flow:fetch_conversation_flow"
+            },
+            "input": {
+              "customConversationStoreOpInput": "=$.customConversationStoreOpInput"
+            },
+            "output": {
+              "customConversationStoreOpOutput": "=$.customConversationStoreOpOutput"
+            }
+          },
+          "schemas": {
+            "reply": {
+              "response": {
+                "type": "json",
+                "value": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n  }\r\n}",
+                "fe_metadata": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    }\r\n  }\r\n}"
+              },
+              "customConversationStoreOpOutput": {
+                "type": "json",
+                "value": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"success\": {\r\n      \"type\": \"boolean\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"messages\": {\r\n      \"type\": \"array\",\r\n      \"items\": {\r\n        \"type\": \"object\",\r\n        \"properties\": {\r\n          \"role\": {\r\n            \"type\": \"string\"\r\n          },\r\n          \"content\": {\r\n            \"type\": \"string\"\r\n          },\r\n          \"metadata\": {\r\n            \"type\": \"object\",\r\n            \"properties\": {}\r\n          }\r\n        },\r\n        \"required\": [\"role\",\"content\"]\r\n      }\r\n    }\r\n  },\r\n  \"required\": [\"success\",\"messages\"]\r\n}",
+                "fe_metadata": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"success\": {\r\n      \"type\": \"boolean\"\r\n    },\r\n    \"error\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"messages\": {\r\n      \"type\": \"array\",\r\n      \"items\": {\r\n        \"type\": \"object\",\r\n        \"properties\": {\r\n          \"role\": {\r\n            \"type\": \"string\"\r\n          },\r\n          \"content\": {\r\n            \"type\": \"string\"\r\n          },\r\n          \"metadata\": {\r\n            \"type\": \"object\",\r\n            \"properties\": {}\r\n          }\r\n        },\r\n        \"required\": [\"role\",\"content\"]\r\n      }\r\n    }\r\n  },\r\n  \"required\": [\"success\",\"messages\"]\r\n}"
+              }
+            },
+            "output": {
+              "customGuardrailInput": {
+                "type": "json",
+                "value": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"isRequest\": {\r\n      \"type\": \"boolean\"\r\n    }\r\n  },\r\n  \"required\": [\r\n    \"data\",\"isRequest\"\r\n ]\r\n}",
+                "fe_metadata": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"data\": {\r\n      \"type\": \"string\"\r\n    },\r\n    \"isRequest\": {\r\n      \"type\": \"boolean\"\r\n    }\r\n  },\r\n  \"required\": [\r\n    \"data\",\"isRequest\"\r\n ]\r\n}"
+              },
+              "customConversationStoreOpInput": {
+                "type": "json",
+                "value": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"conversationId\": {\r\n      \"type\": \"string\"\r\n    }\r\n  },\r\n  \"required\": [\r\n    \"conversationId\"\r\n  ]\r\n}",
+                "fe_metadata": "{\r\n  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\r\n  \"type\": \"object\",\r\n  \"properties\": {\r\n    \"conversationId\": {\r\n      \"type\": \"string\"\r\n    }\r\n  },\r\n  \"required\": [\r\n    \"conversationId\"\r\n  ]\r\n}"
+              }
+            }
+          },
+          "name": "fetch_conversation_flow"
+        }
+      ]
     }
   ],
   "resources": [
@@ -457,7 +674,7 @@
           {
             "id": 3,
             "from": "RAGQuery",
-            "to": "Return",
+            "to": "FireRagEval",
             "type": "label",
             "label": "RAGQuery to Return"
           },
@@ -467,6 +684,11 @@
             "to": "ErrorReturn",
             "type": "error",
             "label": "RAGQuery error"
+          },
+          {
+            "id": 5,
+            "from": "FireRagEval",
+            "to": "Return"
           }
         ],
         "tasks": [
@@ -510,7 +732,7 @@
                 "scoreThreshold": 0,
                 "contentField": "text",
                 "contextFormat": "numbered",
-                "timeoutSeconds": 120,
+                "timeoutSeconds": 600,
                 "useHybridSearch": true,
                 "hybridAlpha": 0.75,
                 "enableLLMGenerate": true,
@@ -559,6 +781,44 @@
                     }
                   }
                 }
+              }
+            }
+          },
+          {
+            "id": "FireRagEval",
+            "name": "FireRagEval",
+            "description": "Fire-and-forget POST to rageval /eval/v1/events \u2014 non-blocking RAG quality check",
+            "activity": {
+              "ref": "#restff",
+              "settings": {
+                "timeout": 5000,
+                "skipTlsVerify": false,
+                "maxConcurrentRequests": 100
+              },
+              "input": {
+                "method": "POST",
+                "url": "=$property[\"RAGEVAL_URL\"]",
+                "headers": {},
+                "body": {
+                  "mapping": {
+                    "pipelineId": "=coerce.toString($property[\"AGENT_ID\"])",
+                    "platform": "flogo",
+                    "traceId": "=coerce.toString($flowctx[\"FlowId\"])",
+                    "collection": "=coerce.toString($property[\"COLLECTION_NAME\"])",
+                    "query": "=$flow.body.message",
+                    "chunks": "=$activity[RAGQuery].sourceDocuments",
+                    "answer": "=$activity[RAGQuery].answer"
+                  }
+                }
+              },
+              "schemas": {
+                "input": {
+                  "body": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"pipelineId\":{\"type\":\"string\"},\"platform\":{\"type\":\"string\"},\"traceId\":{\"type\":\"string\"},\"collection\":{\"type\":\"string\"},\"query\":{\"type\":\"string\"},\"chunks\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"content\":{\"type\":\"string\"},\"score\":{\"type\":\"number\"},\"payload\":{\"type\":\"object\"}}}},\"answer\":{\"type\":\"string\"}}}"
+                  }
+                },
+                "output": {}
               }
             }
           }
@@ -669,7 +929,7 @@
                 "scoreThreshold": 0,
                 "contentField": "text",
                 "contextFormat": "numbered",
-                "timeoutSeconds": 30,
+                "timeoutSeconds": 600,
                 "useHybridSearch": true,
                 "hybridAlpha": 0.75,
                 "enableLLMGenerate": false,
@@ -778,38 +1038,30 @@
           {
             "id": 3,
             "from": "RAGRetrieve",
-            "to": "SaveUserTurn",
+            "to": "InvokeAgent",
             "type": "label",
-            "label": "RAGRetrieve to AgentChat"
+            "label": "RAGRetrieve to InvokeAgent"
+          },
+          {
+            "id": 4,
+            "from": "InvokeAgent",
+            "to": "Return",
+            "type": "label",
+            "label": "InvokeAgent to Return"
           },
           {
             "id": 5,
-            "from": "AgentChat",
+            "from": "InvokeAgent",
             "to": "ErrorReturn",
             "type": "error",
-            "label": "AgentChat error"
+            "label": "InvokeAgent to ErrorReturn"
           },
           {
             "id": 6,
             "from": "RAGRetrieve",
             "to": "ErrorReturn",
             "type": "error",
-            "label": "RAGRetrieve error"
-          },
-          {
-            "id": 7,
-            "from": "SaveUserTurn",
-            "to": "AgentChat"
-          },
-          {
-            "id": 8,
-            "from": "AgentChat",
-            "to": "SaveAssistantTurn"
-          },
-          {
-            "id": 9,
-            "from": "SaveAssistantTurn",
-            "to": "Return"
+            "label": "RAGRetrieve to ErrorReturn"
           }
         ],
         "tasks": [
@@ -853,7 +1105,7 @@
                 "scoreThreshold": 0,
                 "contentField": "text",
                 "contextFormat": "numbered",
-                "timeoutSeconds": 30,
+                "timeoutSeconds": 600,
                 "useHybridSearch": true,
                 "hybridAlpha": 0.75,
                 "enableLLMGenerate": false,
@@ -874,28 +1126,15 @@
             }
           },
           {
-            "id": "AgentChat",
-            "name": "AgentChat",
-            "description": "",
+            "id": "InvokeAgent",
+            "name": "InvokeAgent",
+            "description": "Invoke local ChatAgent (durable Custom Store)",
             "activity": {
-              "ref": "#agentactivity",
-              "settings": {
-                "llmProviderConnection": "conn://llm-provider",
-                "model": "=$property[\"LLM_MODEL\"]",
-                "reasoning": "",
-                "temperature": 0.1,
-                "enableGuardrails": false,
-                "rateLimit": 25,
-                "tokenLimit": 4096,
-                "redactSensitiveData": false,
-                "responseType": "Text",
-                "mcpServers": [],
-                "conversationStoreType": "Memory",
-                "memoryMaxSize": 20,
-                "systemPrompt": "=$property[\"SYSTEM_PROMPT\"]"
-              },
+              "ref": "#callagent",
               "input": {
-                "userPrompt": "=string.concat(\"Context:\\n\", $activity[RAGRetrieve].formattedContext, \"\\n\\nUser question: \", $flow.body.message)",
+                "agentName": "ChatAgent",
+                "prompt": "=string.concat(\"User question: \", $flow.body.message, \"\\n\\n--- Reference material (optional) ---\\n\", $activity[RAGRetrieve].formattedContext, \"\\n--- End reference ---\\n\\nAnswer the user's question above. Prioritize our conversation history; use the reference material only when it is directly relevant. If the question is a follow-up about something we already discussed, rely on the conversation and ignore the reference.\")",
+                "structuredOutput": false,
                 "conversationId": "=$flow.body.sessionId"
               }
             }
@@ -909,7 +1148,7 @@
               "settings": {
                 "mappings": {
                   "code": 200,
-                  "data": "=$activity[AgentChat].response"
+                  "data": "=$activity[InvokeAgent].response"
                 }
               }
             }
@@ -931,101 +1170,9 @@
                 }
               }
             }
-          },
-          {
-            "id": "SaveUserTurn",
-            "name": "SaveUserTurn",
-            "description": "Persist user message to chat_history (Phase 2.2)",
-            "activity": {
-              "ref": "#rest",
-              "input": {
-                "enableASR": false,
-                "swagger": "",
-                "authorization": false,
-                "authorizationConn": "",
-                "serviceName": "",
-                "resourcePath": "",
-                "Method": "POST",
-                "Uri": "=string.concat($property[\"HISTORY_SERVICE_URL\"], \"/\", $flow.body.sessionId)",
-                "requestType": "application/json",
-                "Use certificate for verification": false,
-                "mutualAuth": false,
-                "disableSSLVerification": false,
-                "disableKeepAlives": false,
-                "followRedirects": true,
-                "Timeout": 10,
-                "headers": {
-                  "mapping": {
-                    "Content-Type": "application/json"
-                  }
-                },
-                "body": {
-                  "mapping": {
-                    "agentId": "=$flow.body.agentId",
-                    "role": "user",
-                    "content": "=$flow.body.message",
-                    "metadata": {}
-                  }
-                }
-              },
-              "schemas": {
-                "input": {
-                  "body": {
-                    "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"},\"role\":{\"type\":\"string\"},\"content\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\"}}}"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "id": "SaveAssistantTurn",
-            "name": "SaveAssistantTurn",
-            "description": "Persist assistant answer to chat_history (Phase 2.2)",
-            "activity": {
-              "ref": "#rest",
-              "input": {
-                "enableASR": false,
-                "swagger": "",
-                "authorization": false,
-                "authorizationConn": "",
-                "serviceName": "",
-                "resourcePath": "",
-                "Method": "POST",
-                "Uri": "=string.concat($property[\"HISTORY_SERVICE_URL\"], \"/\", $flow.body.sessionId)",
-                "requestType": "application/json",
-                "Use certificate for verification": false,
-                "mutualAuth": false,
-                "disableSSLVerification": false,
-                "disableKeepAlives": false,
-                "followRedirects": true,
-                "Timeout": 10,
-                "headers": {
-                  "mapping": {
-                    "Content-Type": "application/json"
-                  }
-                },
-                "body": {
-                  "mapping": {
-                    "agentId": "=$flow.body.agentId",
-                    "role": "assistant",
-                    "content": "=$activity[AgentChat].response",
-                    "metadata": {}
-                  }
-                }
-              },
-              "schemas": {
-                "input": {
-                  "body": {
-                    "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"agentId\":{\"type\":\"string\"},\"role\":{\"type\":\"string\"},\"content\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\"}}}"
-                  }
-                }
-              }
-            }
           }
         ],
-        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6NTB9LCJSQUdSZXRyaWV2ZSI6eyJ4Ijo0NTMsInkiOjQ3fSwiQWdlbnRDaGF0Ijp7IngiOjY1MCwieSI6NTB9LCJSZXR1cm4iOnsieCI6ODUwLCJ5Ijo1MH0sIkVycm9yUmV0dXJuIjp7IngiOjc0NSwieSI6MzAwfSwiU2F2ZVVzZXJUdXJuIjp7IngiOjEwNTAsInkiOjUwfSwiU2F2ZUFzc2lzdGFudFR1cm4iOnsieCI6MTI1MCwieSI6NTB9fQ==",
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJMb2dSZXF1ZXN0Ijp7IngiOjI1MCwieSI6MTUwfSwiUkFHUmV0cmlldmUiOnsieCI6NDUwLCJ5IjoyNTB9LCJJbnZva2VBZ2VudCI6eyJ4Ijo2NTAsInkiOjM1MH0sIlJldHVybiI6eyJ4Ijo4NTAsInkiOjQ1MH0sIkVycm9yUmV0dXJuIjp7IngiOjY1MCwieSI6NjUwfX0=",
         "metadata": {
           "input": [
             {
@@ -1053,6 +1200,349 @@
           }
         },
         "explicitReply": true
+      }
+    },
+    {
+      "id": "flow:tool_search_kb",
+      "data": {
+        "name": "tool_search_kb",
+        "description": "Agent tool flow backing the search_knowledge_base tool. Runs retrieve-only hybrid RAG against the vector DB for the agent-supplied query and returns formattedContext as the tool result. In-process; reuses the vectordb-weaviate connection. No external MCP server.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "SearchKB",
+            "type": "label",
+            "label": "Start to SearchKB"
+          },
+          {
+            "id": 2,
+            "from": "SearchKB",
+            "to": "Return",
+            "type": "label",
+            "label": "SearchKB to Return"
+          },
+          {
+            "id": 3,
+            "from": "SearchKB",
+            "to": "ErrorReturn",
+            "type": "error",
+            "label": "SearchKB to ErrorReturn"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "description": "",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "SearchKB",
+            "name": "SearchKB",
+            "description": "Retrieve-only hybrid RAG for the agent-supplied tool query",
+            "activity": {
+              "ref": "#ragQuery",
+              "settings": {
+                "connection": "conn://vectordb-weaviate",
+                "useConnectorEmbedding": true,
+                "embeddingProvider": "OpenAI",
+                "embeddingAPIKey": "",
+                "embeddingBaseURL": "",
+                "embeddingModel": "=$property[\"EMBEDDING_MODEL\"]",
+                "embeddingDimensions": 0,
+                "defaultCollection": "=$property[\"COLLECTION_NAME\"]",
+                "defaultTopK": 5,
+                "scoreThreshold": 0,
+                "contentField": "text",
+                "contextFormat": "numbered",
+                "timeoutSeconds": 600,
+                "useHybridSearch": true,
+                "hybridAlpha": 0.75,
+                "enableLLMGenerate": false,
+                "llmProvider": "Ollama",
+                "llmBaseURL": "http://localhost:11434",
+                "llmAPIKey": "",
+                "llmModel": "llama3.1:8b",
+                "systemPrompt": "You are a helpful assistant. Answer the question using only the provided context. If the context does not contain enough information, say so.",
+                "maxTokens": 1024,
+                "temperature": 0.1
+              },
+              "input": {
+                "queryText": "=$flow.toolParams.query",
+                "collectionName": "=$property[\"COLLECTION_NAME\"]",
+                "topK": 5,
+                "systemPrompt": ""
+              }
+            }
+          },
+          {
+            "id": "Return",
+            "name": "Return",
+            "description": "Return retrieved context as the tool result",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "mapping": {
+                      "data": "=$activity[SearchKB].formattedContext",
+                      "error": ""
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "ErrorReturn",
+            "name": "ErrorReturn",
+            "description": "Return a tool error so the agent can recover gracefully",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "mapping": {
+                      "data": "",
+                      "error": "=$error.message"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6NTB9LCJTZWFyY2hLQiI6eyJ4IjozMDAsInkiOjUwfSwiUmV0dXJuIjp7IngiOjU1MCwieSI6NTB9LCJFcnJvclJldHVybiI6eyJ4Ijo0MjAsInkiOjI2MH19",
+        "metadata": {
+          "input": [
+            {
+              "name": "toolParams",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"query\":{\"type\":\"string\"}}"
+              }
+            }
+          ],
+          "output": [
+            {
+              "name": "response",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"data\":{\"type\":\"string\"},\"error\":{\"type\":\"string\"}}"
+              }
+            }
+          ],
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"toolParams\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}}}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"response\":{\"type\":\"object\",\"properties\":{\"data\":{\"type\":\"string\"},\"error\":{\"type\":\"string\"}}}}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "flow:tool_ask_specialist",
+      "data": {
+        "name": "tool_ask_specialist",
+        "description": "Agent tool flow backing the ask_specialist tool (agent-to-agent handoff). If SPECIALIST_AGENT_URL is set, POSTs the agent-supplied question to that remote agent's chat endpoint via #rest and returns its answer; if unset, returns a graceful 'not configured' message and makes NO network call. In-process; opt-in; zero boot coupling.",
+        "links": [
+          {
+            "id": 1,
+            "from": "Start",
+            "to": "CallSpecialist",
+            "type": "expression",
+            "label": "Start to CallSpecialist",
+            "value": "$property[\"SPECIALIST_AGENT_URL\"] != \"\""
+          },
+          {
+            "id": 2,
+            "from": "CallSpecialist",
+            "to": "ReturnAnswer",
+            "type": "label",
+            "label": "CallSpecialist to ReturnAnswer"
+          },
+          {
+            "id": 3,
+            "from": "CallSpecialist",
+            "to": "ReturnError",
+            "type": "error",
+            "label": "CallSpecialist to ReturnError"
+          },
+          {
+            "id": 4,
+            "from": "Start",
+            "to": "ReturnNotConfigured",
+            "type": "expression",
+            "label": "Start to ReturnNotConfigured",
+            "value": "$property[\"SPECIALIST_AGENT_URL\"] == \"\""
+          }
+        ],
+        "tasks": [
+          {
+            "id": "Start",
+            "name": "Start",
+            "description": "",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "CallSpecialist",
+            "name": "CallSpecialist",
+            "description": "POST the delegated question to the specialist agent's REST chat endpoint",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
+            "activity": {
+              "ref": "#rest",
+              "input": {
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "serviceName": "",
+                "resourcePath": "",
+                "Method": "POST",
+                "Uri": "=$property[\"SPECIALIST_AGENT_URL\"]",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 60,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json",
+                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
+                  }
+                },
+                "body": {
+                  "mapping": {
+                    "message": "=$flow.toolParams.question",
+                    "sessionId": "=string.concat(\"delegate-\", coerce.toString($flowctx[\"FlowId\"]))",
+                    "agentId": "specialist"
+                  }
+                }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "text/plain",
+                "responseOutput": "JSON Object"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
+                }
+              },
+              "feSchemaMap": {}
+            }
+          },
+          {
+            "id": "ReturnAnswer",
+            "name": "ReturnAnswer",
+            "description": "Return the specialist agent's answer as the tool result",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "mapping": {
+                      "data": "=coerce.toString($activity[CallSpecialist].responseBody)",
+                      "error": ""
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "ReturnError",
+            "name": "ReturnError",
+            "description": "Return a graceful tool error if the specialist call fails",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "mapping": {
+                      "data": "",
+                      "error": "=string.concat(\"Specialist delegation failed: \", coerce.toString($error.message))"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "ReturnNotConfigured",
+            "name": "ReturnNotConfigured",
+            "description": "Delegation disabled (no specialist URL) \u2014 graceful no-op result",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "response": {
+                    "mapping": {
+                      "data": "Delegation is not available: no specialist agent is configured for this agent.",
+                      "error": ""
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydCI6eyJ4Ijo1MCwieSI6MTIwfSwiQ2FsbFNwZWNpYWxpc3QiOnsieCI6MjgwLCJ5Ijo1MH0sIlJldHVybkFuc3dlciI6eyJ4Ijo1NDAsInkiOjUwfSwiUmV0dXJuRXJyb3IiOnsieCI6NTQwLCJ5IjoyMjB9LCJSZXR1cm5Ob3RDb25maWd1cmVkIjp7IngiOjI4MCwieSI6MjQwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "toolParams",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"question\":{\"type\":\"string\"}}"
+              }
+            }
+          ],
+          "output": [
+            {
+              "name": "response",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"data\":{\"type\":\"string\"},\"error\":{\"type\":\"string\"}}"
+              }
+            }
+          ],
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"toolParams\":{\"type\":\"object\",\"properties\":{\"question\":{\"type\":\"string\"}}}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"response\":{\"type\":\"object\",\"properties\":{\"data\":{\"type\":\"string\"},\"error\":{\"type\":\"string\"}}}}}"
+          }
+        }
       }
     },
     {
@@ -1143,65 +1633,51 @@
           {
             "id": 3,
             "from": "EmitStart",
-            "to": "CallRAG",
+            "to": "InvokeAgent",
             "type": "label",
-            "label": "EmitStart to CallRAG"
+            "label": "EmitStart to InvokeAgent"
           },
           {
             "id": 4,
-            "from": "CallRAG",
-            "to": "RunLLM",
-            "type": "label",
-            "label": "CallRAG to RunLLM"
-          },
-          {
-            "id": 5,
-            "from": "RunLLM",
+            "from": "InvokeAgent",
             "to": "EmitAnswer",
             "type": "label",
             "label": "RunLLM to EmitAnswer"
           },
           {
-            "id": 6,
+            "id": 5,
             "from": "EmitAnswer",
             "to": "EmitDone",
             "type": "label",
             "label": "EmitAnswer to EmitDone"
           },
           {
-            "id": 7,
+            "id": 6,
             "from": "EmitDone",
             "to": "Return",
             "type": "label",
             "label": "EmitDone to Return"
           },
           {
-            "id": 8,
+            "id": 7,
             "from": "EmitDone",
             "to": "ErrorReturn",
             "type": "error",
             "label": "EmitDone error"
           },
           {
-            "id": 9,
+            "id": 8,
             "from": "EmitAnswer",
             "to": "ErrorReturn",
             "type": "error",
             "label": "EmitAnswer error"
           },
           {
-            "id": 10,
-            "from": "RunLLM",
+            "id": 9,
+            "from": "InvokeAgent",
             "to": "ErrorReturn",
             "type": "error",
             "label": "RunLLM error"
-          },
-          {
-            "id": 11,
-            "from": "CallRAG",
-            "to": "ErrorReturn",
-            "type": "error",
-            "label": "CallRAG error"
           }
         ],
         "tasks": [
@@ -1256,94 +1732,15 @@
             }
           },
           {
-            "id": "CallRAG",
-            "name": "CallRAG",
-            "description": "Retrieve relevant context from agent-chat-service via RAG using HTTP POST.",
-            "settings": {
-              "retryOnError": {
-                "count": 0,
-                "interval": 0
-              }
-            },
+            "id": "InvokeAgent",
+            "name": "InvokeAgent",
+            "description": "Invoke local ChatAgent (durable Custom Store)",
             "activity": {
-              "ref": "#rest",
+              "ref": "#callagent",
               "input": {
-                "enableASR": false,
-                "swagger": "",
-                "authorization": false,
-                "serviceName": "",
-                "resourcePath": "",
-                "Method": "POST",
-                "Uri": "=$property[\"CHAT_SERVICE_URL\"]",
-                "requestType": "application/json",
-                "Use certificate for verification": false,
-                "mutualAuth": false,
-                "disableSSLVerification": false,
-                "disableKeepAlives": false,
-                "followRedirects": true,
-                "Timeout": 0,
-                "headers": {
-                  "mapping": {
-                    "Content-Type": "application/json",
-                    "Authorization": "Basic ZmxvZ286Y2hhbmdlbWU="
-                  }
-                },
-                "body": "=$flow.body"
-              },
-              "output": {
-                "configureResponseCodes": false,
-                "throwError": false,
-                "responseType": "application/json",
-                "responseOutput": "JSON Object"
-              },
-              "schemas": {
-                "input": {
-                  "headers": {
-                    "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
-                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
-                  },
-                  "dynamicRequestHeaders": {
-                    "type": "json",
-                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
-                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
-                  }
-                },
-                "output": {
-                  "headers": {
-                    "type": "json",
-                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
-                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
-                  }
-                }
-              },
-              "feSchemaMap": {}
-            }
-          },
-          {
-            "id": "RunLLM",
-            "name": "RunLLM",
-            "description": "Run LLM with RAG context using AgentActivity. Returns the full LLM answer for streaming to SSE clients.",
-            "activity": {
-              "ref": "#agentactivity",
-              "settings": {
-                "llmProviderConnection": "conn://llm_provider",
-                "model": "=$property[\"LLM_MODEL\"]",
-                "reasoning": "",
-                "temperature": 0.7,
-                "enableGuardrails": false,
-                "rateLimit": 0,
-                "tokenLimit": 0,
-                "redactSensitiveData": false,
-                "responseType": "Text",
-                "agentHandoffs": "",
-                "mcpServers": [],
-                "conversationStoreType": "Memory",
-                "memoryMaxSize": 10,
-                "systemPrompt": "=$property[\"SYSTEM_PROMPT\"]"
-              },
-              "input": {
-                "userPrompt": "=$flow.body.message",
+                "agentName": "ChatAgent",
+                "prompt": "=$flow.body.message",
+                "structuredOutput": false,
                 "conversationId": "=$flow.body.sessionId"
               }
             }
@@ -1369,7 +1766,7 @@
                   "mapping": {
                     "sessionId": "=$flow.body.sessionId",
                     "agentId": "=$flow.body.agentId",
-                    "answer": "=$activity[RunLLM].response"
+                    "answer": "=$activity[InvokeAgent].response"
                   }
                 }
               }
@@ -1439,7 +1836,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJFbWl0U3RhcnQiOnsieCI6NDUwLCJ5IjoyNTB9LCJDYWxsUkFHIjp7IngiOjY1MCwieSI6MzUwfSwiUnVuTExNIjp7IngiOjg1MCwieSI6NDUwfSwiRW1pdEFuc3dlciI6eyJ4IjoxMDUwLCJ5Ijo1NTB9LCJFbWl0RG9uZSI6eyJ4IjoxMjUwLCJ5Ijo2NTB9LCJSZXR1cm4iOnsieCI6MTQ1MCwieSI6NzUwfSwiRXJyb3JSZXR1cm4iOnsieCI6ODUwLCJ5IjoxMTUwfX0=",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkxvZ1JlcXVlc3QiOnsieCI6MjUwLCJ5IjoxNTB9LCJFbWl0U3RhcnQiOnsieCI6NDUwLCJ5IjoyNTB9LCJJbnZva2VBZ2VudCI6eyJ4Ijo2NTAsInkiOjM1MH0sIkVtaXRBbnN3ZXIiOnsieCI6ODUwLCJ5Ijo0NTB9LCJFbWl0RG9uZSI6eyJ4IjoxMDUwLCJ5Ijo1NTB9LCJSZXR1cm4iOnsieCI6MTI1MCwieSI6NjUwfSwiRXJyb3JSZXR1cm4iOnsieCI6ODUwLCJ5Ijo5NTB9fQ==",
         "metadata": {
           "input": [
             {
@@ -1713,6 +2110,330 @@
           }
         }
       }
+    },
+    {
+      "id": "flow:store_conversation_flow",
+      "data": {
+        "name": "store_conversation_flow",
+        "description": "Custom Conversation Store STORE handler: persists one conversation turn (role, content, metadata) for the agent's conversationId by POSTing it to the durable session store (runtime-manager /api/sessions backed by PostgreSQL chat_history). Best-effort \u2014 an error link still returns success so a transient store outage never fails the user's chat.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "PostTurn",
+            "type": "label",
+            "label": "StartActivity to PostTurn"
+          },
+          {
+            "id": 2,
+            "from": "PostTurn",
+            "to": "ReturnStoreSuccess",
+            "type": "label",
+            "label": "PostTurn to ReturnStoreSuccess"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "PostTurn",
+            "name": "PostTurn",
+            "description": "",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
+            "activity": {
+              "ref": "#rest",
+              "input": {
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "serviceName": "",
+                "resourcePath": "",
+                "Method": "POST",
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 30,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json"
+                  }
+                },
+                "body": {
+                  "mapping": {
+                    "agentId": "=coerce.toString($property[\"AGENT_ID\"])",
+                    "role": "=$flow.customConversationStoreOpInput.message.role",
+                    "content": "=$flow.customConversationStoreOpInput.message.content",
+                    "metadata": "=$flow.customConversationStoreOpInput.message.metadata"
+                  }
+                }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
+                }
+              },
+              "feSchemaMap": {}
+            }
+          },
+          {
+            "id": "ReturnStoreSuccess",
+            "name": "ReturnStoreSuccess",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "customConversationStoreOpOutput": {
+                    "mapping": {
+                      "success": "=boolean.true()"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIlBvc3RUdXJuIjp7IngiOjI1MCwieSI6MTUwfSwiUmV0dXJuU3RvcmVTdWNjZXNzIjp7IngiOjQ1MCwieSI6MzUwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "customConversationStoreOpInput",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"conversationId\":{\"type\":\"string\"},\"message\":{\"type\":\"object\",\"properties\":{\"role\":{\"type\":\"string\"},\"content\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"properties\":{}}}}}"
+              }
+            }
+          ],
+          "output": [
+            {
+              "name": "customConversationStoreOpOutput",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"success\":{\"type\":\"boolean\"},\"error\":{\"type\":\"string\"}}"
+              }
+            }
+          ],
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"customConversationStoreOpInput\":{\"type\":\"object\",\"properties\":{\"conversationId\":{\"type\":\"string\"},\"message\":{\"type\":\"object\",\"properties\":{\"role\":{\"type\":\"string\"},\"content\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"properties\":{}}}}}}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"customConversationStoreOpOutput\":{\"type\":\"object\",\"properties\":{\"success\":{\"type\":\"boolean\"},\"error\":{\"type\":\"string\"}}}}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "flow:fetch_conversation_flow",
+      "data": {
+        "name": "fetch_conversation_flow",
+        "description": "Custom Conversation Store FETCH handler: loads the prior conversation turns for the agent's conversationId from the durable session store (runtime-manager /api/sessions backed by PostgreSQL chat_history) and returns them as role/content messages, giving the agent memory across requests and restarts. Returns an empty history gracefully when the session is new or the store is unreachable.",
+        "links": [
+          {
+            "id": 1,
+            "from": "StartActivity",
+            "to": "GetTurns",
+            "type": "label",
+            "label": "StartActivity to GetTurns"
+          },
+          {
+            "id": 2,
+            "from": "GetTurns",
+            "to": "ReturnMessages",
+            "type": "label",
+            "label": "GetTurns to ReturnMessages"
+          },
+          {
+            "id": 3,
+            "from": "GetTurns",
+            "to": "ReturnEmptyMessages",
+            "type": "error",
+            "label": "GetTurns to ReturnEmptyMessages"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "StartActivity",
+            "name": "StartActivity",
+            "description": "",
+            "activity": {
+              "ref": "#noop"
+            }
+          },
+          {
+            "id": "GetTurns",
+            "name": "GetTurns",
+            "description": "",
+            "settings": {
+              "retryOnError": {
+                "count": 0,
+                "interval": 0
+              }
+            },
+            "activity": {
+              "ref": "#rest",
+              "input": {
+                "enableASR": false,
+                "swagger": "",
+                "authorization": false,
+                "serviceName": "",
+                "resourcePath": "",
+                "Method": "GET",
+                "Uri": "",
+                "requestType": "application/json",
+                "Use certificate for verification": false,
+                "mutualAuth": false,
+                "disableSSLVerification": false,
+                "disableKeepAlives": false,
+                "followRedirects": true,
+                "Timeout": 30,
+                "headers": {
+                  "mapping": {
+                    "Content-Type": "application/json"
+                  }
+                }
+              },
+              "output": {
+                "configureResponseCodes": false,
+                "throwError": false,
+                "responseType": "application/json",
+                "responseOutput": "JSON Object"
+              },
+              "schemas": {
+                "input": {
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  },
+                  "dynamicRequestHeaders": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"Header\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}},\"required\":[\"name\",\"value\"]}}}}"
+                  }
+                },
+                "output": {
+                  "responseBody": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"sessionId\":{\"type\":\"string\"},\"count\":{\"type\":\"number\"},\"turns\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"role\":{\"type\":\"string\"},\"content\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"properties\":{}}}}}}}",
+                    "fe_metadata": "{\"sessionId\":\"abc\",\"count\":134,\"turns\":[{\"role\":\"abc\",\"content\":\"abc\",\"metadata\":{}}]}"
+                  },
+                  "headers": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false},\"Set-Cookie\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Set-Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                  }
+                }
+              },
+              "feSchemaMap": {}
+            }
+          },
+          {
+            "id": "ReturnMessages",
+            "name": "ReturnMessages",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "customConversationStoreOpOutput": {
+                    "mapping": {
+                      "success": "=boolean.true()",
+                      "messages": {
+                        "@foreach($activity[GetTurns].responseBody.turns,msg)": {
+                          "role": "=$loop.role",
+                          "content": "=$loop.content"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "id": "ReturnEmptyMessages",
+            "name": "ReturnEmptyMessages",
+            "description": "",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {
+                "mappings": {
+                  "customConversationStoreOpOutput": {
+                    "mapping": {
+                      "success": "=boolean.true()",
+                      "messages": []
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjUwLCJ5Ijo1MH0sIkdldFR1cm5zIjp7IngiOjI1MCwieSI6MTUwfSwiUmV0dXJuTWVzc2FnZXMiOnsieCI6NDUwLCJ5IjoyNTB9LCJSZXR1cm5FbXB0eU1lc3NhZ2VzIjp7IngiOjQ1MCwieSI6MzUwfX0=",
+        "metadata": {
+          "input": [
+            {
+              "name": "customConversationStoreOpInput",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"conversationId\":{\"type\":\"string\"}}"
+              }
+            }
+          ],
+          "output": [
+            {
+              "name": "customConversationStoreOpOutput",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"success\":{\"type\":\"boolean\"},\"error\":{\"type\":\"string\"},\"messages\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"role\":{\"type\":\"string\"},\"content\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"properties\":{}}}}}}"
+              }
+            }
+          ],
+          "fe_metadata": {
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"customConversationStoreOpInput\":{\"type\":\"object\",\"properties\":{\"conversationId\":{\"type\":\"string\"}}}}}",
+            "output": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"customConversationStoreOpOutput\":{\"type\":\"object\",\"properties\":{\"success\":{\"type\":\"boolean\"},\"error\":{\"type\":\"string\"},\"messages\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"role\":{\"type\":\"string\"},\"content\":{\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"properties\":{}}}}}}}}}"
+          }
+        }
+      }
     }
   ],
   "properties": [
@@ -1724,12 +2445,12 @@
     {
       "name": "AgenticAI.llm-provider.API_Key",
       "type": "string",
-      "value": "SECRET:3lUHI0sn8F942zN7u3wi+YxpAEGzekPIOyYfwm8C1houJgvOsVqinXuErd/hrrSh8zaTDN3cKRsoXZ/USz/zIwNWZEJgcwlizQ=="
+      "value": "SECRET:rM/Bl6ZTMGHaCRMwvFYScOwe4pnPM7MaIc2y7k4d4kgoJsh7walrJnIfyGHKbDlelGnNms74qKQ3a4Y8IyCXFweuj82hV/7x8Q=="
     },
     {
       "name": "AgenticAI.llm-provider.LLM_Base_URL",
       "type": "string",
-      "value": "http://localhost:11434/v1"
+      "value": "http://localhost:11434"
     },
     {
       "name": "AgenticAI.LLM_Provider.LLM_Provider",
@@ -1739,7 +2460,7 @@
     {
       "name": "AgenticAI.LLM_Provider.API_Key",
       "type": "string",
-      "value": "SECRET:V2L7al+Ep/VX/IYuBNUtYe5D1pBuB2LM"
+      "value": "SECRET:W9+55oGaM89Hh7MuAa0DJD00x/MiwqTg"
     },
     {
       "name": "AgenticAI.LLM_Provider.LLM_Base_URL",
@@ -1777,24 +2498,9 @@
       "value": "http://localhost:7004"
     },
     {
-      "name": "LLM_PROVIDER",
-      "type": "string",
-      "value": "OpenAI"
-    },
-    {
-      "name": "LLM_BASE_URL",
-      "type": "string",
-      "value": "http://localhost:11434"
-    },
-    {
-      "name": "LLM_API_KEY",
-      "type": "string",
-      "value": "954bd5d476ee456583f9a4079d24ac16.EP8HhAPYJyC4LELg-PfqTa6z"
-    },
-    {
       "name": "API_KEY",
       "type": "string",
-      "value": "SECRET:aG4TpTDwvKWWy00wYV9SrkrVCP9HlvaO"
+      "value": "SECRET:qXnshaQz9pkihpg0mLI8HTKuD1kav4si"
     },
     {
       "name": "API_AUTH_HEADER",
@@ -1810,6 +2516,46 @@
       "name": "CHAT_SERVICE_URL",
       "type": "string",
       "value": "http://localhost:7001/api/chat"
+    },
+    {
+      "name": "HISTORY_SERVICE_URL",
+      "type": "string",
+      "value": "http://localhost:7050/api/sessions"
+    },
+    {
+      "name": "ENABLE_GUARDRAILS",
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "name": "REDACT_SENSITIVE_DATA",
+      "type": "boolean",
+      "value": true
+    },
+    {
+      "name": "RATE_LIMIT",
+      "type": "float64",
+      "value": 0
+    },
+    {
+      "name": "TOKEN_LIMIT",
+      "type": "float64",
+      "value": 0
+    },
+    {
+      "name": "REASONING_EFFORT",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "name": "AGENT_ID",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "name": "SPECIALIST_AGENT_URL",
+      "type": "string",
+      "value": ""
     },
     {
       "name": "VectorDB.vectordb-weaviate.Connection_Name",
@@ -1828,7 +2574,7 @@
     },
     {
       "name": "VectorDB.vectordb-weaviate.Port",
-      "type": "integer",
+      "type": "float64",
       "value": 18080
     },
     {
@@ -1843,17 +2589,17 @@
     },
     {
       "name": "VectorDB.vectordb-weaviate.Timeout_(seconds)",
-      "type": "integer",
+      "type": "float64",
       "value": 30
     },
     {
       "name": "VectorDB.vectordb-weaviate.Max_Retries",
-      "type": "integer",
+      "type": "float64",
       "value": 3
     },
     {
       "name": "VectorDB.vectordb-weaviate.Retry_Backoff_(ms)",
-      "type": "integer",
+      "type": "float64",
       "value": 500
     },
     {
@@ -1882,42 +2628,57 @@
       "value": "http://localhost:11434/v1"
     },
     {
-      "name": "HISTORY_SERVICE_URL",
+      "name": "LLM_PROVIDER",
       "type": "string",
-      "value": "http://localhost:7050/api/sessions"
+      "value": "OpenAI"
+    },
+    {
+      "name": "LLM_BASE_URL",
+      "type": "string",
+      "value": "http://localhost:11434"
+    },
+    {
+      "name": "LLM_API_KEY",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "name": "RAGEVAL_URL",
+      "type": "string",
+      "value": "http://localhost:9090/eval/v1/events"
     }
   ],
   "connections": {
     "vectordb-weaviate": {
       "id": "vectordb-weaviate",
-      "name": "$property[\"VectorDB.$property[\"VectorDB_vectordb-weaviate_Connection_Name\"].Connection_Name\"]",
+      "name": "vectordb-weaviate",
       "ref": "#connector",
       "isGlobal": false,
       "settings": {
-        "name": "=$property[\"VectorDB.vectordb-weaviate.Connection_Name\"]",
-        "dbType": "=$property[\"VectorDB.vectordb-weaviate.DB_Provider\"]",
-        "host": "=$property[\"VectorDB.vectordb-weaviate.Host\"]",
-        "port": "=$property[\"VectorDB.vectordb-weaviate.Port\"]",
-        "apiKey": "=$property[\"VectorDB.vectordb-weaviate.API_Key\"]",
-        "useTLS": "=$property[\"VectorDB.vectordb-weaviate.Secure_Connection\"]",
+        "name": "vectordb-weaviate",
+        "dbType": "weaviate",
+        "host": "localhost",
+        "port": 18080,
+        "apiKey": "",
+        "useTLS": false,
         "tlsInsecureSkipVerify": false,
         "tlsServerName": "",
         "caCert": "",
         "clientCert": "",
         "clientKey": "",
-        "timeoutSeconds": "=$property[\"VectorDB.vectordb-weaviate.Timeout_(seconds)\"]",
-        "maxRetries": "=$property[\"VectorDB.vectordb-weaviate.Max_Retries\"]",
-        "retryBackoffMs": "=$property[\"VectorDB.vectordb-weaviate.Retry_Backoff_(ms)\"]",
+        "timeoutSeconds": 30,
+        "maxRetries": 3,
+        "retryBackoffMs": 500,
         "grpcPort": 50051,
-        "scheme": "=$property[\"VectorDB.vectordb-weaviate.HTTP_Scheme\"]",
+        "scheme": "http",
         "username": "",
         "password": "",
         "dbName": "default",
         "defaultMetricType": "cosine",
-        "enableEmbedding": "=$property[\"VectorDB.vectordb-weaviate.Configure_Embedding_Provider\"]",
-        "embeddingProvider": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Provider\"]",
-        "embeddingAPIKey": "SECRET:AwoGlhyU/V89QqKM4v2TwVnjbVZblYebmd2u7xnPiNT1RrwWLgFQ6oAWXCpCWv1DWWw5m0YTvEiAmVErbaKyNhaSshTvtt6brZ4D",
-        "embeddingBaseURL": "=$property[\"VectorDB.vectordb-weaviate.Embedding_Base_URL\"]"
+        "enableEmbedding": true,
+        "embeddingProvider": "Ollama",
+        "embeddingAPIKey": "",
+        "embeddingBaseURL": "http://localhost:11434/v1"
       }
     },
     "llm-provider": {
@@ -1927,10 +2688,14 @@
       "isGlobal": false,
       "settings": {
         "name": "llm-provider",
-        "llmProvider": "=$property[\"LLM_PROVIDER\"]",
+        "llmProvider": "=$property[\"AgenticAI.llm-provider.LLM_Provider\"]",
         "anthropicProvider": "Default",
-        "apiKey": "=$property[\"LLM_API_KEY\"]",
-        "llmProviderUrl": "=$property[\"LLM_BASE_URL\"]"
+        "apiKey": "=$property[\"AgenticAI.llm-provider.API_Key\"]",
+        "llmProviderUrl": "=$property[\"AgenticAI.llm-provider.LLM_Base_URL\"]",
+        "azureDeployment": "",
+        "azureRegion": "",
+        "azureResourceName": "",
+        "azureApiVersion": ""
       }
     },
     "llm_provider": {
@@ -1940,14 +2705,18 @@
       "isGlobal": false,
       "settings": {
         "name": "LLM Provider",
-        "llmProvider": "=$property[\"LLM_PROVIDER\"]",
+        "llmProvider": "OpenAI",
         "anthropicProvider": "Default",
-        "apiKey": "=$property[\"LLM_API_KEY\"]",
-        "llmProviderUrl": "=$property[\"LLM_BASE_URL\"]"
+        "apiKey": "SECRET:bEAajDoRHWq6JjHzwvAcGVZkOR2Cu7RT51fEInwWk5v9P5T684lKYHQkGCY5v8dXDZTVpTJa/igSrBS+KBE/9y79gY7gikwNOg==",
+        "llmProviderUrl": "http://localhost:11434",
+        "azureDeployment": "",
+        "azureRegion": "",
+        "azureResourceName": "",
+        "azureApiVersion": ""
       }
     }
   },
-  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTMiLCJ0YWciOiIxLjYuMTMtYjAzIiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmMiLCJpZCI6IlZlY3RvckRCIiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiV2VhdmlhdGUgVmVjdG9yREIgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tYWktYWdlbnQvc3JjL2FwcC9BZ2VudGljQUkiLCJpZCI6IkFnZW50aWNBSSIsInZlcnNpb24iOiIwLjkuMSIsInRhZyI6IjAuOS4xLWIwMiIsIm5hbWUiOiJBZ2VudGljIEFJIChUZWNoIFByZXZpZXcpIiwiczNsb2NhdGlvbiI6IlRpYmNvL0FnZW50aWNBSSIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS9tcGFuZGF2LXRpYmNvL2Zsb2dvLWN1c3RvbS1leHRlbnNpb25zL3NzZS9hY3Rpdml0eSIsImlkIjoiRGVmYXVsdCIsInZlcnNpb24iOiIxLjAuMCIsInRhZyI6IjEuMC4wIiwibmFtZSI6IlJ1bGUgRW5naW5lIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L1NTRS9hY3Rpdml0eSIsImlzVXNlckV4dGVuc2lvbiI6dHJ1ZX0seyJyZWYiOiJnaXRodWIuY29tL21wYW5kYXYtdGliY28vZmxvZ28tY3VzdG9tLWV4dGVuc2lvbnMvc3NlL3RyaWdnZXIiLCJpZCI6IkRlZmF1bHQiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJSdWxlIEVuZ2luZSIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9TU0UvdHJpZ2dlciIsImlzVXNlckV4dGVuc2lvbiI6dHJ1ZX1d",
+  "contrib": "W3sicmVmIjoiZ2l0aHViLmNvbS90aWJjby9mbG9nby1nZW5lcmFsL3NyYy9hcHAvR2VuZXJhbCIsImlkIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjYuMTQiLCJ0YWciOiIxLjYuMTQtYjA0IiwibmFtZSI6IkdlbmVyYWwiLCJzM2xvY2F0aW9uIjoiVGliY28vR2VuZXJhbCIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmMiLCJpZCI6IlZlY3RvckRCIiwidmVyc2lvbiI6IjEuMC4wIiwidGFnIjoiMS4wLjAiLCJuYW1lIjoiUmVkaXMgU3RhY2sgVmVjdG9yREIgQ29ubmVjdG9yIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L1ZlY3RvckRCIiwiaXNVc2VyRXh0ZW5zaW9uIjp0cnVlfSx7InJlZiI6ImdpdGh1Yi5jb20vdGliY28vZmxvZ28tYWktYWdlbnQvc3JjL2FwcC9BZ2VudGljQUkiLCJpZCI6IkFnZW50aWNBSSIsInZlcnNpb24iOiIwLjkuMyIsInRhZyI6IjAuOS4zLWIwMiIsIm5hbWUiOiJBZ2VudGljIEFJIChUZWNoIFByZXZpZXcpIiwiczNsb2NhdGlvbiI6IlRpYmNvL0FnZW50aWNBSSIsImlzVXNlckV4dGVuc2lvbiI6ZmFsc2V9LHsicmVmIjoiZ2l0aHViLmNvbS9tcGFuZGF2LXRpYmNvL2Zsb2dvLWN1c3RvbS1leHRlbnNpb25zL3NzZS9hY3Rpdml0eSIsImlkIjoiRGVmYXVsdCIsInZlcnNpb24iOiIxLjAuMCIsInRhZyI6IjEuMC4wIiwibmFtZSI6IlJ1bGUgRW5naW5lIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L1NTRS9hY3Rpdml0eSIsImlzVXNlckV4dGVuc2lvbiI6dHJ1ZX0seyJyZWYiOiJnaXRodWIuY29tL21wYW5kYXYtdGliY28vZmxvZ28tY3VzdG9tLWV4dGVuc2lvbnMvc3NlL3RyaWdnZXIiLCJpZCI6IkRlZmF1bHQiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0YWciOiIxLjAuMCIsIm5hbWUiOiJSdWxlIEVuZ2luZSIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9TU0UvdHJpZ2dlciIsImlzVXNlckV4dGVuc2lvbiI6dHJ1ZX1d",
   "metadata": {
     "endpoints": [
       {
@@ -2307,6 +3076,7 @@
         }
       }
     ],
-    "flogoVersion": "2.26.3"
-  }
+    "flogoVersion": "2.26.5"
+  },
+  "fe_metadata": "eyJGaXJlUmFnRXZhbCI6eyJ4Ijo0MjUsInkiOjUwfX0="
 }
