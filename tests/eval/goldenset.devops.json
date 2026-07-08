@@ -1,0 +1,44 @@
+{
+    "agent": "DevOps & SRE Assistant",
+    "collection": "DevOpsRunbooks",
+    "chatUrl": "http://localhost:7201/api/chat",
+    "ragevalUrl": "http://localhost:9090",
+    "auth": {
+        "user": "flogo",
+        "password": "changeme"
+    },
+    "topK": 5,
+    "thresholds": {
+        "faithfulness": 0.50,
+        "answerRelevance": 0.45,
+        "contextRelevance": 0.25,
+        "hallucinationPctMax": 50.0,
+        "llmOverallMin": 0.55
+    },
+    "cases": [
+        {
+            "id": "rollback",
+            "query": "How do I roll back a failed deployment?"
+        },
+        {
+            "id": "incident-first",
+            "query": "What are the first steps when a production incident is detected?"
+        },
+        {
+            "id": "escalation",
+            "query": "How do I escalate a high-severity incident and who is on the escalation path?"
+        },
+        {
+            "id": "monitoring",
+            "query": "What monitoring and alerting should be in place for a production service?"
+        },
+        {
+            "id": "postmortem",
+            "query": "What should a post-incident review or postmortem include?"
+        },
+        {
+            "id": "k8s-readiness",
+            "query": "How do I investigate a Kubernetes pod that is failing its readiness probe?"
+        }
+    ]
+}

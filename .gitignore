@@ -25,6 +25,9 @@ data/agent-runtime.json
 data/agent-runtimes/
 nohup.out
 
+# ── Test Flogo apps (standalone test/dev apps, not service source) ────────────
+tests/flogo/*.flogo
+
 # ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
 *.pyc
