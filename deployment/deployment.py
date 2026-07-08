@@ -83,7 +83,9 @@ LOGS_AGENT_DIR   = PROJECT_ROOT / "logs" / "agents"
 STATE_FILE       = DATA_DIR / "agent-runtime.json"
 DOCKER_DEPLOY_DIR = DATA_DIR / "docker-deployments"   # per-agent compose files
 LAUNCH_PY        = PROJECT_ROOT / "services" / "launch.py"
-CHAINLIT_DIR     = PROJECT_ROOT / "services" / "agent" / "ui" / "chainlit"
+CHAINLIT_DIR     = PROJECT_ROOT / "services" / "agent" / "ui" / "chainlit"   # kept for docker-build compatibility
+CHAT_SERVER_DIR  = PROJECT_ROOT / "services" / "agent" / "ui" / "chat"   # kept for docker-build compatibility
+CHAT_SERVER_DIR  = PROJECT_ROOT / "services" / "agent" / "ui" / "chat"
 
 # ── Port pool ──────────────────────────────────────────────────────────────────
 
@@ -199,7 +201,7 @@ async def _ensure_binary(flogo_src: Path, svc_name: str) -> bool:
     proc = await asyncio.create_subprocess_exec(
         fb, "build-exe",
         "-f", str(flogo_src),
-        "-c", "flogo-studio",
+        "-c", "flogo-studio-2264",
         "-n", svc_name,
         "-o", str(PROJECT_ROOT / "bin"),
         stdout=asyncio.subprocess.PIPE,
@@ -209,6 +211,20 @@ async def _ensure_binary(flogo_src: Path, svc_name: str) -> bool:
     out, _ = await proc.communicate()
     if proc.returncode == 0:
         _build_failures.pop(svc_name, None)  # clear failure record on success
+        # macOS: ad-hoc re-sign the freshly built binary. Rebuilding in place can
+        # leave a stale kernel code-signing cache entry that SIGKILLs the process
+        # at launch ("Taskgated Invalid Signature") with zero log output, even
+        # though `codesign --verify` passes on disk. A forced ad-hoc sign busts it.
+        if sys.platform == "darwin":
+            try:
+                sign = await asyncio.create_subprocess_exec(
+                    "codesign", "--force", "--sign", "-", str(binary),
+                    stdout=asyncio.subprocess.DEVNULL,
+                    stderr=asyncio.subprocess.DEVNULL,
+                )
+                await sign.wait()
+            except Exception as exc:  # noqa: BLE001 — best-effort; non-fatal
+                log.warning("codesign re-sign failed for %s: %s", svc_name, exc)
         log.info("Binary %s built successfully", svc_name)
         return True
     _build_failures[svc_name] = time.time()
@@ -304,6 +320,7 @@ def _kill_port(port: int, timeout: int = 3):
 
 
 def _chainlit_cmd() -> Optional[list[str]]:
+    """Retained for docker-build path; native launch now uses server.py."""
     if shutil.which("chainlit"):
         return ["chainlit", "run", "app.py", "--headless"]
     try:
@@ -401,9 +418,37 @@ def _generate_env_file(base_env: Path, dst: Path, overrides: dict[str, str]):
     dst.write_text("\n".join(lines) + "\n")
 
 
+def _env_bool(value, default: bool = True) -> str:
+    """Coerce an agent-config value to a Flogo-friendly 'true'/'false' env string."""
+    if isinstance(value, bool):
+        b = value
+    elif isinstance(value, str):
+        b = value.strip().lower() in ("true", "1", "yes", "on")
+    elif value is None:
+        b = default
+    else:
+        b = bool(value)
+    return "true" if b else "false"
+
+
+def _env_int(value, default: int = 0) -> str:
+    """Coerce an agent-config value to an integer env string, falling back to default."""
+    try:
+        return str(int(value))
+    except (TypeError, ValueError):
+        return str(default)
+
+
 # ── Design-service integration ────────────────────────────────────────────────
 
-async def _fetch_all_agents() -> list[dict]:
+async def _fetch_all_agents() -> Optional[list[dict]]:
+    """Return the agent registry from design-service.
+
+    Returns a list (possibly empty) when the registry is reachable, or None when
+    the registry is unreachable. Callers MUST treat None ("can't read desired
+    state") differently from [] ("registry is genuinely empty") so a transient
+    registry outage never causes running agents to be torn down.
+    """
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.get(
@@ -426,8 +471,8 @@ async def _fetch_all_agents() -> list[dict]:
                 result.append(a)
             return result
     except Exception as exc:
-        log.warning("fetch_all_agents failed: %s", exc)
-        return []
+        log.warning("fetch_all_agents failed (registry unreachable): %s", exc)
+        return None
 
 
 async def _patch_agent_urls(agent_id: str, record: dict):
@@ -492,6 +537,17 @@ async def _start_runtime(agent: dict) -> dict:
     embedding_provider = cfg.get("embeddingProvider", "Ollama")
     embedding_base_url = cfg.get("embeddingBaseUrl", "") or "http://localhost:11434/v1"
     chunk_strategy     = cfg.get("chunkStrategy", "sentence")
+    # Per-agent governance (2.26.4 guardrails). Defaults match the app-property defaults
+    # (guardrails + PII redaction ON; rate/token limits OFF). Overridable via agent config.
+    enable_guardrails     = _env_bool(cfg.get("enableGuardrails"), True)
+    redact_sensitive_data = _env_bool(cfg.get("redactSensitiveData"), True)
+    rate_limit            = _env_int(cfg.get("rateLimit"), 0)
+    token_limit           = _env_int(cfg.get("tokenLimit"), 0)
+    # Per-agent LLM reasoning effort (2.26.4). Empty = no reasoning param sent.
+    reasoning_effort      = str(cfg.get("reasoningEffort", "") or "")
+    # Optional agent-to-agent handoff target. When set, the agent's ask_specialist
+    # tool delegates questions to this remote agent's REST chat endpoint; empty = off.
+    specialist_agent_url  = str(cfg.get("specialistAgentUrl", "") or "")
 
     # Allocate a free slot
     async with _state_lock:
@@ -557,6 +613,13 @@ async def _start_runtime(agent: dict) -> dict:
             "LLM_PROVIDER":      llm_provider,
             "LLM_BASE_URL":      llm_base_url,
             "LLM_API_KEY":       os.getenv("LLM_API_KEY", ""),
+            "ENABLE_GUARDRAILS":     enable_guardrails,
+            "REDACT_SENSITIVE_DATA": redact_sensitive_data,
+            "RATE_LIMIT":            rate_limit,
+            "TOKEN_LIMIT":           token_limit,
+            "REASONING_EFFORT":      reasoning_effort,
+            "AGENT_ID":              agent_id,
+            "SPECIALIST_AGENT_URL":  specialist_agent_url,
             # CHAT_SERVICE_URL is used by the SSE stream_chat flow (loopback within same process)
             "CHAT_SERVICE_URL":  f"http://localhost:{ports['chat']}/api/chat",
             "HISTORY_SERVICE_URL": f"http://localhost:{PORT}/api/sessions",
@@ -635,30 +698,33 @@ async def _start_runtime(agent: dict) -> dict:
     pids["rule_engine"] = re_proc.pid
     log.info("  [%s] rule-engine  pid=%-7s port=%s", short, re_proc.pid, ports["rule_engine"])
 
-    # ── Chainlit UI ────────────────────────────────────────────────────────────
-    cmd = _chainlit_cmd()
-    if cmd and CHAINLIT_DIR.exists():
-        chainlit_env = {
+    # ── Chat UI (lightweight server.py — replaces Chainlit) ────────────────────
+    chat_server_py = CHAT_SERVER_DIR / "server.py"
+    if chat_server_py.exists():
+        agent_desc = cfg.get("description", cfg.get("desc", ""))
+        chat_srv_env = {
             **os.environ,
-            "AGENT_ID":              agent_id,
-            "DESIGN_SERVICE_URL":    DESIGN_URL,
-            "CHAT_SERVICE_URL":      f"http://localhost:{ports['chat']}",
-            "FEEDBACK_SERVICE_URL":  FEEDBACK_URL,
-            "SSE_SERVICE_URL":       f"http://localhost:{ports['sse_rest']}",
-            "SSE_EVENTS_URL":        f"http://localhost:{ports['sse_events']}",
+            "PORT":                    str(ports["chainlit"]),
+            "AGENT_ID":                agent_id,
+            "AGENT_NAME":              agent_name,
+            "AGENT_DESCRIPTION":       agent_desc,
+            "CHAT_SERVICE_URL":        f"http://localhost:{ports['chat']}",
+            "SSE_SERVICE_URL":         f"http://localhost:{ports['sse_rest']}",
+            "SSE_EVENTS_URL":          f"http://localhost:{ports['sse_events']}",
+            "RULE_ENGINE_SERVICE_URL": f"http://localhost:{ports['rule_engine']}",
+            "FEEDBACK_SERVICE_URL":    FEEDBACK_URL,
         }
-        chainlit_proc = subprocess.Popen(
-            cmd + ["--port", str(ports["chainlit"])],
-            cwd=str(CHAINLIT_DIR),
+        chat_srv_proc = subprocess.Popen(
+            [sys.executable, str(chat_server_py)],
             stdin=subprocess.DEVNULL, stdout=_open_log("chainlit"), stderr=subprocess.STDOUT,
-            env=chainlit_env,
+            env=chat_srv_env,
             start_new_session=True,
         )
-        pids["chainlit"] = chainlit_proc.pid
-        log.info("  [%s] chainlit    pid=%-7s port=%s", short, chainlit_proc.pid, ports["chainlit"])
+        pids["chainlit"] = chat_srv_proc.pid
+        log.info("  [%s] chat-server  pid=%-7s port=%s", short, chat_srv_proc.pid, ports["chainlit"])
     else:
         pids["chainlit"] = None
-        log.warning("  [%s] chainlit skipped (not installed or services/agent/ui/chainlit missing)", short)
+        log.warning("  [%s] chat-server skipped (services/agent/ui/chat/server.py not found)", short)
 
     chat_ui_url = f"http://localhost:{ports['chainlit']}" if pids.get("chainlit") else ""
 
@@ -816,7 +882,7 @@ async def _restart_dead_processes(agent_id: str):
 
     log.warning("Agent [%s] has dead processes %s — restarting runtime", agent_id[:8], dead)
     # Fetch current agent config and restart
-    agents = await _fetch_all_agents()
+    agents = await _fetch_all_agents() or []
     agent = next((a for a in agents if a["id"] == agent_id), None)
     if agent and agent.get("status") == "active":
         await _stop_runtime(agent_id)
@@ -908,8 +974,16 @@ async def reconcile_loop():
 
 
 async def _reconcile_once():
+    # Heal the always-on platform services first. A dead platform-service makes the
+    # agent registry appear empty to the UI/orchestrator while agent runtimes keep
+    # running — the registry/runtime drift this guards against.
+    await _supervise_platform_services()
+
     agents = await _fetch_all_agents()
-    if not agents:
+    if agents is None:
+        # Registry unreachable — do NOT converge agents. Never tear down running
+        # agents because we momentarily can't read desired state; the supervisor
+        # above will bring the registry back on a subsequent cycle.
         return
 
     active_ids  = {a["id"] for a in agents if a.get("status") == "active"}
@@ -1080,7 +1154,7 @@ def _build_flogo_service_image(
             [
                 fb, "build-exe",
                 "-f", str(flogo_src),
-                "-c", "flogo-studio",
+                "-c", "flogo-studio-2264",
                 "-n", service_name,
                 "-o", str(darwin_out),
             ],
@@ -1218,6 +1292,12 @@ def _generate_compose_yaml(agent: dict) -> str:
     embedding_provider = cfg.get("embeddingProvider", "Ollama")
     embedding_base_url = cfg.get("embeddingBaseUrl", "") or "http://ollama:11434/v1"
     chunk_strategy     = cfg.get("chunkStrategy", "sentence")
+    # Per-agent governance (2.26.4 guardrails); defaults match app-property defaults
+    enable_guardrails     = _env_bool(cfg.get("enableGuardrails"), True)
+    redact_sensitive_data = _env_bool(cfg.get("redactSensitiveData"), True)
+    rate_limit            = _env_int(cfg.get("rateLimit"), 0)
+    token_limit           = _env_int(cfg.get("tokenLimit"), 0)
+    reasoning_effort      = str(cfg.get("reasoningEffort", "") or "")
 
     safe_name   = _compose_safe_name(agent_name)
     short       = agent_id[:8]
@@ -1305,6 +1385,12 @@ def _generate_compose_yaml(agent: dict) -> str:
               LLM_MODEL: {llm_model}
               LLM_PROVIDER: {llm_provider}
               LLM_BASE_URL: http://ollama:11434/v1
+              ENABLE_GUARDRAILS: "{enable_guardrails}"
+              REDACT_SENSITIVE_DATA: "{redact_sensitive_data}"
+              RATE_LIMIT: "{rate_limit}"
+              TOKEN_LIMIT: "{token_limit}"
+              REASONING_EFFORT: "{reasoning_effort}"
+              AGENT_ID: {agent_id}
               WEAVIATE_HOST: weaviate
               WEAVIATE_PORT: "8080"
               CHAT_SERVICE_URL: http://localhost:7001/api/chat
@@ -1469,7 +1555,7 @@ async def _run_docker_deploy(agent_id: str) -> None:
         return
 
     # ── Step 2: fetch agent config ───────────────────────────────────────────
-    agents = await _fetch_all_agents()
+    agents = await _fetch_all_agents() or []
     agent = next((a for a in agents if a["id"] == agent_id), None)
     if not agent:
         job.update({"status": "error", "error": f"agent {agent_id} not found"})
@@ -1622,6 +1708,20 @@ async def _handle_docker_stop(request: web.Request) -> web.Response:
 
 # ── Admin helpers ─────────────────────────────────────────────────────────────
 
+# ── Optional rageval (RAG quality eval) integration ──────────────────────────
+# rageval (github.com/mpandav-tibco/rag-evaluator) is an external Go service that
+# scores RAG answers. It lives in its own repo, so we only register/supervise it
+# when its binary is present on this host (default ../rageval, override RAGEVAL_HOME).
+RAGEVAL_HOME = Path(os.getenv("RAGEVAL_HOME", str(PROJECT_ROOT.parent / "rageval")))
+RAGEVAL_PORT = int(os.getenv("RAGEVAL_PORT", "9090"))
+
+
+def _rageval_bin() -> Optional[Path]:
+    """Path to the rageval binary if installed, else None (feature stays off)."""
+    b = RAGEVAL_HOME / "rageval"
+    return b if b.exists() else None
+
+
 _PLATFORM_SERVICES = [
     {"name": "platform-service",   "port": 7020, "healthPath": "/api/health"},
     {"name": "agent-builder",      "port": 7010, "healthPath": "/api/health"},
@@ -1629,6 +1729,9 @@ _PLATFORM_SERVICES = [
     {"name": "runtime-manager",    "port": 7050, "healthPath": "/api/health"},
     {"name": "forge-ui",           "port": 7025, "healthPath": "/"},
 ]
+# rageval is surfaced + supervised only when its binary exists on this host.
+if _rageval_bin():
+    _PLATFORM_SERVICES.append({"name": "rageval", "port": RAGEVAL_PORT, "healthPath": "/health"})
 
 # rule-engine-service is now per-agent (started by _start_runtime for each agent)
 _AGENT_SUPPORT_SERVICES: list = []
@@ -1675,7 +1778,8 @@ async def _handle_admin_services(request: web.Request) -> web.Response:
             "status":      "online" if alive else "offline",
             "pid":         pid,
             "category":    category,
-            "controllable": svc["name"] not in _PLATFORM_SVC_UNMANAGED and svc["name"] in _PLATFORM_SVC_BIN,
+            "controllable": svc["name"] not in _PLATFORM_SVC_UNMANAGED and (
+                svc["name"] in _PLATFORM_SVC_BIN or svc["name"] == "rageval"),
         })
     return web.json_response(services)
 
@@ -1705,6 +1809,8 @@ async def _stop_platform_svc(name: str) -> dict:
 
 async def _start_platform_svc(name: str) -> dict:
     """Launch a named platform service using its binary + env/flogo-app files."""
+    if name == "rageval":
+        return await _start_rageval()
     if name not in _PLATFORM_SVC_BIN:
         return {"error": f"no binary configured for: {name}"}
     svc = next((s for s in _PLATFORM_SERVICES + _AGENT_SUPPORT_SERVICES if s["name"] == name), None)
@@ -1762,6 +1868,72 @@ async def _start_platform_svc(name: str) -> dict:
     except Exception as exc:
         log.error("Failed to start platform service [%s]: %s", name, exc)
         return {"error": str(exc)}
+
+
+async def _start_rageval() -> dict:
+    """Launch the external rageval Go service from its own repo dir (cwd=RAGEVAL_HOME
+    so it loads config.yaml + rageval.db). No-op if already listening; off when the
+    binary is absent."""
+    b = _rageval_bin()
+    if not b:
+        return {"error": f"rageval not installed (looked in {RAGEVAL_HOME}; set RAGEVAL_HOME)"}
+    existing = _pid_on_port(RAGEVAL_PORT)
+    if existing:
+        return {"message": "already running", "pid": existing}
+    if not os.access(b, os.X_OK):
+        b.chmod(b.stat().st_mode | 0o111)
+    log_path = PROJECT_ROOT / "logs" / "rageval.log"
+    try:
+        with open(log_path, "a") as lf:
+            lf.write(f"=== STARTED {datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')} rageval ===\n")
+            lf.flush()
+            proc = subprocess.Popen(
+                [str(b)], stdout=lf, stderr=lf,
+                cwd=str(RAGEVAL_HOME), start_new_session=True,
+            )
+        log.info("Started rageval PID %s (port %s, home %s)", proc.pid, RAGEVAL_PORT, RAGEVAL_HOME)
+        return {"message": "started", "pid": proc.pid}
+    except Exception as exc:
+        log.error("Failed to start rageval: %s", exc)
+        return {"error": str(exc)}
+
+
+# ── Platform-service supervisor ───────────────────────────────────────────────
+# The runtime-manager is the always-on orchestrator, so it also keeps the managed
+# platform services alive. Without this, a dead platform-service makes the agent
+# registry look empty (registry/runtime drift) while agent runtimes keep running.
+_PLATFORM_RESTART_COOLDOWN = 30.0   # min seconds between auto-restart attempts per service
+_platform_restart_attempts: dict[str, float] = {}
+
+async def _supervise_platform_services():
+    """Restart any managed platform service (platform-service, agent-builder,
+    mcp-server) that is not listening on its port. Idempotent (_start_platform_svc
+    no-ops if the port is already bound) and rate-limited so a crash-looping binary
+    is retried at most once per cooldown window. Never touches runtime-manager
+    (itself) or forge-ui (both excluded from _PLATFORM_SVC_BIN)."""
+    for name in _PLATFORM_SVC_BIN:
+        svc = next((s for s in _PLATFORM_SERVICES if s["name"] == name), None)
+        if not svc:
+            continue
+        if _pid_on_port(svc["port"]):
+            continue  # alive — leave it alone
+        last = _platform_restart_attempts.get(name, 0.0)
+        if time.time() - last < _PLATFORM_RESTART_COOLDOWN:
+            continue  # within cooldown — don't hammer a service that won't boot
+        _platform_restart_attempts[name] = time.time()
+        log.warning("Supervisor: platform service [%s] DOWN on port %s — restarting",
+                    name, svc["port"])
+        res = await _start_platform_svc(name)
+        log.info("Supervisor: restart [%s] -> %s", name, res)
+
+    # Optional: supervise the external rageval service when it is installed.
+    if _rageval_bin() and not _pid_on_port(RAGEVAL_PORT):
+        last = _platform_restart_attempts.get("rageval", 0.0)
+        if time.time() - last >= _PLATFORM_RESTART_COOLDOWN:
+            _platform_restart_attempts["rageval"] = time.time()
+            log.warning("Supervisor: rageval DOWN on port %s — restarting", RAGEVAL_PORT)
+            res = await _start_rageval()
+            log.info("Supervisor: restart [rageval] -> %s", res)
 
 
 async def _handle_stop_platform_svc(request: web.Request) -> web.Response:
@@ -1831,7 +2003,7 @@ async def _handle_start_agent(request: web.Request) -> web.Response:
             rec = _state[agent_id]
         return web.json_response({"message": "already running", "runtime": rec})
 
-    agents = await _fetch_all_agents()
+    agents = await _fetch_all_agents() or []
     agent = next((a for a in agents if a["id"] == agent_id), None)
     if not agent:
         return web.json_response({"error": f"agent {agent_id} not found in design-service"}, status=404)
@@ -1867,7 +2039,7 @@ async def _handle_restart_agent(request: web.Request) -> web.Response:
     log.info("Restarting runtime for agent [%s]", agent_id[:8])
     await _stop_runtime(agent_id)
 
-    agents = await _fetch_all_agents()
+    agents = await _fetch_all_agents() or []
     agent = next((a for a in agents if a["id"] == agent_id), None)
     if not agent:
         return web.json_response({"error": f"agent {agent_id} not found in design-service"}, status=404)
@@ -1949,7 +2121,7 @@ async def _handle_restart_ingestion(request: web.Request) -> web.Response:
     agent_id = request.match_info["agentId"]
 
     # Fetch latest agent config from design-service
-    agents = await _fetch_all_agents()
+    agents = await _fetch_all_agents() or []
     agent  = next((a for a in agents if a["id"] == agent_id), None)
     if not agent:
         return web.json_response({"error": f"agent {agent_id} not found"}, status=404)
@@ -2141,7 +2313,7 @@ async def _handle_v1_deploy(request: web.Request) -> web.Response:
     async with _state_lock:
         already_running = agent_id in _state
     if not already_running:
-        agents = await _fetch_all_agents()
+        agents = await _fetch_all_agents() or []
         a = next((x for x in agents if x["id"] == agent_id), None)
         if a:
             asyncio.ensure_future(_start_runtime(a))
@@ -2418,8 +2590,12 @@ async def _handle_kb_get_collection(request: web.Request) -> web.Response:
                          .get(name, [{}])[0].get("meta", {}).get("count", 0))
         except Exception:
             pass
-        cls["objectCount"] = count
-        return web.json_response(cls)
+        prop_names = [p["name"] for p in cls.get("properties", [])]
+        return web.json_response({
+            "name": cls.get("class", name),
+            "objectCount": count,
+            "properties": prop_names,
+        })
     except Exception as exc:
         return web.json_response({"error": str(exc)}, status=500)
 

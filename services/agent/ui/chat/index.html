@@ -174,6 +174,9 @@ pre::-webkit-scrollbar-thumb { background: #2a2b3d; border-radius: 2px; }
   <div id="input-row">
     <textarea id="msg-input" rows="1" placeholder="Type a message…" maxlength="16000"></textarea>
     <div id="input-actions">
+      <label for="file-input" class="icon-btn" id="attach-btn" title="Attach file for Rule Engine analysis">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+      </label>
       <button class="icon-btn" id="send-btn" title="Send (Enter)">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
@@ -262,7 +265,6 @@ function renderMarkdown(raw) {
   s = s.replace(/^>\s+(.+)$/gm, "<blockquote>$1</blockquote>");
   // Lists — gather consecutive li lines and wrap in ul/ol
   s = s.replace(/^(\d+)\.\s+(.+)$/gm, "<li data-ol>$2</li>");
-  s = s.replace(/^[\*\-]\s+(.+)$/gm, "<li>$2</li>"); // note: $2 is wrong, fix:
   s = s.replace(/^[\*\-]\s+(.+)$/gm, "<li>$1</li>");
   // Wrap ol li blocks
   s = s.replace(/(<li data-ol>[^]*?<\/li>\n?)+/g, m => `<ol>${m.replace(/ data-ol/g,"")}</ol>`);
@@ -397,13 +399,52 @@ async function sendFeedback(msgId, rating) {
   _feedbackState[msgId] = rating;
   document.getElementById(`${msgId}-up`)?.classList.toggle("active-up",   rating === "up");
   document.getElementById(`${msgId}-down`)?.classList.toggle("active-down", rating === "down");
+
+  // Ask for optional comment (inline, non-blocking)
+  let comment = "";
+  const bubble = document.getElementById(`${msgId}-content`);
+  if (bubble) {
+    const commentBox = document.createElement("div");
+    commentBox.style.cssText = "margin-top:8px;display:flex;gap:6px;align-items:center";
+    commentBox.innerHTML = `
+      <input id="fb-comment-${msgId}" type="text" placeholder="Add a comment (optional)…"
+        style="flex:1;background:#0d0e1a;border:1px solid #2a2b3d;border-radius:6px;color:#e2e8f0;
+               padding:5px 10px;font-size:12px;outline:none;font-family:inherit">
+      <button onclick="submitFeedbackComment('${msgId}','${rating}')" style="background:#1e2030;border:1px solid #2a2b3d;
+              color:#94a3b8;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">Send</button>
+      <button onclick="document.getElementById('fb-wrap-${msgId}').remove()" style="background:none;border:none;
+              color:#475569;cursor:pointer;font-size:14px">✕</button>`;
+    const wrap = document.createElement("div");
+    wrap.id = `fb-wrap-${msgId}`;
+    wrap.appendChild(commentBox);
+    bubble.appendChild(wrap);
+    document.getElementById(`fb-comment-${msgId}`)?.focus();
+    // Auto-dismiss after 30s if user ignores it
+    setTimeout(() => wrap.remove(), 30000);
+  }
+
   try {
     await fetch("/proxy/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ agentId: CFG.agentId, sessionId, messageId: msgId, rating }),
+      body: JSON.stringify({ agentId: CFG.agentId, sessionId, messageId: msgId, rating, comment }),
     });
   } catch (_) { /* fire-and-forget */ }
+}
+
+async function submitFeedbackComment(msgId, rating) {
+  const input = document.getElementById(`fb-comment-${msgId}`);
+  const comment = input?.value?.trim() || "";
+  document.getElementById(`fb-wrap-${msgId}`)?.remove();
+  if (!comment) return;
+  try {
+    await fetch("/proxy/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ agentId: CFG.agentId, sessionId, messageId: msgId, rating, comment }),
+    });
+    showToast("Feedback saved with comment");
+  } catch (_) {}
 }
 
 // ── Rule Engine analysis ──────────────────────────────────────────────────────
@@ -574,6 +615,17 @@ async function handleSend() {
   if (isBusy) return;
   const text = $input.value.trim();
 
+  // Auto-detect YAML/JSON document pasted directly into the text box
+  if (!pendingFile && text.length > 120 && looksLikeDocument(text)) {
+    isBusy = true; setBusy(true);
+    const fname = looksLikeYaml(text) ? "inline-content.yaml" : "inline-content.json";
+    addMessage("user", `<em style="color:#94a3b8;font-size:13px">Analysing pasted content (${escHtml(fname)})</em>`);
+    $input.value = ""; autoResize();
+    await analyzeFile(fname, text);
+    isBusy = false; setBusy(false);
+    return;
+  }
+
   // Handle pending file upload (rule engine analysis)
   if (pendingFile && (!text || isAnalysisIntent(text))) {
     isBusy = true;
@@ -597,8 +649,22 @@ async function handleSend() {
   $input.value = "";
   autoResize();
 
+  // If analysis intent but no file attached, add a gentle hint alongside the chat reply
+  const _showAnalysisHint = isAnalysisIntent(text) && !pendingFile;
+
   // Use SSE path — falls back to sync on timeout/error
   await sendChatSSE(text);
+
+  if (_showAnalysisHint) {
+    // Append a non-blocking tip after the reply
+    const hintEl = document.createElement("div");
+    hintEl.style.cssText = "font-size:12px;color:#475569;padding:4px 0 0 42px;display:flex;align-items:center;gap:6px";
+    hintEl.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+      Tip: attach a file (📎) for Rule Engine analysis`;
+    $messages.appendChild(hintEl);
+    scrollToBottom();
+    setTimeout(() => hintEl.remove(), 8000);
+  }
 
   isBusy = false;
   setBusy(false);
@@ -610,13 +676,41 @@ function isAnalysisIntent(text) {
   return kw.some(k => text.toLowerCase().includes(k));
 }
 
+function looksLikeYaml(text) {
+  return ["apiVersion:","kind:","metadata:","spec:","---"].some(m => text.includes(m));
+}
+function looksLikeDocument(text) {
+  if (!text || text.length < 60) return false;
+  const s = text.trim();
+  return looksLikeYaml(s) ||
+         ((s.startsWith("{") && s.endsWith("}")) ||
+          (s.startsWith("[") && s.endsWith("]")));
+}
+
 function setBusy(on) {
   $sendBtn.disabled = on;
   $input.disabled   = on;
 }
 
 // ── File upload ───────────────────────────────────────────────────────────────
+// Header button and input-row label both trigger the hidden file input
 document.getElementById("upload-btn").onclick = () => $fileInput.click();
+
+// Paste detection — auto-route YAML/JSON pasted directly into the textarea
+$input.addEventListener("paste", () => setTimeout(() => {
+  const text = $input.value.trim();
+  if (!pendingFile && text.length > 120 && looksLikeDocument(text)) {
+    const fname = looksLikeYaml(text) ? "pasted-content.yaml" : "pasted-content.json";
+    pendingFile = { name: fname, content: text };
+    $input.value = "";
+    autoResize();
+    $uploadName.textContent = fname + " (pasted)";
+    $uploadInd.style.display = "flex";
+    $input.placeholder = "Press Send to run Rule Engine analysis on pasted content…";
+    showToast("📋 Document detected — press Send to analyse");
+  }
+}, 0));
+
 $fileInput.onchange = async () => {
   const file = $fileInput.files[0];
   if (!file) return;
